@@ -44,9 +44,6 @@
     <div id="updateTime" class="update-time"></div>
     <div id="planMeta" class="plan-meta"></div>
 
-    <div class="section-title">جدول التفتيش الشهري</div>
-    <div class="plan-section" id="planTable"></div>
-
     <div class="section-title">إحصائيات التفتيش</div>
     <div class="plan-section" id="stats"></div>
 
@@ -91,32 +88,6 @@
         const d = new Date();
         let meta = "تاريخ العرض: " + d.toLocaleDateString('ar-EG') + " " + d.toLocaleTimeString('ar-EG');
         document.getElementById("planMeta").textContent = meta;
-
-        // رسم جدول الخطة
-        let html = `<table>
-          <thead>
-            <tr>
-              <th>اسم المفتش</th>
-              <th>اليوم</th>
-              <th>وقت المناوبة</th>
-              <th>المنطقة</th>
-              <th>المحلات</th>
-            </tr>
-          </thead>
-          <tbody>`;
-        (plan.distribution||[]).forEach(row=>{
-          html += `<tr>
-            <td class="inspector-label">${row.inspector||""}</td>
-            <td>${row.day||""}</td>
-            <td>${row.shift||""}</td>
-            <td class="area-label">${row.area||""}</td>
-            <td>${
-              (row.shops||[]).map(shop=>`<span class="shop-badge">${shop}</span>`).join(" ")
-            }</td>
-          </tr>`;
-        });
-        html += `</tbody></table>`;
-        document.getElementById("planTable").innerHTML = html;
 
         // المفتشون
         let inspectorsHtml = "";
@@ -200,7 +171,7 @@
         document.getElementById("stats").innerHTML = statsHtml;
       })
       .catch(()=>{
-        document.getElementById("planTable").innerHTML='<p style="color:#c00; font-weight:bold;">تعذر تحميل الخطة من الخادم!</p>';
+        document.getElementById("stats").innerHTML='<p style="color:#c00; font-weight:bold;">تعذر تحميل الخطة من الخادم!</p>';
       });
   </script>
 </body>

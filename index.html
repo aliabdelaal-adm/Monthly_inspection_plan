@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>عرض الخطة الشهرية للتفتيش</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { background:#f6f7fa; font-family:'Segoe UI',Arial,sans-serif; margin:0; padding:0;}
+    .container {max-width:950px; margin:38px auto 34px auto; background:#fff; border-radius:10px; box-shadow:0 0 12px #bbb; padding:26px 18px 36px 18px;}
+    .header { background:#2336a0; color:#fff; font-size:2em; text-align:center; padding:17px 0; border-radius:8px; margin-bottom:22px;}
+    .section-title { background:#e2e6f6; color:#2336a0; font-size:1.19em; font-weight:bold; margin:23px 0 14px 0; padding:8px 0; border-radius:6px; text-align:right;}
+    table {width:100%; border-collapse:collapse; background:#fafafa; margin-bottom:30px;}
+    th,td {border:1px solid #bbb; padding:12px 6px; text-align:center; vertical-align:middle; font-size:1.09em;}
+    th {background:#2336a0; color:#fff;}
+    .goals-cell { text-align:right; background:#f3f7ff; color:#2336a0; font-weight:bold; font-size:1.09em;}
+    .goals-red { color:#c00; font-weight:bold; }
+    .copyright { text-align:center; color:#2336a0; font-weight:bold; margin-top:25px; font-size:1.09em;}
+    .plan-meta {margin:0 0 17px 0; color:#777; text-align:left; font-size:0.98em;}
+    .update-time {color:#888; font-size:0.91em; margin:0 0 3px 0; text-align:left;}
+    .list-label {font-weight:bold; color:#2336a0;}
+    .list-area {margin-bottom:7px;}
+    .shop-list {display:inline-block; background:#f3f7ff; color:#2336a0; margin:2px 7px 2px 0; padding:4px 14px; border-radius:4px; font-size:1em;}
+    .inspector-label {color:#2336a0; font-weight:bold;}
+    .area-label {color:#2a43c7; font-weight:bold;}
+    .shop-label {color:#555;}
+    .stats-table {margin:16px auto 24px auto; border:1px solid #2336a0; border-radius:8px; background:#f7f7ff;}
+    .stats-table th {background:#2336a0; color:#fff;}
+    .stats-table td {background:#fff;}
+    .stats-table tfoot td {background:#e2e6f6; font-weight:bold;}
+    .stats-inspector-col {min-width:160px; width:160px;}
+    .stats-total-cell { color:#c00; font-weight:bold;}
+    .plan-section {margin-bottom:32px;}
+    .shop-badge {background:#e2e6f6; color:#2336a0; border-radius:3px; margin:0 2px; padding:2px 9px; font-size:0.99em;}
+    @media (max-width: 700px) {
+      .container {padding:8px 2px;}
+      th,td {padding:7px 2px; font-size:0.98em;}
+      .header {font-size:1.1em;}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">عرض الخطة الشهرية للتفتيش</div>
+    <div id="updateTime" class="update-time"></div>
+    <div id="planMeta" class="plan-meta"></div>
+
+    <div class="section-title">جدول التفتيش الشهري</div>
+    <div class="plan-section" id="planTable"></div>
+
+    <div class="section-title">إحصائيات التفتيش</div>
+    <div class="plan-section" id="stats"></div>
+
+    <div class="section-title">المفتشون</div>
+    <div id="inspectorsList" class="plan-section"></div>
+
+    <div class="section-title">المناطق والمحلات التابعة</div>
+    <div id="areasList" class="plan-section"></div>
+
+    <div class="section-title">أهداف التفتيش لهذا الشهر</div>
+    <div class="plan-section">
+      <div id="goalsSection" class="goals-cell"></div>
+    </div>
+
+    <div class="copyright">
+      جميع الحقوق محفوظة &copy; المطور د. علي عبدالعال
+    </div>
+  </div>
+  <script>
+    // جلب الخطة دائماً بدون كاش
+    const PLAN_URL = "https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/plan-data.json?" + Date.now();
+    const API_URL  = "https://api.github.com/repos/aliabdelaal-adm/Monthly_inspection_plan/commits?path=plan-data.json&per_page=1&" + Date.now();
+
+    // جلب تاريخ آخر تحديث للملف من GitHub API
+    fetch(API_URL)
+      .then(r=>r.json())
+      .then(commits=>{
+        let dateStr = "";
+        if(Array.isArray(commits) && commits[0] && commits[0].commit && commits[0].commit.committer && commits[0].commit.committer.date){
+          let d = new Date(commits[0].commit.committer.date);
+          dateStr = d.toLocaleDateString('ar-EG') + " " + d.toLocaleTimeString('ar-EG');
+        }
+        if(dateStr){
+          document.getElementById("updateTime").innerHTML = "آخر تحديث للخطة: <b>"+dateStr+"</b>";
+        }
+      });
+
+    fetch(PLAN_URL)
+      .then(r=>r.json())
+      .then(plan=>{
+        // إعداد بيانات عامة
+        const d = new Date();
+        let meta = "تاريخ العرض: " + d.toLocaleDateString('ar-EG') + " " + d.toLocaleTimeString('ar-EG');
+        document.getElementById("planMeta").textContent = meta;
+
+        // رسم جدول الخطة
+        let html = `<table>
+          <thead>
+            <tr>
+              <th>اسم المفتش</th>
+              <th>اليوم</th>
+              <th>وقت المناوبة</th>
+              <th>المنطقة</th>
+              <th>المحلات</th>
+            </tr>
+          </thead>
+          <tbody>`;
+        (plan.distribution||[]).forEach(row=>{
+          html += `<tr>
+            <td class="inspector-label">${row.inspector||""}</td>
+            <td>${row.day||""}</td>
+            <td>${row.shift||""}</td>
+            <td class="area-label">${row.area||""}</td>
+            <td>${
+              (row.shops||[]).map(shop=>`<span class="shop-badge">${shop}</span>`).join(" ")
+            }</td>
+          </tr>`;
+        });
+        html += `</tbody></table>`;
+        document.getElementById("planTable").innerHTML = html;
+
+        // المفتشون
+        let inspectorsHtml = "";
+        (plan.inspectors||[]).forEach(name=>{
+          inspectorsHtml += `<span class="shop-list">${name}</span>`;
+        });
+        document.getElementById("inspectorsList").innerHTML = inspectorsHtml;
+
+        // المناطق والمحلات
+        let areasHtml = "";
+        let shopsByArea = plan.shopsByArea || {};
+        Object.keys(shopsByArea).forEach(area=>{
+          areasHtml += `<div class="list-area"><span class="area-label">${area}:</span> `;
+          (shopsByArea[area]||[]).forEach(shop=>{
+            areasHtml += `<span class="shop-badge">${shop}</span>`;
+          });
+          areasHtml += `</div>`;
+        });
+        document.getElementById("areasList").innerHTML = areasHtml;
+
+        // الأهداف
+        document.getElementById("goalsSection").innerHTML = 
+          `<span class="goals-red">${(plan.goals||"" ).replace(/\n/g,"<br>")}</span>`;
+
+        // جدول الإحصائيات
+        let inspectorShopCounts = {}, morningCounts = {}, eveningCounts = {}, weekendCounts = {};
+        (plan.inspectors||[]).forEach(inspector=>{
+          inspectorShopCounts[inspector]=0;
+          morningCounts[inspector]=0;
+          eveningCounts[inspector]=0;
+          weekendCounts[inspector]=0;
+        });
+        (plan.distribution||[]).forEach(row=>{
+          if (!row.inspector || !plan.inspectors.includes(row.inspector)) return;
+          let shopsCount = row.shops ? row.shops.length : 0;
+          let shift = row.shift || "";
+          let inspector = row.inspector;
+          let dayStr = row.day;
+          let isWeekend = false;
+          if (dayStr) {
+            let d = new Date(dayStr);
+            let dayOfWeek = d.getDay();
+            if (dayOfWeek === 5 || dayOfWeek === 6 || dayOfWeek === 0) isWeekend = true;
+          }
+          inspectorShopCounts[inspector] += shopsCount;
+          if (shift === "صباحية") morningCounts[inspector] += shopsCount;
+          if (shift === "مسائية") eveningCounts[inspector] += shopsCount;
+          if (isWeekend) weekendCounts[inspector] += shopsCount;
+        });
+        let statsHtml = `<table class="stats-table">
+          <thead>
+            <tr>
+              <th class="stats-inspector-col">اسم المفتش</th>
+              <th>عدد التفتيشات (كل الشهر)</th>
+              <th>عدد التفتيشات الصباحية</th>
+              <th>عدد التفتيشات المسائية</th>
+              <th>عدد التفتيشات في العطلة (جمعة/سبت/أحد)</th>
+            </tr>
+          </thead>
+          <tbody>`;
+        (plan.inspectors||[]).forEach(name=>{
+          statsHtml += `<tr>
+            <td class="stats-inspector-col">${name}</td>
+            <td>${inspectorShopCounts[name]}</td>
+            <td>${morningCounts[name]}</td>
+            <td>${eveningCounts[name]}</td>
+            <td>${weekendCounts[name]}</td>
+          </tr>`;
+        });
+        statsHtml += `</tbody>
+          <tfoot>
+            <tr>
+              <td class="stats-total-cell">مجموع التفتيش</td>
+              <td class="stats-total-cell">${Object.values(inspectorShopCounts).reduce((a,b)=>a+b,0)}</td>
+              <td class="stats-total-cell">${Object.values(morningCounts).reduce((a,b)=>a+b,0)}</td>
+              <td class="stats-total-cell">${Object.values(eveningCounts).reduce((a,b)=>a+b,0)}</td>
+              <td class="stats-total-cell">${Object.values(weekendCounts).reduce((a,b)=>a+b,0)}</td>
+            </tr>
+          </tfoot>
+        </table>`;
+        document.getElementById("stats").innerHTML = statsHtml;
+      })
+      .catch(()=>{
+        document.getElementById("planTable").innerHTML='<p style="color:#c00; font-weight:bold;">تعذر تحميل الخطة من الخادم!</p>';
+      });
+  </script>
+</body>
+</html>

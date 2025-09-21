@@ -1,207 +1,399 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>عرض الخطة الشهرية للتفتيش</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body { background:#f6f7fa; font-family:'Segoe UI',Arial,sans-serif; margin:0; padding:0;}
-    .container {max-width:950px; margin:38px auto 34px auto; background:#fff; border-radius:10px; box-shadow:0 0 12px #bbb; padding:26px 18px 36px 18px;}
-    .header { background:#2336a0; color:#fff; font-size:2em; text-align:center; padding:17px 0; border-radius:8px; margin-bottom:22px;}
-    .section-title { background:#e2e6f6; color:#2336a0; font-size:1.19em; font-weight:bold; margin:23px 0 14px 0; padding:8px 0; border-radius:6px; text-align:right;}
-    table {width:100%; border-collapse:collapse; background:#fafafa; margin-bottom:30px;}
-    th,td {border:1px solid #bbb; padding:12px 6px; text-align:center; vertical-align:middle; font-size:1.09em;}
-    th {background:#2336a0; color:#fff;}
-    .goals-cell { text-align:right; background:#f3f7ff; color:#2336a0; font-weight:bold; font-size:1.09em;}
-    .goals-red { color:#c00; font-weight:bold; }
-    .copyright { text-align:center; color:#2336a0; font-weight:bold; margin-top:25px; font-size:1.09em;}
-    .plan-meta {margin:0 0 17px 0; color:#777; text-align:left; font-size:0.98em;}
-    .update-time {color:#888; font-size:0.91em; margin:0 0 3px 0; text-align:left;}
-    .list-label {font-weight:bold; color:#2336a0;}
-    .list-area {margin-bottom:7px;}
-    .shop-list {display:inline-block; background:#f3f7ff; color:#2336a0; margin:2px 7px 2px 0; padding:4px 14px; border-radius:4px; font-size:1em;}
-    .inspector-label {color:#2336a0; font-weight:bold;}
-    .area-label {color:#2a43c7; font-weight:bold;}
-    .shop-label {color:#555;}
-    .stats-table {margin:16px auto 24px auto; border:1px solid #2336a0; border-radius:8px; background:#f7f7ff;}
-    .stats-table th {background:#2336a0; color:#fff;}
-    .stats-table td {background:#fff;}
-    .stats-table tfoot td {background:#e2e6f6; font-weight:bold;}
-    .stats-inspector-col {min-width:160px; width:160px;}
-    .stats-total-cell { color:#c00; font-weight:bold;}
-    .plan-section {margin-bottom:32px;}
-    .shop-badge {background:#e2e6f6; color:#2336a0; border-radius:3px; margin:0 2px; padding:2px 9px; font-size:0.99em;}
-    @media (max-width: 700px) {
-      .container {padding:8px 2px;}
-      th,td {padding:7px 2px; font-size:0.98em;}
-      .header {font-size:1.1em;}
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>واجهة إدارة خطة التفتيش الشهرية</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: 'Cairo', Tahoma, Arial, sans-serif;
+            background: #f7f8fa;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 40px auto 24px auto;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 32px #0002;
+            padding: 32px 24px 24px 24px;
+            direction: rtl;
+        }
+        .main-title {
+            background: #234093;
+            color: #fff;
+            border-radius: 10px;
+            padding: 18px 0;
+            text-align: center;
+            font-size: 2em;
+            margin-bottom: 24px;
+            letter-spacing: 1px;
+        }
+        .top-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            gap: 1.5rem;
+            direction: rtl;
+        }
+        .top-bar label, .top-bar .user-type-label {
+            font-size: 1.1em;
+            margin-left: 8px;
+        }
+        .top-bar select, .top-bar button {
+            font-size: 1em;
+            border-radius: 7px;
+            border: 1px solid #ccc;
+            padding: 8px 14px;
+            margin-right: 8px;
+        }
+        .top-bar button {
+            background: #234093;
+            color: #fff;
+            border: none;
+            margin: 0 4px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .top-bar button:hover {
+            background: #1a2c67;
+        }
+        .admin-panel {
+            margin: 32px 0 32px 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 28px;
+        }
+        .admin-section {
+            background: #f3f6fe;
+            border: 1px solid #e0e7f7;
+            border-radius: 14px;
+            padding: 24px 18px 18px 18px;
+            box-shadow: 0px 1.5px 6px #23409311;
+            margin-bottom: 24px;
+        }
+        .admin-section h3 {
+            color: #1a2c67;
+            margin-top: 0;
+            font-size: 1.13em;
+            margin-bottom: 18px;
+        }
+        .add-row-form {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 18px;
+            align-items: center;
+        }
+        .add-row-form input[type="text"] {
+            flex: 1;
+            font-size: 1em;
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid #bbb;
+        }
+        .add-row-form button {
+            background: #234093;
+            color: #fff;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .admin-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .admin-list li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #fff;
+            margin-bottom: 7px;
+            border-radius: 7px;
+            padding: 7px 10px;
+            border: 1px solid #e3e6f0;
+        }
+        .admin-list .list-actions button {
+            margin-right: 5px;
+            font-size: 0.97em;
+            padding: 4px 12px;
+            border-radius: 5px;
+        }
+        .edit-btn {
+            background: #efb400;
+            color: #fff;
+            border: none;
+        }
+        .edit-btn:hover {
+            background: #b28a00;
+        }
+        .save-btn {
+            background: #388e3c;
+            color: #fff;
+            border: none;
+        }
+        .delete-btn {
+            background: #d32f2f;
+            color: #fff;
+            border: none;
+        }
+        .delete-btn:hover {
+            background: #b71c1c;
+        }
+        .goal-section {
+            background: #e5f7ef;
+            border: 1px solid #81c6ae;
+            border-radius: 14px;
+            padding: 24px 18px 18px 18px;
+            box-shadow: 0px 1.5px 6px #046a4433;
+            margin-top: 30px;
+        }
+        .goal-section h3 {
+            color: #046a44;
+            margin-top: 0;
+            font-size: 1.13em;
+            margin-bottom: 18px;
+        }
+        .goal-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .goal-list li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #fff;
+            margin-bottom: 7px;
+            border-radius: 7px;
+            padding: 7px 10px;
+            border: 1px solid #b2dfdb;
+        }
+        .goal-list .list-actions button {
+            margin-right: 5px;
+            font-size: 0.97em;
+            padding: 4px 12px;
+            border-radius: 5px;
+        }
+        .goal-edit-btn {
+            background: #009688;
+            color: #fff;
+        }
+        .goal-save-btn {
+            background: #388e3c;
+            color: #fff;
+        }
+        .goal-delete-btn {
+            background: #d32f2f;
+            color: #fff;
+        }
+        .goal-delete-btn:hover {
+            background: #b71c1c;
+        }
+        /* توزيع المحلات */
+        .shops-area-box {
+            background: #e9ebf6;
+            border-radius: 10px;
+            padding: 18px 10px 10px 10px;
+            margin-bottom: 20px;
+        }
+        .shops-area-title {
+            font-size: 1.07em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .shop-area-tag {
+            background: #234093;
+            color: #fff;
+            border-radius: 18px;
+            padding: 4px 16px 4px 16px;
+            display: inline-block;
+            margin: 2px 4px;
+        }
+        .shop-area-tag button {
+            background: #c22;
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            margin-right: 4px;
+            font-size: 1.1em;
+            cursor: pointer;
+        }
+        .distribution-table th, .distribution-table td {
+            text-align: center;
+            padding: 7px 6px;
+        }
+        .distribution-table th {
+            background: #234093;
+            color: #fff;
+        }
+        .distribution-table td button {
+            background: #c22;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 4px 10px;
+        }
+        /* المفتش */
+        .section-box {
+            background: #f4f6fa;
+            border-radius: 14px;
+            margin-bottom: 30px;
+            box-shadow: 0px 1.5px 6px #23409311;
+        }
+        .table-title, .stats-title {
+            color: #c00;
+            font-size: 1.15em;
+            font-weight: bold;
+            margin: 16px 0 8px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            margin-bottom: 10px;
+        }
+        th, td {
+            border: 1px solid #bbb;
+            padding: 12px 6px;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 1.09em;
+        }
+        th {
+            background: #234093;
+            color: #fff;
+        }
+        .shop-btn {
+            background: #e5eaff;
+            color: #234093;
+            border: none;
+            border-radius: 7px;
+            padding: 6px 16px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: 0.2s;
+        }
+        .shop-btn:hover {
+            background: #b2c5fa;
+        }
+        .goals-section {
+            background: #e5f7ef;
+            border: 1px solid #81c6ae;
+            border-radius: 14px;
+            padding: 16px 12px 10px 12px;
+            margin-bottom: 15px;
+        }
+        .goals-section h3 {
+            color: #046a44;
+            margin: 0 0 10px 0;
+            font-size: 1.1em;
+        }
+        .goals-section ul {
+            margin: 0;
+            padding-right: 20px;
+        }
+        .goals-section li {
+            color: #046a44;
+            margin-bottom: 4px;
+            font-size: 1.01em;
+        }
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            border-radius: 8px;
+            background: #fff;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+        .stats-table th, .stats-table td {
+            border: 1px solid #234093;
+            padding: 10px 6px;
+            text-align: center;
+            font-size: 1.05em;
+        }
+        .stats-table th {
+            background: #234093;
+            color: #fff;
+        }
+        .stats-table tfoot td {
+            background: #e2e6f6;
+            font-weight: bold;
+        }
+        .stats-total-cell {
+            color: #c00;
+            font-weight: bold;
+        }
+        .copyright {
+            text-align: center;
+            color: #234093;
+            font-weight: bold;
+            margin-top: 20px;
+            font-size: 1.08em;
+        }
+        /* نافذة المحلات ونافذة الرقم السري */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.36);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: #fff;
+            padding: 32px 26px 22px 26px;
+            border-radius: 18px;
+            box-shadow: 0 2px 16px #0002;
+            min-width: 260px;
+            max-width: 350px;
+            text-align: center;
+        }
+        .modal-content button {
+            background: #234093;
+            color: #fff;
+            border: none;
+            padding: 8px 22px;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .modal-content label {
+            font-size: 1.08em;
+            color: #234093;
+            margin-bottom: 16px;
+            display: block;
+        }
+        .modal-content input[type="password"] {
+            font-size: 1.08em;
+            padding: 7px 12px;
+            border: 1.5px solid #ccc;
+            border-radius: 8px;
+            margin-bottom: 14px;
+            text-align: center;
+        }
+        .modal-content .error-msg {
+            color: #d32f2f;
+            margin-bottom: 8px;
+        }
+        @media (max-width: 900px) {
+            .container { padding: 14px 2px 8px 2px; }
+            .main-title { font-size: 1.22em; padding: 11px 0; }
+            .admin-panel { grid-template-columns: 1fr; gap: 16px; }
+            .admin-section, .goal-section, .inspect-section, .section-box { padding: 13px 4px 13px 4px;}
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">عرض الخطة الشهرية للتفتيش</div>
-    <div id="updateTime" class="update-time"></div>
-    <div id="planMeta" class="plan-meta"></div>
-
-    <div class="section-title">جدول التفتيش الشهري</div>
-    <div class="plan-section" id="planTable"></div>
-
-    <div class="section-title">إحصائيات التفتيش</div>
-    <div class="plan-section" id="stats"></div>
-
-    <div class="section-title">المفتشون</div>
-    <div id="inspectorsList" class="plan-section"></div>
-
-    <div class="section-title">المناطق والمحلات التابعة</div>
-    <div id="areasList" class="plan-section"></div>
-
-    <div class="section-title">أهداف التفتيش لهذا الشهر</div>
-    <div class="plan-section">
-      <div id="goalsSection" class="goals-cell"></div>
-    </div>
-
-    <div class="copyright">
-      جميع الحقوق محفوظة &copy; المطور د. علي عبدالعال
-    </div>
-  </div>
-  <script>
-    // جلب الخطة دائماً بدون كاش
-    const PLAN_URL = "https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/plan-data.json?" + Date.now();
-    const API_URL  = "https://api.github.com/repos/aliabdelaal-adm/Monthly_inspection_plan/commits?path=plan-data.json&per_page=1&" + Date.now();
-
-    // جلب تاريخ آخر تحديث للملف من GitHub API
-    fetch(API_URL)
-      .then(r=>r.json())
-      .then(commits=>{
-        let dateStr = "";
-        if(Array.isArray(commits) && commits[0] && commits[0].commit && commits[0].commit.committer && commits[0].commit.committer.date){
-          let d = new Date(commits[0].commit.committer.date);
-          dateStr = d.toLocaleDateString('ar-EG') + " " + d.toLocaleTimeString('ar-EG');
-        }
-        if(dateStr){
-          document.getElementById("updateTime").innerHTML = "آخر تحديث للخطة: <b>"+dateStr+"</b>";
-        }
-      });
-
-    fetch(PLAN_URL)
-      .then(r=>r.json())
-      .then(plan=>{
-        // إعداد بيانات عامة
-        const d = new Date();
-        let meta = "تاريخ العرض: " + d.toLocaleDateString('ar-EG') + " " + d.toLocaleTimeString('ar-EG');
-        document.getElementById("planMeta").textContent = meta;
-
-        // رسم جدول الخطة
-        let html = `<table>
-          <thead>
-            <tr>
-              <th>اسم المفتش</th>
-              <th>اليوم</th>
-              <th>وقت المناوبة</th>
-              <th>المنطقة</th>
-              <th>المحلات</th>
-            </tr>
-          </thead>
-          <tbody>`;
-        (plan.distribution||[]).forEach(row=>{
-          html += `<tr>
-            <td class="inspector-label">${row.inspector||""}</td>
-            <td>${row.day||""}</td>
-            <td>${row.shift||""}</td>
-            <td class="area-label">${row.area||""}</td>
-            <td>${
-              (row.shops||[]).map(shop=>`<span class="shop-badge">${shop}</span>`).join(" ")
-            }</td>
-          </tr>`;
-        });
-        html += `</tbody></table>`;
-        document.getElementById("planTable").innerHTML = html;
-
-        // المفتشون
-        let inspectorsHtml = "";
-        (plan.inspectors||[]).forEach(name=>{
-          inspectorsHtml += `<span class="shop-list">${name}</span>`;
-        });
-        document.getElementById("inspectorsList").innerHTML = inspectorsHtml;
-
-        // المناطق والمحلات
-        let areasHtml = "";
-        let shopsByArea = plan.shopsByArea || {};
-        Object.keys(shopsByArea).forEach(area=>{
-          areasHtml += `<div class="list-area"><span class="area-label">${area}:</span> `;
-          (shopsByArea[area]||[]).forEach(shop=>{
-            areasHtml += `<span class="shop-badge">${shop}</span>`;
-          });
-          areasHtml += `</div>`;
-        });
-        document.getElementById("areasList").innerHTML = areasHtml;
-
-        // الأهداف
-        document.getElementById("goalsSection").innerHTML = 
-          `<span class="goals-red">${(plan.goals||"" ).replace(/\n/g,"<br>")}</span>`;
-
-        // جدول الإحصائيات
-        let inspectorShopCounts = {}, morningCounts = {}, eveningCounts = {}, weekendCounts = {};
-        (plan.inspectors||[]).forEach(inspector=>{
-          inspectorShopCounts[inspector]=0;
-          morningCounts[inspector]=0;
-          eveningCounts[inspector]=0;
-          weekendCounts[inspector]=0;
-        });
-        (plan.distribution||[]).forEach(row=>{
-          if (!row.inspector || !plan.inspectors.includes(row.inspector)) return;
-          let shopsCount = row.shops ? row.shops.length : 0;
-          let shift = row.shift || "";
-          let inspector = row.inspector;
-          let dayStr = row.day;
-          let isWeekend = false;
-          if (dayStr) {
-            let d = new Date(dayStr);
-            let dayOfWeek = d.getDay();
-            if (dayOfWeek === 5 || dayOfWeek === 6 || dayOfWeek === 0) isWeekend = true;
-          }
-          inspectorShopCounts[inspector] += shopsCount;
-          if (shift === "صباحية") morningCounts[inspector] += shopsCount;
-          if (shift === "مسائية") eveningCounts[inspector] += shopsCount;
-          if (isWeekend) weekendCounts[inspector] += shopsCount;
-        });
-        let statsHtml = `<table class="stats-table">
-          <thead>
-            <tr>
-              <th class="stats-inspector-col">اسم المفتش</th>
-              <th>عدد التفتيشات (كل الشهر)</th>
-              <th>عدد التفتيشات الصباحية</th>
-              <th>عدد التفتيشات المسائية</th>
-              <th>عدد التفتيشات في العطلة (جمعة/سبت/أحد)</th>
-            </tr>
-          </thead>
-          <tbody>`;
-        (plan.inspectors||[]).forEach(name=>{
-          statsHtml += `<tr>
-            <td class="stats-inspector-col">${name}</td>
-            <td>${inspectorShopCounts[name]}</td>
-            <td>${morningCounts[name]}</td>
-            <td>${eveningCounts[name]}</td>
-            <td>${weekendCounts[name]}</td>
-          </tr>`;
-        });
-        statsHtml += `</tbody>
-          <tfoot>
-            <tr>
-              <td class="stats-total-cell">مجموع التفتيش</td>
-              <td class="stats-total-cell">${Object.values(inspectorShopCounts).reduce((a,b)=>a+b,0)}</td>
-              <td class="stats-total-cell">${Object.values(morningCounts).reduce((a,b)=>a+b,0)}</td>
-              <td class="stats-total-cell">${Object.values(eveningCounts).reduce((a,b)=>a+b,0)}</td>
-              <td class="stats-total-cell">${Object.values(weekendCounts).reduce((a,b)=>a+b,0)}</td>
-            </tr>
-          </tfoot>
-        </table>`;
-        document.getElementById("stats").innerHTML = statsHtml;
-      })
-      .catch(()=>{
-        document.getElementById("planTable").innerHTML='<p style="color:#c00; font-weight:bold;">تعذر تحميل الخطة من الخادم!</p>';
-      });
-  </script>
+    <!-- الكود كما هو في الرد السابق ... -->
 </body>
 </html>

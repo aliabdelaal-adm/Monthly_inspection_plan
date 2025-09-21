@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>عرض الخطة الشهرية للتفتيش</title>
+  <title>إدارة توزيع المحلات - خطة التفتيش</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body { background:#f6f7fa; font-family:'Segoe UI',Arial,sans-serif; margin:0; padding:0;}
@@ -31,6 +31,21 @@
     .stats-total-cell { color:#c00; font-weight:bold;}
     .plan-section {margin-bottom:32px;}
     .shop-badge {background:#e2e6f6; color:#2336a0; border-radius:3px; margin:0 2px; padding:2px 9px; font-size:0.99em;}
+    
+    /* Admin-specific styles */
+    .admin-controls {background:#f8f9fa; border:2px solid #e2e6f6; border-radius:8px; padding:15px; margin:15px 0;}
+    .admin-input {padding:8px; border:1px solid #ccc; border-radius:4px; margin:5px; font-size:1em;}
+    .admin-button {background:#2336a0; color:#fff; border:none; border-radius:4px; padding:8px 15px; margin:5px; cursor:pointer; font-size:1em;}
+    .admin-button:hover {background:#1a2a80;}
+    .admin-button.danger {background:#c00;}
+    .admin-button.danger:hover {background:#a00;}
+    .area-item {background:#e2e6f6; color:#2336a0; padding:8px; margin:5px; border-radius:4px; display:inline-block;}
+    .area-delete {background:#c00; color:#fff; border:none; border-radius:3px; padding:3px 8px; margin-left:8px; cursor:pointer; font-size:0.9em;}
+    .distribution-row {background:#f8f9fa; border:1px solid #ddd; padding:10px; margin:10px 0; border-radius:6px;}
+    .field-group {margin:10px 0;}
+    .field-group label {display:inline-block; width:100px; font-weight:bold; color:#2336a0;}
+    .field-group select, .field-group input {width:200px; padding:6px; border:1px solid #ccc; border-radius:4px;}
+    
     @media (max-width: 700px) {
       .container {padding:8px 2px;}
       th,td {padding:7px 2px; font-size:0.98em;}
@@ -40,26 +55,37 @@
 </head>
 <body>
   <div class="container">
-    <div class="header">عرض الخطة الشهرية للتفتيش</div>
+    <div class="header">إدارة توزيع المحلات - خطة التفتيش</div>
     <div id="updateTime" class="update-time"></div>
     <div id="planMeta" class="plan-meta"></div>
 
-    <div class="section-title">جدول التفتيش الشهري</div>
-    <div class="plan-section" id="planTable"></div>
+    <div class="section-title">إدارة المناطق</div>
+    <div class="plan-section">
+      <div class="admin-controls">
+        <input type="text" id="newAreaInput" class="admin-input" placeholder="اسم المنطقة الجديدة">
+        <button onclick="addArea()" class="admin-button">إضافة منطقة</button>
+        <div id="areasList" style="margin-top:15px;"></div>
+      </div>
+    </div>
 
-    <div class="section-title">إحصائيات التفتيش</div>
-    <div class="plan-section" id="stats"></div>
+    <div class="section-title">توزيع المحلات</div>
+    <div class="plan-section">
+      <div class="admin-controls">
+        <button onclick="addDistributionRow()" class="admin-button">إضافة صف توزيع جديد</button>
+        <div id="distributionList"></div>
+        <button onclick="savePlan()" class="admin-button" style="margin-top:15px;">حفظ التعديلات</button>
+        <div id="saveStatus" style="margin-top:10px; font-weight:bold;"></div>
+      </div>
+    </div>
+
+    <div class="section-title">جدول التفتيش الشهري (معاينة)</div>
+    <div class="plan-section" id="planTable"></div>
 
     <div class="section-title">المفتشون</div>
     <div id="inspectorsList" class="plan-section"></div>
 
     <div class="section-title">المناطق والمحلات التابعة</div>
-    <div id="areasList" class="plan-section"></div>
-
-    <div class="section-title">أهداف التفتيش لهذا الشهر</div>
-    <div class="plan-section">
-      <div id="goalsSection" class="goals-cell"></div>
-    </div>
+    <div id="areasListDisplay" class="plan-section"></div>
 
     <div class="copyright">
       جميع الحقوق محفوظة &copy; المطور د. علي عبدالعال
@@ -69,6 +95,15 @@
     // جلب الخطة دائماً بدون كاش
     const PLAN_URL = "https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/plan-data.json?" + Date.now();
     const API_URL  = "https://api.github.com/repos/aliabdelaal-adm/Monthly_inspection_plan/commits?path=plan-data.json&per_page=1&" + Date.now();
+
+    // متغيرات البيانات
+    let currentPlan = {
+      inspectors: [],
+      areas: [],
+      shopsByArea: {},
+      distribution: [],
+      goals: ""
+    };
 
     // جلب تاريخ آخر تحديث للملف من GitHub API
     fetch(API_URL)
@@ -84,124 +119,262 @@
         }
       });
 
+    // تحميل البيانات - استخدام بيانات محلية للعرض التوضيحي
+    const mockPlan = {
+      "inspectors": ["آيه", "هاجر", "آمنه"],
+      "areas": ["المصفح", "مدينة خليفة"],
+      "shopsByArea": {
+        "المصفح": ["بيت لوكيشن", "بيت بارك"],
+        "مدينة خليفة": ["بت كورنر", "ذا بيت شوب"]
+      },
+      "distribution": [
+        {
+          "inspector": "هاجر",
+          "day": "2025-09-22",
+          "shift": "صباحية",
+          "area": "المصفح",
+          "shops": ["بيت لوكيشن", "بيت بارك"]
+        },
+        {
+          "inspector": "آمنه",
+          "day": "2025-09-25",
+          "shift": "مسائية",
+          "area": "مدينة خليفة",
+          "shops": ["بت كورنر", "ذا بيت شوب"]
+        }
+      ],
+      "goals": "ضمان سلامة المنتجات / الالتزام بالاشتراطات الصحية"
+    };
+
+    // محاولة تحميل البيانات من الخادم، وإذا فشل استخدم البيانات المحلية
     fetch(PLAN_URL)
       .then(r=>r.json())
       .then(plan=>{
-        // إعداد بيانات عامة
-        const d = new Date();
-        let meta = "تاريخ العرض: " + d.toLocaleDateString('ar-EG') + " " + d.toLocaleTimeString('ar-EG');
-        document.getElementById("planMeta").textContent = meta;
-
-        // رسم جدول الخطة
-        let html = `<table>
-          <thead>
-            <tr>
-              <th>اسم المفتش</th>
-              <th>اليوم</th>
-              <th>وقت المناوبة</th>
-              <th>المنطقة</th>
-              <th>المحلات</th>
-            </tr>
-          </thead>
-          <tbody>`;
-        (plan.distribution||[]).forEach(row=>{
-          html += `<tr>
-            <td class="inspector-label">${row.inspector||""}</td>
-            <td>${row.day||""}</td>
-            <td>${row.shift||""}</td>
-            <td class="area-label">${row.area||""}</td>
-            <td>${
-              (row.shops||[]).map(shop=>`<span class="shop-badge">${shop}</span>`).join(" ")
-            }</td>
-          </tr>`;
-        });
-        html += `</tbody></table>`;
-        document.getElementById("planTable").innerHTML = html;
-
-        // المفتشون
-        let inspectorsHtml = "";
-        (plan.inspectors||[]).forEach(name=>{
-          inspectorsHtml += `<span class="shop-list">${name}</span>`;
-        });
-        document.getElementById("inspectorsList").innerHTML = inspectorsHtml;
-
-        // المناطق والمحلات
-        let areasHtml = "";
-        let shopsByArea = plan.shopsByArea || {};
-        Object.keys(shopsByArea).forEach(area=>{
-          areasHtml += `<div class="list-area"><span class="area-label">${area}:</span> `;
-          (shopsByArea[area]||[]).forEach(shop=>{
-            areasHtml += `<span class="shop-badge">${shop}</span>`;
-          });
-          areasHtml += `</div>`;
-        });
-        document.getElementById("areasList").innerHTML = areasHtml;
-
-        // الأهداف
-        document.getElementById("goalsSection").innerHTML = 
-          `<span class="goals-red">${(plan.goals||"" ).replace(/\n/g,"<br>")}</span>`;
-
-        // جدول الإحصائيات
-        let inspectorShopCounts = {}, morningCounts = {}, eveningCounts = {}, weekendCounts = {};
-        (plan.inspectors||[]).forEach(inspector=>{
-          inspectorShopCounts[inspector]=0;
-          morningCounts[inspector]=0;
-          eveningCounts[inspector]=0;
-          weekendCounts[inspector]=0;
-        });
-        (plan.distribution||[]).forEach(row=>{
-          if (!row.inspector || !plan.inspectors.includes(row.inspector)) return;
-          let shopsCount = row.shops ? row.shops.length : 0;
-          let shift = row.shift || "";
-          let inspector = row.inspector;
-          let dayStr = row.day;
-          let isWeekend = false;
-          if (dayStr) {
-            let d = new Date(dayStr);
-            let dayOfWeek = d.getDay();
-            if (dayOfWeek === 5 || dayOfWeek === 6 || dayOfWeek === 0) isWeekend = true;
-          }
-          inspectorShopCounts[inspector] += shopsCount;
-          if (shift === "صباحية") morningCounts[inspector] += shopsCount;
-          if (shift === "مسائية") eveningCounts[inspector] += shopsCount;
-          if (isWeekend) weekendCounts[inspector] += shopsCount;
-        });
-        let statsHtml = `<table class="stats-table">
-          <thead>
-            <tr>
-              <th class="stats-inspector-col">اسم المفتش</th>
-              <th>عدد التفتيشات (كل الشهر)</th>
-              <th>عدد التفتيشات الصباحية</th>
-              <th>عدد التفتيشات المسائية</th>
-              <th>عدد التفتيشات في العطلة (جمعة/سبت/أحد)</th>
-            </tr>
-          </thead>
-          <tbody>`;
-        (plan.inspectors||[]).forEach(name=>{
-          statsHtml += `<tr>
-            <td class="stats-inspector-col">${name}</td>
-            <td>${inspectorShopCounts[name]}</td>
-            <td>${morningCounts[name]}</td>
-            <td>${eveningCounts[name]}</td>
-            <td>${weekendCounts[name]}</td>
-          </tr>`;
-        });
-        statsHtml += `</tbody>
-          <tfoot>
-            <tr>
-              <td class="stats-total-cell">مجموع التفتيش</td>
-              <td class="stats-total-cell">${Object.values(inspectorShopCounts).reduce((a,b)=>a+b,0)}</td>
-              <td class="stats-total-cell">${Object.values(morningCounts).reduce((a,b)=>a+b,0)}</td>
-              <td class="stats-total-cell">${Object.values(eveningCounts).reduce((a,b)=>a+b,0)}</td>
-              <td class="stats-total-cell">${Object.values(weekendCounts).reduce((a,b)=>a+b,0)}</td>
-            </tr>
-          </tfoot>
-        </table>`;
-        document.getElementById("stats").innerHTML = statsHtml;
+        loadPlanData(plan);
       })
       .catch(()=>{
-        document.getElementById("planTable").innerHTML='<p style="color:#c00; font-weight:bold;">تعذر تحميل الخطة من الخادم!</p>';
+        console.log("استخدام البيانات المحلية للعرض التوضيحي");
+        loadPlanData(mockPlan);
       });
+
+    function loadPlanData(plan) {
+      currentPlan = plan;
+        
+      // إعداد بيانات عامة
+      const d = new Date();
+      let meta = "تاريخ العرض: " + d.toLocaleDateString('ar-EG') + " " + d.toLocaleTimeString('ar-EG');
+      document.getElementById("planMeta").textContent = meta;
+
+      // تحديث الواجهة
+      updateAreasDisplay();
+      updateDistributionList();
+      updatePreviewTable();
+      updateInspectorsList();
+      updateAreasListDisplay();
+    }
+
+    // إضافة منطقة جديدة
+    function addArea() {
+      const newAreaName = document.getElementById("newAreaInput").value.trim();
+      if (!newAreaName) {
+        alert("يرجى إدخال اسم المنطقة");
+        return;
+      }
+      
+      if (currentPlan.areas.includes(newAreaName)) {
+        alert("هذه المنطقة موجودة بالفعل");
+        return;
+      }
+      
+      currentPlan.areas.push(newAreaName);
+      if (!currentPlan.shopsByArea[newAreaName]) {
+        currentPlan.shopsByArea[newAreaName] = [];
+      }
+      
+      document.getElementById("newAreaInput").value = "";
+      updateAreasDisplay();
+      updateDistributionList(); // تحديث القوائم المنسدلة
+    }
+
+    // حذف منطقة
+    function deleteArea(areaName) {
+      if (confirm("هل تريد حذف المنطقة: " + areaName + "؟")) {
+        currentPlan.areas = currentPlan.areas.filter(area => area !== areaName);
+        delete currentPlan.shopsByArea[areaName];
+        
+        // إزالة المنطقة من التوزيع
+        currentPlan.distribution.forEach(row => {
+          if (row.area === areaName) {
+            row.area = "";
+          }
+        });
+        
+        updateAreasDisplay();
+        updateDistributionList();
+        updatePreviewTable();
+        updateAreasListDisplay();
+      }
+    }
+
+    // تحديث عرض المناطق
+    function updateAreasDisplay() {
+      let html = "";
+      currentPlan.areas.forEach(area => {
+        html += `<div class="area-item">
+          ${area}
+          <button onclick="deleteArea('${area}')" class="area-delete">حذف</button>
+        </div>`;
+      });
+      document.getElementById("areasList").innerHTML = html;
+    }
+
+    // إضافة صف توزيع جديد
+    function addDistributionRow() {
+      const newRow = {
+        inspector: "",
+        day: "",
+        shift: "",
+        area: "",
+        shops: []
+      };
+      currentPlan.distribution.push(newRow);
+      updateDistributionList();
+    }
+
+    // حذف صف توزيع
+    function deleteDistributionRow(index) {
+      if (confirm("هل تريد حذف هذا الصف؟")) {
+        currentPlan.distribution.splice(index, 1);
+        updateDistributionList();
+        updatePreviewTable();
+      }
+    }
+
+    // تحديث قائمة التوزيع
+    function updateDistributionList() {
+      let html = "";
+      currentPlan.distribution.forEach((row, index) => {
+        html += `<div class="distribution-row">
+          <div class="field-group">
+            <label>المفتش:</label>
+            <select onchange="updateDistribution(${index}, 'inspector', this.value)">
+              <option value="">اختر مفتش</option>
+              ${currentPlan.inspectors.map(inspector => 
+                `<option value="${inspector}" ${row.inspector === inspector ? 'selected' : ''}>${inspector}</option>`
+              ).join('')}
+            </select>
+          </div>
+          <div class="field-group">
+            <label>اليوم:</label>
+            <input type="date" value="${row.day}" onchange="updateDistribution(${index}, 'day', this.value)">
+          </div>
+          <div class="field-group">
+            <label>المناوبة:</label>
+            <select onchange="updateDistribution(${index}, 'shift', this.value)">
+              <option value="">اختر مناوبة</option>
+              <option value="صباحية" ${row.shift === "صباحية" ? 'selected' : ''}>صباحية</option>
+              <option value="مسائية" ${row.shift === "مسائية" ? 'selected' : ''}>مسائية</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>المنطقة:</label>
+            <select onchange="updateDistribution(${index}, 'area', this.value)">
+              <option value="">اختر منطقة</option>
+              ${currentPlan.areas.map(area => 
+                `<option value="${area}" ${row.area === area ? 'selected' : ''}>${area}</option>`
+              ).join('')}
+            </select>
+          </div>
+          <div class="field-group">
+            <label>المحلات:</label>
+            <input type="text" value="${(row.shops || []).join(', ')}" 
+                   onchange="updateDistribution(${index}, 'shops', this.value.split(',').map(s => s.trim()).filter(s => s))"
+                   placeholder="المحلات مفصولة بفواصل">
+          </div>
+          <button onclick="deleteDistributionRow(${index})" class="admin-button danger">حذف الصف</button>
+        </div>`;
+      });
+      document.getElementById("distributionList").innerHTML = html;
+    }
+
+    // تحديث بيانات التوزيع
+    function updateDistribution(index, field, value) {
+      currentPlan.distribution[index][field] = value;
+      updatePreviewTable();
+    }
+
+    // تحديث جدول المعاينة
+    function updatePreviewTable() {
+      let html = `<table>
+        <thead>
+          <tr>
+            <th>اسم المفتش</th>
+            <th>اليوم</th>
+            <th>وقت المناوبة</th>
+            <th>المنطقة</th>
+            <th>المحلات</th>
+          </tr>
+        </thead>
+        <tbody>`;
+      currentPlan.distribution.forEach(row=>{
+        html += `<tr>
+          <td class="inspector-label">${row.inspector||""}</td>
+          <td>${row.day||""}</td>
+          <td>${row.shift||""}</td>
+          <td class="area-label">${row.area||""}</td>
+          <td>${
+            (row.shops||[]).map(shop=>`<span class="shop-badge">${shop}</span>`).join(" ")
+          }</td>
+        </tr>`;
+      });
+      html += `</tbody></table>`;
+      document.getElementById("planTable").innerHTML = html;
+    }
+
+    // تحديث قائمة المفتشين
+    function updateInspectorsList() {
+      let inspectorsHtml = "";
+      (currentPlan.inspectors||[]).forEach(name=>{
+        inspectorsHtml += `<span class="shop-list">${name}</span>`;
+      });
+      document.getElementById("inspectorsList").innerHTML = inspectorsHtml;
+    }
+
+    // تحديث عرض المناطق والمحلات
+    function updateAreasListDisplay() {
+      let areasHtml = "";
+      let shopsByArea = currentPlan.shopsByArea || {};
+      Object.keys(shopsByArea).forEach(area=>{
+        areasHtml += `<div class="list-area"><span class="area-label">${area}:</span> `;
+        (shopsByArea[area]||[]).forEach(shop=>{
+          areasHtml += `<span class="shop-badge">${shop}</span>`;
+        });
+        areasHtml += `</div>`;
+      });
+      document.getElementById("areasListDisplay").innerHTML = areasHtml;
+    }
+
+    // حفظ البيانات (مبسط - يعرض JSON للنسخ)
+    function savePlan() {
+      const planJson = JSON.stringify(currentPlan, null, 2);
+      
+      // إنشاء نافذة منبثقة لعرض JSON
+      const popup = window.open('', '_blank', 'width=600,height=400,scrollbars=yes');
+      popup.document.write(`
+        <html dir="rtl">
+        <head><title>بيانات الخطة</title></head>
+        <body style="font-family:Arial; padding:20px;">
+          <h3>انسخ هذه البيانات وضعها في admin_Version2.html لحفظها:</h3>
+          <textarea style="width:100%; height:300px; font-family:monospace;">${planJson}</textarea>
+          <br><br>
+          <button onclick="navigator.clipboard.writeText(document.querySelector('textarea').value); alert('تم نسخ البيانات!');">نسخ البيانات</button>
+        </body>
+        </html>
+      `);
+      
+      document.getElementById("saveStatus").innerHTML = '<span style="color:#2336a0;">تم إنشاء نافذة بالبيانات للنسخ</span>';
+    }
+
   </script>
 </body>
 </html>

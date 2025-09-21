@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>عرض الخطة الشهرية للتفتيش</title>
+  <title>واجهة توزيع الخطة الشهرية للتفتيش</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body { background:#f6f7fa; font-family:'Segoe UI',Arial,sans-serif; margin:0; padding:0;}
@@ -31,6 +31,58 @@
     .stats-total-cell { color:#c00; font-weight:bold;}
     .plan-section {margin-bottom:32px;}
     .shop-badge {background:#e2e6f6; color:#2336a0; border-radius:3px; margin:0 2px; padding:2px 9px; font-size:0.99em;}
+    
+    /* Admin Form Styles */
+    .admin-form {
+      background:#f8f9ff; border:1px solid #d0d7ff; border-radius:8px; padding:20px;
+    }
+    .form-row {
+      margin-bottom:15px; display:flex; align-items:center; gap:10px;
+    }
+    .form-row label {
+      min-width:120px; font-weight:bold; color:#2336a0;
+    }
+    .form-row select, .form-row input {
+      flex:1; padding:8px; border:1px solid #ccc; border-radius:4px; font-size:1em;
+    }
+    .form-buttons {
+      margin-top:20px; display:flex; gap:10px; flex-wrap:wrap;
+    }
+    .form-buttons button {
+      background:#2336a0; color:#fff; border:none; border-radius:6px; padding:10px 20px; font-size:1em; cursor:pointer;
+    }
+    .form-buttons button:hover {
+      background:#1a2a80;
+    }
+    .form-buttons button:disabled {
+      background:#999; cursor:not-allowed;
+    }
+    #shopsCheckboxes {
+      display:flex; flex-wrap:wrap; gap:10px; max-width:500px;
+    }
+    .shop-checkbox {
+      display:flex; align-items:center; gap:5px; background:#fff; padding:5px 10px; border-radius:4px; border:1px solid #ddd;
+    }
+    .status {
+      margin:15px 0 0 0; font-weight:bold;
+    }
+    .status.success { color:#090; }
+    .status.error { color:#c00; }
+    .status.info { color:#2336a0; }
+    
+    /* Token Popup Styles */
+    .token-popup-bg {
+      position:fixed;top:0;left:0;right:0;bottom:0;
+      background:rgba(0,0,0,0.17);z-index:1000;
+      display:flex;align-items:center;justify-content:center;
+    }
+    .token-popup-box {
+      background:#fff;padding:26px 22px;border-radius:12px;box-shadow:0 0 22px #aaa;min-width:320px;text-align:center;
+    }
+    .token-popup-box label {color:#2336a0;}
+    .token-popup-box input {
+      width:80%; font-size:1.1em; padding:7px; border-radius:6px; border:1px solid #bbb; margin:10px 0;
+    }
     @media (max-width: 700px) {
       .container {padding:8px 2px;}
       th,td {padding:7px 2px; font-size:0.98em;}
@@ -39,10 +91,62 @@
   </style>
 </head>
 <body>
+  <!-- Token Popup -->
+  <div class="token-popup-bg" id="tokenPopup" style="display:none;">
+    <div class="token-popup-box">
+      <h3>إدخال التوكن السري</h3>
+      <p>للحفظ في GitHub، يرجى إدخال Token API:</p>
+      <input id="tokenInput" type="password" placeholder="GitHub Personal Access Token">
+      <br><br>
+      <button onclick="saveToken()">حفظ</button>
+      <button onclick="skipToken()">تخطي</button>
+      <div style="color:#c00;font-size:1em;margin-top:10px;" id="tokenError"></div>
+    </div>
+  </div>
+
   <div class="container">
-    <div class="header">عرض الخطة الشهرية للتفتيش</div>
+    <div class="header">واجهة توزيع خطة التفتيش الشهرية</div>
     <div id="updateTime" class="update-time"></div>
     <div id="planMeta" class="plan-meta"></div>
+
+    <!-- Distribution Admin Interface -->
+    <div class="section-title">إضافة توزيع جديد للخطة</div>
+    <div class="plan-section admin-form" id="distributionForm">
+      <div class="form-row">
+        <label>المفتش:</label>
+        <select id="inspectorSelect">
+          <option value="">اختر المفتش</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>التاريخ:</label>
+        <input type="date" id="dayInput">
+      </div>
+      <div class="form-row">
+        <label>المناوبة:</label>
+        <select id="shiftSelect">
+          <option value="">اختر المناوبة</option>
+          <option value="صباحية">صباحية</option>
+          <option value="مسائية">مسائية</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>المنطقة:</label>
+        <select id="areaSelect" onchange="updateShopsCheckboxes()">
+          <option value="">اختر المنطقة</option>
+        </select>
+      </div>
+      <div class="form-row" id="shopsRow" style="display:none;">
+        <label>المحلات:</label>
+        <div id="shopsCheckboxes"></div>
+      </div>
+      <div class="form-buttons">
+        <button onclick="addDistribution()" id="addBtn">إضافة للخطة</button>
+        <button onclick="saveLocally()" id="saveLocalBtn">حفظ الخطة على الجهاز</button>
+        <button onclick="saveToGitHub()" id="saveGitHubBtn">حفظ ورفع للسحابة</button>
+      </div>
+      <div class="status" id="status"></div>
+    </div>
 
     <div class="section-title">جدول التفتيش الشهري</div>
     <div class="plan-section" id="planTable"></div>
@@ -66,142 +170,435 @@
     </div>
   </div>
   <script>
+    // Global variables
+    const repo = "aliabdelaal-adm/Monthly_inspection_plan";
+    const path = "plan-data.json";
+    let currentPlan = null;
+    let planSha = "";
+    
     // جلب الخطة دائماً بدون كاش
     const PLAN_URL = "https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/plan-data.json?" + Date.now();
-    const API_URL  = "https://api.github.com/repos/aliabdelaal-adm/Monthly_inspection_plan/commits?path=plan-data.json&per_page=1&" + Date.now();
+    const API_URL = "https://api.github.com/repos/aliabdelaal-adm/Monthly_inspection_plan/commits?path=plan-data.json&per_page=1&" + Date.now();
 
-    // جلب تاريخ آخر تحديث للملف من GitHub API
-    fetch(API_URL)
-      .then(r=>r.json())
-      .then(commits=>{
+    // ---- Token Management ----
+    function getToken() {
+      return localStorage.getItem("devToken") || "";
+    }
+    function setToken(token) {
+      localStorage.setItem("devToken", token);
+    }
+    function removeToken() {
+      localStorage.removeItem("devToken");
+    }
+    function showTokenPopup() {
+      document.getElementById("tokenPopup").style.display = "flex";
+      document.getElementById("tokenInput").value = "";
+      document.getElementById("tokenInput").focus();
+      document.getElementById("tokenError").textContent = "";
+    }
+    function hideTokenPopup() {
+      document.getElementById("tokenPopup").style.display = "none";
+    }
+    function saveToken() {
+      const token = document.getElementById("tokenInput").value.trim();
+      if (!token) {
+        document.getElementById("tokenError").textContent = "يرجى إدخال التوكن السري!";
+        return;
+      }
+      setToken(token);
+      hideTokenPopup();
+      showStatus("تم حفظ التوكن بنجاح", "success");
+    }
+    function skipToken() {
+      hideTokenPopup();
+      showStatus("تم تخطي إعداد التوكن. لن تتمكن من الحفظ في GitHub", "info");
+    }
+
+    // ---- Status Management ----
+    function showStatus(message, type = "info") {
+      const statusEl = document.getElementById("status");
+      statusEl.textContent = message;
+      statusEl.className = "status " + type;
+    }
+
+    // ---- Plan Data Management ----
+    async function loadPlanData() {
+      try {
+        // Try to load from GitHub first
         let dateStr = "";
-        if(Array.isArray(commits) && commits[0] && commits[0].commit && commits[0].commit.committer && commits[0].commit.committer.date){
-          let d = new Date(commits[0].commit.committer.date);
-          dateStr = d.toLocaleDateString('ar-EG') + " " + d.toLocaleTimeString('ar-EG');
+        try {
+          const commitsResponse = await fetch(API_URL);
+          const commits = await commitsResponse.json();
+          if(Array.isArray(commits) && commits[0] && commits[0].commit && commits[0].commit.committer && commits[0].commit.committer.date){
+            let d = new Date(commits[0].commit.committer.date);
+            dateStr = d.toLocaleDateString('ar-EG') + " " + d.toLocaleTimeString('ar-EG');
+          }
+        } catch (e) {
+          console.log("Could not load update time:", e);
         }
+        
         if(dateStr){
           document.getElementById("updateTime").innerHTML = "آخر تحديث للخطة: <b>"+dateStr+"</b>";
         }
-      });
 
-    fetch(PLAN_URL)
-      .then(r=>r.json())
-      .then(plan=>{
-        // إعداد بيانات عامة
-        const d = new Date();
-        let meta = "تاريخ العرض: " + d.toLocaleDateString('ar-EG') + " " + d.toLocaleTimeString('ar-EG');
-        document.getElementById("planMeta").textContent = meta;
-
-        // رسم جدول الخطة
-        let html = `<table>
-          <thead>
-            <tr>
-              <th>اسم المفتش</th>
-              <th>اليوم</th>
-              <th>وقت المناوبة</th>
-              <th>المنطقة</th>
-              <th>المحلات</th>
-            </tr>
-          </thead>
-          <tbody>`;
-        (plan.distribution||[]).forEach(row=>{
-          html += `<tr>
-            <td class="inspector-label">${row.inspector||""}</td>
-            <td>${row.day||""}</td>
-            <td>${row.shift||""}</td>
-            <td class="area-label">${row.area||""}</td>
-            <td>${
-              (row.shops||[]).map(shop=>`<span class="shop-badge">${shop}</span>`).join(" ")
-            }</td>
-          </tr>`;
-        });
-        html += `</tbody></table>`;
-        document.getElementById("planTable").innerHTML = html;
-
-        // المفتشون
-        let inspectorsHtml = "";
-        (plan.inspectors||[]).forEach(name=>{
-          inspectorsHtml += `<span class="shop-list">${name}</span>`;
-        });
-        document.getElementById("inspectorsList").innerHTML = inspectorsHtml;
-
-        // المناطق والمحلات
-        let areasHtml = "";
-        let shopsByArea = plan.shopsByArea || {};
-        Object.keys(shopsByArea).forEach(area=>{
-          areasHtml += `<div class="list-area"><span class="area-label">${area}:</span> `;
-          (shopsByArea[area]||[]).forEach(shop=>{
-            areasHtml += `<span class="shop-badge">${shop}</span>`;
-          });
-          areasHtml += `</div>`;
-        });
-        document.getElementById("areasList").innerHTML = areasHtml;
-
-        // الأهداف
-        document.getElementById("goalsSection").innerHTML = 
-          `<span class="goals-red">${(plan.goals||"" ).replace(/\n/g,"<br>")}</span>`;
-
-        // جدول الإحصائيات
-        let inspectorShopCounts = {}, morningCounts = {}, eveningCounts = {}, weekendCounts = {};
-        (plan.inspectors||[]).forEach(inspector=>{
-          inspectorShopCounts[inspector]=0;
-          morningCounts[inspector]=0;
-          eveningCounts[inspector]=0;
-          weekendCounts[inspector]=0;
-        });
-        (plan.distribution||[]).forEach(row=>{
-          if (!row.inspector || !plan.inspectors.includes(row.inspector)) return;
-          let shopsCount = row.shops ? row.shops.length : 0;
-          let shift = row.shift || "";
-          let inspector = row.inspector;
-          let dayStr = row.day;
-          let isWeekend = false;
-          if (dayStr) {
-            let d = new Date(dayStr);
-            let dayOfWeek = d.getDay();
-            if (dayOfWeek === 5 || dayOfWeek === 6 || dayOfWeek === 0) isWeekend = true;
+        // Try to load plan data from GitHub, fallback to local
+        try {
+          const planResponse = await fetch(PLAN_URL);
+          currentPlan = await planResponse.json();
+        } catch (e) {
+          console.log("Could not load from GitHub, trying local file:", e);
+          // Fallback to local file
+          const localResponse = await fetch('./plan-data.json');
+          currentPlan = await localResponse.json();
+          document.getElementById("updateTime").innerHTML = "تم تحميل البيانات من الملف المحلي";
+        }
+        
+        // Get SHA for GitHub API
+        if (getToken()) {
+          try {
+            const shaResponse = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`);
+            const shaData = await shaResponse.json();
+            planSha = shaData.sha;
+          } catch (e) {
+            console.log("Could not get SHA:", e);
           }
-          inspectorShopCounts[inspector] += shopsCount;
-          if (shift === "صباحية") morningCounts[inspector] += shopsCount;
-          if (shift === "مسائية") eveningCounts[inspector] += shopsCount;
-          if (isWeekend) weekendCounts[inspector] += shopsCount;
-        });
-        let statsHtml = `<table class="stats-table">
-          <thead>
-            <tr>
-              <th class="stats-inspector-col">اسم المفتش</th>
-              <th>عدد التفتيشات (كل الشهر)</th>
-              <th>عدد التفتيشات الصباحية</th>
-              <th>عدد التفتيشات المسائية</th>
-              <th>عدد التفتيشات في العطلة (جمعة/سبت/أحد)</th>
-            </tr>
-          </thead>
-          <tbody>`;
-        (plan.inspectors||[]).forEach(name=>{
-          statsHtml += `<tr>
-            <td class="stats-inspector-col">${name}</td>
-            <td>${inspectorShopCounts[name]}</td>
-            <td>${morningCounts[name]}</td>
-            <td>${eveningCounts[name]}</td>
-            <td>${weekendCounts[name]}</td>
-          </tr>`;
-        });
-        statsHtml += `</tbody>
-          <tfoot>
-            <tr>
-              <td class="stats-total-cell">مجموع التفتيش</td>
-              <td class="stats-total-cell">${Object.values(inspectorShopCounts).reduce((a,b)=>a+b,0)}</td>
-              <td class="stats-total-cell">${Object.values(morningCounts).reduce((a,b)=>a+b,0)}</td>
-              <td class="stats-total-cell">${Object.values(eveningCounts).reduce((a,b)=>a+b,0)}</td>
-              <td class="stats-total-cell">${Object.values(weekendCounts).reduce((a,b)=>a+b,0)}</td>
-            </tr>
-          </tfoot>
-        </table>`;
-        document.getElementById("stats").innerHTML = statsHtml;
-      })
-      .catch(()=>{
+        }
+
+        updateDisplay();
+        populateFormSelectors();
+        
+      } catch (error) {
+        console.error("Error loading plan:", error);
+        showStatus("تعذر تحميل الخطة من الخادم! يرجى التحقق من الاتصال.", "error");
         document.getElementById("planTable").innerHTML='<p style="color:#c00; font-weight:bold;">تعذر تحميل الخطة من الخادم!</p>';
+      }
+    }
+
+    function updateDisplay() {
+      if (!currentPlan) return;
+
+      // إعداد بيانات عامة
+      const d = new Date();
+      let meta = "تاريخ العرض: " + d.toLocaleDateString('ar-EG') + " " + d.toLocaleTimeString('ar-EG');
+      document.getElementById("planMeta").textContent = meta;
+
+      // رسم جدول الخطة
+      renderPlanTable();
+      renderStats();
+      renderInspectorsList();
+      renderAreasList();
+      renderGoals();
+    }
+
+    function populateFormSelectors() {
+      if (!currentPlan) return;
+
+      // Populate inspectors dropdown
+      const inspectorSelect = document.getElementById("inspectorSelect");
+      inspectorSelect.innerHTML = '<option value="">اختر المفتش</option>';
+      (currentPlan.inspectors || []).forEach(inspector => {
+        const option = document.createElement("option");
+        option.value = inspector;
+        option.textContent = inspector;
+        inspectorSelect.appendChild(option);
       });
+
+      // Populate areas dropdown
+      const areaSelect = document.getElementById("areaSelect");
+      areaSelect.innerHTML = '<option value="">اختر المنطقة</option>';
+      (currentPlan.areas || []).forEach(area => {
+        const option = document.createElement("option");
+        option.value = area;
+        option.textContent = area;
+        areaSelect.appendChild(option);
+      });
+    }
+
+    function updateShopsCheckboxes() {
+      const selectedArea = document.getElementById("areaSelect").value;
+      const shopsRow = document.getElementById("shopsRow");
+      const shopsCheckboxes = document.getElementById("shopsCheckboxes");
+      
+      if (!selectedArea || !currentPlan || !currentPlan.shopsByArea || !currentPlan.shopsByArea[selectedArea]) {
+        shopsRow.style.display = "none";
+        return;
+      }
+      
+      shopsRow.style.display = "block";
+      shopsCheckboxes.innerHTML = "";
+      
+      currentPlan.shopsByArea[selectedArea].forEach(shop => {
+        const label = document.createElement("label");
+        label.className = "shop-checkbox";
+        
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.value = shop;
+        checkbox.name = "shops";
+        
+        const span = document.createElement("span");
+        span.textContent = shop;
+        
+        label.appendChild(checkbox);
+        label.appendChild(span);
+        shopsCheckboxes.appendChild(label);
+      });
+    }
+
+    function getSelectedShops() {
+      const checkboxes = document.querySelectorAll('input[name="shops"]:checked');
+      return Array.from(checkboxes).map(cb => cb.value);
+    }
+
+    // ---- Distribution Management ----
+    function addDistribution() {
+      const inspector = document.getElementById("inspectorSelect").value;
+      const day = document.getElementById("dayInput").value;
+      const shift = document.getElementById("shiftSelect").value;
+      const area = document.getElementById("areaSelect").value;
+      const shops = getSelectedShops();
+
+      if (!inspector || !day || !shift || !area || shops.length === 0) {
+        showStatus("يرجى ملء جميع الحقول واختيار محل واحد على الأقل", "error");
+        return;
+      }
+
+      const newDistribution = {
+        inspector: inspector,
+        day: day,
+        shift: shift,
+        area: area,
+        shops: shops
+      };
+
+      if (!currentPlan.distribution) {
+        currentPlan.distribution = [];
+      }
+
+      currentPlan.distribution.push(newDistribution);
+      
+      // Clear form
+      document.getElementById("inspectorSelect").value = "";
+      document.getElementById("dayInput").value = "";
+      document.getElementById("shiftSelect").value = "";
+      document.getElementById("areaSelect").value = "";
+      document.getElementById("shopsRow").style.display = "none";
+      
+      updateDisplay();
+      showStatus("تم إضافة التوزيع بنجاح", "success");
+    }
+
+    // ---- Local Save Functions ----
+    function saveLocally() {
+      if (!currentPlan) {
+        showStatus("لا توجد بيانات للحفظ", "error");
+        return;
+      }
+
+      // Create CSV content
+      let csvContent = "اسم المفتش,اليوم,وقت المناوبة,المنطقة,المحلات\n";
+      
+      (currentPlan.distribution || []).forEach(row => {
+        const shops = (row.shops || []).join("; ");
+        csvContent += `"${row.inspector || ""}","${row.day || ""}","${row.shift || ""}","${row.area || ""}","${shops}"\n`;
+      });
+
+      // Download CSV
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", "خطة_التفتيش_" + new Date().toISOString().split('T')[0] + ".csv");
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      showStatus("تم حفظ الخطة على الجهاز بصيغة CSV", "success");
+    }
+
+    // ---- GitHub Save Functions ----
+    async function saveToGitHub() {
+      const token = getToken();
+      if (!token) {
+        showStatus("يرجى إعداد التوكن أولاً", "error");
+        showTokenPopup();
+        return;
+      }
+
+      if (!currentPlan) {
+        showStatus("لا توجد بيانات للحفظ", "error");
+        return;
+      }
+
+      try {
+        showStatus("جاري الحفظ في GitHub...", "info");
+        
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(currentPlan, null, 2))));
+        const response = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+          method: "PUT",
+          headers: {
+            "Authorization": `token ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: "تحديث خطة التفتيش من واجهة التوزيع",
+            content: content,
+            sha: planSha
+          })
+        });
+
+        if (response.status === 200 || response.status === 201) {
+          const result = await response.json();
+          planSha = result.content.sha;
+          showStatus("✅ تم حفظ الخطة في GitHub بنجاح!", "success");
+          
+          // Reload plan data to get latest updates
+          setTimeout(() => {
+            loadPlanData();
+          }, 2000);
+        } else {
+          const error = await response.json();
+          showStatus("❌ حدث خطأ في الحفظ: " + (error.message || "تحقق من التوكن"), "error");
+          if (response.status === 401 || response.status === 403) {
+            removeToken();
+            showTokenPopup();
+          }
+        }
+      } catch (error) {
+        console.error("GitHub save error:", error);
+        showStatus("❌ حدث خطأ في الاتصال بـ GitHub", "error");
+      }
+    }
+
+    // ---- Display Functions ----
+    function renderPlanTable() {
+      let html = `<table>
+        <thead>
+          <tr>
+            <th>اسم المفتش</th>
+            <th>اليوم</th>
+            <th>وقت المناوبة</th>
+            <th>المنطقة</th>
+            <th>المحلات</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>`;
+      
+      (currentPlan.distribution || []).forEach((row, index) => {
+        html += `<tr>
+          <td class="inspector-label">${row.inspector||""}</td>
+          <td>${row.day||""}</td>
+          <td>${row.shift||""}</td>
+          <td class="area-label">${row.area||""}</td>
+          <td>${
+            (row.shops||[]).map(shop=>`<span class="shop-badge">${shop}</span>`).join(" ")
+          }</td>
+          <td><button onclick="removeDistribution(${index})" style="background:#c00; padding:5px 10px; border:none; color:#fff; border-radius:4px; cursor:pointer;">حذف</button></td>
+        </tr>`;
+      });
+      html += `</tbody></table>`;
+      document.getElementById("planTable").innerHTML = html;
+    }
+
+    function removeDistribution(index) {
+      if (confirm("هل أنت متأكد من حذف هذا التوزيع؟")) {
+        currentPlan.distribution.splice(index, 1);
+        updateDisplay();
+        showStatus("تم حذف التوزيع", "info");
+      }
+    }
+
+    function renderStats() {
+      let inspectorShopCounts = {}, morningCounts = {}, eveningCounts = {}, weekendCounts = {};
+      (currentPlan.inspectors||[]).forEach(inspector=>{
+        inspectorShopCounts[inspector]=0;
+        morningCounts[inspector]=0;
+        eveningCounts[inspector]=0;
+        weekendCounts[inspector]=0;
+      });
+      (currentPlan.distribution||[]).forEach(row=>{
+        if (!row.inspector || !currentPlan.inspectors.includes(row.inspector)) return;
+        let shopsCount = row.shops ? row.shops.length : 0;
+        let shift = row.shift || "";
+        let inspector = row.inspector;
+        let dayStr = row.day;
+        let isWeekend = false;
+        if (dayStr) {
+          let d = new Date(dayStr);
+          let dayOfWeek = d.getDay();
+          if (dayOfWeek === 5 || dayOfWeek === 6 || dayOfWeek === 0) isWeekend = true;
+        }
+        inspectorShopCounts[inspector] += shopsCount;
+        if (shift === "صباحية") morningCounts[inspector] += shopsCount;
+        if (shift === "مسائية") eveningCounts[inspector] += shopsCount;
+        if (isWeekend) weekendCounts[inspector] += shopsCount;
+      });
+      let statsHtml = `<table class="stats-table">
+        <thead>
+          <tr>
+            <th class="stats-inspector-col">اسم المفتش</th>
+            <th>عدد التفتيشات (كل الشهر)</th>
+            <th>عدد التفتيشات الصباحية</th>
+            <th>عدد التفتيشات المسائية</th>
+            <th>عدد التفتيشات في العطلة (جمعة/سبت/أحد)</th>
+          </tr>
+        </thead>
+        <tbody>`;
+      (currentPlan.inspectors||[]).forEach(name=>{
+        statsHtml += `<tr>
+          <td class="stats-inspector-col">${name}</td>
+          <td>${inspectorShopCounts[name]}</td>
+          <td>${morningCounts[name]}</td>
+          <td>${eveningCounts[name]}</td>
+          <td>${weekendCounts[name]}</td>
+        </tr>`;
+      });
+      statsHtml += `</tbody>
+        <tfoot>
+          <tr>
+            <td class="stats-total-cell">مجموع التفتيش</td>
+            <td class="stats-total-cell">${Object.values(inspectorShopCounts).reduce((a,b)=>a+b,0)}</td>
+            <td class="stats-total-cell">${Object.values(morningCounts).reduce((a,b)=>a+b,0)}</td>
+            <td class="stats-total-cell">${Object.values(eveningCounts).reduce((a,b)=>a+b,0)}</td>
+            <td class="stats-total-cell">${Object.values(weekendCounts).reduce((a,b)=>a+b,0)}</td>
+          </tr>
+        </tfoot>
+      </table>`;
+      document.getElementById("stats").innerHTML = statsHtml;
+    }
+
+    function renderInspectorsList() {
+      let inspectorsHtml = "";
+      (currentPlan.inspectors||[]).forEach(name=>{
+        inspectorsHtml += `<span class="shop-list">${name}</span>`;
+      });
+      document.getElementById("inspectorsList").innerHTML = inspectorsHtml;
+    }
+
+    function renderAreasList() {
+      let areasHtml = "";
+      let shopsByArea = currentPlan.shopsByArea || {};
+      Object.keys(shopsByArea).forEach(area=>{
+        areasHtml += `<div class="list-area"><span class="area-label">${area}:</span> `;
+        (shopsByArea[area]||[]).forEach(shop=>{
+          areasHtml += `<span class="shop-badge">${shop}</span>`;
+        });
+        areasHtml += `</div>`;
+      });
+      document.getElementById("areasList").innerHTML = areasHtml;
+    }
+
+    function renderGoals() {
+      document.getElementById("goalsSection").innerHTML = 
+        `<span class="goals-red">${(currentPlan.goals||"").replace(/\n/g,"<br>")}</span>`;
+    }
+
+    // ---- Initialize Application ----
+    window.onload = function() {
+      loadPlanData();
+    };
   </script>
 </body>
 </html>

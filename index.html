@@ -31,6 +31,26 @@
     .stats-total-cell { color:#c00; font-weight:bold;}
     .plan-section {margin-bottom:32px;}
     .shop-badge {background:#e2e6f6; color:#2336a0; border-radius:3px; margin:0 2px; padding:2px 9px; font-size:0.99em;}
+    
+    /* أنماط إدارة التوزيع */
+    .distribution-form {background:#f9f9f9; border:1px solid #ddd; border-radius:8px; padding:15px; margin-bottom:20px;}
+    .form-row {display:flex; gap:10px; margin-bottom:10px; align-items:center; flex-wrap:wrap;}
+    .form-group {display:flex; flex-direction:column; gap:5px;}
+    .form-group label {font-weight:bold; color:#2336a0; font-size:0.9em;}
+    .form-group select, .form-group input {padding:8px; border:1px solid #ccc; border-radius:4px; font-size:0.9em;}
+    .shops-checkboxes {display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;}
+    .shop-checkbox {display:flex; align-items:center; gap:5px; background:#fff; padding:5px 10px; border:1px solid #ddd; border-radius:4px;}
+    .shop-checkbox input[type="checkbox"] {margin:0;}
+    .btn {background:#2336a0; color:#fff; border:none; padding:8px 16px; border-radius:4px; cursor:pointer; font-size:0.9em;}
+    .btn:hover {background:#1a2a80;}
+    .btn-secondary {background:#6c757d;}
+    .btn-secondary:hover {background:#545b62;}
+    .distribution-table {margin-top:20px;}
+    .distribution-table td {padding:8px; vertical-align:top;}
+    .distribution-actions {display:flex; gap:5px;}
+    .btn-small {padding:4px 8px; font-size:0.8em;}
+    .btn-danger {background:#dc3545;}
+    .btn-danger:hover {background:#c82333;}
     @media (max-width: 700px) {
       .container {padding:8px 2px;}
       th,td {padding:7px 2px; font-size:0.98em;}
@@ -46,6 +66,9 @@
 
     <div class="section-title">جدول التفتيش الشهري</div>
     <div class="plan-section" id="planTable"></div>
+
+    <div class="section-title">إدارة توزيع المحلات على المفتشين</div>
+    <div class="plan-section" id="distributionManager"></div>
 
     <div class="section-title">إحصائيات التفتيش</div>
     <div class="plan-section" id="stats"></div>
@@ -66,23 +89,11 @@
     </div>
   </div>
   <script>
-    // جلب الخطة دائماً بدون كاش
-    const PLAN_URL = "https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/plan-data.json?" + Date.now();
-    const API_URL  = "https://api.github.com/repos/aliabdelaal-adm/Monthly_inspection_plan/commits?path=plan-data.json&per_page=1&" + Date.now();
+    // استخدام ملف البيانات المحلي للاختبار
+    const PLAN_URL = "./plan-data.json";
 
-    // جلب تاريخ آخر تحديث للملف من GitHub API
-    fetch(API_URL)
-      .then(r=>r.json())
-      .then(commits=>{
-        let dateStr = "";
-        if(Array.isArray(commits) && commits[0] && commits[0].commit && commits[0].commit.committer && commits[0].commit.committer.date){
-          let d = new Date(commits[0].commit.committer.date);
-          dateStr = d.toLocaleDateString('ar-EG') + " " + d.toLocaleTimeString('ar-EG');
-        }
-        if(dateStr){
-          document.getElementById("updateTime").innerHTML = "آخر تحديث للخطة: <b>"+dateStr+"</b>";
-        }
-      });
+    // تحديث وقت العرض فقط
+    document.getElementById("updateTime").innerHTML = "آخر تحديث للخطة: <b>" + new Date().toLocaleDateString('ar-EG') + " " + new Date().toLocaleTimeString('ar-EG') + "</b>";
 
     fetch(PLAN_URL)
       .then(r=>r.json())
@@ -198,10 +209,261 @@
           </tfoot>
         </table>`;
         document.getElementById("stats").innerHTML = statsHtml;
+
+        // إنشاء واجهة إدارة التوزيع
+        createDistributionManager(plan);
       })
       .catch(()=>{
         document.getElementById("planTable").innerHTML='<p style="color:#c00; font-weight:bold;">تعذر تحميل الخطة من الخادم!</p>';
       });
+
+    // متغيرات عامة لإدارة التوزيع
+    let currentPlan = {};
+    let editingIndex = -1;
+
+    // إنشاء واجهة إدارة التوزيع
+    function createDistributionManager(plan) {
+      currentPlan = plan;
+      
+      let html = `
+        <div class="distribution-form">
+          <h3 style="color:#2336a0; margin-top:0;">إضافة توزيع جديد</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>المفتش</label>
+              <select id="inspectorSelect">
+                <option value="">اختر المفتش</option>
+                ${(plan.inspectors || []).map(inspector => 
+                  `<option value="${inspector}">${inspector}</option>`
+                ).join('')}
+              </select>
+            </div>
+            <div class="form-group">
+              <label>اليوم</label>
+              <input type="date" id="dayInput">
+            </div>
+            <div class="form-group">
+              <label>وقت المناوبة</label>
+              <select id="shiftSelect">
+                <option value="">اختر الوقت</option>
+                <option value="صباحية">صباحية</option>
+                <option value="مسائية">مسائية</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>المنطقة</label>
+              <select id="areaSelect" onchange="updateShopsForArea()">
+                <option value="">اختر المنطقة</option>
+                ${Object.keys(plan.shopsByArea || {}).map(area => 
+                  `<option value="${area}">${area}</option>`
+                ).join('')}
+              </select>
+            </div>
+          </div>
+          <div id="shopsSelection" class="shops-checkboxes" style="display:none;">
+            <strong style="color:#2336a0; width:100%; display:block; margin-bottom:10px;">اختر المحلات:</strong>
+          </div>
+          <div class="form-row">
+            <button class="btn" onclick="addDistribution()">إضافة التوزيع</button>
+            <button class="btn btn-secondary" onclick="cancelEdit()" style="display:none;" id="cancelBtn">إلغاء التعديل</button>
+          </div>
+        </div>
+        <div class="distribution-table">
+          <h3 style="color:#2336a0;">التوزيعات الحالية</h3>
+          <table id="distributionTable">
+            <thead>
+              <tr>
+                <th>المفتش</th>
+                <th>اليوم</th>
+                <th>المناوبة</th>
+                <th>المنطقة</th>
+                <th>المحلات</th>
+                <th>العمليات</th>
+              </tr>
+            </thead>
+            <tbody id="distributionTableBody">
+            </tbody>
+          </table>
+        </div>
+      `;
+      
+      document.getElementById("distributionManager").innerHTML = html;
+      updateDistributionTable();
+    }
+
+    // تحديث المحلات حسب المنطقة المختارة
+    function updateShopsForArea() {
+      const areaSelect = document.getElementById("areaSelect");
+      const shopsContainer = document.getElementById("shopsSelection");
+      const selectedArea = areaSelect.value;
+      
+      if (!selectedArea) {
+        shopsContainer.style.display = "none";
+        return;
+      }
+      
+      const shops = currentPlan.shopsByArea[selectedArea] || [];
+      let shopsHtml = '<strong style="color:#2336a0; width:100%; display:block; margin-bottom:10px;">اختر المحلات:</strong>';
+      
+      shops.forEach(shop => {
+        shopsHtml += `
+          <div class="shop-checkbox">
+            <input type="checkbox" id="shop_${shop}" value="${shop}">
+            <label for="shop_${shop}">${shop}</label>
+          </div>
+        `;
+      });
+      
+      shopsContainer.innerHTML = shopsHtml;
+      shopsContainer.style.display = "block";
+    }
+
+    // إضافة توزيع جديد
+    function addDistribution() {
+      const inspector = document.getElementById("inspectorSelect").value;
+      const day = document.getElementById("dayInput").value;
+      const shift = document.getElementById("shiftSelect").value;
+      const area = document.getElementById("areaSelect").value;
+      
+      if (!inspector || !day || !shift || !area) {
+        alert("يرجى ملء جميع الحقول المطلوبة!");
+        return;
+      }
+      
+      // جمع المحلات المختارة
+      const shopCheckboxes = document.querySelectorAll('#shopsSelection input[type="checkbox"]:checked');
+      const selectedShops = Array.from(shopCheckboxes).map(cb => cb.value);
+      
+      if (selectedShops.length === 0) {
+        alert("يرجى اختيار محل واحد على الأقل!");
+        return;
+      }
+      
+      const newDistribution = {
+        inspector: inspector,
+        day: day,
+        shift: shift,
+        area: area,
+        shops: selectedShops
+      };
+      
+      if (editingIndex >= 0) {
+        // تعديل توزيع موجود
+        currentPlan.distribution[editingIndex] = newDistribution;
+        editingIndex = -1;
+        document.getElementById("cancelBtn").style.display = "none";
+      } else {
+        // إضافة توزيع جديد
+        if (!currentPlan.distribution) currentPlan.distribution = [];
+        currentPlan.distribution.push(newDistribution);
+      }
+      
+      // إعادة تعيين النموذج
+      resetForm();
+      updateDistributionTable();
+      updateMainPlanTable();
+    }
+
+    // إلغاء التعديل
+    function cancelEdit() {
+      editingIndex = -1;
+      resetForm();
+      document.getElementById("cancelBtn").style.display = "none";
+    }
+
+    // إعادة تعيين النموذج
+    function resetForm() {
+      document.getElementById("inspectorSelect").value = "";
+      document.getElementById("dayInput").value = "";
+      document.getElementById("shiftSelect").value = "";
+      document.getElementById("areaSelect").value = "";
+      document.getElementById("shopsSelection").style.display = "none";
+    }
+
+    // تحديث جدول التوزيعات
+    function updateDistributionTable() {
+      const tbody = document.getElementById("distributionTableBody");
+      let html = "";
+      
+      (currentPlan.distribution || []).forEach((dist, index) => {
+        html += `
+          <tr>
+            <td class="inspector-label">${dist.inspector}</td>
+            <td>${dist.day}</td>
+            <td>${dist.shift}</td>
+            <td class="area-label">${dist.area}</td>
+            <td>${(dist.shops || []).map(shop => `<span class="shop-badge">${shop}</span>`).join(' ')}</td>
+            <td class="distribution-actions">
+              <button class="btn btn-small" onclick="editDistribution(${index})">تعديل</button>
+              <button class="btn btn-small btn-danger" onclick="deleteDistribution(${index})">حذف</button>
+            </td>
+          </tr>
+        `;
+      });
+      
+      tbody.innerHTML = html;
+    }
+
+    // تعديل توزيع
+    function editDistribution(index) {
+      const dist = currentPlan.distribution[index];
+      editingIndex = index;
+      
+      document.getElementById("inspectorSelect").value = dist.inspector;
+      document.getElementById("dayInput").value = dist.day;
+      document.getElementById("shiftSelect").value = dist.shift;
+      document.getElementById("areaSelect").value = dist.area;
+      
+      // تحديث المحلات للمنطقة المختارة
+      updateShopsForArea();
+      
+      // تحديد المحلات المختارة
+      setTimeout(() => {
+        (dist.shops || []).forEach(shop => {
+          const checkbox = document.getElementById(`shop_${shop}`);
+          if (checkbox) checkbox.checked = true;
+        });
+      }, 100);
+      
+      document.getElementById("cancelBtn").style.display = "inline-block";
+    }
+
+    // حذف توزيع
+    function deleteDistribution(index) {
+      if (confirm("هل أنت متأكد من حذف هذا التوزيع؟")) {
+        currentPlan.distribution.splice(index, 1);
+        updateDistributionTable();
+        updateMainPlanTable();
+      }
+    }
+
+    // تحديث جدول الخطة الرئيسي
+    function updateMainPlanTable() {
+      let html = `<table>
+        <thead>
+          <tr>
+            <th>اسم المفتش</th>
+            <th>اليوم</th>
+            <th>وقت المناوبة</th>
+            <th>المنطقة</th>
+            <th>المحلات</th>
+          </tr>
+        </thead>
+        <tbody>`;
+      (currentPlan.distribution||[]).forEach(row=>{
+        html += `<tr>
+          <td class="inspector-label">${row.inspector||""}</td>
+          <td>${row.day||""}</td>
+          <td>${row.shift||""}</td>
+          <td class="area-label">${row.area||""}</td>
+          <td>${
+            (row.shops||[]).map(shop=>`<span class="shop-badge">${shop}</span>`).join(" ")
+          }</td>
+        </tr>`;
+      });
+      html += `</tbody></table>`;
+      document.getElementById("planTable").innerHTML = html;
+    }
   </script>
 </body>
 </html>

@@ -619,5 +619,70 @@
     });
     document.addEventListener('DOMContentLoaded', fillInspectorsDropdown);
 </script>
+function playBirdSound() {
+    var audio = document.getElementById('birdSound');
+    if (!audio) return;
+    audio.currentTime = 0;
+    audio.play().catch(function(err){
+        // أحيانًا قد يمنع المتصفح التشغيل حتى مع التفاعل
+    });
+    setTimeout(function(){ audio.pause(); }, 7000);
+}
+
+// ربط الصوت بأول تفاعل فقط (مرة واحدة فقط)
+function enableBirdSoundOnFirstInteraction() {
+    function handler() {
+        playBirdSound();
+        // إزالة جميع المستمعين بعد أول تفاعل
+        window.removeEventListener('click', handler, true);
+        window.removeEventListener('keydown', handler, true);
+        window.removeEventListener('touchstart', handler, true);
+        window.removeEventListener('change', handler, true);
+    }
+    window.addEventListener('click', handler, true);
+    window.addEventListener('keydown', handler, true);
+    window.addEventListener('touchstart', handler, true);
+    window.addEventListener('change', handler, true);
+}
+document.addEventListener('DOMContentLoaded', enableBirdSoundOnFirstInteraction);
+
+// زر الجرس يشغل الصوت أيضًا دائمًا عند الضغط عليه
+document.getElementById('bellBtn').addEventListener('click', playBirdSound);
+</script>
+</body>
+</html>
+    // جرس مع صوت عصافير مغردة واضح
+    document.getElementById('bellBtn').addEventListener('click', function(){
+        let audio = document.getElementById('birdSound');
+        audio.currentTime = 0;
+        audio.play();
+        setTimeout(()=>{ audio.pause(); }, 7000);
+    });
+    document.addEventListener('DOMContentLoaded', fillInspectorsDropdown);
+</script>// دالة تشغيل صوت العصافير
+function playBirdSound() {
+    var audio = document.getElementById('birdSound');
+    if (!audio) return;
+    audio.currentTime = 0;
+    audio.play();
+    setTimeout(function(){ audio.pause(); }, 7000);
+}
+
+// ربط الصوت بأول تفاعل فقط
+function enableBirdSoundOnFirstInteraction() {
+    function handler() {
+        playBirdSound();
+        // إزالة جميع المستمعين بعد أول تفاعل
+        window.removeEventListener('click', handler, true);
+        window.removeEventListener('keydown', handler, true);
+        window.removeEventListener('touchstart', handler, true);
+        window.removeEventListener('change', handler, true);
+    }
+    window.addEventListener('click', handler, true);
+    window.addEventListener('keydown', handler, true);
+    window.addEventListener('touchstart', handler, true);
+    window.addEventListener('change', handler, true);
+}
+document.addEventListener('DOMContentLoaded', enableBirdSoundOnFirstInteraction);
 </body>
 </html>

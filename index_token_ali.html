@@ -1277,6 +1277,39 @@
         document.getElementById('passwordInput').addEventListener('keydown', function(e){
             if(e.key === "Enter") checkPassword();
         });
-    </script>
+    </script>            const val = document.getElementById('newInspector').value.trim();
+            if(val && !inspectors.includes(val)) {
+                inspectors.push(val);
+                updateInspectorList();
+                fillInspectorsSelect();
+                saveAllData();
+            }
+            document.getElementById('newInspector').value = '';
+        }
+        // في كل دوال إضافة/تعديل/حذف أخرى لنفس العناصر أضف saveAllData(); بعد التغيير.
+        // مثال: بعد shops.push(val) أو shops.splice(idx,1) أو areas.push(val) ... الخ.
+
+        // ... باقي السكريبت يبقى كما هو، فقط أضف saveAllData() بعد أي تعديل على البيانات ...
+        // مثال:
+        function deleteInspector(idx) {
+            if(confirm("هل تريد حذف هذا المفتش؟")) {
+                inspectors.splice(idx,1);
+                updateInspectorList();
+                fillInspectorsSelect();
+                saveAllData();
+            }
+        }
+        // ونفس الشيء في كل حذف أو تعديل لأي قائمة -- دائماً أضف saveAllData() بعد التغيير.
+
+        // إذا أردت زر لمسح جميع البيانات المخزنة (إعادة ضبط):
+        function clearAllDataAndReload() {
+            if(confirm("سيتم حذف جميع البيانات المخصصة وإعادة ضبطها للوضع الافتراضي. هل أنت متأكد؟")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+        // يمكنك وضع زر في لوحة المطور:
+        // <button onclick="clearAllDataAndReload()" style="background:#d32f2f;color:#fff">إعادة ضبط البيانات بالكامل</button>
+    </script>  
 </body>
 </html>

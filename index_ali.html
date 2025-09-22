@@ -253,19 +253,7 @@
     </div>
 </div>
 <script>
-    // بيانات تجريبية
-    let inspectorsData = [
-        {id:"hager", name:"هاجر"}, {id:"amna", name:"آمنه"}, {id:"aya", name:"آيه"},
-        {id:"faiz", name:"د. فايز المسالمة"}, {id:"amna2", name:"د.آمنه بن صرم"}
-    ];
-    let inspectionData = [
-        { inspector: "هاجر", day: "2025-09-22", shift: "صباحية", area: "المصفح", shops: ["محل 1", "محل 2"] },
-        { inspector: "هاجر", day: "2025-09-28", shift: "مسائية", area: "المصفح", shops: ["محل 5"] },
-        { inspector: "آمنه", day: "2025-09-25", shift: "مسائية", area: "مدينة خليفة", shops: ["محل 3", "محل 4"] },
-        { inspector: "آيه", day: "2025-09-22", shift: "صباحية", area: "المصفح", shops: ["محل 7"] },
-        { inspector: "د. فايز المسالمة", day: "2025-09-21", shift: "صباحية", area: "المنطقة أ", shops: ["محل 8", "محل 9"] },
-        { inspector: "د.آمنه بن صرم", day: "2025-09-21", shift: "مسائية", area: "المنطقة ج", shops: ["محل 11"] },
-    ];
+    
     // تحديث التاريخ تلقائي (12 ساعة صباحا/مساءا مع مسافة)
     function setLastUpdateDate() {
         let row = document.getElementById('lastUpdateRow');
@@ -609,7 +597,42 @@
         const ws = XLSX.utils.aoa_to_sheet(ws_data);
         XLSX.utils.book_append_sheet(wb, ws, "التقرير الشهري");
         XLSX.writeFile(wb, `التقرير_الشهري.xlsx`);
+    } /div>
+</div>
+<script>
+// دالة تشغيل صوت العصافير
+function playBirdSound() {
+    var audio = document.getElementById('birdSound');
+    if (!audio) return;
+    audio.currentTime = 0;
+    audio.play().catch(function(err){
+        // أحيانًا قد يمنع المتصفح التشغيل حتى مع التفاعل
+    });
+    setTimeout(function(){ audio.pause(); }, 7000);
+}
+
+// ربط الصوت بأول تفاعل فقط (مرة واحدة فقط)
+function enableBirdSoundOnFirstInteraction() {
+    function handler() {
+        playBirdSound();
+        // إزالة جميع المستمعين بعد أول تفاعل
+        window.removeEventListener('click', handler, true);
+        window.removeEventListener('keydown', handler, true);
+        window.removeEventListener('touchstart', handler, true);
+        window.removeEventListener('change', handler, true);
     }
+    window.addEventListener('click', handler, true);
+    window.addEventListener('keydown', handler, true);
+    window.addEventListener('touchstart', handler, true);
+    window.addEventListener('change', handler, true);
+}
+document.addEventListener('DOMContentLoaded', enableBirdSoundOnFirstInteraction);
+
+// زر الجرس يشغل الصوت أيضًا دائمًا عند الضغط عليه
+document.getElementById('bellBtn').addEventListener('click', playBirdSound);
+</script>
+</body>
+</html>
     // جرس مع صوت عصافير مغردة واضح
     document.getElementById('bellBtn').addEventListener('click', function(){
         let audio = document.getElementById('birdSound');

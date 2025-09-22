@@ -618,6 +618,30 @@
         setTimeout(()=>{ audio.pause(); }, 7000);
     });
     document.addEventListener('DOMContentLoaded', fillInspectorsDropdown);
-</script>
+</script>// دالة تشغيل صوت العصافير
+function playBirdSound() {
+    var audio = document.getElementById('birdSound');
+    if (!audio) return;
+    audio.currentTime = 0;
+    audio.play();
+    setTimeout(function(){ audio.pause(); }, 7000);
+}
+
+// ربط الصوت بأول تفاعل فقط
+function enableBirdSoundOnFirstInteraction() {
+    function handler() {
+        playBirdSound();
+        // إزالة جميع المستمعين بعد أول تفاعل
+        window.removeEventListener('click', handler, true);
+        window.removeEventListener('keydown', handler, true);
+        window.removeEventListener('touchstart', handler, true);
+        window.removeEventListener('change', handler, true);
+    }
+    window.addEventListener('click', handler, true);
+    window.addEventListener('keydown', handler, true);
+    window.addEventListener('touchstart', handler, true);
+    window.addEventListener('change', handler, true);
+}
+document.addEventListener('DOMContentLoaded', enableBirdSoundOnFirstInteraction);
 </body>
 </html>

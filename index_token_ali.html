@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>واجهة إدارة خطة التفتيش الشهرية</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.4.21/dist/vue.global.js"></script>
     <style>
         body {
             font-family: 'Cairo', Tahoma, Arial, sans-serif;
@@ -482,73 +483,115 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <div id="app" class="container">
         <div class="main-title">
             خطة التفتيش الشهرية
         </div>
         <div class="top-bar">
             <div>
                 <span class="user-type-label">نوع المستخدم:</span>
-                <select id="userTypeSelect" onchange="handleUserTypeChange()">
+                <select v-model="userType" @change="handleUserTypeChange">
                     <option value="inspector">مفتش</option>
                     <option value="developer">المطور</option>
                 </select>
-                <span id="inspectorSelectBox" style="display:inline-block;">
+                <span v-show="userType === 'inspector'" style="display:inline-block;">
                     <label for="inspectorSelect">اسم المفتش:</label>
-                    <select id="inspectorSelect" onchange="renderInspectorPage()"></select>
+                    <select v-model="selectedInspector" @change="renderInspectorPage">
+                        <option v-for="inspector in inspectors" :key="inspector" :value="inspector">
+                            {{ inspector }}
+                        </option>
+                    </select>
                 </span>
-                <button onclick="window.print()">طباعة أو حفظ PDF</button>
-                <button id="bellButton" onclick="playBirdSound()" title="تشغيل صوت العصافير" style="background: #228B22; margin-right: 10px;">🔔</button>
+                <button @click="window.print()">طباعة أو حفظ PDF</button>
+                <button @click="playBirdSound()" title="تشغيل صوت العصافير" style="background: #228B22; margin-right: 10px;">🔔</button>
             </div>
         </div>
-        <div id="apiTokenBar" class="api-token-bar" style="display:none;">
+        <div v-show="showApiTokenBar" class="api-token-bar">
             <label for="apiTokenInput">API Token:</label>
-            <input type="password" id="apiTokenInput" placeholder="أدخل التوكين هنا" autocomplete="off" />
-            <button type="button" id="saveApiTokenBtn">حفظ التوكين</button>
-            <span id="apiTokenSavedMsg" class="api-token-saved" style="display:none;">تم الحفظ ✓</span>
-            <button type="button" id="toggleApiTokenInputBtn" style="background:#888;" title="إظهار/إخفاء">👁️</button>
+            <input :type="apiTokenInputType" v-model="apiToken" placeholder="أدخل التوكين هنا" autocomplete="off" />
+            <button type="button" @click="saveApiToken">حفظ التوكين</button>
+            <span v-show="apiTokenSaved" class="api-token-saved">تم الحفظ ✓</span>
+            <button type="button" @click="toggleApiTokenInput" style="background:#888;" title="إظهار/إخفاء">👁️</button>
         </div>
-        <div id="adminPanel" style="display:none;">
+        <div v-show="userType === 'developer' && isDeveloperAuthenticated">
             <div class="admin-panel">
                 <div class="admin-section">
                     <h3>إدارة أسماء المفتشين</h3>
-                    <form class="add-row-form" id="addInspectorForm">
-                        <input type="text" id="newInspector" placeholder="اسم المفتش الجديد" required />
+                    <form class="add-row-form" @submit.prevent="addInspector">
+                        <input type="text" v-model="newInspector" placeholder="اسم المفتش الجديد" required />
                         <button type="submit">إضافة</button>
                     </form>
-                    <ul class="admin-list" id="inspectorList"></ul>
+                    <ul class="admin-list">
+                        <li v-for="(inspector, index) in inspectors" :key="index">
+                            <span>{{ inspector }}</span>
+                            <span class="list-actions">
+                                <button class="edit-btn" @click="deleteInspector(index)">حذف</button>
+                            </span>
+                        </li>
+                    </ul>
                 </div>
                 <div class="admin-section">
                     <h3>إدارة أسماء المحلات</h3>
-                    <form class="add-row-form" id="addShopForm">
-                        <input type="text" id="newShop" placeholder="اسم المحل الجديد" required />
+                    <form class="add-row-form" @submit.prevent="addShop">
+                        <input type="text" v-model="newShop" placeholder="اسم المحل الجديد" required />
                         <button type="submit">إضافة</button>
                     </form>
-                    <ul class="admin-list" id="shopList"></ul>
+                    <ul class="admin-list">
+                        <li v-for="(shop, index) in shops" :key="index">
+                            <span>{{ shop }}</span>
+                            <span class="list-actions">
+                                <button class="delete-btn" @click="deleteShop(index)">حذف</button>
+                            </span>
+                        </li>
+                    </ul>
                 </div>
                 <div class="admin-section">
                     <h3>إدارة أسماء المناطق</h3>
-                    <form class="add-row-form" id="addAreaForm">
-                        <input type="text" id="newArea" placeholder="اسم المنطقة الجديدة" required />
+                    <form class="add-row-form" @submit.prevent="addArea">
+                        <input type="text" v-model="newArea" placeholder="اسم المنطقة الجديدة" required />
                         <button type="submit">إضافة</button>
                     </form>
-                    <ul class="admin-list" id="areaList"></ul>
+                    <ul class="admin-list">
+                        <li v-for="(area, index) in areas" :key="index">
+                            <span>{{ area }}</span>
+                            <span class="list-actions">
+                                <button class="delete-btn" @click="deleteArea(index)">حذف</button>
+                            </span>
+                        </li>
+                    </ul>
                 </div>
             </div>
             <div class="goal-section">
                 <h3>إدارة أهداف التفتيش</h3>
-                <form class="add-row-form" id="addGoalForm">
-                    <input type="text" id="newGoal" placeholder="هدف جديد..." required />
+                <form class="add-row-form" @submit.prevent="addGoal">
+                    <input type="text" v-model="newGoal" placeholder="هدف جديد..." required />
                     <button type="submit">إضافة</button>
                 </form>
-                <ul class="goal-list" id="goalList"></ul>
+                <ul class="goal-list">
+                    <li v-for="(goal, index) in goals" :key="index">
+                        <span>{{ goal }}</span>
+                        <span class="list-actions">
+                            <button class="goal-delete-btn" @click="deleteGoal(index)">حذف</button>
+                        </span>
+                    </li>
+                </ul>
             </div>
             <div class="admin-section shops-area-box">
                 <div class="shops-area-title">إدارة المحلات حسب المنطقة:</div>
-                <div id="shopsByAreaList"></div>
-                <form class="add-row-form" id="addShopByAreaForm" style="margin-top:8px;">
-                    <input type="text" id="newShopByArea" placeholder="اسم محل جديد" required />
-                    <select id="areaForShop"></select>
+                <div>
+                    <div v-for="area in areas" :key="area" style="margin-bottom:5px;">
+                        <b>{{ area }}:</b>
+                        <span v-for="(shop, shopIndex) in getShopsByArea(area)" :key="shopIndex" class="shop-area-tag">
+                            {{ shop }}
+                            <button @click="deleteShopFromArea(area, shopIndex)">&times;</button>
+                        </span>
+                    </div>
+                </div>
+                <form class="add-row-form" @submit.prevent="addShopByArea" style="margin-top:8px;">
+                    <input type="text" v-model="newShopByArea" placeholder="اسم محل جديد" required />
+                    <select v-model="areaForShop">
+                        <option v-for="area in areas" :key="area" :value="area">{{ area }}</option>
+                    </select>
                     <button type="submit">إضافة محل</button>
                 </form>
             </div>
@@ -564,16 +607,49 @@
                             <th>حذف</th>
                         </tr>
                     </thead>
-                    <tbody id="distributionTableBody"></tbody>
+                    <tbody>
+                        <tr v-for="(row, index) in distributionRows" :key="index">
+                            <td>
+                                <select v-model="row.inspector">
+                                    <option value=""></option>
+                                    <option v-for="inspector in inspectors" :key="inspector" :value="inspector">
+                                        {{ inspector }}
+                                    </option>
+                                </select>
+                            </td>
+                            <td>
+                                <input type="date" v-model="row.day">
+                            </td>
+                            <td>
+                                <select v-model="row.area" @change="row.shop = []">
+                                    <option value=""></option>
+                                    <option v-for="area in areas" :key="area" :value="area">
+                                        {{ area }}
+                                    </option>
+                                </select>
+                            </td>
+                            <td>
+                                <select multiple size="3" v-model="row.shop" style="width:100%;">
+                                    <option v-for="shop in getShopsByArea(row.area)" :key="shop" :value="shop">
+                                        {{ shop }}
+                                    </option>
+                                </select>
+                            </td>
+                            <td>
+                                <button @click="deleteDistributionRow(index)">حذف</button>
+                            </td>
+                        </tr>
+                    </tbody>
                 </table>
-                <button onclick="addDistributionRow()" style="margin-bottom: 8px;">إضافة صف</button>
-                <button onclick="autoDistributeShops()" style="background:#234093;color:#fff;">توزيع تلقائي</button>
+                <button @click="addDistributionRow" style="margin-bottom: 8px;">إضافة صف</button>
+                <button @click="autoDistributeShops" style="background:#234093;color:#fff;">توزيع تلقائي</button>
                 <br>
-                <button onclick="saveDistributionToFile()" style="background:#223;color:#fff;font-size:1.1em;padding:9px 18px;margin-top:12px;">حفظ الخطة (تحميل ملف)</button>
-                <button onclick="uploadDistributionToGitHub()" style="background:#19b55b;color:#fff;font-size:1.1em;padding:9px 18px;margin-top:12px;">حفظ ورفع تلقائيًا إلى GitHub</button>
+                <button @click="saveDistributionToFile" style="background:#223;color:#fff;font-size:1.1em;padding:9px 18px;margin-top:12px;">حفظ الخطة (تحميل ملف)</button>
+                <button @click="uploadDistributionToGitHub" style="background:#19b55b;color:#fff;font-size:1.1em;padding:9px 18px;margin-top:12px;">حفظ ورفع تلقائيًا إلى GitHub</button>
+                <button @click="clearAllDataAndReload" style="background:#d32f2f;color:#fff;font-size:1.1em;padding:9px 18px;margin-top:12px;">إعادة ضبط البيانات بالكامل</button>
             </div>
         </div>
-        <div id="inspectorPage">
+        <div v-show="userType === 'inspector'">
             <div class="section-box">
                 <div class="table-title">جدول التفتيش</div>
                 <table id="inspectionTable">
@@ -586,12 +662,24 @@
                         </tr>
                     </thead>
                     <tbody>
+                        <tr v-if="getInspectorData.length === 0">
+                            <td colspan="4">لا توجد مهام تفتيش لهذا المفتش.</td>
+                        </tr>
+                        <tr v-for="(row, index) in getInspectorData" :key="index">
+                            <td>{{ row.day }}</td>
+                            <td>{{ row.shift }}</td>
+                            <td>{{ row.area }}</td>
+                            <td>
+                                <div class="shops-list-print">{{ row.shops.join('\n') }}</div>
+                                <button class="shop-btn" @click="showShopsModal(row.shops)">عرض المحلات</button>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
             <div class="section-box">
                 <div class="stats-title">احصائيات التفتيش</div>
-                <table class="stats-table" id="inspectorStatsTable">
+                <table class="stats-table">
                     <thead>
                         <tr>
                             <th>عدد التفتيشات (كل الشهر)</th>
@@ -601,826 +689,548 @@
                         </tr>
                     </thead>
                     <tbody>
+                        <tr>
+                            <td>{{ getInspectorStats.total }}</td>
+                            <td>{{ getInspectorStats.morning }}</td>
+                            <td>{{ getInspectorStats.evening }}</td>
+                            <td>{{ getInspectorStats.weekend }}</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
             <div class="goals-section">
                 <h3>أهداف التفتيش هذا الشهر:</h3>
-                <ul id="goalsList"></ul>
+                <ul>
+                    <li v-for="goal in goals" :key="goal">{{ goal }}</li>
+                </ul>
             </div>
             <div class="copyright">
                 جميع الحقوق محفوظة &copy; المطور د. علي عبدالعال
             </div>
         </div>
     </div>
-    <div id="shopsModal" class="modal-overlay" style="display:none;">
+    <div v-show="showShopsModalFlag" class="modal-overlay">
         <div class="modal-content">
             <h4>قائمة المحلات</h4>
-            <ul id="shopsList"></ul>
-            <button onclick="closeShopsModal()">إغلاق</button>
+            <ul>
+                <li v-for="shop in modalShops" :key="shop">{{ shop }}</li>
+            </ul>
+            <button @click="closeShopsModal">إغلاق</button>
         </div>
     </div>
-    <div id="modalPassword" class="modal-overlay" style="display:none;">
+    <div v-show="showPasswordModal" class="modal-overlay">
         <div class="modal-content">
             <label>من فضلك أدخل الرقم السري للمطور:</label>
-            <input type="password" id="passwordInput" maxlength="10" autocomplete="off" />
-            <div class="error-msg" id="passwordError" style="display:none;">الرقم السري غير صحيح!</div>
-            <button onclick="checkPassword()">دخول</button>
+            <input type="password" v-model="passwordInput" maxlength="10" autocomplete="off" 
+                   @keyup.enter="checkPassword" />
+            <div v-show="passwordError" class="error-msg">الرقم السري غير صحيح!</div>
+            <button @click="checkPassword">دخول</button>
         </div>
     </div>
     <audio id="birds-audio" src="https://cdn.pixabay.com/audio/2022/07/26/audio_124bfa5c1c.mp3"></audio>
     <script>
-        // =============== API Token LocalStorage ===============
-        function showApiTokenBar(show) {
-            document.getElementById('apiTokenBar').style.display = show ? '' : 'none';
-        }
-        function getApiToken() {
-            return localStorage.getItem('api_token') || '';
-        }
-        function setApiToken(token) {
-            if(token) localStorage.setItem('api_token', token);
-        }
-        function handleDeveloperApiTokenBar() {
-            showApiTokenBar(true);
-            const apiTokenInput = document.getElementById('apiTokenInput');
-            const savedToken = getApiToken();
-            if(savedToken){
-                apiTokenInput.value = savedToken;
-                apiTokenInput.type = "password";
-                document.getElementById('apiTokenSavedMsg').style.display = '';
-            } else {
-                apiTokenInput.value = '';
-                document.getElementById('apiTokenSavedMsg').style.display = 'none';
-            }
-        }
-        document.addEventListener('DOMContentLoaded', function(){
-            document.getElementById('saveApiTokenBtn').onclick = function(){
-                const val = document.getElementById('apiTokenInput').value.trim();
-                if(val){
-                    setApiToken(val);
-                    document.getElementById('apiTokenSavedMsg').style.display = '';
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    // User interface state
+                    userType: 'inspector',
+                    selectedInspector: '',
+                    isDeveloperAuthenticated: false,
+                    showPasswordModal: false,
+                    passwordInput: '',
+                    passwordError: false,
+                    
+                    // API Token management
+                    showApiTokenBar: false,
+                    apiToken: '',
+                    apiTokenInputType: 'password',
+                    apiTokenSaved: false,
+                    
+                    // Modal state
+                    showShopsModalFlag: false,
+                    modalShops: [],
+                    
+                    // Form inputs
+                    newInspector: '',
+                    newShop: '',
+                    newArea: '',
+                    newGoal: '',
+                    newShopByArea: '',
+                    areaForShop: '',
+                    
+                    // Edit mode values
+                    editInspectorValue: '',
+                    editShopValue: '',
+                    editAreaValue: '',
+                    editGoalValue: '',
+                    
+                    // Data arrays
+                    inspectors: [
+                        "هاجر","آمنه","آيه","د. فايز المسالمة","د.آمنه بن صرم"
+                    ],
+                    shops: [
+                        "محل 1", "محل 2", "محل 3", "محل 4",
+                        "محل 5", "محل 6", "محل 7", "محل 8",
+                        "محل 9", "محل 10", "محل 11"
+                    ],
+                    areas: [
+                        "المصفح", "مدينة خليفة", "المنطقة أ", "المنطقة ب", "المنطقة ج", "المنطقة د"
+                    ],
+                    goals: [
+                        "ضمان سلامة المنتجات",
+                        "الالتزام بالاشتراطات الصحية"
+                    ],
+                    inspectionData: [
+                        { inspector: "هاجر", day: "2025-09-22", shift: "صباحية", area: "المصفح", shops: ["محل 1", "محل 2"] },
+                        { inspector: "آمنه", day: "2025-09-25", shift: "مسائية", area: "مدينة خليفة", shops: ["محل 3", "محل 4"] },
+                        { inspector: "آيه", day: "2025-09-22", shift: "صباحية", area: "المصفح", shops: ["محل 5"] },
+                        { inspector: "د. فايز المسالمة", day: "2025-09-21", shift: "صباحية", area: "المنطقة أ", shops: ["محل 6", "محل 7"] },
+                        { inspector: "د. فايز المسالمة", day: "2025-09-27", shift: "صباحية", area: "المنطقة ب", shops: ["محل 8"] },
+                        { inspector: "د.آمنه بن صرم", day: "2025-09-21", shift: "مسائية", area: "المنطقة ج", shops: ["محل 9"] },
+                        { inspector: "د.آمنه بن صرم", day: "2025-09-28", shift: "مسائية", area: "المنطقة د", shops: ["محل 10", "محل 11"] }
+                    ],
+                    shopsByArea: {},
+                    distributionRows: [],
+                    weekendDays: [5, 6, 0]
                 }
-            };
-            document.getElementById('toggleApiTokenInputBtn').onclick = function(){
-                const inp = document.getElementById('apiTokenInput');
-                inp.type = (inp.type === "password") ? "text" : "password";
-            };
-        });
-        // =================== بيانات أولية وتطبيق ===================
-        let inspectors = [
-            "هاجر","آمنه","آيه","د. فايز المسالمة","د.آمنه بن صرم"
-        ];
-        let shops = [
-            "محل 1", "محل 2", "محل 3", "محل 4",
-            "محل 5", "محل 6", "محل 7", "محل 8",
-            "محل 9", "محل 10", "محل 11"
-        ];
-        let areas = [
-            "المصفح", "مدينة خليفة", "المنطقة أ", "المنطقة ب", "المنطقة ج", "المنطقة د"
-        ];
-        let goals = [
-            "ضمان سلامة المنتجات",
-            "الالتزام بالاشتراطات الصحية"
-        ];
-        let inspectionData = [
-            { inspector: "هاجر", day: "2025-09-22", shift: "صباحية", area: "المصفح", shops: ["محل 1", "محل 2"] },
-            { inspector: "آمنه", day: "2025-09-25", shift: "مسائية", area: "مدينة خليفة", shops: ["محل 3", "محل 4"] },
-            { inspector: "آيه", day: "2025-09-22", shift: "صباحية", area: "المصفح", shops: ["محل 5"] },
-            { inspector: "د. فايز المسالمة", day: "2025-09-21", shift: "صباحية", area: "المنطقة أ", shops: ["محل 6", "محل 7"] },
-            { inspector: "د. فايز المسالمة", day: "2025-09-27", shift: "صباحية", area: "المنطقة ب", shops: ["محل 8"] },
-            { inspector: "د.آمنه بن صرم", day: "2025-09-21", shift: "مسائية", area: "المنطقة ج", shops: ["محل 9"] },
-            { inspector: "د.آمنه بن صرم", day: "2025-09-28", shift: "مسائية", area: "المنطقة د", shops: ["محل 10", "محل 11"] }
-        ];
-        const weekendDays = [5, 6, 0];
-        let shopsByArea = {};
-        function fillShopsByAreaDefault() {
-            if (Object.keys(shopsByArea).length === 0) {
-                let ai = 0;
-                shops.forEach(shop => {
-                    let area = areas[ai % areas.length];
-                    if (!shopsByArea[area]) shopsByArea[area] = [];
-                    shopsByArea[area].push(shop);
-                    ai++;
-                });
-            }
-        }
-        function renderShopsByArea() {
-            fillShopsByAreaDefault();
-            const container = document.getElementById('shopsByAreaList');
-            container.innerHTML = '';
-            for(let area of areas){
-                const shopsList = shopsByArea[area] || [];
-                let html = `<div style="margin-bottom:5px;"><b>${area}:</b> `;
-                shopsList.forEach((shop,idx)=>{
-                    html += `<span class="shop-area-tag">
-                                ${shop}
-                                <button onclick="deleteShopFromArea('${area}',${idx})">&times;</button>
-                             </span>`;
-                });
-                html += '</div>';
-                container.innerHTML += html;
-            }
-            const sel = document.getElementById('areaForShop');
-            sel.innerHTML = '';
-            areas.forEach(area=>{
-                const opt = document.createElement('option');
-                opt.value = area;
-                opt.textContent = area;
-                sel.appendChild(opt);
-            });
-        }
-        function addShopByArea(e) {
-            e.preventDefault();
-            const shopName = document.getElementById('newShopByArea').value.trim();
-            const area = document.getElementById('areaForShop').value;
-            if(shopName && area){
-                if(!shopsByArea[area]) shopsByArea[area] = [];
-                if(!shopsByArea[area].includes(shopName)){
-                    shopsByArea[area].push(shopName);
-                    if (!shops.includes(shopName)) shops.push(shopName);
-                    renderShopsByArea();
-                    updateShopList();
+            },
+            computed: {
+                getInspectorData() {
+                    if (!this.selectedInspector) return [];
+                    return this.inspectionData.filter(item => item.inspector === this.selectedInspector);
+                },
+                getInspectorStats() {
+                    const rows = this.getInspectorData;
+                    const total = rows.length;
+                    const morning = rows.filter(r => r.shift === "صباحية").length;
+                    const evening = rows.filter(r => r.shift === "مسائية").length;
+                    const weekend = rows.filter(r => {
+                        const dayOfWeek = new Date(r.day).getDay();
+                        return this.weekendDays.includes(dayOfWeek);
+                    }).length;
+                    return { total, morning, evening, weekend };
                 }
-            }
-            document.getElementById('newShopByArea').value = '';
-        }
-        function deleteShopFromArea(area, idx) {
-            if(confirm("حذف هذا المحل من المنطقة؟")){
-                const shopName = shopsByArea[area][idx];
-                shopsByArea[area].splice(idx,1);
-                renderShopsByArea();
-                let used = false;
-                for (let a in shopsByArea)
-                    if (shopsByArea[a].includes(shopName)) used = true;
-                if (!used) {
-                    const i = shops.indexOf(shopName);
-                    if (i > -1) shops.splice(i,1);
-                    updateShopList();
-                }
-            }
-        }
-        let distributionRows = [];
-        function renderDistributionTable() {
-            const tbody = document.getElementById('distributionTableBody');
-            tbody.innerHTML = '';
-            distributionRows.forEach((row, idx) => {
-                let inspectorSelect = `<select onchange="distributionRows[${idx}].inspector=this.value; renderDistributionTable()">
-                    <option value=""></option>
-                    ${inspectors.map(inspector =>
-                        `<option value="${inspector}" ${row.inspector===inspector?'selected':''}>${inspector}</option>`
-                    ).join('')}
-                </select>`;
-                let areaSelect = `<select onchange="distributionRows[${idx}].area=this.value; distributionRows[${idx}].shop=[]; renderDistributionTable()">
-                    <option value=""></option>
-                    ${areas.map(area =>
-                        `<option value="${area}" ${row.area===area?'selected':''}>${area}</option>`
-                    ).join('')}
-                </select>`;
-                let areaShops = (shopsByArea[row.area] || []);
-                let shopSelect = `<select multiple size="3" onchange="handleShopMultiSelect(this,${idx})" style="width:100%;">
-                    ${areaShops.map(shop =>
-                        `<option value="${shop}" ${row.shop && row.shop.includes(shop)?'selected':''}>${shop}</option>`
-                    ).join('')}
-                </select>`;
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${inspectorSelect}</td>
-                        <td><input type="date" value="${row.day||''}" onchange="distributionRows[${idx}].day=this.value"></td>
-                        <td>${areaSelect}</td>
-                        <td>${shopSelect}</td>
-                        <td><button onclick="deleteDistributionRow(${idx})">حذف</button></td>
-                    </tr>
-                `;
-            });
-        }
-        function handleShopMultiSelect(sel, idx) {
-            const selected = Array.from(sel.selectedOptions).map(opt=>opt.value);
-            distributionRows[idx].shop = selected;
-        }
-        function addDistributionRow() {
-            distributionRows.push({inspector:'', day:'', area:'', shop:[]});
-            renderDistributionTable();
-        }
-        function deleteDistributionRow(idx) {
-            distributionRows.splice(idx,1);
-            renderDistributionTable();
-        }
-        function autoDistributeShops() {
-            distributionRows = [];
-            let allShops = [];
-            for(let area in shopsByArea){
-                shopsByArea[area].forEach(shop=>{
-                    allShops.push({area, shop});
-                });
-            }
-            let allInspectors = inspectors.slice();
-            if(allInspectors.length === 0 || allShops.length === 0) return alert("يجب إضافة مفتشين ومحلات أولاً");
-            let numDays = 7;
-            let today = new Date();
-            for(let dayIdx=0; dayIdx<numDays; dayIdx++) {
-                let dateStr = new Date(today.getFullYear(), today.getMonth(), today.getDate()+dayIdx).toISOString().slice(0,10);
-                for(let i=0; i<allShops.length; i++) {
-                    let inspector = allInspectors[(i+dayIdx)%allInspectors.length];
-                    distributionRows.push({
-                        inspector,
-                        day: dateStr,
-                        area: allShops[i].area,
-                        shop: [allShops[i].shop],
-                    });
-                }
-            }
-            renderDistributionTable();
-        }
-        function saveDistributionToFile() {
-            let csv = "المفتش,اليوم,المنطقة,المحلات\n";
-            distributionRows.forEach(row=>{
-                csv += `${row.inspector},${row.day},${row.area},"${(row.shop||[]).join(' - ')}"\n`;
-            });
-            let blob = new Blob([csv], {type:"text/csv"});
-            let a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = "جدول_توزيع_المحلات.csv";
-            a.click();
-        }
-        // =========== تفعيل رفع توزيع المحلات إلى GitHub باستخدام التوكين ===========
-        function uploadDistributionToGitHub() {
-            const token = getApiToken();
-            if (!token) {
-                alert("يرجى إدخال وحفظ التوكين أولاً!");
-                return;
-            }
-            let csv = "المفتش,اليوم,المنطقة,المحلات\n";
-            distributionRows.forEach(row=>{
-                csv += `${row.inspector},${row.day},${row.area},"${(row.shop||[]).join(' - ')}"\n`;
-            });
-            const owner = "aliabdelaal-adm";
-            const repo = "Monthly_inspection_plan";
-            const path = "distribution_table.csv";
-            const message = "رفع توزيع المحلات تلقائيًا عبر الواجهة";
-            const content = btoa(unescape(encodeURIComponent(csv)));
-            fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
-                headers: { "Authorization": `token ${token}` }
-            })
-            .then(resp => {
-                if (resp.status === 404) return { sha: undefined };
-                return resp.json();
-            })
-            .then(data => {
-                const sha = data && data.sha ? data.sha : undefined;
-                return fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
-                    method: "PUT",
-                    headers: {
-                        "Authorization": `token ${token}`,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        message: message,
-                        content: content,
-                        sha: sha
-                    })
-                });
-            })
-            .then(resp => resp.json())
-            .then(result => {
-                if(result.content) {
-                    alert("تم رفع الجدول بنجاح إلى GitHub!");
-                } else {
-                    throw new Error(result.message || "حدث خطأ أثناء الرفع");
-                }
-            })
-            .catch(err => {
-                alert("خطأ في رفع الملف إلى GitHub:\n" + (err.message || err));
-            });
-        }
-        // =====================================================
-        function renderList(list, arr, itemKey, editFunc, saveFunc, deleteFunc) {
-            list.innerHTML = "";
-            arr.forEach((name, idx) => {
-                let li = document.createElement("li");
-                li.id = `${itemKey}-item-${idx}`;
-                li.innerHTML = `
-                    <span class="${itemKey}-name">${name}</span>
-                    <span class="list-actions">
-                        <button class="edit-btn" onclick="${editFunc}(${idx})">تعديل</button>
-                        <button class="delete-btn" onclick="${deleteFunc}(${idx})">حذف</button>
-                    </span>
-                `;
-                list.appendChild(li);
-            });
-        }
-        function updateInspectorList() {
-            const list = document.getElementById('inspectorList');
-            renderList(list, inspectors, 'inspector', 'startEditInspector', 'saveEditInspector', 'deleteInspector');
-            fillInspectorsSelect();
-        }
-        function addInspector(e) {
-            e.preventDefault();
-            const val = document.getElementById('newInspector').value.trim();
-            if(val && !inspectors.includes(val)) {
-                inspectors.push(val);
-                updateInspectorList();
-                fillInspectorsSelect();
-            }
-            document.getElementById('newInspector').value = '';
-        }
-        function startEditInspector(idx) {
-            const item = document.getElementById(`inspector-item-${idx}`);
-            item.innerHTML = `
-                <input type="text" id="editInspectorInput${idx}" value="${inspectors[idx]}" style="flex:1;padding:4px 8px;border-radius:5px;border:1px solid #bbb;">
-                <span class="list-actions">
-                    <button class="save-btn" onclick="saveEditInspector(${idx})">حفظ</button>
-                    <button class="delete-btn" onclick="deleteInspector(${idx})">حذف</button>
-                </span>
-            `;
-            document.getElementById(`editInspectorInput${idx}`).focus();
-        }
-        function saveEditInspector(idx) {
-            const val = document.getElementById(`editInspectorInput${idx}`).value.trim();
-            if(val && !inspectors.includes(val)) {
-                inspectors[idx] = val;
-                updateInspectorList();
-                fillInspectorsSelect();
-            }
-        }
-        function deleteInspector(idx) {
-            if(confirm("هل تريد حذف هذا المفتش؟")) {
-                inspectors.splice(idx,1);
-                updateInspectorList();
-                fillInspectorsSelect();
-            }
-        }
-        function updateShopList() {
-            const list = document.getElementById('shopList');
-            renderList(list, shops, 'shop', 'startEditShop', 'saveEditShop', 'deleteShop');
-        }
-        function addShop(e) {
-            e.preventDefault();
-            const val = document.getElementById('newShop').value.trim();
-            if(val && !shops.includes(val)) {
-                shops.push(val);
-                updateShopList();
-            }
-            document.getElementById('newShop').value = '';
-        }
-        function startEditShop(idx) {
-            const item = document.getElementById(`shop-item-${idx}`);
-            item.innerHTML = `
-                <input type="text" id="editShopInput${idx}" value="${shops[idx]}" style="flex:1;padding:4px 8px;border-radius:5px;border:1px solid #bbb;">
-                <span class="list-actions">
-                    <button class="save-btn" onclick="saveEditShop(${idx})">حفظ</button>
-                    <button class="delete-btn" onclick="deleteShop(${idx})">حذف</button>
-                </span>
-            `;
-            document.getElementById(`editShopInput${idx}`).focus();
-        }
-        function saveEditShop(idx) {
-            const val = document.getElementById(`editShopInput${idx}`).value.trim();
-            if(val && !shops.includes(val)) {
-                shops[idx] = val;
-                updateShopList();
-            }
-        }
-        function deleteShop(idx) {
-            if(confirm("هل تريد حذف هذا المحل؟")) {
-                shops.splice(idx,1);
-                updateShopList();
-            }
-        }
-        function updateAreaList() {
-            const list = document.getElementById('areaList');
-            renderList(list, areas, 'area', 'startEditArea', 'saveEditArea', 'deleteArea');
-        }
-        function addArea(e) {
-            e.preventDefault();
-            const val = document.getElementById('newArea').value.trim();
-            if(val && !areas.includes(val)) {
-                areas.push(val);
-                updateAreaList();
-            }
-            document.getElementById('newArea').value = '';
-        }
-        function startEditArea(idx) {
-            const item = document.getElementById(`area-item-${idx}`);
-            item.innerHTML = `
-                <input type="text" id="editAreaInput${idx}" value="${areas[idx]}" style="flex:1;padding:4px 8px;border-radius:5px;border:1px solid #bbb;">
-                <span class="list-actions">
-                    <button class="save-btn" onclick="saveEditArea(${idx})">حفظ</button>
-                    <button class="delete-btn" onclick="deleteArea(${idx})">حذف</button>
-                </span>
-            `;
-            document.getElementById(`editAreaInput${idx}`).focus();
-        }
-        function saveEditArea(idx) {
-            const val = document.getElementById(`editAreaInput${idx}`).value.trim();
-            if(val && !areas.includes(val)) {
-                areas[idx] = val;
-                updateAreaList();
-            }
-        }
-        function deleteArea(idx) {
-            if(confirm("هل تريد حذف هذه المنطقة؟")) {
-                areas.splice(idx,1);
-                updateAreaList();
-            }
-        }
-        function renderGoalList() {
-            const list = document.getElementById('goalList');
-            list.innerHTML = "";
-            goals.forEach((name, idx) => {
-                let li = document.createElement("li");
-                li.id = `goal-item-${idx}`;
-                li.innerHTML = `
-                    <span class="goal-name">${name}</span>
-                    <span class="list-actions">
-                        <button class="goal-edit-btn" onclick="startEditGoal(${idx})">تعديل</button>
-                        <button class="goal-delete-btn" onclick="deleteGoal(${idx})">حذف</button>
-                    </span>
-                `;
-                list.appendChild(li);
-            });
-        }
-        function addGoal(e) {
-            e.preventDefault();
-            const val = document.getElementById('newGoal').value.trim();
-            if(val && !goals.includes(val)) {
-                goals.push(val);
-                renderGoalList();
-            }
-            document.getElementById('newGoal').value = '';
-        }
-        function startEditGoal(idx) {
-            const item = document.getElementById(`goal-item-${idx}`);
-            item.innerHTML = `
-                <input type="text" id="editGoalInput${idx}" value="${goals[idx]}" style="flex:1;padding:4px 8px;border-radius:5px;border:1px solid #bbb;">
-                <span class="list-actions">
-                    <button class="goal-save-btn" onclick="saveEditGoal(${idx})">حفظ</button>
-                    <button class="goal-delete-btn" onclick="deleteGoal(${idx})">حذف</button>
-                </span>
-            `;
-            document.getElementById(`editGoalInput${idx}`).focus();
-        }
-        function saveEditGoal(idx) {
-            const val = document.getElementById(`editGoalInput${idx}`).value.trim();
-            if(val && !goals.includes(val)) {
-                goals[idx] = val;
-                renderGoalList();
-            }
-        }
-        function deleteGoal(idx) {
-            if(confirm("هل تريد حذف هذا الهدف؟")) {
-                goals.splice(idx,1);
-                renderGoalList();
-            }
-        }
-        function fillInspectorsSelect() {
-            const sel = document.getElementById('inspectorSelect');
-            sel.innerHTML = "";
-            inspectors.forEach(name => {
-                const opt = document.createElement('option');
-                opt.value = name;
-                opt.textContent = name;
-                sel.appendChild(opt);
-            });
-        }
-        function renderInspectionTable(inspector) {
-            const tbody = document.getElementById('inspectionTable').querySelector('tbody');
-            tbody.innerHTML = "";
-            const rows = inspectionData.filter(item => item.inspector === inspector);
-            if(rows.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4">لا توجد مهام تفتيش لهذا المفتش.</td></tr>`;
-                return;
-            }
-            rows.forEach((row, idx) => {
-                const tr = document.createElement('tr');
-                const shopsList = row.shops.join('\n');
-                tr.innerHTML = `
-                    <td>${row.day}</td>
-                    <td>${row.shift}</td>
-                    <td>${row.area}</td>
-                    <td>
-                        <div class="shops-list-print">${shopsList}</div>
-                    </td>
-                `;
-                const shopBtn = document.createElement('button');
-                shopBtn.className = 'shop-btn';
-                shopBtn.textContent = 'عرض المحلات';
-                shopBtn.onclick = () => showShopsModal(row.shops);
-                tr.cells[3].appendChild(shopBtn);
-                tbody.appendChild(tr);
-            });
-        }
-        function showShopsModal(shopsArr) {
-            const modal = document.getElementById('shopsModal');
-            const list = document.getElementById('shopsList');
-            list.innerHTML = "";
-            shopsArr.forEach(shop => {
-                const li = document.createElement('li');
-                li.textContent = shop;
-                list.appendChild(li);
-            });
-            modal.style.display = '';
-        }
-        function closeShopsModal() {
-            document.getElementById('shopsModal').style.display = 'none';
-        }
-        function renderGoals() {
-            const ul = document.getElementById('goalsList');
-            ul.innerHTML = "";
-            goals.forEach(goal => {
-                const li = document.createElement('li');
-                li.textContent = goal;
-                ul.appendChild(li);
-            });
-        }
-        function renderInspectorStats(inspector) {
-            const rows = inspectionData.filter(item => item.inspector === inspector);
-            let total = rows.length;
-            let morning = rows.filter(r => r.shift === "صباحية").length;
-            let evening = rows.filter(r => r.shift === "مسائية").length;
-            let weekend = rows.filter(r => {
-                const dayOfWeek = new Date(r.day).getDay();
-                return weekendDays.includes(dayOfWeek);
-            }).length;
-            const tbody = document.getElementById('inspectorStatsTable').querySelector('tbody');
-            tbody.innerHTML = `
-                <tr>
-                    <td>${total}</td>
-                    <td>${morning}</td>
-                    <td>${evening}</td>
-                    <td>${weekend}</td>
-                </tr>
-            `;
-        }
-        function renderInspectorPage() {
-            const inspector = document.getElementById('inspectorSelect').value;
-            if (inspector) {
-                renderInspectionTable(inspector);
-                renderInspectorStats(inspector);
-                renderGoals();
-                playBirdSound();
-            }
-        }
-        function showPasswordModal() {
-            document.getElementById('modalPassword').style.display = '';
-            document.getElementById('passwordInput').value = '';
-            document.getElementById('passwordError').style.display = 'none';
-            setTimeout(()=>document.getElementById('passwordInput').focus(), 200);
-        }
-        function checkPassword() {
-            const val = document.getElementById('passwordInput').value;
-            if(val === "1983") {
-                document.getElementById('modalPassword').style.display = 'none';
-                document.getElementById('adminPanel').style.display = '';
-                document.getElementById('inspectorPage').style.display = 'none';
-                updateInspectorList();
-                updateShopList();
-                updateAreaList();
-                renderGoalList();
-                renderShopsByArea();
-                renderDistributionTable();
-                handleDeveloperApiTokenBar();
-            } else {
-                document.getElementById('passwordError').style.display = '';
-            }
-        }
-        function handleUserTypeChange() {
-            const type = document.getElementById('userTypeSelect').value;
-            const inspectorSelectBox = document.getElementById('inspectorSelectBox');
-            if(type === 'developer') {
-                showPasswordModal();
-                inspectorSelectBox.style.display = 'none';
-            } else {
-                document.getElementById('adminPanel').style.display = 'none';
-                document.getElementById('modalPassword').style.display = 'none';
-                document.getElementById('inspectorPage').style.display = '';
-                inspectorSelectBox.style.display = 'inline-block';
-                fillInspectorsSelect();
-                renderInspectorPage();
-                showApiTokenBar(false);
-            }
-        }
-        function playBirdSound() {
-            const audio = document.getElementById('birds-audio');
-            if (audio) {
-                audio.currentTime = 0;
-                const playPromise = audio.play();
-                if (playPromise !== undefined) {
-                    playPromise.then(() => {
-                        setTimeout(() => {
-                            audio.pause();
-                            audio.currentTime = 0;
-                        }, 6000);
-                    }).catch((error) => {
-                        showAudioNotification();
-                    });
-                }
-            }
-        }
-        function showAudioNotification() {
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: #234093;
-                color: white;
-                padding: 15px 20px;
-                border-radius: 10px;
-                z-index: 9999;
-                font-size: 14px;
-                max-width: 300px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            `;
-            notification.innerHTML = `
-                <div style="margin-bottom: 10px;">🔊 المتصفح منع تشغيل الصوت تلقائياً</div>
-                <button onclick="playBirdSoundManually(this.parentElement)" style="background: white; color: #234093; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">تشغيل الصوت</button>
-                <button onclick="this.parentElement.remove()" style="background: transparent; color: white; border: 1px solid white; padding: 5px 10px; border-radius: 5px; cursor: pointer; margin-left: 5px;">إغلاق</button>
-            `;
-            document.body.appendChild(notification);
-            setTimeout(() => {
-                if (notification.parentElement) {
-                    notification.remove();
-                }
-            }, 10000);
-        }
-        function playBirdSoundManually(notification) {
-            const audio = document.getElementById('birds-audio');
-            if (audio) {
-                audio.currentTime = 0;
-                audio.play().then(() => {
-                    setTimeout(() => {
-                        audio.pause();
-                        audio.currentTime = 0;
-                    }, 6000);
-                    if (notification) {
-                        notification.remove();
+            },
+            methods: {
+                // Initialization and data management
+                initializeData() {
+                    this.loadAllData();
+                    this.fillShopsByAreaDefault();
+                    if (this.inspectors.length > 0) {
+                        this.selectedInspector = this.inspectors[0];
+                        this.areaForShop = this.areas[0] || '';
                     }
-                });
+                },
+                
+                // LocalStorage functions
+                saveAllData() {
+                    localStorage.setItem('inspectors', JSON.stringify(this.inspectors));
+                    localStorage.setItem('shops', JSON.stringify(this.shops));
+                    localStorage.setItem('areas', JSON.stringify(this.areas));
+                    localStorage.setItem('goals', JSON.stringify(this.goals));
+                    localStorage.setItem('inspectionData', JSON.stringify(this.inspectionData));
+                    localStorage.setItem('shopsByArea', JSON.stringify(this.shopsByArea));
+                    localStorage.setItem('distributionRows', JSON.stringify(this.distributionRows));
+                },
+                
+                loadAllData() {
+                    if (localStorage.getItem('inspectors')) this.inspectors = JSON.parse(localStorage.getItem('inspectors'));
+                    if (localStorage.getItem('shops')) this.shops = JSON.parse(localStorage.getItem('shops'));
+                    if (localStorage.getItem('areas')) this.areas = JSON.parse(localStorage.getItem('areas'));
+                    if (localStorage.getItem('goals')) this.goals = JSON.parse(localStorage.getItem('goals'));
+                    if (localStorage.getItem('inspectionData')) this.inspectionData = JSON.parse(localStorage.getItem('inspectionData'));
+                    if (localStorage.getItem('shopsByArea')) this.shopsByArea = JSON.parse(localStorage.getItem('shopsByArea'));
+                    if (localStorage.getItem('distributionRows')) this.distributionRows = JSON.parse(localStorage.getItem('distributionRows'));
+                    
+                    // Load API token
+                    this.apiToken = localStorage.getItem('api_token') || '';
+                    this.apiTokenSaved = !!this.apiToken;
+                },
+                
+                clearAllDataAndReload() {
+                    if (confirm("سيتم حذف جميع البيانات المخصصة وإعادة ضبطها للوضع الافتراضي. هل أنت متأكد؟")) {
+                        localStorage.clear();
+                        location.reload();
+                    }
+                },
+                
+                // User type and authentication
+                handleUserTypeChange() {
+                    if (this.userType === 'developer') {
+                        this.showPasswordModal = true;
+                        this.passwordInput = '';
+                        this.passwordError = false;
+                    } else {
+                        this.isDeveloperAuthenticated = false;
+                        this.showApiTokenBar = false;
+                        this.showPasswordModal = false;
+                        this.renderInspectorPage();
+                    }
+                },
+                
+                checkPassword() {
+                    if (this.passwordInput === "1983") {
+                        this.showPasswordModal = false;
+                        this.isDeveloperAuthenticated = true;
+                        this.showApiTokenBar = true;
+                        this.handleDeveloperApiTokenBar();
+                        this.passwordError = false;
+                    } else {
+                        this.passwordError = true;
+                    }
+                },
+                
+                // API Token management
+                saveApiToken() {
+                    if (this.apiToken.trim()) {
+                        localStorage.setItem('api_token', this.apiToken.trim());
+                        this.apiTokenSaved = true;
+                    }
+                },
+                
+                toggleApiTokenInput() {
+                    this.apiTokenInputType = this.apiTokenInputType === 'password' ? 'text' : 'password';
+                },
+                
+                handleDeveloperApiTokenBar() {
+                    if (this.apiToken) {
+                        this.apiTokenInputType = 'password';
+                        this.apiTokenSaved = true;
+                    } else {
+                        this.apiTokenSaved = false;
+                    }
+                },
+                
+                // Inspector management
+                addInspector() {
+                    const val = this.newInspector.trim();
+                    if (val && !this.inspectors.includes(val)) {
+                        this.inspectors.push(val);
+                        this.saveAllData();
+                    }
+                    this.newInspector = '';
+                },
+                
+                deleteInspector(index) {
+                    if (confirm("هل تريد حذف هذا المفتش؟")) {
+                        this.inspectors.splice(index, 1);
+                        this.saveAllData();
+                    }
+                },
+                
+                // Shop management
+                addShop() {
+                    const val = this.newShop.trim();
+                    if (val && !this.shops.includes(val)) {
+                        this.shops.push(val);
+                        this.saveAllData();
+                    }
+                    this.newShop = '';
+                },
+                
+                deleteShop(index) {
+                    if (confirm("هل تريد حذف هذا المحل؟")) {
+                        this.shops.splice(index, 1);
+                        this.saveAllData();
+                    }
+                },
+                
+                // Area management
+                addArea() {
+                    const val = this.newArea.trim();
+                    if (val && !this.areas.includes(val)) {
+                        this.areas.push(val);
+                        this.saveAllData();
+                    }
+                    this.newArea = '';
+                },
+                
+                deleteArea(index) {
+                    if (confirm("هل تريد حذف هذه المنطقة؟")) {
+                        this.areas.splice(index, 1);
+                        this.saveAllData();
+                    }
+                },
+                
+                // Goal management
+                addGoal() {
+                    const val = this.newGoal.trim();
+                    if (val && !this.goals.includes(val)) {
+                        this.goals.push(val);
+                        this.saveAllData();
+                    }
+                    this.newGoal = '';
+                },
+                
+                deleteGoal(index) {
+                    if (confirm("هل تريد حذف هذا الهدف؟")) {
+                        this.goals.splice(index, 1);
+                        this.saveAllData();
+                    }
+                },
+                
+                // Shops by area management
+                fillShopsByAreaDefault() {
+                    if (Object.keys(this.shopsByArea).length === 0) {
+                        let ai = 0;
+                        this.shops.forEach(shop => {
+                            let area = this.areas[ai % this.areas.length];
+                            if (!this.shopsByArea[area]) this.shopsByArea[area] = [];
+                            this.shopsByArea[area].push(shop);
+                            ai++;
+                        });
+                    }
+                },
+                
+                getShopsByArea(area) {
+                    return this.shopsByArea[area] || [];
+                },
+                
+                addShopByArea() {
+                    const shopName = this.newShopByArea.trim();
+                    const area = this.areaForShop;
+                    if (shopName && area) {
+                        if (!this.shopsByArea[area]) this.shopsByArea[area] = [];
+                        if (!this.shopsByArea[area].includes(shopName)) {
+                            this.shopsByArea[area].push(shopName);
+                            if (!this.shops.includes(shopName)) this.shops.push(shopName);
+                            this.saveAllData();
+                        }
+                    }
+                    this.newShopByArea = '';
+                },
+                
+                deleteShopFromArea(area, index) {
+                    if (confirm("حذف هذا المحل من المنطقة؟")) {
+                        const shopName = this.shopsByArea[area][index];
+                        this.shopsByArea[area].splice(index, 1);
+                        
+                        // Check if shop is used in other areas
+                        let used = false;
+                        for (let a in this.shopsByArea) {
+                            if (this.shopsByArea[a].includes(shopName)) used = true;
+                        }
+                        if (!used) {
+                            const i = this.shops.indexOf(shopName);
+                            if (i > -1) this.shops.splice(i, 1);
+                        }
+                        this.saveAllData();
+                    }
+                },
+                
+                // Distribution table management
+                addDistributionRow() {
+                    this.distributionRows.push({
+                        inspector: '',
+                        day: '',
+                        area: '',
+                        shop: []
+                    });
+                    this.saveAllData();
+                },
+                
+                deleteDistributionRow(index) {
+                    this.distributionRows.splice(index, 1);
+                    this.saveAllData();
+                },
+                
+                autoDistributeShops() {
+                    this.distributionRows = [];
+                    let allShops = [];
+                    for (let area in this.shopsByArea) {
+                        this.shopsByArea[area].forEach(shop => {
+                            allShops.push({ area, shop });
+                        });
+                    }
+                    
+                    if (this.inspectors.length === 0 || allShops.length === 0) {
+                        alert("يجب إضافة مفتشين ومحلات أولاً");
+                        return;
+                    }
+                    
+                    let numDays = 7;
+                    let today = new Date();
+                    for (let dayIdx = 0; dayIdx < numDays; dayIdx++) {
+                        let dateStr = new Date(today.getFullYear(), today.getMonth(), today.getDate() + dayIdx).toISOString().slice(0, 10);
+                        for (let i = 0; i < allShops.length; i++) {
+                            let inspector = this.inspectors[(i + dayIdx) % this.inspectors.length];
+                            this.distributionRows.push({
+                                inspector,
+                                day: dateStr,
+                                area: allShops[i].area,
+                                shop: [allShops[i].shop]
+                            });
+                        }
+                    }
+                    this.saveAllData();
+                },
+                
+                saveDistributionToFile() {
+                    let csv = "المفتش,اليوم,المنطقة,المحلات\n";
+                    this.distributionRows.forEach(row => {
+                        csv += `${row.inspector},${row.day},${row.area},"${(row.shop || []).join(' - ')}"\n`;
+                    });
+                    let blob = new Blob([csv], { type: "text/csv" });
+                    let a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = "جدول_توزيع_المحلات.csv";
+                    a.click();
+                },
+                
+                uploadDistributionToGitHub() {
+                    const token = this.apiToken.trim();
+                    if (!token) {
+                        alert("يرجى إدخال وحفظ التوكين أولاً!");
+                        return;
+                    }
+                    
+                    let csv = "المفتش,اليوم,المنطقة,المحلات\n";
+                    this.distributionRows.forEach(row => {
+                        csv += `${row.inspector},${row.day},${row.area},"${(row.shop || []).join(' - ')}"\n`;
+                    });
+                    
+                    const owner = "aliabdelaal-adm";
+                    const repo = "Monthly_inspection_plan";
+                    const path = "distribution_table.csv";
+                    const message = "رفع توزيع المحلات تلقائيًا عبر الواجهة";
+                    const content = btoa(unescape(encodeURIComponent(csv)));
+                    
+                    fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
+                        headers: { "Authorization": `token ${token}` }
+                    })
+                    .then(resp => {
+                        if (resp.status === 404) return { sha: undefined };
+                        return resp.json();
+                    })
+                    .then(data => {
+                        const sha = data && data.sha ? data.sha : undefined;
+                        return fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
+                            method: "PUT",
+                            headers: {
+                                "Authorization": `token ${token}`,
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                message: message,
+                                content: content,
+                                sha: sha
+                            })
+                        });
+                    })
+                    .then(resp => resp.json())
+                    .then(result => {
+                        if (result.content) {
+                            alert("تم رفع الجدول بنجاح إلى GitHub!");
+                        } else {
+                            throw new Error(result.message || "حدث خطأ أثناء الرفع");
+                        }
+                    })
+                    .catch(err => {
+                        alert("خطأ في رفع الملف إلى GitHub:\n" + (err.message || err));
+                    });
+                },
+                
+                // Inspector page
+                renderInspectorPage() {
+                    if (this.selectedInspector) {
+                        this.playBirdSound();
+                    }
+                },
+                
+                // Modal management
+                showShopsModal(shopsArr) {
+                    this.modalShops = shopsArr || [];
+                    this.showShopsModalFlag = true;
+                },
+                
+                closeShopsModal() {
+                    this.showShopsModalFlag = false;
+                    this.modalShops = [];
+                },
+                
+                // Audio functions
+                playBirdSound() {
+                    const audio = document.getElementById('birds-audio');
+                    if (audio) {
+                        audio.currentTime = 0;
+                        const playPromise = audio.play();
+                        if (playPromise !== undefined) {
+                            playPromise.then(() => {
+                                setTimeout(() => {
+                                    audio.pause();
+                                    audio.currentTime = 0;
+                                }, 6000);
+                            }).catch((error) => {
+                                this.showAudioNotification();
+                            });
+                        }
+                    }
+                },
+                
+                showAudioNotification() {
+                    const notification = document.createElement('div');
+                    notification.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        background: #234093;
+                        color: white;
+                        padding: 15px 20px;
+                        border-radius: 10px;
+                        z-index: 9999;
+                        font-size: 14px;
+                        max-width: 300px;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                    `;
+                    notification.innerHTML = `
+                        <div style="margin-bottom: 10px;">🔊 المتصفح منع تشغيل الصوت تلقائياً</div>
+                        <button onclick="this.playBirdSoundManually(this.parentElement)" style="background: white; color: #234093; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">تشغيل الصوت</button>
+                        <button onclick="this.parentElement.remove()" style="background: transparent; color: white; border: 1px solid white; padding: 5px 10px; border-radius: 5px; cursor: pointer; margin-left: 5px;">إغلاق</button>
+                    `;
+                    document.body.appendChild(notification);
+                    setTimeout(() => {
+                        if (notification.parentElement) {
+                            notification.remove();
+                        }
+                    }, 10000);
+                },
+                
+                playBirdSoundManually(notification) {
+                    const audio = document.getElementById('birds-audio');
+                    if (audio) {
+                        audio.currentTime = 0;
+                        audio.play().then(() => {
+                            setTimeout(() => {
+                                audio.pause();
+                                audio.currentTime = 0;
+                            }, 6000);
+                            if (notification) {
+                                notification.remove();
+                            }
+                        });
+                    }
+                }
+            },
+            
+            mounted() {
+                this.initializeData();
+            },
+            
+            watch: {
+                distributionRows: {
+                    handler() {
+                        this.saveAllData();
+                    },
+                    deep: true
+                },
+                
+                apiToken() {
+                    this.apiTokenSaved = false;
+                }
             }
-        }
-        document.getElementById('addInspectorForm').onsubmit = addInspector;
-        document.getElementById('addShopForm').onsubmit = addShop;
-        document.getElementById('addAreaForm').onsubmit = addArea;
-        document.getElementById('addGoalForm').onsubmit = addGoal;
-        document.getElementById('addShopByAreaForm').onsubmit = addShopByArea;
-        document.addEventListener('DOMContentLoaded', ()=>{
-            fillShopsByAreaDefault();
-            fillInspectorsSelect();
-            renderInspectorPage();
-            updateInspectorList();
-            updateShopList();
-            updateAreaList();
-            renderGoalList();
-            renderShopsByArea();
-            renderDistributionTable();
-        });
-        document.getElementById('passwordInput').addEventListener('keydown', function(e){
-            if(e.key === "Enter") checkPassword();
-        });
-    </script>            const val = document.getElementById('newInspector').value.trim();
-            if(val && !inspectors.includes(val)) {
-                inspectors.push(val);
-                updateInspectorList();
-                fillInspectorsSelect();
-                saveAllData();
-            }
-            document.getElementById('newInspector').value = '';
-        }
-        // في كل دوال إضافة/تعديل/حذف أخرى لنفس العناصر أضف saveAllData(); بعد التغيير.
-        // مثال: بعد shops.push(val) أو shops.splice(idx,1) أو areas.push(val) ... الخ.
-
-        // ... باقي السكريبت يبقى كما هو، فقط أضف saveAllData() بعد أي تعديل على البيانات ...
-        // مثال:
-        function deleteInspector(idx) {
-            if(confirm("هل تريد حذف هذا المفتش؟")) {
-                inspectors.splice(idx,1);
-                updateInspectorList();
-                fillInspectorsSelect();
-                saveAllData();
-            }
-        }
-        // ونفس الشيء في كل حذف أو تعديل لأي قائمة -- دائماً أضف saveAllData() بعد التغيير.
-
-        // إذا أردت زر لمسح جميع البيانات المخزنة (إعادة ضبط):
-        function clearAllDataAndReload() {
-            if(confirm("سيتم حذف جميع البيانات المخصصة وإعادة ضبطها للوضع الافتراضي. هل أنت متأكد؟")) {
-                localStorage.clear();
-                location.reload();
-            }
-        }
-        // يمكنك وضع زر في لوحة المطور:
-        // <button onclick="clearAllDataAndReload()" style="background:#d32f2f;color:#fff">إعادة ضبط البيانات بالكامل</button>
-    </script> 
-        // ================== تخزين محلي دائم للبيانات ==================
-        let inspectors = [
-            "هاجر","آمنه","آيه","د. فايز المسالمة","د.آمنه بن صرم"
-        ];
-        let shops = [
-            "محل 1", "محل 2", "محل 3", "محل 4",
-            "محل 5", "محل 6", "محل 7", "محل 8",
-            "محل 9", "محل 10", "محل 11"
-        ];
-        let areas = [
-            "المصفح", "مدينة خليفة", "المنطقة أ", "المنطقة ب", "المنطقة ج", "المنطقة د"
-        ];
-        let goals = [
-            "ضمان سلامة المنتجات",
-            "الالتزام بالاشتراطات الصحية"
-        ];
-        let inspectionData = [
-            { inspector: "هاجر", day: "2025-09-22", shift: "صباحية", area: "المصفح", shops: ["محل 1", "محل 2"] },
-            { inspector: "آمنه", day: "2025-09-25", shift: "مسائية", area: "مدينة خليفة", shops: ["محل 3", "محل 4"] },
-            { inspector: "آيه", day: "2025-09-22", shift: "صباحية", area: "المصفح", shops: ["محل 5"] },
-            { inspector: "د. فايز المسالمة", day: "2025-09-21", shift: "صباحية", area: "المنطقة أ", shops: ["محل 6", "محل 7"] },
-            { inspector: "د. فايز المسالمة", day: "2025-09-27", shift: "صباحية", area: "المنطقة ب", shops: ["محل 8"] },
-            { inspector: "د.آمنه بن صرم", day: "2025-09-21", shift: "مسائية", area: "المنطقة ج", shops: ["محل 9"] },
-            { inspector: "د.آمنه بن صرم", day: "2025-09-28", shift: "مسائية", area: "المنطقة د", shops: ["محل 10", "محل 11"] }
-        ];
-        let shopsByArea = {};
-        let distributionRows = [];
-
-        // دوال الحفظ والتحميل من LocalStorage
-        function saveAllData() {
-            localStorage.setItem('inspectors', JSON.stringify(inspectors));
-            localStorage.setItem('shops', JSON.stringify(shops));
-            localStorage.setItem('areas', JSON.stringify(areas));
-            localStorage.setItem('goals', JSON.stringify(goals));
-            localStorage.setItem('inspectionData', JSON.stringify(inspectionData));
-            localStorage.setItem('shopsByArea', JSON.stringify(shopsByArea));
-            localStorage.setItem('distributionRows', JSON.stringify(distributionRows));
-        }
-        function loadAllData() {
-            if(localStorage.getItem('inspectors')) inspectors = JSON.parse(localStorage.getItem('inspectors'));
-            if(localStorage.getItem('shops')) shops = JSON.parse(localStorage.getItem('shops'));
-            if(localStorage.getItem('areas')) areas = JSON.parse(localStorage.getItem('areas'));
-            if(localStorage.getItem('goals')) goals = JSON.parse(localStorage.getItem('goals'));
-            if(localStorage.getItem('inspectionData')) inspectionData = JSON.parse(localStorage.getItem('inspectionData'));
-            if(localStorage.getItem('shopsByArea')) shopsByArea = JSON.parse(localStorage.getItem('shopsByArea'));
-            if(localStorage.getItem('distributionRows')) distributionRows = JSON.parse(localStorage.getItem('distributionRows'));
-        }
-        loadAllData();
-        // ================ نهاية التخزين المحلي ================
-
-        // ... جميع الأكواد والدوال كما هي ...
-        // في كل دالة "إضافة" أو "تعديل" أو "حذف" لأي من البيانات السابقة، أضف saveAllData() بعد التعديل
-        // مثلاً:
-        function addInspector(e) {
-            e.preventDefault();
-            const val = document.getElementById('newInspector').value.trim();
-            if(val && !inspectors.includes(val)) {
-                inspectors.push(val);
-                updateInspectorList();
-                fillInspectorsSelect();
-                saveAllData();
-            }
-            document.getElementById('newInspector').value = '';
-        }
-        function deleteInspector(idx) {
-            if(confirm("هل تريد حذف هذا المفتش؟")) {
-                inspectors.splice(idx,1);
-                updateInspectorList();
-                fillInspectorsSelect();
-                saveAllData();
-            }
-        }
-        function saveEditInspector(idx) {
-            const val = document.getElementById(`editInspectorInput${idx}`).value.trim();
-            if(val && !inspectors.includes(val)) {
-                inspectors[idx] = val;
-                updateInspectorList();
-                fillInspectorsSelect();
-                saveAllData();
-            }
-        }
-        // ... ضع saveAllData() أيضًا بعد أي تعديل في shops, areas, goals, shopsByArea, distributionRows
-        // مثال:
-        function addShop(e) {
-            e.preventDefault();
-            const val = document.getElementById('newShop').value.trim();
-            if(val && !shops.includes(val)) {
-                shops.push(val);
-                updateShopList();
-                saveAllData();
-            }
-            document.getElementById('newShop').value = '';
-        }
-        function deleteShop(idx) {
-            if(confirm("هل تريد حذف هذا المحل؟")) {
-                shops.splice(idx,1);
-                updateShopList();
-                saveAllData();
-            }
-        }
-        // ... وهكذا لبقية الدوال الخاصة بالمناطق والأهداف والتوزيع ...
-        // مثال للحذف الجماعي (زر إعادة ضبط):
-        function clearAllDataAndReload() {
-            if(confirm("سيتم حذف جميع البيانات المخصصة وإعادة ضبطها للوضع الافتراضي. هل أنت متأكد؟")) {
-                localStorage.clear();
-                location.reload();
-            }
-        }
-        // يمكنك وضع زر للمطورين فقط:
-        // <button onclick="clearAllDataAndReload()" style="background:#d32f2f;color:#fff">إعادة ضبط البيانات بالكامل</button>
-        // ========== بقية السكريبت كما هو تماما ========== 
+        }).mount('#app');
+    </script>
 </body>
 </html>

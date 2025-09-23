@@ -576,7 +576,8 @@
     </div>
     <script>
         // --- المتغيرات والتخزين الدائم ---
-        let inspectors = ["هاجر","آمنه","آيه","د. فايز المسالمة","د.آمنه بن صرم"];
+        // البيانات الثابتة السابقة تم تعطيلها وسيتم جلبها من الملف المركزي data.json
+        /* let inspectors = ["هاجر","آمنه","آيه","د. فايز المسالمة","د.آمنه بن صرم"];
         let shops = ["محل 1", "محل 2", "محل 3", "محل 4","محل 5", "محل 6", "محل 7", "محل 8","محل 9", "محل 10", "محل 11"];
         let areas = ["المصفح", "مدينة خليفة", "المنطقة أ", "المنطقة ب", "المنطقة ج", "المنطقة د"];
         let goals = ["ضمان سلامة المنتجات","الالتزام بالاشتراطات الصحية"];
@@ -591,7 +592,79 @@
         ];
         let shopsByArea = {};
         let distributionRows = [];
-        const weekendDays = [5, 6, 0];
+        const weekendDays = [5, 6, 0]; */
+        
+        // البيانات الجديدة التي سيتم جلبها من الملف المركزي
+        let inspectors = [];
+        let shops = [];
+        let areas = [];
+        let goals = [];
+        let inspectionData = [];
+        let shopsByArea = {};
+        let distributionRows = [];
+        let weekendDays = [5, 6, 0];
+
+        // --- جلب البيانات من الملف المركزي ---
+        async function loadCentralData() {
+            try {
+                // محاولة جلب البيانات من المصدر المحلي أولاً، ثم من GitHub
+                let dataUrl = './data.json';
+                let response = await fetch(dataUrl);
+                
+                if (!response.ok) {
+                    // إذا فشل المصدر المحلي، جرب GitHub
+                    dataUrl = 'https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/data.json';
+                    response = await fetch(dataUrl);
+                }
+                
+                if (!response.ok) {
+                    console.warn('تعذر جلب البيانات من GitHub، سيتم استخدام البيانات الافتراضية');
+                    return false;
+                }
+                
+                const data = await response.json();
+                
+                // تحديث البيانات من الملف المركزي
+                if (data.inspectors && Array.isArray(data.inspectors)) {
+                    inspectors = data.inspectors.slice();
+                }
+                
+                if (data.shops && Array.isArray(data.shops)) {
+                    shops = data.shops.slice();
+                }
+                
+                if (data.areas && Array.isArray(data.areas)) {
+                    areas = data.areas.slice();
+                }
+                
+                if (data.goals && Array.isArray(data.goals)) {
+                    goals = data.goals.slice();
+                }
+                
+                if (data.inspectionData && Array.isArray(data.inspectionData)) {
+                    inspectionData = data.inspectionData.slice();
+                }
+                
+                if (data.shopsByArea && typeof data.shopsByArea === 'object') {
+                    shopsByArea = JSON.parse(JSON.stringify(data.shopsByArea));
+                }
+                
+                if (data.distributionRows && Array.isArray(data.distributionRows)) {
+                    distributionRows = data.distributionRows.slice();
+                }
+                
+                if (data.weekendDays && Array.isArray(data.weekendDays)) {
+                    weekendDays = data.weekendDays.slice();
+                }
+                
+                console.log('تم جلب البيانات بنجاح من الملف المركزي data.json');
+                return true;
+                
+            } catch (error) {
+                console.warn('خطأ في جلب البيانات من الملف المركزي:', error);
+                return false;
+            }
+        }
 
         function saveAllData() {
             localStorage.setItem('inspectors', JSON.stringify(inspectors));
@@ -603,6 +676,7 @@
             localStorage.setItem('distributionRows', JSON.stringify(distributionRows));
         }
         function loadAllData() {
+            // جلب البيانات من localStorage إذا كانت متوفرة (للبيانات المحفوظة محلياً)
             if(localStorage.getItem('inspectors')) inspectors = JSON.parse(localStorage.getItem('inspectors'));
             if(localStorage.getItem('shops')) shops = JSON.parse(localStorage.getItem('shops'));
             if(localStorage.getItem('areas')) areas = JSON.parse(localStorage.getItem('areas'));
@@ -611,7 +685,28 @@
             if(localStorage.getItem('shopsByArea')) shopsByArea = JSON.parse(localStorage.getItem('shopsByArea'));
             if(localStorage.getItem('distributionRows')) distributionRows = JSON.parse(localStorage.getItem('distributionRows'));
         }
-        loadAllData();
+        
+        // تهيئة الصفحة مع جلب البيانات المركزية
+        async function initializePage() {
+            // جلب البيانات من الملف المركزي أولاً
+            const centralDataLoaded = await loadCentralData();
+            
+            // إذا فشل جلب البيانات المركزية، حاول جلب البيانات من localStorage
+            if (!centralDataLoaded) {
+                loadAllData();
+            }
+            
+            // تحديث واجهة المستخدم
+            fillShopsByAreaDefault();
+            fillInspectorsSelect();
+            renderInspectorPage();
+            updateInspectorList();
+            updateShopList();
+            updateAreaList();
+            renderGoalList();
+            renderShopsByArea();
+            renderDistributionTable();
+        }
 
         // --- API Token LocalStorage ---
         function showApiTokenBar(show) {
@@ -1145,17 +1240,7 @@
         document.getElementById('addAreaForm').onsubmit = addArea;
         document.getElementById('addGoalForm').onsubmit = addGoal;
         document.getElementById('addShopByAreaForm').onsubmit = addShopByArea;
-        document.addEventListener('DOMContentLoaded', ()=>{
-            fillShopsByAreaDefault();
-            fillInspectorsSelect();
-            renderInspectorPage();
-            updateInspectorList();
-            updateShopList();
-            updateAreaList();
-            renderGoalList();
-            renderShopsByArea();
-            renderDistributionTable();
-        });
+        document.addEventListener('DOMContentLoaded', initializePage);
         document.getElementById('passwordInput').addEventListener('keydown', function(e){
             if(e.key === "Enter") checkPassword();
         });

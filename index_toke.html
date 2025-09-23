@@ -1173,7 +1173,11 @@
                 // تحديث البيانات المحلية بالبيانات المركزية
                 if (centralData.inspectors) {
                     inspectors = [...centralData.inspectors];
+                } else if (centralData.inspectorsData) {
+                    // Handle the inspectorsData format (array of objects)
+                    inspectors = centralData.inspectorsData.map(item => item.name);
                 }
+                
                 if (centralData.areas) {
                     areas = [...centralData.areas];
                 }
@@ -1190,6 +1194,9 @@
                     shopsByArea = {...centralData.shopsByArea};
                 }
 
+                // حفظ البيانات المحملة محلياً
+                saveAllData();
+
                 // تحديث الواجهة
                 fillInspectorsSelect();
                 updateInspectorList();
@@ -1200,6 +1207,7 @@
                 renderDistributionTable();
                 
                 console.log("تم تحميل البيانات المركزية بنجاح!");
+                alert("تم تحميل البيانات المركزية بنجاح من GitHub ✅");
                 return true;
             } catch (error) {
                 console.error("خطأ في تحميل البيانات المركزية:", error);
@@ -1235,15 +1243,24 @@
             }
 
             try {
-                // إعداد البيانات للحفظ
+                // إعداد البيانات للحفظ - compatible with existing format
                 const centralData = {
-                    inspectors: inspectors,
+                    inspectorsData: inspectors.map((name, index) => ({
+                        id: name.toLowerCase().replace(/\s+/g, '').replace(/\./g, ''),
+                        name: name
+                    })),
                     areas: areas,
-                    shops: shops,
                     goals: goals,
-                    inspectionData: inspectionData,
-                    shopsByArea: shopsByArea
+                    inspectionData: inspectionData
                 };
+
+                // Add shops and shopsByArea if they exist
+                if (shops && shops.length > 0) {
+                    centralData.shops = shops;
+                }
+                if (shopsByArea && Object.keys(shopsByArea).length > 0) {
+                    centralData.shopsByArea = shopsByArea;
+                }
 
                 // جلب معرف الملف الحالي
                 centralDataSha = await getCentralDataSha();

@@ -620,12 +620,12 @@ document.addEventListener('click', function(e){
 async function loadDataFromGitHub() {
     try {
         // محاولة جلب البيانات من المصدر المحلي أولاً، ثم من GitHub
-        let dataUrl = './data.json';
+        let dataUrl = './plan-data.json';
         let response = await fetch(dataUrl);
         
         if (!response.ok) {
             // إذا فشل المصدر المحلي، جرب GitHub
-            dataUrl = 'https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/data.json';
+            dataUrl = 'https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/plan-data.json';
             response = await fetch(dataUrl);
         }
         
@@ -636,18 +636,21 @@ async function loadDataFromGitHub() {
         
         const data = await response.json();
         
-        // تحديث بيانات المفتشين
-        if (data.inspectorsData && Array.isArray(data.inspectorsData)) {
-            inspectorsData = data.inspectorsData;
-            inspectors = inspectorsData.map(i => i.name);
+        // تحديث بيانات المفتشين - تحويل من تنسيق plan-data.json
+        if (data.inspectors && Array.isArray(data.inspectors)) {
+            inspectorsData = data.inspectors.map((name, index) => ({
+                id: `inspector_${index}`,
+                name: name
+            }));
+            inspectors = data.inspectors.slice();
         }
         
-        // تحديث بيانات التفتيش
-        if (data.inspectionData && Array.isArray(data.inspectionData)) {
+        // تحديث بيانات التفتيش - تحويل من distribution إلى inspectionData
+        if (data.distribution && Array.isArray(data.distribution)) {
             // إذا لم توجد بيانات محفوظة محلياً، استخدم البيانات من الملف المركزي
             let localData = localStorage.getItem('inspectionData');
             if (!localData) {
-                inspectionData = data.inspectionData.slice();
+                inspectionData = data.distribution.slice();
                 saveInspectionData();
             }
         }

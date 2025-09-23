@@ -257,22 +257,12 @@
 </div>
 <script>
 // ... (نفس الجافاسكريبت كما أرسلته سابقا، فقط جدول الخطة عدل الترتيب والتنسيق) ...
-let inspectorsData = [
-    {id:"hager", name:"هاجر"}, {id:"amna", name:"آمنه"}, {id:"aya", name:"آيه"},
-    {id:"faiz", name:"د. فايز المسالمة"}, {id:"amna2", name:"د.آمنه بن صرم"}
-];
-let inspectors = inspectorsData.map(i=>i.name);
+let inspectorsData = [];
+let inspectors = [];
 const DEV_PASSWORD = "1983";
 let isDev = false;
-let defaultInspectionData = [
-    { inspector: "هاجر", day: "2025-09-22", shift: "صباحية", area: "المصفح", shops: ["محل 1", "محل 2"] },
-    { inspector: "هاجر", day: "2025-09-28", shift: "مسائية", area: "المصفح", shops: ["محل 5"] },
-    { inspector: "آمنه", day: "2025-09-25", shift: "مسائية", area: "مدينة خليفة", shops: ["محل 3", "محل 4"] },
-    { inspector: "آيه", day: "2025-09-22", shift: "صباحية", area: "المصفح", shops: ["محل 7"] },
-    { inspector: "د. فايز المسالمة", day: "2025-09-21", shift: "صباحية", area: "المنطقة أ", shops: ["محل 8", "محل 9"] },
-    { inspector: "د.آمنه بن صرم", day: "2025-09-21", shift: "مسائية", area: "المنطقة ج", shops: ["محل 11"] },
-];
-let inspectionData = JSON.parse(localStorage.getItem('inspectionData')) || defaultInspectionData.slice();
+let defaultInspectionData = [];
+let inspectionData = JSON.parse(localStorage.getItem('inspectionData')) || [];
 let selectedInspector = "";
 
 function saveInspectionData() {
@@ -626,14 +616,21 @@ document.addEventListener('click', function(e){
     }
 });
 
-// --- جلب البيانات من الملف المركزي على GitHub ---
+// --- جلب البيانات من الملف المركزي ---
 async function loadDataFromGitHub() {
     try {
-        const dataUrl = 'https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/data.json';
-        const response = await fetch(dataUrl);
+        // محاولة جلب البيانات من المصدر المحلي أولاً، ثم من GitHub
+        let dataUrl = './data.json';
+        let response = await fetch(dataUrl);
         
         if (!response.ok) {
-            console.warn('تعذر جلب البيانات من GitHub، سيتم استخدام البيانات الافتراضية');
+            // إذا فشل المصدر المحلي، جرب GitHub
+            dataUrl = 'https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/data.json';
+            response = await fetch(dataUrl);
+        }
+        
+        if (!response.ok) {
+            console.warn('تعذر جلب البيانات من المصادر المحلية وGitHub، سيتم استخدام البيانات المحفوظة');
             return false;
         }
         
@@ -647,7 +644,7 @@ async function loadDataFromGitHub() {
         
         // تحديث بيانات التفتيش
         if (data.inspectionData && Array.isArray(data.inspectionData)) {
-            // إذا لم توجد بيانات محفوظة محلياً، استخدم البيانات من GitHub
+            // إذا لم توجد بيانات محفوظة محلياً، استخدم البيانات من الملف المركزي
             let localData = localStorage.getItem('inspectionData');
             if (!localData) {
                 inspectionData = data.inspectionData.slice();
@@ -655,19 +652,38 @@ async function loadDataFromGitHub() {
             }
         }
         
-        console.log('تم جلب البيانات بنجاح من GitHub');
+        console.log('تم جلب البيانات بنجاح من الملف المركزي');
         return true;
         
     } catch (error) {
-        console.warn('خطأ في جلب البيانات من GitHub:', error);
+        console.warn('خطأ في جلب البيانات من الملف المركزي:', error);
         return false;
     }
 }
 
 // تحديث عملية تحميل الصفحة لتشمل جلب البيانات
 async function initializePage() {
-    // جلب البيانات من GitHub أولاً
-    await loadDataFromGitHub();
+    // جلب البيانات من الملف المركزي أولاً
+    const dataLoaded = await loadDataFromGitHub();
+    
+    // إذا فشل جلب البيانات وكانت المصفوفات فارغة، تحميل البيانات من localStorage
+    if (!dataLoaded) {
+        // تحميل بيانات التفتيش من localStorage
+        let localInspectionData = localStorage.getItem('inspectionData');
+        if (localInspectionData) {
+            inspectionData = JSON.parse(localInspectionData);
+        }
+        
+        // إذا كانت inspectorsData فارغة، حاول استخراج المفتشين من بيانات التفتيش
+        if (inspectorsData.length === 0 && inspectionData.length > 0) {
+            const uniqueInspectors = [...new Set(inspectionData.map(item => item.inspector))];
+            inspectorsData = uniqueInspectors.map((name, index) => ({
+                id: `inspector_${index}`,
+                name: name
+            }));
+            inspectors = uniqueInspectors;
+        }
+    }
     
     // ثم تحديث واجهة المستخدم
     fillInspectorDropdowns();

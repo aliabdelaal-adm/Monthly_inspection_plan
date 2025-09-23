@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>خطة التفتيش الشهرية</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body { font-family: 'Cairo', Arial, sans-serif; background: #f7f9fc; margin:0;}
+        .main-container {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 2px 16px #dadce0;
+            padding: 36px 18px 24px 18px;
+            max-width: 900px;
+            min-width:320px;
+            margin: 64px auto 0 auto;
+            display: flex; flex-direction: column; align-items: center;
+            position: relative;
+        }
+        .bell-notification {
+            position: absolute;
+            top: 20px;
+            right: 27px;
+            z-index: 2;
+        }
+        .bell-notification .bell {
+            font-size:2.2em;
+            color:#ffbe27;
+            background: #fff;
+            border-radius:50%;
+            box-shadow:0 2px 7px #e5e7f1;
+            padding:4px 12px 0 12px;
+            cursor:pointer;
+            transition:background 0.2s;
+            border:2px solid #ffe9b8;
+        }
+        .bell-notification .bell:hover {
+            background: #fff7e0;
+        }
+        .last-update-bar {
+            position: absolute;
+            top: 27px;
+            left: 30px;
+            font-size:0.94em;
+            color:#234085;
+            font-weight: normal;
+            text-align:left;
+            direction:ltr;
+            letter-spacing: 0.3px;
+            z-index:2;
+        }
+        .title-bar {
+            width:100%;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            margin-top: 18px;
+            margin-bottom: 24px;
+        }
+        .main-title-box {
+            background:#234085;
+            color:#fff;
+            padding:28px 0 28px 0;
+            border-radius:14px;
+            width: 96%;
+            max-width: 600px;
+            min-height: 56px;
+            font-size:2.12em;
+            text-align:center;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin:0 auto;
+            box-shadow:0 2px 14px #e0e2f5;
+        }
+        .top-controls {width:100%;display:flex;flex-direction:column;align-items:center;gap:14px;margin-bottom:10px;}
+        .user-row {display:flex;align-items:center;gap:9px;}
+        .user-row label {font-weight:bold;font-size:1.06em;}
+        .user-row select {min-width:120px;}
+        .plan-table-container {width:100%;margin:18px 0; overflow:visible;}
+        .plan-table {width:100%;border-collapse:collapse;border-radius:13px;overflow:visible;box-shadow:0 2px 14px #eee;}
+        .plan-table th,.plan-table td {padding:10px 8px;text-align:center;}
+        .plan-table th {
+            background:#234085;
+            color:#fff;
+            font-weight:bold;
+            font-size:1.12em;
+        }
+        .plan-table tr:nth-child(even) {background:#f5f7fb;}
+        .plan-table td { border-bottom:1px solid #d7dcef; font-size:1em; vertical-align:middle;}
+        .inspector-name-cell, .shops-cell {
+            background: #ffd6ef !important;
+            color: #a9004d;
+            font-weight: bold;
+            border-radius:8px;
+            box-shadow:0 1px 6px #ffe7f6 inset;
+            letter-spacing: 0.5px;
+            direction:rtl;
+            text-align:right;
+        }
+        .dropdown-shops-btn {
+            background:#234085;
+            color:#fff;
+            border:none;
+            border-radius:6px;
+            padding:6px 18px;
+            cursor:pointer;
+            font-size:0.98em;
+            min-width:90px;
+        }
+        .shops-dropdown-list {
+            display:none;
+            position:absolute;
+            background:#fff;
+            border:1px solid #23408577;
+            border-radius:9px;
+            bottom:100%;
+            margin-bottom:8px;
+            min-width:130px;
+            max-width:220px;
+            box-shadow:0 2px 14px #eaeaea;
+            z-index:1002;
+            text-align:right;
+            overflow-y:auto;
+            right:0;
+            left:auto;
+            animation: slideUp .15s;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(40px); opacity:0; }
+            to { transform: translateY(0); opacity:1; }
+        }
+        .shops-dropdown-list ul {
+            list-style: none;
+            margin:0; padding:7px 5px;
+        }
+        .shops-dropdown-list ul li {
+            padding:3px 0 3px 0;
+            border-bottom:1px solid #eee;
+            font-size:0.97em;
+        }
+        .shops-dropdown-list ul li:last-child {border-bottom:none;}
+        .shops-dropdown-wrap {position:relative; display:inline-block;}
+        .actions-row {
+            width:100%;display:flex;justify-content:center;align-items:center;gap:18px;margin:20px 0 18px;
+        }
+        .save-box, .report-box {display:flex;gap:12px;}
+        .save-box button, .report-box button {padding:10px 28px;border-radius:8px;border:none;cursor:pointer;font-size:1em;}
+        .pdf-btn {background:#d63384;color:#fff;}
+        .excel-btn {background:#198754;color:#fff;}
+        .inspector-report-btn {background:#234085;color:#fff;}
+        .monthly-report-btn {background:#ff9800;color:#fff;}
+        .inspector-report-div {margin:16px 0 0 0;background:#f7f9fc;border-radius:10px;padding:18px 12px;width:100%;color:#234085;font-size:1.1em;box-shadow:0 1px 5px #e2e2e2;}
+        .footer {text-align:center;margin-top:22px;color:#234085;font-size:0.85em;}
+        .report-table {border-collapse: collapse; width: 100%; margin-top: 8px; background: #fff;}
+        .report-table th, .report-table td { border: 1px solid #ccc; padding: 8px; text-align: center;}
+        .report-table th {background: #234085; color: #fff;}
+        .report-table-caption {text-align:right; font-weight:bold; font-size:1.09em; margin-bottom:8px;}
+        @media (max-width:600px) {
+            .main-container {padding:10px 1vw 7px 1vw;}
+            .main-title-box {font-size:1em;padding:16px 0;}
+            .last-update-bar { font-size:0.83em; left:8px; top:10px;}
+            .bell-notification { top:10px; right:10px;}
+            .plan-table th, .plan-table td {padding:7px 2px;font-size:0.94em;}
+            .dropdown-shops-btn {padding:4px 8px;font-size:0.91em;}
+            .footer {font-size:0.74em;}
+        }
+    </style>
+</head>
+<body>
+<div class="main-container">
+    <span class="bell-notification" title="تنبيهات">
+        <span class="bell" onclick="alert('لا توجد تنبيهات جديدة.')" aria-label="تنبيهات">&#128276;</span>
+    </span>
+    <span class="last-update-bar" id="lastUpdateBar">
+        آخر تحديث للخطة: <span id="lastUpdateDate"></span>
+    </span>
+    <div class="title-bar">
+        <div class="main-title-box">خطة التفتيش الشهرية</div>
+    </div>
+    <div class="top-controls">
+        <div class="user-row">
+            <label for="loginRole">تسجيل الدخول:</label>
+            <select id="loginRole">
+                <option value="inspector">مفتش</option>
+                <option value="developer">المطور</option>
+            </select>
+            <button id="logoutBtn" style="background:#d32f2f;color:#fff;border:none;padding:10px 28px;border-radius:8px;font-size:1em;cursor:pointer;display:none;">إغلاق المطور</button>
+        </div>
+        <div class="user-row">
+            <label for="inspectorFilter">اختر المفتش :</label>
+            <select id="inspectorFilter">
+                <option value="">-- اختر المفتش --</option>
+            </select>
+        </div>
+        <form id="addEditForm" class="plan-form" autocomplete="off" style="display:none;">
+            <select id="formInspector" required>
+                <option value="">مفتش</option>
+            </select>
+            <input type="date" id="formDay" required>
+            <select id="formShift" required>
+                <option value="">وقت المناوبة</option>
+                <option value="صباحية">صباحية</option>
+                <option value="مسائية">مسائية</option>
+            </select>
+            <select id="formArea" required>
+                <option value="">المنطقة</option>
+            </select>
+            <input type="text" id="formShops" placeholder="المحلات (أفضل بينها بفاصلة , )" required>
+            <button type="submit" style="background:#198754;color:#fff;">إضافة / تعديل</button>
+            <input type="hidden" id="formEditingIndex" value="">
+        </form>
+    </div>
+    <div class="plan-table-container" id="planTableContainer"></div>
+    <div class="actions-row">
+        <div class="save-box">
+            <button class="pdf-btn" onclick="exportActiveTableToPDF()">حفظ كـ PDF</button>
+            <button class="excel-btn" onclick="exportActiveTableToExcel()">حفظ كـ Excel</button>
+        </div>
+        <div class="report-box">
+            <button class="inspector-report-btn" onclick="showInspectorReport()">تقرير المفتش</button>
+            <button class="monthly-report-btn" onclick="showMonthlyReport()">التقرير الشهري</button>
+        </div>
+    </div>
+    <div id="inspectorReportDiv" class="inspector-report-div" style="display:none;"></div>
+    <div class="footer">
+        تم التطوير بواسطة &copy; المطور د. علي عبدالعال
+    </div>
+    <!-- نافذة كلمة سر المطور -->
+    <div id="devPasswordModal">
+      <div class="modal-content">
+        <button class="close-btn" onclick="closeDevPasswordModal()">×</button>
+        <div style="margin-bottom:12px;font-weight:bold;">ادخل كلمة سر المطور</div>
+        <input type="password" id="modalDevPassword" placeholder="كلمة السر" autocomplete="off" style="width:100%;">
+        <button onclick="devPasswordSubmit()" style="background:#198754;color:#fff;border:none;padding:7px 22px;border-radius:7px;font-size:1em;cursor:pointer;width:100%;margin-top:10px;">دخول</button>
+        <div id="devError" style="color:#d32f2f;margin-top:8px;"></div>
+      </div>
+    </div>
+</div>
+<script>
+let inspectorsData = [
+    {id:"hager", name:"هاجر"}, {id:"amna", name:"آمنه"}, {id:"aya", name:"آيه"},
+    {id:"faiz", name:"د. فايز المسالمة"}, {id:"amna2", name:"د.آمنه بن صرم"}
+];
+let inspectors = inspectorsData.map(i=>i.name);
+const DEV_PASSWORD = "1983";
+let isDev = false;
+let defaultInspectionData = [
+    { inspector: "هاجر", day: "2025-09-22", shift: "صباحية", area: "المصفح", shops: ["محل 1", "محل 2"] },
+    { inspector: "هاجر", day: "2025-09-28", shift: "مسائية", area: "المصفح", shops: ["محل 5"] },
+    { inspector: "آمنه", day: "2025-09-25", shift: "مسائية", area: "مدينة خليفة", shops: ["محل 3", "محل 4"] },
+    { inspector: "آيه", day: "2025-09-22", shift: "صباحية", area: "المصفح", shops: ["محل 7"] },
+    { inspector: "د. فايز المسالمة", day: "2025-09-21", shift: "صباحية", area: "المنطقة أ", shops: ["محل 8", "محل 9"] },
+    { inspector: "د.آمنه بن صرم", day: "2025-09-21", shift: "مسائية", area: "المنطقة ج", shops: ["محل 11"] },
+];
+let inspectionData = JSON.parse(localStorage.getItem('inspectionData')) || defaultInspectionData.slice();
+let selectedInspector = "";
+
+function saveInspectionData() {
+    localStorage.setItem('inspectionData', JSON.stringify(inspectionData));
+}
+function getAreaList() {
+    let allAreas = [...new Set(inspectionData.map(row=>row.area))].sort();
+    return allAreas;
+}
+function fillInspectorDropdowns() {
+    let select = document.getElementById('inspectorFilter');
+    select.innerHTML = '<option value="">-- اختر المفتش --</option>';
+    inspectors.forEach(inspector => {
+        select.innerHTML += `<option value="${inspector}">${inspector}</option>`;
+    });
+    select.value = selectedInspector;
+    let select2 = document.getElementById('formInspector');
+    select2.innerHTML = `<option value="">مفتش</option>`;
+    inspectors.forEach(inspector => {
+        select2.innerHTML += `<option value="${inspector}">${inspector}</option>`;
+    });
+}
+function fillAreaDropdown() {
+    const selectArea = document.getElementById('formArea');
+    let areas = getAreaList();
+    selectArea.innerHTML = '<option value="">المنطقة</option>';
+    areas.forEach(area=>{
+        selectArea.innerHTML += `<option value="${area}">${area}</option>`;
+    });
+}
+function formatDate12H(date) {
+    let en = date.toLocaleString('en-US', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit',
+        hour12: true
+    });
+    let [datePart, timePart] = en.split(', ');
+    return `${datePart} - ${timePart}`;
+}
+function updateLastUpdateBar() {
+    let lastUpdate = localStorage.getItem('inspectionLastUpdate');
+    if (!lastUpdate) {
+        lastUpdate = formatDate12H(new Date());
+    }
+    document.getElementById('lastUpdateDate').textContent = lastUpdate;
+}
+function saveInspectionData() {
+    localStorage.setItem('inspectionData', JSON.stringify(inspectionData));
+    let now = new Date();
+    let updateStr = formatDate12H(now);
+    localStorage.setItem('inspectionLastUpdate', updateStr);
+    updateLastUpdateBar();
+}
+function renderPlanTable() {
+    const container = document.getElementById('planTableContainer');
+    let rows = selectedInspector?inspectionData.filter(r=>r.inspector===selectedInspector):inspectionData;
+    container.innerHTML = "";
+    if (rows.length === 0) {
+        container.innerHTML = '<div style="text-align:center;color:#c00;font-weight:bold;margin:30px 0;">لا توجد أي خطة تفتيش.</div>';
+        return;
+    }
+    let lastIdx = rows.length - 1;
+    let html = `
+    <table class="plan-table" id="inspectorPlanTable">
+        <thead>
+            <tr>
+                <th>المحلات</th>
+                <th>المنطقة</th>
+                <th>وقت المناوبة</th>
+                <th>اليوم</th>
+                <th>اسم المفتش</th>
+            </tr>
+        </thead>
+        <tbody>
+    `;
+    rows.forEach((row, idx) => {
+        let shopsStr = row.shops.map(shop=>`<li>${shop}</li>`).join('');
+        let shopsCell = '';
+        if(idx===lastIdx && row.inspector==="د.آمنه بن صرم") {
+            shopsCell = `<button class="dropdown-shops-btn" disabled>عرض المحلات</button>`;
+        } else {
+            shopsCell = `
+            <span class="shops-dropdown-wrap">
+                <button class="dropdown-shops-btn" onclick="toggleShopsDropdown(event, ${idx})">عرض المحلات</button>
+                <div class="shops-dropdown-list" id="shopsDropdownList${idx}">
+                    <ul>${shopsStr}</ul>
+                </div>
+            </span>
+            `;
+        }
+        html += `
+            <tr>
+                <td class="shops-cell">${shopsCell}</td>
+                <td>${row.area}</td>
+                <td>${row.shift}</td>
+                <td>${row.day}</td>
+                <td class="inspector-name-cell">${row.inspector}</td>
+            </tr>
+        `;
+    });
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+}
+window.toggleShopsDropdown = function(event, idx) {
+    event.stopPropagation();
+    document.querySelectorAll('.shops-dropdown-list').forEach((el)=>{
+        el.style.display='none';
+    });
+    let list = document.getElementById('shopsDropdownList'+idx);
+    if(list) list.style.display = (list.style.display==='block'?'none':'block');
+};
+document.addEventListener('click', function(e){
+    if (![...document.querySelectorAll('.shops-dropdown-wrap *')].includes(e.target)) {
+        document.querySelectorAll('.shops-dropdown-list').forEach(el=>el.style.display='none');
+    }
+});
+function resetPlanForm() {
+    document.getElementById("addEditForm").reset();
+    document.getElementById("formEditingIndex").value = "";
+}
+document.getElementById('inspectorFilter').addEventListener('change', function() {
+    selectedInspector = this.value;
+    renderPlanTable();
+    resetPlanForm();
+});
+document.getElementById("loginRole").addEventListener("change", function() {
+    let role = this.value;
+    if(role === "developer") {
+        document.getElementById("devPasswordModal").style.display = "flex";
+        document.getElementById("modalDevPassword").value = "";
+        document.getElementById("devError").innerText = "";
+        document.getElementById("addEditForm").style.display = "none";
+        document.getElementById("logoutBtn").style.display = "none";
+    } else {
+        showInspectorMode();
+    }
+});
+function showDevMode() {
+    isDev = true;
+    document.getElementById("addEditForm").style.display = "flex";
+    document.getElementById("logoutBtn").style.display = "inline-block";
+    renderPlanTable();
+}
+function showInspectorMode() {
+    isDev = false;
+    document.getElementById("addEditForm").style.display = "none";
+    document.getElementById("logoutBtn").style.display = "none";
+    renderPlanTable();
+}
+document.getElementById("logoutBtn").onclick = function() {
+    showInspectorMode();
+    document.getElementById("loginRole").value = "inspector";
+};
+document.addEventListener('DOMContentLoaded', function() {
+    fillInspectorDropdowns();
+    fillAreaDropdown();
+    showInspectorMode();
+    renderPlanTable();
+    updateLastUpdateBar();
+});
+document.getElementById("addEditForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    let inspector = document.getElementById("formInspector").value;
+    let day = document.getElementById("formDay").value;
+    let shift = document.getElementById("formShift").value;
+    let area = document.getElementById("formArea").value;
+    let shops = document.getElementById("formShops").value.split(',').map(s=>s.trim()).filter(Boolean);
+    let editingIdx = document.getElementById("formEditingIndex").value;
+    if(!inspector || !day || !shift || !area || shops.length===0) {
+        alert("يرجى تعبئة جميع الحقول واختيار محل واحد على الأقل!");
+        return;
+    }
+    let newPlan = {inspector, day, shift, area, shops};
+    if(editingIdx==="") {
+        inspectionData.push(newPlan);
+    } else {
+        inspectionData[editingIdx] = newPlan;
+    }
+    saveInspectionData();
+    fillAreaDropdown();
+    renderPlanTable();
+    this.reset();
+    document.getElementById("formEditingIndex").value = "";
+});
+function editPlan(idx) {
+    let plan = inspectionData[idx];
+    document.getElementById("formInspector").value = plan.inspector;
+    document.getElementById("formDay").value = plan.day;
+    document.getElementById("formShift").value = plan.shift;
+    fillAreaDropdown();
+    document.getElementById("formArea").value = plan.area;
+    document.getElementById("formShops").value = plan.shops.join(', ');
+    document.getElementById("formEditingIndex").value = idx;
+}
+function deletePlan(idx) {
+    if(!confirm("هل تريد حذف هذه الخطة نهائياً؟")) return;
+    inspectionData.splice(idx,1);
+    saveInspectionData();
+    fillAreaDropdown();
+    renderPlanTable();
+    resetPlanForm();
+}
+function devPasswordSubmit() {
+    let pw = document.getElementById("modalDevPassword").value.trim();
+    if (pw === DEV_PASSWORD) {
+        document.getElementById("devPasswordModal").style.display = "none";
+        showDevMode();
+        document.getElementById("loginRole").value = "developer";
+    } else {
+        document.getElementById("devError").innerText = "كلمة السر غير صحيحة!";
+    }
+}
+function closeDevPasswordModal() {
+    document.getElementById("devPasswordModal").style.display = "none";
+    showInspectorMode();
+    document.getElementById("loginRole").value = "inspector";
+}
+
+function getActiveTableAndCaption() {
+    let reportDiv = document.getElementById('inspectorReportDiv');
+    if (reportDiv.style.display === "block" && reportDiv.querySelector("table")) {
+        let table = reportDiv.querySelector("table");
+        let caption = "";
+        let capEl = reportDiv.querySelector(".report-table-caption");
+        if(capEl) caption = capEl.innerText;
+        return {table, caption};
+    } else if (document.getElementById('inspectorPlanTable')) {
+        return {table: document.getElementById('inspectorPlanTable'), caption: "خطة التفتيش الشهرية"};
+    }
+    return {table:null, caption:""};
+}
+function exportActiveTableToPDF() {
+    let {table, caption} = getActiveTableAndCaption();
+    if (!table) { alert("لا يوجد جدول للتصدير"); return; }
+    let wrap = document.createElement('div');
+    wrap.style.background = '#fff';
+    wrap.style.padding = '18px';
+    wrap.style.width = table.offsetWidth + 'px';
+    let titleBox = document.createElement('div');
+    titleBox.className = "pdf-title-arabic";
+    titleBox.innerText = caption;
+    wrap.appendChild(titleBox);
+    let tableClone = table.cloneNode(true);
+    tableClone.style.marginTop = '10px';
+    wrap.appendChild(tableClone);
+    document.body.appendChild(wrap);
+    html2canvas(wrap, {backgroundColor:'#fff', scale:2}).then(function(canvas) {
+        const imgData = canvas.toDataURL('image/png');
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({orientation:"landscape",unit:"pt",format:"a4"});
+        let pageWidth = doc.internal.pageSize.getWidth();
+        let imgProps = doc.getImageProperties(imgData);
+        let pdfWidth = pageWidth - 80;
+        let pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        doc.addImage(imgData, 'PNG', 40, 35, pdfWidth, pdfHeight);
+        doc.save(`${caption.replace(/[^\u0600-\u06FF\w\s]/g,"").replace(/\s+/g,"_")}.pdf`);
+        document.body.removeChild(wrap);
+    });
+}
+function exportActiveTableToExcel() {
+    let {table, caption} = getActiveTableAndCaption();
+    if (!table) { alert("لا يوجد جدول للتصدير"); return; }
+    let ws_data = [];
+    for(let r of table.rows) {
+        let row = [];
+        for(let c of r.cells) row.push(c.textContent);
+        ws_data.push(row);
+    }
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(ws_data);
+    XLSX.utils.book_append_sheet(wb, ws, caption || "الخطة");
+    XLSX.writeFile(wb, `${caption.replace(/[^\u0600-\u06FF\w\s]/g,"").replace(/\s+/g,"_")||"الخطة"}.xlsx`);
+}
+
+function showInspectorReport() {
+    let inspector = document.getElementById('inspectorFilter').value;
+    let reportDiv = document.getElementById('inspectorReportDiv');
+    if (!inspector) {
+        reportDiv.style.display = "block";
+        reportDiv.innerHTML = "اختر اسم المفتش أولاً لعرض تقريره.";
+        return;
+    }
+    let rows = inspectionData.filter(r=>r.inspector===inspector);
+    if(rows.length===0) {
+        reportDiv.style.display = "block";
+        reportDiv.innerHTML = "لا توجد بيانات لهذا المفتش.";
+        return;
+    }
+    let html = `<div class="report-table-caption">تقرير المفتش (${inspector})</div>
+    <table class="report-table">
+        <thead><tr>
+            <th>اليوم</th>
+            <th>المنطقة</th>
+            <th>وقت المناوبة</th>
+            <th>عدد المحلات</th>
+            <th>تفاصيل المحلات</th>
+        </tr></thead>
+        <tbody>
+    `;
+    rows.forEach(row=>{
+        html += `<tr>
+            <td>${row.day}</td>
+            <td>${row.area}</td>
+            <td>${row.shift}</td>
+            <td>${row.shops.length}</td>
+            <td>${row.shops.join("، ")}</td>
+        </tr>`;
+    });
+    html += "</tbody></table>";
+    reportDiv.style.display = "block";
+    reportDiv.innerHTML = html;
+}
+function showMonthlyReport() {
+    let reportDiv = document.getElementById('inspectorReportDiv');
+    let summary = {};
+    let shopsMap = {};
+    inspectionData.forEach(r=>{
+        summary[r.inspector] = (summary[r.inspector]||0) + r.shops.length;
+        if (!shopsMap[r.inspector]) shopsMap[r.inspector] = [];
+        shopsMap[r.inspector] = shopsMap[r.inspector].concat(r.shops);
+    });
+    let html = `<div class="report-table-caption">التقرير الشهري (إجمالي عدد المحلات وتفاصيلها لكل مفتش)</div>
+    <table class="report-table">
+        <thead><tr>
+            <th>المفتش</th>
+            <th>عدد المحلات</th>
+            <th>تفاصيل المحلات</th>
+        </tr></thead>
+        <tbody>
+    `;
+    for(let k in summary) {
+        html += `<tr>
+            <td>${k}</td>
+            <td>${summary[k]}</td>
+            <td>${shopsMap[k].join("، ")}</td>
+        </tr>`;
+    }
+    html += "</tbody></table>";
+    reportDiv.style.display = "block";
+    reportDiv.innerHTML = html;
+}
+document.addEventListener('click', function(e){
+    let reportDiv = document.getElementById('inspectorReportDiv');
+    if(reportDiv.style.display === "block" && !reportDiv.contains(e.target) && !e.target.classList.contains('inspector-report-btn') && !e.target.classList.contains('monthly-report-btn')) {
+        reportDiv.style.display = "none";
+    }
+});
+</script>
+</body>
+</html>

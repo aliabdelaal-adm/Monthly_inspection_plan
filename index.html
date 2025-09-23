@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>واجهة إدارة خطة التفتيش الشهرية</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: 'Cairo', Tahoma, Arial, sans-serif;
+            background: #f7f8fa;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 40px auto 24px auto;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 32px #0002;
+            padding: 32px 24px 24px 24px;
+            direction: rtl;
+        }
+        .main-title {
+            background: #234093;
+            color: #fff;
+            border-radius: 10px;
+            padding: 18px 0;
+            text-align: center;
+            font-size: 2em;
+            margin-bottom: 24px;
+            letter-spacing: 1px;
+        }
+        .top-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            gap: 1.5rem;
+            direction: rtl;
+        }
+        .top-bar label, .top-bar .user-type-label {
+            font-size: 1.1em;
+            margin-left: 8px;
+        }
+        .top-bar select, .top-bar button {
+            font-size: 1em;
+            border-radius: 7px;
+            border: 1px solid #ccc;
+            padding: 8px 14px;
+            margin-right: 8px;
+        }
+        .top-bar button {
+            background: #234093;
+            color: #fff;
+            border: none;
+            margin: 0 4px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .top-bar button:hover {
+            background: #1a2c67;
+        }
+        .admin-panel {
+            margin: 32px 0 32px 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 28px;
+        }
+        .admin-section {
+            background: #f3f6fe;
+            border: 1px solid #e0e7f7;
+            border-radius: 14px;
+            padding: 24px 18px 18px 18px;
+            box-shadow: 0px 1.5px 6px #23409311;
+            margin-bottom: 24px;
+        }
+        .admin-section h3 {
+            color: #1a2c67;
+            margin-top: 0;
+            font-size: 1.13em;
+            margin-bottom: 18px;
+        }
+        .add-row-form {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 18px;
+            align-items: center;
+        }
+        .add-row-form input[type="text"] {
+            flex: 1;
+            font-size: 1em;
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid #bbb;
+        }
+        .add-row-form button {
+            background: #234093;
+            color: #fff;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .admin-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .admin-list li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #fff;
+            margin-bottom: 7px;
+            border-radius: 7px;
+            padding: 7px 10px;
+            border: 1px solid #e3e6f0;
+        }
+        .admin-list .list-actions button {
+            margin-right: 5px;
+            font-size: 0.97em;
+            padding: 4px 12px;
+            border-radius: 5px;
+        }
+        .edit-btn {
+            background: #efb400;
+            color: #fff;
+            border: none;
+        }
+        .edit-btn:hover {
+            background: #b28a00;
+        }
+        .save-btn {
+            background: #388e3c;
+            color: #fff;
+            border: none;
+        }
+        .delete-btn {
+            background: #d32f2f;
+            color: #fff;
+            border: none;
+        }
+        .delete-btn:hover {
+            background: #b71c1c;
+        }
+        /* توزيع المحلات */
+        .shops-area-box {
+            background: #e9ebf6;
+            border-radius: 10px;
+            padding: 18px 10px 10px 10px;
+            margin-bottom: 20px;
+        }
+        .shops-area-title {
+            font-size: 1.07em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .shop-area-tag {
+            background: #234093;
+            color: #fff;
+            border-radius: 18px;
+            padding: 4px 16px 4px 16px;
+            display: inline-block;
+            margin: 2px 4px;
+        }
+        .shop-area-tag button {
+            background: #c22;
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            margin-right: 4px;
+            font-size: 1.1em;
+            cursor: pointer;
+        }
+        .distribution-table th, .distribution-table td {
+            text-align: center;
+            padding: 7px 6px;
+        }
+        .distribution-table th {
+            background: #234093;
+            color: #fff;
+        }
+        .distribution-table td button {
+            background: #c22;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 4px 10px;
+        }
+        /* المفتش */
+        .section-box {
+            background: #f4f6fa;
+            border-radius: 14px;
+            margin-bottom: 30px;
+            box-shadow: 0px 1.5px 6px #23409311;
+        }
+        .table-title, .stats-title {
+            color: #c00;
+            font-size: 1.15em;
+            font-weight: bold;
+            margin: 16px 0 8px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            margin-bottom: 10px;
+        }
+        th, td {
+            border: 1px solid #bbb;
+            padding: 12px 6px;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 1.09em;
+        }
+        th {
+            background: #234093;
+            color: #fff;
+        }
+        .shop-btn {
+            background: #e5eaff;
+            color: #234093;
+            border: none;
+            border-radius: 7px;
+            padding: 6px 16px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: 0.2s;
+        }
+        .shop-btn:hover {
+            background: #b2c5fa;
+        }
+        .goals-section {
+            background: #e5f7ef;
+            border: 1px solid #81c6ae;
+            border-radius: 14px;
+            padding: 16px 12px 10px 12px;
+            margin-bottom: 15px;
+        }
+        .goals-section h3 {
+            color: #046a44;
+            margin: 0 0 10px 0;
+            font-size: 1.1em;
+        }
+        .goals-section ul {
+            margin: 0;
+            padding-right: 20px;
+        }
+        .goals-section li {
+            color: #046a44;
+            margin-bottom: 4px;
+            font-size: 1.01em;
+        }
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            border-radius: 8px;
+            background: #fff;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+        .stats-table th, .stats-table td {
+            border: 1px solid #234093;
+            padding: 10px 6px;
+            text-align: center;
+            font-size: 1.05em;
+        }
+        .stats-table th {
+            background: #234093;
+            color: #fff;
+        }
+        .stats-table tfoot td {
+            background: #e2e6f6;
+            font-weight: bold;
+        }
+        .stats-total-cell {
+            color: #c00;
+            font-weight: bold;
+        }
+        .copyright {
+            text-align: center;
+            color: #234093;
+            font-weight: bold;
+            margin-top: 20px;
+            font-size: 1.08em;
+        }
+        /* نافذة المحلات ونافذة الرقم السري */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.36);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: #fff;
+            padding: 32px 26px 22px 26px;
+            border-radius: 18px;
+            box-shadow: 0 2px 16px #0002;
+            min-width: 260px;
+            max-width: 350px;
+            text-align: center;
+        }
+        .modal-content button {
+            background: #234093;
+            color: #fff;
+            border: none;
+            padding: 8px 22px;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .modal-content label {
+            font-size: 1.08em;
+            color: #234093;
+            margin-bottom: 16px;
+            display: block;
+        }
+        .modal-content input[type="password"] {
+            font-size: 1.08em;
+            padding: 7px 12px;
+            border: 1.5px solid #ccc;
+            border-radius: 8px;
+            margin-bottom: 14px;
+            text-align: center;
+        }
+        .modal-content .error-msg {
+            color: #d32f2f;
+            margin-bottom: 8px;
+        }
+        @media (max-width: 900px) {
+            .container { padding: 14px 2px 8px 2px; }
+            .main-title { font-size: 1.22em; padding: 11px 0; }
+            .admin-panel { grid-template-columns: 1fr; gap: 16px; }
+            .admin-section, .goal-section, .inspect-section, .section-box { padding: 13px 4px 13px 4px;}
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-title">واجهة إدارة خطة التفتيش الشهرية</div>
+        <div id="updateTime" class="top-bar"></div>
+        <!-- إدارة المناطق -->
+        <div class="admin-panel">
+            <div class="admin-section" id="areas-section">
+                <h3>المناطق</h3>
+                <div class="add-row-form">
+                    <input type="text" id="newAreaInput" placeholder="اسم المنطقة الجديدة">
+                    <button onclick="addArea()">إضافة منطقة</button>
+                </div>
+                <ul id="areasList" class="admin-list"></ul>
+            </div>
+            <div class="admin-section" id="inspectors-section">
+                <h3>المفتشون</h3>
+                <div class="add-row-form">
+                    <input type="text" id="newInspectorInput" placeholder="اسم المفتش الجديد">
+                    <button onclick="addInspector()">إضافة مفتش</button>
+                </div>
+                <ul id="inspectorsList" class="admin-list"></ul>
+            </div>
+        </div>
+        <!-- إدارة المحلات لكل منطقة -->
+        <div class="admin-panel" id="shops-area-panel"></div>
+        <!-- توزيع المحلات -->
+        <div class="admin-section">
+            <h3>توزيع المحلات على المفتشين والأيام</h3>
+            <button onclick="addDistributionRow()">إضافة صف توزيع جديد</button>
+            <div id="distributionList"></div>
+        </div>
+        <!-- أهداف الخطة -->
+        <div class="goal-section">
+            <h3>أهداف الخطة</h3>
+            <ul id="goalsList" class="goal-list"></ul>
+            <div class="add-row-form">
+                <input type="text" id="newGoalInput" placeholder="هدف جديد">
+                <button onclick="addGoal()">إضافة هدف</button>
+            </div>
+        </div>
+        <!-- جدول عرض الخطة -->
+        <div class="section-box">
+            <div class="table-title">جدول التفتيش الشهري (معاينة)</div>
+            <div id="planTable"></div>
+        </div>
+        <div class="copyright">
+            جميع الحقوق محفوظة &copy; المطور د. علي عبدالعال
+        </div>
+        <!-- أزرار الحفظ -->
+        <div style="text-align:center; margin:30px 0;">
+            <button onclick="savePlanLocal()" class="top-bar button">حفظ الخطة على الجهاز (CSV)</button>
+            <button onclick="savePlanGitHub()" class="top-bar button" style="background:#388e3c;">حفظ الخطة في GitHub (سحابي)</button>
+            <div id="saveStatus" style="margin-top:10px; font-weight:bold;"></div>
+        </div>
+    </div>
+    <!-- نافذة التوكين -->
+    <div id="tokenModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <label for="apiToken">يرجى إدخال GitHub API Token (مرة واحدة فقط):</label>
+            <input type="password" id="apiToken" placeholder="ghp_...">
+            <div class="error-msg" id="tokenError" style="display:none;"></div>
+            <button onclick="saveToken()">حفظ التوكين</button>
+        </div>
+    </div>
+    <script>
+        // روابط البيانات
+        const PLAN_URL = "https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/plan-data.json?" + Date.now();
+        const API_URL  = "https://api.github.com/repos/aliabdelaal-adm/Monthly_inspection_plan/commits?path=plan-data.json&per_page=1&" + Date.now();
+
+        // بيانات التطبيق
+        let currentPlan = {
+            inspectors: [],
+            areas: [],
+            shopsByArea: {},
+            distribution: [],
+            goals: []
+        };
+
+        // جلب تاريخ آخر تحديث للملف من GitHub API
+        fetch(API_URL)
+        .then(r=>r.json())
+        .then(commits=>{
+            let dateStr = "";
+            if(Array.isArray(commits) && commits[0] && commits[0].commit && commits[0].commit.committer && commits[0].commit.committer.date){
+                let d = new Date(commits[0].commit.committer.date);
+                dateStr = d.toLocaleDateString('ar-EG') + " " + d.toLocaleTimeString('ar-EG');
+            }
+            if(dateStr){
+                document.getElementById("updateTime").innerHTML = "آخر تحديث للخطة: <b>"+dateStr+"</b>";
+            }
+        });
+
+        // تحميل البيانات من GitHub أو بيانات افتراضية
+        const mockPlan = {
+            "inspectors": ["آيه", "هاجر", "آمنه"],
+            "areas": ["المصفح", "مدينة خليفة"],
+            "shopsByArea": {
+                "المصفح": ["بيت لوكيشن", "بيت بارك"],
+                "مدينة خليفة": ["بت كورنر", "ذا بيت شوب"]
+            },
+            "distribution": [
+                {
+                    "inspector": "هاجر",
+                    "day": "2025-09-22",
+                    "shift": "صباحية",
+                    "area": "المصفح",
+                    "shops": ["بيت لوكيشن", "بيت بارك"]
+                }
+            ],
+            "goals": ["ضمان سلامة المنتجات", "الالتزام بالاشتراطات الصحية"]
+        };
+
+        fetch(PLAN_URL)
+        .then(r=>r.json())
+        .then(plan=>{
+            loadPlanData(plan);
+        })
+        .catch(()=>{
+            loadPlanData(mockPlan);
+        });
+
+        function loadPlanData(plan) {
+            currentPlan = plan;
+            updateAreas();
+            updateInspectors();
+            updateShopsByArea();
+            updateGoals();
+            updateDistributionList();
+            updatePreviewTable();
+        }
+
+        // إدارة المناطق
+        function addArea() {
+            const input = document.getElementById("newAreaInput");
+            const name = input.value.trim();
+            if (!name) return alert("يرجى إدخال اسم المنطقة");
+            if (currentPlan.areas.includes(name)) return alert("هذه المنطقة موجودة بالفعل");
+            currentPlan.areas.push(name);
+            currentPlan.shopsByArea[name] = [];
+            input.value = "";
+            updateAreas();
+            updateShopsByArea();
+            updateDistributionList();
+        }
+        function deleteArea(area) {
+            if (!confirm("حذف المنطقة سيحذف جميع المحلات والتوزيعات المتعلقة بها. هل أنت متأكد؟")) return;
+            currentPlan.areas = currentPlan.areas.filter(a=>a!==area);
+            delete currentPlan.shopsByArea[area];
+            currentPlan.distribution = currentPlan.distribution.filter(d=>d.area!==area);
+            updateAreas();
+            updateShopsByArea();
+            updateDistributionList();
+            updatePreviewTable();
+        }
+        function updateAreas() {
+            const ul = document.getElementById("areasList");
+            ul.innerHTML = "";
+            currentPlan.areas.forEach(area=>{
+                const li = document.createElement("li");
+                li.textContent = area;
+                const btn = document.createElement("button");
+                btn.className = "delete-btn";
+                btn.textContent = "حذف";
+                btn.onclick = ()=>deleteArea(area);
+                li.appendChild(btn);
+                ul.appendChild(li);
+            });
+        }
+
+        // إدارة المفتشين
+        function addInspector() {
+            const input = document.getElementById("newInspectorInput");
+            const name = input.value.trim();
+            if (!name) return alert("يرجى إدخال اسم المفتش");
+            if (currentPlan.inspectors.includes(name)) return alert("هذا المفتش موجود بالفعل");
+            currentPlan.inspectors.push(name);
+            input.value = "";
+            updateInspectors();
+            updateDistributionList();
+        }
+        function deleteInspector(inspector) {
+            if (!confirm("هل تريد حذف المفتش؟")) return;
+            currentPlan.inspectors = currentPlan.inspectors.filter(i=>i!==inspector);
+            currentPlan.distribution = currentPlan.distribution.map(row=>{
+                if(row.inspector===inspector) row.inspector = "";
+                return row;
+            });
+            updateInspectors();
+            updateDistributionList();
+            updatePreviewTable();
+        }
+        function updateInspectors() {
+            const ul = document.getElementById("inspectorsList");
+            ul.innerHTML = "";
+            currentPlan.inspectors.forEach(inspector=>{
+                const li = document.createElement("li");
+                li.textContent = inspector;
+                const btn = document.createElement("button");
+                btn.className = "delete-btn";
+                btn.textContent = "حذف";
+                btn.onclick = ()=>deleteInspector(inspector);
+                li.appendChild(btn);
+                ul.appendChild(li);
+            });
+        }
+
+        // إدارة المحلات حسب المنطقة
+        function updateShopsByArea() {
+            const panel = document.getElementById("shops-area-panel");
+            panel.innerHTML = "";
+            currentPlan.areas.forEach(area=>{
+                const box = document.createElement("div");
+                box.className = "shops-area-box";
+                box.innerHTML = `<div class="shops-area-title">${area}</div>`;
+                const shopList = document.createElement("div");
+                (currentPlan.shopsByArea[area]||[]).forEach(shop=>{
+                    const tag = document.createElement("span");
+                    tag.className = "shop-area-tag";
+                    tag.textContent = shop;
+                    const btn = document.createElement("button");
+                    btn.textContent = "×";
+                    btn.onclick = ()=>{
+                        currentPlan.shopsByArea[area] = currentPlan.shopsByArea[area].filter(s=>s!==shop);
+                        updateShopsByArea();
+                        updateDistributionList();
+                        updatePreviewTable();
+                    };
+                    tag.appendChild(btn);
+                    shopList.appendChild(tag);
+                });
+                box.appendChild(shopList);
+                // إضافة محل جديد
+                const input = document.createElement("input");
+                input.type = "text";
+                input.placeholder = "اسم محل جديد";
+                input.style = "margin-top:10px;width:55%";
+                const addBtn = document.createElement("button");
+                addBtn.textContent = "إضافة محل";
+                addBtn.onclick = ()=>{
+                    const shop = input.value.trim();
+                    if(!shop) return;
+                    if(currentPlan.shopsByArea[area].includes(shop)) return alert("هذا المحل موجود بالفعل.");
+                    currentPlan.shopsByArea[area].push(shop);
+                    input.value = "";
+                    updateShopsByArea();
+                    updateDistributionList();
+                    updatePreviewTable();
+                };
+                box.appendChild(document.createElement("br"));
+                box.appendChild(input);
+                box.appendChild(addBtn);
+                panel.appendChild(box);
+            });
+        }
+
+        // أهداف الخطة
+        function addGoal() {
+            const input = document.getElementById("newGoalInput");
+            const goal = input.value.trim();
+            if (!goal) return;
+            currentPlan.goals.push(goal);
+            input.value = "";
+            updateGoals();
+        }
+        function deleteGoal(idx) {
+            currentPlan.goals.splice(idx, 1);
+            updateGoals();
+        }
+        function updateGoals() {
+            const ul = document.getElementById("goalsList");
+            ul.innerHTML = "";
+            currentPlan.goals.forEach((goal, idx)=>{
+                const li = document.createElement("li");
+                li.textContent = goal;
+                const btn = document.createElement("button");
+                btn.className = "goal-delete-btn";
+                btn.textContent = "حذف";
+                btn.onclick = ()=>deleteGoal(idx);
+                li.appendChild(btn);
+                ul.appendChild(li);
+            });
+        }
+
+        // توزيع المحلات (جدول ديناميكي)
+        function addDistributionRow() {
+            currentPlan.distribution.push({
+                inspector: "",
+                day: "",
+                shift: "",
+                area: "",
+                shops: []
+            });
+            updateDistributionList();
+        }
+        function deleteDistributionRow(idx) {
+            if (!confirm("هل تريد حذف هذا الصف؟")) return;
+            currentPlan.distribution.splice(idx, 1);
+            updateDistributionList();
+            updatePreviewTable();
+        }
+        function updateDistributionList() {
+            const container = document.getElementById("distributionList");
+            container.innerHTML = "";
+            currentPlan.distribution.forEach((row, idx)=>{
+                const div = document.createElement("div");
+                div.className = "distribution-row";
+                div.style = "background:#f8f9fa; border:1px solid #ddd; padding:10px; margin:10px 0; border-radius:6px;";
+                // المفتش
+                let inspectorSelect = `<select onchange="setDistribution(${idx}, 'inspector', this.value)">
+                    <option value="">اختر مفتش</option>
+                    ${currentPlan.inspectors.map(ins=>`<option value="${ins}"${row.inspector===ins?' selected':''}>${ins}</option>`).join('')}
+                </select>`;
+                // اليوم
+                let dayInput = `<input type="date" value="${row.day||''}" onchange="setDistribution(${idx}, 'day', this.value)">`;
+                // المناوبة
+                let shiftSelect = `<select onchange="setDistribution(${idx}, 'shift', this.value)">
+                    <option value="">اختر مناوبة</option>
+                    <option value="صباحية"${row.shift==="صباحية"?' selected':''}>صباحية</option>
+                    <option value="مسائية"${row.shift==="مسائية"?' selected':''}>مسائية</option>
+                </select>`;
+                // المنطقة
+                let areaSelect = `<select onchange="setDistribution(${idx}, 'area', this.value)">
+                    <option value="">اختر منطقة</option>
+                    ${currentPlan.areas.map(area=>`<option value="${area}"${row.area===area?' selected':''}>${area}</option>`).join('')}
+                </select>`;
+                // المحلات حسب المنطقة (checkboxes)
+                let shopsHtml = "";
+                if(row.area && currentPlan.shopsByArea[row.area]) {
+                    shopsHtml = currentPlan.shopsByArea[row.area].map(shop=>
+                        `<label style="margin:0 8px;">
+                            <input type="checkbox" value="${shop}" 
+                                ${row.shops&&row.shops.includes(shop)?'checked':''}
+                                onchange="toggleShop(${idx}, '${shop}', this.checked)">
+                            ${shop}
+                        </label>`
+                    ).join('');
+                }
+                div.innerHTML = `
+                    <div class="field-group"><label>المفتش:</label> ${inspectorSelect}</div>
+                    <div class="field-group"><label>اليوم:</label> ${dayInput}</div>
+                    <div class="field-group"><label>المناوبة:</label> ${shiftSelect}</div>
+                    <div class="field-group"><label>المنطقة:</label> ${areaSelect}</div>
+                    <div class="field-group"><label>المحلات:</label> ${shopsHtml}</div>
+                    <button class="delete-btn" onclick="deleteDistributionRow(${idx})">حذف الصف</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+        function setDistribution(idx, field, value) {
+            if(field==="area") currentPlan.distribution[idx].shops = []; // إعادة ضبط المحلات عند تغيير المنطقة
+            currentPlan.distribution[idx][field] = value;
+            updateDistributionList();
+            updatePreviewTable();
+        }
+        function toggleShop(idx, shop, checked) {
+            let shops = currentPlan.distribution[idx].shops || [];
+            if(checked) {
+                if(!shops.includes(shop)) shops.push(shop);
+            } else {
+                shops = shops.filter(s=>s!==shop);
+            }
+            currentPlan.distribution[idx].shops = shops;
+            updatePreviewTable();
+        }
+
+        // جدول المعاينة
+        function updatePreviewTable() {
+            let html = `<table class="distribution-table"><thead>
+                <tr>
+                    <th>المفتش</th><th>اليوم</th><th>المناوبة</th><th>المنطقة</th><th>المحلات</th>
+                </tr>
+            </thead><tbody>`;
+            currentPlan.distribution.forEach(row=>{
+                html += `<tr>
+                    <td>${row.inspector||''}</td>
+                    <td>${row.day||''}</td>
+                    <td>${row.shift||''}</td>
+                    <td>${row.area||''}</td>
+                    <td>${(row.shops||[]).map(shop=>`<span class="shop-area-tag">${shop}</span>`).join('')}</td>
+                </tr>`;
+            });
+            html += "</tbody></table>";
+            document.getElementById("planTable").innerHTML = html;
+        }
+
+        // ==== الحفظ المحلي (CSV) ====
+        function savePlanLocal() {
+            let csv = "المفتش,اليوم,المناوبة,المنطقة,المحلات\n";
+            currentPlan.distribution.forEach(row=>{
+                csv += `"${row.inspector}","${row.day}","${row.shift}","${row.area}","${(row.shops||[]).join(';')}"\n`;
+            });
+            const blob = new Blob([csv], {type:"text/csv"});
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "inspection-plan.csv";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            document.getElementById("saveStatus").innerText = "تم حفظ الخطة على الجهاز.";
+        }
+
+        // ==== الحفظ السحابي (GitHub) ====
+        function savePlanGitHub() {
+            let token = localStorage.getItem("github_token");
+            if(!token) {
+                document.getElementById("tokenModal").style.display = "flex";
+                return;
+            }
+            const url = "https://api.github.com/repos/aliabdelaal-adm/Monthly_inspection_plan/contents/plan-data.json";
+            const planContent = btoa(unescape(encodeURIComponent(JSON.stringify(currentPlan, null, 2))));
+            // جلب sha الحالي أولا لكي يتم التحديث وليس إنشاء جديد
+            fetch(url, {headers:{Authorization:"token "+token}})
+            .then(resp=>resp.json())
+            .then(data=>{
+                const sha = data.sha;
+                return fetch(url, {
+                    method: "PUT",
+                    headers: {
+                        "Authorization": "token " + token,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        message: "تحديث الخطة من الواجهة",
+                        content: planContent,
+                        sha: sha
+                    })
+                });
+            })
+            .then(resp=>resp.json())
+            .then(result=>{
+                if(result.content) {
+                    document.getElementById("saveStatus").innerText = "تم حفظ الخطة على GitHub بنجاح.";
+                } else {
+                    document.getElementById("saveStatus").innerText = "حدث خطأ أثناء الحفظ!";
+                }
+            })
+            .catch(()=>{
+                document.getElementById("saveStatus").innerText = "تعذر الحفظ! تحقق من التوكين أو الصلاحيات.";
+            });
+        }
+
+        // حفظ التوكين
+        function saveToken() {
+            const token = document.getElementById("apiToken").value.trim();
+            if(token.length<20){
+                document.getElementById("tokenError").innerText = "يرجى إدخال توكين صالح!";
+                document.getElementById("tokenError").style.display = "block";
+                return;
+            }
+            localStorage.setItem("github_token", token);
+            document.getElementById("tokenModal").style.display = "none";
+            document.getElementById("tokenError").style.display = "none";
+            document.getElementById("apiToken").value = "";
+            document.getElementById("saveStatus").innerText = "تم حفظ التوكين! يمكنك الآن الحفظ على GitHub.";
+        }
+
+        // دعم setDistribution و toggleShop في global scope
+        window.setDistribution = setDistribution;
+        window.toggleShop = toggleShop;
+        window.deleteDistributionRow = deleteDistributionRow;
+
+    </script>
+</body>
+</html>

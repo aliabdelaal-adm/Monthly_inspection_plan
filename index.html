@@ -431,13 +431,6 @@ document.getElementById("logoutBtn").onclick = function() {
     showInspectorMode();
     document.getElementById("loginRole").value = "inspector";
 };
-document.addEventListener('DOMContentLoaded', function() {
-    fillInspectorDropdowns();
-    fillAreaDropdown();
-    showInspectorMode();
-    renderPlanTable();
-    updateLastUpdateBar();
-});
 document.getElementById("addEditForm").addEventListener("submit", function(e){
     e.preventDefault();
     let inspector = document.getElementById("formInspector").value;
@@ -632,6 +625,60 @@ document.addEventListener('click', function(e){
         reportDiv.style.display = "none";
     }
 });
+
+// --- جلب البيانات من الملف المركزي على GitHub ---
+async function loadDataFromGitHub() {
+    try {
+        const dataUrl = 'https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/data.json';
+        const response = await fetch(dataUrl);
+        
+        if (!response.ok) {
+            console.warn('تعذر جلب البيانات من GitHub، سيتم استخدام البيانات الافتراضية');
+            return false;
+        }
+        
+        const data = await response.json();
+        
+        // تحديث بيانات المفتشين
+        if (data.inspectorsData && Array.isArray(data.inspectorsData)) {
+            inspectorsData = data.inspectorsData;
+            inspectors = inspectorsData.map(i => i.name);
+        }
+        
+        // تحديث بيانات التفتيش
+        if (data.inspectionData && Array.isArray(data.inspectionData)) {
+            // إذا لم توجد بيانات محفوظة محلياً، استخدم البيانات من GitHub
+            let localData = localStorage.getItem('inspectionData');
+            if (!localData) {
+                inspectionData = data.inspectionData.slice();
+                saveInspectionData();
+            }
+        }
+        
+        console.log('تم جلب البيانات بنجاح من GitHub');
+        return true;
+        
+    } catch (error) {
+        console.warn('خطأ في جلب البيانات من GitHub:', error);
+        return false;
+    }
+}
+
+// تحديث عملية تحميل الصفحة لتشمل جلب البيانات
+async function initializePage() {
+    // جلب البيانات من GitHub أولاً
+    await loadDataFromGitHub();
+    
+    // ثم تحديث واجهة المستخدم
+    fillInspectorDropdowns();
+    fillAreaDropdown();
+    showInspectorMode();
+    renderPlanTable();
+    updateLastUpdateBar();
+}
+
+// تحديث مستمع تحميل الصفحة
+document.addEventListener('DOMContentLoaded', initializePage);
 </script>
 </body>
 </html>

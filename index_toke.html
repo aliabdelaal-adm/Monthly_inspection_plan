@@ -575,23 +575,101 @@
         </div>
     </div>
     <script>
-        // --- المتغيرات والتخزين الدائم ---
-        let inspectors = ["هاجر","آمنه","آيه","د. فايز المسالمة","د.آمنه بن صرم"];
-        let shops = ["محل 1", "محل 2", "محل 3", "محل 4","محل 5", "محل 6", "محل 7", "محل 8","محل 9", "محل 10", "محل 11"];
-        let areas = ["المصفح", "مدينة خليفة", "المنطقة أ", "المنطقة ب", "المنطقة ج", "المنطقة د"];
-        let goals = ["ضمان سلامة المنتجات","الالتزام بالاشتراطات الصحية"];
-        let inspectionData = [
-            { inspector: "هاجر", day: "2025-09-22", shift: "صباحية", area: "المصفح", shops: ["محل 1", "محل 2"] },
-            { inspector: "آمنه", day: "2025-09-25", shift: "مسائية", area: "مدينة خليفة", shops: ["محل 3", "محل 4"] },
-            { inspector: "آيه", day: "2025-09-22", shift: "صباحية", area: "المصفح", shops: ["محل 5"] },
-            { inspector: "د. فايز المسالمة", day: "2025-09-21", shift: "صباحية", area: "المنطقة أ", shops: ["محل 6", "محل 7"] },
-            { inspector: "د. فايز المسالمة", day: "2025-09-27", shift: "صباحية", area: "المنطقة ب", shops: ["محل 8"] },
-            { inspector: "د.آمنه بن صرم", day: "2025-09-21", shift: "مسائية", area: "المنطقة ج", shops: ["محل 9"] },
-            { inspector: "د.آمنه بن صرم", day: "2025-09-28", shift: "مسائية", area: "المنطقة د", shops: ["محل 10", "محل 11"] }
-        ];
+        // --- المتغيرات المحملة من البيانات المركزية ---
+        let inspectors = [];
+        let shops = [];
+        let areas = [];
+        let goals = [];
+        let inspectionData = [];
         let shopsByArea = {};
         let distributionRows = [];
-        const weekendDays = [5, 6, 0];
+        let weekendDays = [5, 6, 0];
+        let inspectorsData = [];
+
+        // --- جلب البيانات من الملف المركزي ---
+        async function loadDataFromGitHub() {
+            try {
+                const dataUrl = 'https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/data.json';
+                const response = await fetch(dataUrl);
+                
+                if (!response.ok) {
+                    console.warn('تعذر جلب البيانات من GitHub، سيتم استخدام البيانات الافتراضية');
+                    setDefaultData();
+                    return false;
+                }
+                
+                const data = await response.json();
+                
+                // تحديث بيانات المفتشين
+                if (data.inspectorsData && Array.isArray(data.inspectorsData)) {
+                    inspectorsData = data.inspectorsData;
+                    inspectors = inspectorsData.map(i => i.name);
+                }
+                
+                // تحديث باقي البيانات
+                if (data.shops && Array.isArray(data.shops)) {
+                    shops = data.shops.slice();
+                }
+                
+                if (data.areas && Array.isArray(data.areas)) {
+                    areas = data.areas.slice();
+                }
+                
+                if (data.goals && Array.isArray(data.goals)) {
+                    goals = data.goals.slice();
+                }
+                
+                if (data.inspectionData && Array.isArray(data.inspectionData)) {
+                    inspectionData = data.inspectionData.slice();
+                }
+                
+                if (data.shopsByArea && typeof data.shopsByArea === 'object') {
+                    shopsByArea = { ...data.shopsByArea };
+                }
+                
+                if (data.distributionRows && Array.isArray(data.distributionRows)) {
+                    distributionRows = data.distributionRows.slice();
+                }
+                
+                if (data.weekendDays && Array.isArray(data.weekendDays)) {
+                    weekendDays = data.weekendDays.slice();
+                }
+                
+                console.log('تم تحميل البيانات من الملف المركزي بنجاح');
+                return true;
+                
+            } catch (error) {
+                console.error('خطأ في تحميل البيانات:', error);
+                setDefaultData();
+                return false;
+            }
+        }
+
+        // --- تعيين البيانات الافتراضية ---
+        function setDefaultData() {
+            inspectorsData = [
+                {"id":"hager", "name":"هاجر"}, 
+                {"id":"amna", "name":"آمنه"}, 
+                {"id":"aya", "name":"آيه"},
+                {"id":"faiz", "name":"د. فايز المسالمة"}, 
+                {"id":"amna2", "name":"د.آمنه بن صرم"}
+            ];
+            inspectors = inspectorsData.map(i => i.name);
+            shops = ["محل 1", "محل 2", "محل 3", "محل 4", "محل 5", "محل 6", "محل 7", "محل 8", "محل 9", "محل 10", "محل 11"];
+            areas = ["المصفح", "مدينة خليفة", "المنطقة أ", "المنطقة ب", "المنطقة ج", "المنطقة د"];
+            goals = ["ضمان سلامة المنتجات", "الالتزام بالاشتراطات الصحية"];
+            inspectionData = [
+                { inspector: "هاجر", day: "2025-09-22", shift: "صباحية", area: "المصفح", shops: ["محل 1", "محل 2"] },
+                { inspector: "هاجر", day: "2025-09-28", shift: "مسائية", area: "المصفح", shops: ["محل 5"] },
+                { inspector: "آمنه", day: "2025-09-25", shift: "مسائية", area: "مدينة خليفة", shops: ["محل 3", "محل 4"] },
+                { inspector: "آيه", day: "2025-09-22", shift: "صباحية", area: "المصفح", shops: ["محل 7"] },
+                { inspector: "د. فايز المسالمة", day: "2025-09-21", shift: "صباحية", area: "المنطقة أ", shops: ["محل 8", "محل 9"] },
+                { inspector: "د.آمنه بن صرم", day: "2025-09-21", shift: "مسائية", area: "المنطقة ج", shops: ["محل 11"] }
+            ];
+            shopsByArea = {};
+            distributionRows = [];
+            weekendDays = [5, 6, 0];
+        }
 
         function saveAllData() {
             localStorage.setItem('inspectors', JSON.stringify(inspectors));
@@ -603,6 +681,7 @@
             localStorage.setItem('distributionRows', JSON.stringify(distributionRows));
         }
         function loadAllData() {
+            // تحميل البيانات المحفوظة محلياً إذا وجدت
             if(localStorage.getItem('inspectors')) inspectors = JSON.parse(localStorage.getItem('inspectors'));
             if(localStorage.getItem('shops')) shops = JSON.parse(localStorage.getItem('shops'));
             if(localStorage.getItem('areas')) areas = JSON.parse(localStorage.getItem('areas'));
@@ -611,7 +690,24 @@
             if(localStorage.getItem('shopsByArea')) shopsByArea = JSON.parse(localStorage.getItem('shopsByArea'));
             if(localStorage.getItem('distributionRows')) distributionRows = JSON.parse(localStorage.getItem('distributionRows'));
         }
-        loadAllData();
+
+        // تهيئة الصفحة مع تحميل البيانات المركزية
+        async function initializePage() {
+            // جلب البيانات من GitHub أولاً
+            await loadDataFromGitHub();
+            
+            // ثم تحميل أي بيانات محفوظة محلياً (تأخذ الأولوية)
+            loadAllData();
+            
+            // تحديث واجهة المستخدم
+            updateInspectorList();
+            updateShopList();
+            updateAreaList();
+            renderGoalList();
+            renderShopsByArea();
+            renderDistributionTable();
+            fillInspectorsSelect();
+        }
 
         // --- API Token LocalStorage ---
         function showApiTokenBar(show) {
@@ -1145,16 +1241,14 @@
         document.getElementById('addAreaForm').onsubmit = addArea;
         document.getElementById('addGoalForm').onsubmit = addGoal;
         document.getElementById('addShopByAreaForm').onsubmit = addShopByArea;
-        document.addEventListener('DOMContentLoaded', ()=>{
+        document.addEventListener('DOMContentLoaded', async ()=>{
+            // تحميل البيانات المركزية أولاً
+            await initializePage();
+            
+            // ثم تنفيذ العمليات الأولية
             fillShopsByAreaDefault();
             fillInspectorsSelect();
             renderInspectorPage();
-            updateInspectorList();
-            updateShopList();
-            updateAreaList();
-            renderGoalList();
-            renderShopsByArea();
-            renderDistributionTable();
         });
         document.getElementById('passwordInput').addEventListener('keydown', function(e){
             if(e.key === "Enter") checkPassword();

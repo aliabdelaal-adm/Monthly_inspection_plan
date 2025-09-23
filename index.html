@@ -219,8 +219,12 @@
     <div class="dropdown-section">
         <label for="inspectorSelect">اختر اسم المفتش :</label>
         <select id="inspectorSelect">
-            <option value="">-- اختر المفتش --</option>
+            <option value="">-- جاري التحميل... --</option>
         </select>
+    </div>
+    <!-- مؤشر التحميل -->
+    <div id="loadingIndicator" style="text-align:center;color:#234085;margin:20px 0;display:block;">
+        جاري تحميل البيانات من نظام إدارة خطة التفتيش...
     </div>
     <!-- خطة المفتش كجدول -->
     <div id="planTableContainer" class="plan-table-container"></div>
@@ -253,19 +257,79 @@
     </div>
 </div>
 <script>
-    // بيانات تجريبية
-    let inspectorsData = [
-        {id:"hager", name:"هاجر"}, {id:"amna", name:"آمنه"}, {id:"aya", name:"آيه"},
-        {id:"faiz", name:"د. فايز المسالمة"}, {id:"amna2", name:"د.آمنه بن صرم"}
-    ];
-    let inspectionData = [
-        { inspector: "هاجر", day: "2025-09-22", shift: "صباحية", area: "المصفح", shops: ["محل 1", "محل 2"] },
-        { inspector: "هاجر", day: "2025-09-28", shift: "مسائية", area: "المصفح", shops: ["محل 5"] },
-        { inspector: "آمنه", day: "2025-09-25", shift: "مسائية", area: "مدينة خليفة", shops: ["محل 3", "محل 4"] },
-        { inspector: "آيه", day: "2025-09-22", shift: "صباحية", area: "المصفح", shops: ["محل 7"] },
-        { inspector: "د. فايز المسالمة", day: "2025-09-21", shift: "صباحية", area: "المنطقة أ", shops: ["محل 8", "محل 9"] },
-        { inspector: "د.آمنه بن صرم", day: "2025-09-21", shift: "مسائية", area: "المنطقة ج", shops: ["محل 11"] },
-    ];
+    // البيانات - سيتم تحميلها من GitHub
+    let inspectors = [], shops = [], areas = [], goals = [];
+    let shopsByArea = {}, distributionRows = [], inspectionData = [];
+    let inspectorsData = [];
+    let selectedInspector = null;
+    const DATA_FILE = "data.json";
+
+    // تحميل البيانات من GitHub عند فتح الموقع
+    async function loadAllDataFromGitHub() {
+        const repo = "aliabdelaal-adm/Monthly_inspection_plan";
+        const branch = "main";
+        const path = encodeURIComponent(DATA_FILE);
+        try {
+            const res = await fetch(`https://raw.githubusercontent.com/${repo}/${branch}/${path}`);
+            if (res.ok) {
+                const allData = await res.json();
+                inspectors = allData.inspectors || [];
+                shops = allData.shops || [];
+                areas = allData.areas || [];
+                goals = allData.goals || [];
+                shopsByArea = allData.shopsByArea || {};
+                distributionRows = allData.distributionRows || [];
+                inspectionData = allData.inspectionData || [];
+                
+                // تحويل بيانات المفتشين إلى التنسيق المطلوب
+                inspectorsData = inspectors.map((name, index) => ({
+                    id: `inspector_${index}`,
+                    name: name
+                }));
+                
+                // تحديث قائمة المفتشين
+                fillInspectorsDropdown();
+                
+                // تحديث التاريخ
+                setLastUpdateDate();
+            } else {
+                setDefaultData();
+            }
+        } catch (e) {
+            console.error("خطأ في تحميل البيانات:", e);
+            setDefaultData();
+        }
+    }
+
+    // البيانات الافتراضية في حالة فشل التحميل
+    function setDefaultData() {
+        inspectors = ["هاجر","آمنه","آيه","د. فايز المسالمة","د.آمنه بن صرم"];
+        shops = ["محل 1", "محل 2", "محل 3", "محل 4","محل 5", "محل 6", "محل 7", "محل 8","محل 9", "محل 10", "محل 11"];
+        areas = ["المصفح", "مدينة خليفة", "المنطقة أ", "المنطقة ب", "المنطقة ج", "المنطقة د"];
+        goals = ["ضمان سلامة المنتجات","الالتزام بالاشتراطات الصحية"];
+        shopsByArea = {};
+        inspectionData = [
+            { inspector: "هاجر", day: "2025-09-22", shift: "صباحية", area: "المصفح", shops: ["محل 1", "محل 2"] },
+            { inspector: "هاجر", day: "2025-09-28", shift: "مسائية", area: "المصفح", shops: ["محل 5"] },
+            { inspector: "آمنه", day: "2025-09-25", shift: "مسائية", area: "مدينة خليفة", shops: ["محل 3", "محل 4"] },
+            { inspector: "آيه", day: "2025-09-22", shift: "صباحية", area: "المصفح", shops: ["محل 7"] },
+            { inspector: "د. فايز المسالمة", day: "2025-09-21", shift: "صباحية", area: "المنطقة أ", shops: ["محل 8", "محل 9"] },
+            { inspector: "د.آمنه بن صرم", day: "2025-09-21", shift: "مسائية", area: "المنطقة ج", shops: ["محل 11"] },
+        ];
+        distributionRows = [];
+        
+        // تحويل بيانات المفتشين إلى التنسيق المطلوب
+        inspectorsData = inspectors.map((name, index) => ({
+            id: `inspector_${index}`,
+            name: name
+        }));
+        
+        // تحديث قائمة المفتشين
+        fillInspectorsDropdown();
+        
+        // تحديث التاريخ
+        setLastUpdateDate();
+    }
     // تحديث التاريخ تلقائي (12 ساعة صباحا/مساءا مع مسافة)
     function setLastUpdateDate() {
         let row = document.getElementById('lastUpdateRow');
@@ -282,10 +346,6 @@
         let dateStr = year+'-'+month+'-'+day;
         row.textContent = "آخر تعديل للبيانات والخطة: " + dateStr + "    " + timeStr;
     }
-    setLastUpdateDate();
-
-    let inspectors = inspectorsData.map(i=>i.name);
-    let selectedInspector = null;
 
     // تعبئة قائمة المفتشين
     function fillInspectorsDropdown() {
@@ -294,6 +354,12 @@
         inspectorsData.forEach(inspector => {
             select.innerHTML += `<option value="${inspector.id}">${inspector.name}</option>`;
         });
+        
+        // إخفاء مؤشر التحميل
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'none';
+        }
     }
     // تشغيل صوت العصافير تلقائي عند عرض خطة المفتش، لمدة 7 ثواني
     function playBirdSoundAuto() {
@@ -617,7 +683,9 @@
         audio.play();
         setTimeout(()=>{ audio.pause(); }, 7000);
     });
-    document.addEventListener('DOMContentLoaded', fillInspectorsDropdown);
+    document.addEventListener('DOMContentLoaded', function() {
+        loadAllDataFromGitHub();
+    });
 </script>
 </body>
 </html>

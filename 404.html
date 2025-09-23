@@ -174,6 +174,64 @@
         .stats-table th, .stats-table td {border:1px solid #234093;padding:10px 6px;text-align:center;}
         .stats-table th {background:#234093;color:#fff;}
         .stats-table tr:nth-child(even) {background:#f3f5fa;}
+        
+        /* تصميم نافذة الإشعارات */
+        .notification-modal-content {
+            max-width: 500px;
+            min-width: 320px;
+            background: #f7f9fc;
+            border-radius: 18px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        .notification-title {
+            color: #234093;
+            font-size: 1.3em;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .notification-content {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            text-align: right;
+        }
+        .notification-item {
+            background: #fff;
+            border: 1px solid #e0e3ea;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            font-size: 1.05em;
+            line-height: 1.5;
+            color: #333;
+        }
+        .notification-item:last-child {
+            margin-bottom: 0;
+        }
+        .notification-empty {
+            text-align: center;
+            color: #666;
+            font-size: 1.1em;
+            padding: 30px 20px;
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #e0e3ea;
+        }
+        .notification-close-btn {
+            background: #234093;
+            color: #fff;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 8px;
+            font-size: 1.05em;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .notification-close-btn:hover {
+            background: #1a3074;
+        }
         .footer {text-align:center;margin-top:22px;color:#234085;font-size:0.85em;}
         .red-total {
             color: #d32f2f !important;
@@ -197,6 +255,19 @@
             .modal-content {padding:10px 2vw; min-width:unset; max-width:99vw;}
             .stats-table th, .stats-table td {padding:7px 2px;}
             .actions-row {gap:7px;}
+            
+            .notification-modal-content {
+                max-width: 95vw;
+                min-width: 280px;
+                margin: 20px auto;
+            }
+            .notification-title {
+                font-size: 1.1em;
+            }
+            .notification-item {
+                padding: 12px;
+                font-size: 0.95em;
+            }
         }
     </style>
 </head>
@@ -253,6 +324,19 @@
             <button class="excel-btn" onclick="exportMonthlyReportToExcel()">حفظ التقرير كـ Excel</button>
         </div>
         <div id="monthlyReportContent"></div>
+      </div>
+    </div>
+    <!-- نافذة الإشعارات والتنبيهات -->
+    <div id="notificationModal" class="modal-overlay">
+      <div class="modal-content notification-modal-content">
+        <button class="close-btn" onclick="closeNotificationModal()">×</button>
+        <div class="notification-title">الإشعارات والتنبيهات</div>
+        <div id="notificationContent" class="notification-content">
+          <!-- محتوى الإشعارات سيتم إدراجه هنا -->
+        </div>
+        <div class="modal-actions">
+            <button class="notification-close-btn" onclick="closeNotificationModal()">إغلاق</button>
+        </div>
       </div>
     </div>
     <div class="footer">
@@ -617,12 +701,56 @@
         XLSX.utils.book_append_sheet(wb, ws, "التقرير الشهري");
         XLSX.writeFile(wb, `التقرير_الشهري.xlsx`);
     }
-    // جرس مع صوت عصافير مغردة واضح
+    
+    // بيانات الإشعارات والتنبيهات (مصفوفة نصوص ثابتة)
+    const notificationData = [
+        "هدف جديد: فحص منطقة السوق اليوم",
+        "تحديث: إضافة محلات جديدة في المنطقة الشمالية",
+        "تنبيه: موعد التقرير الشهري غداً",
+        "إشعار: تحديث جدول توزيع المحلات",
+        "هدف عاجل: مراجعة المحلات المخالفة"
+    ];
+    
+    // عرض نافذة الإشعارات
+    function showNotificationModal() {
+        const modal = document.getElementById('notificationModal');
+        const content = document.getElementById('notificationContent');
+        
+        if (notificationData.length > 0) {
+            let html = '';
+            notificationData.forEach(notification => {
+                html += `<div class="notification-item">${notification}</div>`;
+            });
+            content.innerHTML = html;
+        } else {
+            content.innerHTML = '<div class="notification-empty">لا توجد تنبيهات جديدة</div>';
+        }
+        
+        modal.style.display = 'flex';
+    }
+    
+    // إغلاق نافذة الإشعارات
+    function closeNotificationModal() {
+        document.getElementById('notificationModal').style.display = 'none';
+    }
+    
+    // جرس مع صوت عصافير مغردة واضح + عرض الإشعارات
     document.getElementById('bellBtn').addEventListener('click', function(){
         let audio = document.getElementById('birdSound');
         audio.currentTime = 0;
         audio.play();
         setTimeout(()=>{ audio.pause(); }, 7000);
+        
+        // عرض نافذة الإشعارات
+        showNotificationModal();
+    });
+    
+    // إغلاق النافذة عند الضغط خارجها
+    document.addEventListener('click', function(event) {
+        const modal = document.getElementById('notificationModal');
+        if (event.target === modal) {
+            closeNotificationModal();
+        }
     });
     document.addEventListener('DOMContentLoaded', fillInspectorsDropdown);
 </script>

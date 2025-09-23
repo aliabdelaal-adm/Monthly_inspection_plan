@@ -519,7 +519,7 @@
                 <button onclick="saveDistributionToFile()" style="background:#223;color:#fff;font-size:1.1em;padding:9px 18px;margin-top:12px;">حفظ الخطة (تحميل ملف)</button>
                 <button onclick="uploadDistributionToGitHub()" style="background:#19b55b;color:#fff;font-size:1.1em;padding:9px 18px;margin-top:12px;">حفظ ورفع تلقائيًا إلى GitHub</button>
             </div>
-            <button onclick="clearAllDataAndReload()" style="background:#d32f2f;color:#fff;margin-top:12px;">إعادة ضبط البيانات بالكامل</button>
+            <button onclick="resetDataFromCentralFile()" style="background:#d32f2f;color:#fff;margin-top:12px;">إعادة ضبط البيانات بالكامل</button>
         </div>
         <div id="inspectorPage">
             <div class="section-box">
@@ -1227,6 +1227,52 @@
                 showApiTokenBar(false);
             }
         }
+        async function resetDataFromCentralFile() {
+            if(!confirm("سيتم حذف جميع البيانات الحالية وجلب البيانات المحدثة من الملف المركزي. هل أنت متأكد؟")) return;
+            try {
+                const res = await fetch("https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/plan-data.json?" + Date.now());
+                if(!res.ok) throw new Error("تعذر جلب البيانات من الملف المركزي");
+                const data = await res.json();
+                
+                // تحويل البيانات من plan-data.json إلى الهيكل المتوقع
+                const transformedData = {
+                    inspectors: data.inspectors || [],
+                    areas: data.areas || [],
+                    shops: [],
+                    goals: Array.isArray(data.goals) ? data.goals : (typeof data.goals === 'string' ? data.goals.split(' / ') : []),
+                    inspectionData: data.distribution || [],
+                    shopsByArea: data.shopsByArea || {},
+                    distributionRows: data.distribution || [],
+                    weekendDays: [5, 6, 0]
+                };
+                
+                // استخراج المحلات من shopsByArea
+                if (data.shopsByArea) {
+                    const allShops = [];
+                    Object.values(data.shopsByArea).forEach(areaShops => {
+                        if (Array.isArray(areaShops)) {
+                            allShops.push(...areaShops);
+                        }
+                    });
+                    transformedData.shops = [...new Set(allShops)];
+                }
+                
+                // حفظ البيانات المحولة في localStorage
+                localStorage.setItem('inspectionData', JSON.stringify(transformedData.inspectionData));
+                localStorage.setItem('inspectors', JSON.stringify(transformedData.inspectors));
+                localStorage.setItem('shops', JSON.stringify(transformedData.shops));
+                localStorage.setItem('areas', JSON.stringify(transformedData.areas));
+                localStorage.setItem('goals', JSON.stringify(transformedData.goals));
+                localStorage.setItem('shopsByArea', JSON.stringify(transformedData.shopsByArea));
+                localStorage.setItem('distributionRows', JSON.stringify(transformedData.distributionRows));
+                
+                alert("تم جلب البيانات المحدثة بنجاح. سيتم إعادة تحميل الصفحة الآن.");
+                location.reload();
+            } catch(e) {
+                alert("فشل جلب البيانات: " + e.message);
+            }
+        }
+        
         function clearAllDataAndReload() {
             if(confirm("سيتم حذف جميع البيانات المخصصة وإعادة ضبطها للوضع الافتراضي. هل أنت متأكد؟")) {
                 localStorage.clear();

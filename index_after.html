@@ -598,6 +598,7 @@
                 <br>
                 <button onclick="saveDistributionToFile()" style="background:#223;color:#fff;font-size:1.1em;padding:9px 18px;margin-top:12px;">حفظ الخطة (تحميل ملف)</button>
                 <button onclick="uploadDistributionToGitHub()" style="background:#19b55b;color:#fff;font-size:1.1em;padding:9px 18px;margin-top:12px;">حفظ ورفع تلقائيًا إلى GitHub</button>
+                <button onclick="manualPushToGitHub()" style="background:#2164aa;color:#fff;font-size:1.1em;padding:9px 18px;margin-top:12px;">🔄 رفع يدوي إلى GitHub</button>
             </div>
         </div>
         <!-- صفحة المفتش -->
@@ -669,8 +670,122 @@
     
     <script>
         // ================== API Token LocalStorage ==================
-        
-        });
+        function getApiToken() {
+            return localStorage.getItem("apiToken") || "";
+        }
+        function setApiToken(token) {
+            localStorage.setItem("apiToken", token);
+        }
+        function saveApiToken() {
+            const token = document.getElementById('apiTokenInput').value.trim();
+            if (!token) {
+                alert("يرجى إدخال التوكين!");
+                return;
+            }
+            setApiToken(token);
+            document.getElementById('apiTokenSavedMsg').style.display = 'inline';
+            setTimeout(() => {
+                document.getElementById('apiTokenSavedMsg').style.display = 'none';
+            }, 2000);
+        }
+        function toggleApiTokenInput() {
+            const input = document.getElementById('apiTokenInput');
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        function handleDeveloperApiTokenBar() {
+            document.getElementById('apiTokenBar').style.display = 'block';
+        }
+
+        // ================== GitHub Auto Push Functions ==================
+        const REPO_OWNER = "aliabdelaal-adm";
+        const REPO_NAME = "Monthly_inspection_plan";
+        const FILE_PATH = "plan-data.json";
+        let fileSha = "";
+
+        async function pushDataToGitHub(commitMessage = "تحديث تلقائي للبيانات") {
+            const token = getApiToken();
+            if (!token) {
+                alert("يرجى إدخال التوكين أولاً لتفعيل الرفع التلقائي");
+                return false;
+            }
+
+            try {
+                // Prepare the data to push
+                const planData = {
+                    inspectors: inspectors,
+                    shops: shops,
+                    areas: areas,
+                    goals: goals,
+                    shopsByArea: shopsByArea,
+                    distributionRows: distributionRows,
+                    lastUpdated: new Date().toISOString()
+                };
+
+                // Get current file SHA if we don't have it
+                if (!fileSha) {
+                    try {
+                        const getRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
+                            headers: {
+                                "Authorization": `token ${token}`
+                            }
+                        });
+                        if (getRes.ok) {
+                            const fileData = await getRes.json();
+                            fileSha = fileData.sha;
+                        }
+                    } catch (e) {
+                        console.log("File might not exist yet, will create new");
+                    }
+                }
+
+                // Encode content
+                const content = btoa(unescape(encodeURIComponent(JSON.stringify(planData, null, 2))));
+
+                // Push to GitHub
+                const pushData = {
+                    message: commitMessage,
+                    content: content
+                };
+                
+                if (fileSha) {
+                    pushData.sha = fileSha;
+                }
+
+                const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
+                    method: "PUT",
+                    headers: {
+                        "Authorization": `token ${token}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(pushData)
+                });
+
+                if (res.ok) {
+                    const result = await res.json();
+                    fileSha = result.content.sha; // Update SHA for next push
+                    console.log("✅ تم رفع البيانات بنجاح إلى GitHub");
+                    return true;
+                } else {
+                    const error = await res.json();
+                    console.error("❌ خطأ في رفع البيانات:", error);
+                    return false;
+                }
+            } catch (error) {
+                console.error("❌ خطأ في الاتصال:", error);
+                return false;
+            }
+        }
+
+        async function manualPushToGitHub() {
+            const success = await pushDataToGitHub("رفع يدوي للبيانات");
+            if (success) {
+                alert("✅ تم رفع البيانات بنجاح إلى GitHub!");
+            } else {
+                alert("❌ فشل في رفع البيانات. تحقق من التوكين والاتصال.");
+            }
+        }
+
         // =================== البيانات الأصلية والتطبيق ===================
         // بيانات أولية
         let inspectors = [
@@ -758,6 +873,8 @@
                     if (!shops.includes(shopName)) shops.push(shopName);
                     renderShopsByArea();
                     updateShopList();
+                    // Auto push to GitHub
+                    pushDataToGitHub(`إضافة محل "${shopName}" للمنطقة "${area}"`);
                 }
             }
             document.getElementById('newShopByArea').value = '';
@@ -776,6 +893,8 @@
                     if (i > -1) shops.splice(i,1);
                     updateShopList();
                 }
+                // Auto push to GitHub
+                pushDataToGitHub(`حذف محل "${shopName}" من المنطقة "${area}"`);
             }
         }
 
@@ -786,14 +905,14 @@
             tbody.innerHTML = '';
             distributionRows.forEach((row, idx) => {
                 // قائمة المفتشين
-                let inspectorSelect = `<select onchange="distributionRows[${idx}].inspector=this.value; renderDistributionTable()">
+                let inspectorSelect = `<select onchange="distributionRows[${idx}].inspector=this.value; renderDistributionTable(); pushDataToGitHub('تحديث مفتش في جدول التوزيع');">
                     <option value=""></option>
                     ${inspectors.map(inspector =>
                         `<option value="${inspector}" ${row.inspector===inspector?'selected':''}>${inspector}</option>`
                     ).join('')}
                 </select>`;
                 // قائمة المناطق
-                let areaSelect = `<select onchange="distributionRows[${idx}].area=this.value; distributionRows[${idx}].shop=[]; renderDistributionTable()">
+                let areaSelect = `<select onchange="distributionRows[${idx}].area=this.value; distributionRows[${idx}].shop=[]; renderDistributionTable(); pushDataToGitHub('تحديث منطقة في جدول التوزيع');">
                     <option value=""></option>
                     ${areas.map(area =>
                         `<option value="${area}" ${row.area===area?'selected':''}>${area}</option>`
@@ -810,7 +929,7 @@
                 tbody.innerHTML += `
                     <tr>
                         <td>${inspectorSelect}</td>
-                        <td><input type="date" value="${row.day||''}" onchange="distributionRows[${idx}].day=this.value"></td>
+                        <td><input type="date" value="${row.day||''}" onchange="distributionRows[${idx}].day=this.value; pushDataToGitHub('تحديث تاريخ في جدول التوزيع');"></td>
                         <td>${areaSelect}</td>
                         <td>${shopSelect}</td>
                         <td><button onclick="deleteDistributionRow(${idx})">حذف</button></td>
@@ -823,15 +942,21 @@
         function handleShopMultiSelect(sel, idx) {
             const selected = Array.from(sel.selectedOptions).map(opt=>opt.value);
             distributionRows[idx].shop = selected;
+            // Auto push to GitHub
+            pushDataToGitHub('تحديث محلات في جدول التوزيع');
         }
 
         function addDistributionRow() {
             distributionRows.push({inspector:'', day:'', area:'', shop:[]});
             renderDistributionTable();
+            // Auto push to GitHub
+            pushDataToGitHub("إضافة صف جديد لجدول التوزيع");
         }
         function deleteDistributionRow(idx) {
             distributionRows.splice(idx,1);
             renderDistributionTable();
+            // Auto push to GitHub
+            pushDataToGitHub("حذف صف من جدول التوزيع");
         }
         function autoDistributeShops() {
             // توزيع دوري على كل المفتشين لجميع المحلات ولكل يوم (7 أيام مثلاً)
@@ -860,6 +985,8 @@
                 }
             }
             renderDistributionTable();
+            // Auto push to GitHub
+            pushDataToGitHub("تم التوزيع التلقائي للمحلات على المفتشين");
         }
         function saveDistributionToFile() {
             let csv = "المفتش,اليوم,المنطقة,المحلات\n";
@@ -873,7 +1000,7 @@
             a.click();
         }
         function uploadDistributionToGitHub() {
-            alert("سيتم رفع الجدول إلى GitHub تلقائيًا (تحتاج برمجة API فعلية)");
+            manualPushToGitHub();
         }
 
         // ================= إدارة المفتشين/المحلات/المناطق/الأهداف (كما في النسخة السابقة) ========================
@@ -905,6 +1032,8 @@
                 inspectors.push(val);
                 updateInspectorList();
                 fillInspectorsSelect();
+                // Auto push to GitHub
+                pushDataToGitHub(`إضافة مفتش جديد: ${val}`);
             }
             document.getElementById('newInspector').value = '';
         }
@@ -922,16 +1051,22 @@
         function saveEditInspector(idx) {
             const val = document.getElementById(`editInspectorInput${idx}`).value.trim();
             if(val && !inspectors.includes(val)) {
+                const oldName = inspectors[idx];
                 inspectors[idx] = val;
                 updateInspectorList();
                 fillInspectorsSelect();
+                // Auto push to GitHub
+                pushDataToGitHub(`تعديل اسم المفتش من "${oldName}" إلى "${val}"`);
             }
         }
         function deleteInspector(idx) {
             if(confirm("هل تريد حذف هذا المفتش؟")) {
+                const deletedName = inspectors[idx];
                 inspectors.splice(idx,1);
                 updateInspectorList();
                 fillInspectorsSelect();
+                // Auto push to GitHub
+                pushDataToGitHub(`حذف المفتش: ${deletedName}`);
             }
         }
         // المحلات
@@ -945,6 +1080,8 @@
             if(val && !shops.includes(val)) {
                 shops.push(val);
                 updateShopList();
+                // Auto push to GitHub
+                pushDataToGitHub(`إضافة محل جديد: ${val}`);
             }
             document.getElementById('newShop').value = '';
         }
@@ -962,14 +1099,20 @@
         function saveEditShop(idx) {
             const val = document.getElementById(`editShopInput${idx}`).value.trim();
             if(val && !shops.includes(val)) {
+                const oldName = shops[idx];
                 shops[idx] = val;
                 updateShopList();
+                // Auto push to GitHub
+                pushDataToGitHub(`تعديل اسم المحل من "${oldName}" إلى "${val}"`);
             }
         }
         function deleteShop(idx) {
             if(confirm("هل تريد حذف هذا المحل؟")) {
+                const deletedName = shops[idx];
                 shops.splice(idx,1);
                 updateShopList();
+                // Auto push to GitHub
+                pushDataToGitHub(`حذف المحل: ${deletedName}`);
             }
         }
         // المناطق
@@ -983,6 +1126,8 @@
             if(val && !areas.includes(val)) {
                 areas.push(val);
                 updateAreaList();
+                // Auto push to GitHub
+                pushDataToGitHub(`إضافة منطقة جديدة: ${val}`);
             }
             document.getElementById('newArea').value = '';
         }
@@ -1000,14 +1145,20 @@
         function saveEditArea(idx) {
             const val = document.getElementById(`editAreaInput${idx}`).value.trim();
             if(val && !areas.includes(val)) {
+                const oldName = areas[idx];
                 areas[idx] = val;
                 updateAreaList();
+                // Auto push to GitHub
+                pushDataToGitHub(`تعديل اسم المنطقة من "${oldName}" إلى "${val}"`);
             }
         }
         function deleteArea(idx) {
             if(confirm("هل تريد حذف هذه المنطقة؟")) {
+                const deletedName = areas[idx];
                 areas.splice(idx,1);
                 updateAreaList();
+                // Auto push to GitHub
+                pushDataToGitHub(`حذف المنطقة: ${deletedName}`);
             }
         }
         // أهداف التفتيش (إدارة المطور)
@@ -1033,6 +1184,8 @@
             if(val && !goals.includes(val)) {
                 goals.push(val);
                 renderGoalList();
+                // Auto push to GitHub
+                pushDataToGitHub(`إضافة هدف جديد: ${val}`);
             }
             document.getElementById('newGoal').value = '';
         }
@@ -1050,14 +1203,20 @@
         function saveEditGoal(idx) {
             const val = document.getElementById(`editGoalInput${idx}`).value.trim();
             if(val && !goals.includes(val)) {
+                const oldName = goals[idx];
                 goals[idx] = val;
                 renderGoalList();
+                // Auto push to GitHub
+                pushDataToGitHub(`تعديل الهدف من "${oldName}" إلى "${val}"`);
             }
         }
         function deleteGoal(idx) {
             if(confirm("هل تريد حذف هذا الهدف؟")) {
+                const deletedName = goals[idx];
                 goals.splice(idx,1);
                 renderGoalList();
+                // Auto push to GitHub
+                pushDataToGitHub(`حذف الهدف: ${deletedName}`);
             }
         }
         // ================= صفحة المفتش ========================
@@ -1273,6 +1432,8 @@
         document.getElementById('addAreaForm').onsubmit = addArea;
         document.getElementById('addGoalForm').onsubmit = addGoal;
         document.getElementById('addShopByAreaForm').onsubmit = addShopByArea;
+        document.getElementById('saveApiTokenBtn').onclick = saveApiToken;
+        document.getElementById('toggleApiTokenInputBtn').onclick = toggleApiTokenInput;
         document.addEventListener('DOMContentLoaded', ()=>{
             fillShopsByAreaDefault();
             fillInspectorsSelect();
@@ -1283,6 +1444,11 @@
             renderGoalList();
             renderShopsByArea();
             renderDistributionTable();
+            // Load saved API token
+            const savedToken = getApiToken();
+            if (savedToken) {
+                document.getElementById('apiTokenInput').value = savedToken;
+            }
         });
         document.getElementById('passwordInput').addEventListener('keydown', function(e){
             if(e.key === "Enter") checkPassword();

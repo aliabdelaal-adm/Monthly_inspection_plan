@@ -751,6 +751,274 @@ function exportMonthlyReportToExcel() {
     XLSX.utils.book_append_sheet(wb, ws, "التقرير الشهري");
     XLSX.writeFile(wb, `التقرير_الشهري.xlsx`);
 }
+
+// ======================================================================
+// نظام المزامنة المباشرة للبيانات (Live Data Sync System)
+// تم إضافة هذا الكود لربط بيانات devSection مباشرة مع واجهة العرض
+// ======================================================================
+
+// متغير لتتبع حالة المراقبة المباشرة
+let liveSyncEnabled = false;
+
+// دالة تفعيل نظام المزامنة المباشرة
+function enableLiveSync() {
+    // التأكد من عدم تكرار تفعيل النظام
+    if (liveSyncEnabled) return;
+    liveSyncEnabled = true;
+    
+    console.log('تم تفعيل نظام المزامنة المباشرة للبيانات');
+    
+    // مراقبة تغييرات الحقول في نموذج المطور
+    const devFormFields = [
+        'formInspector',
+        'formDay', 
+        'formShift',
+        'formArea',
+        'formShops'
+    ];
+    
+    // إضافة مستمعات أحداث لكل حقل في النموذج
+    devFormFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            // مراقبة تغييرات كتابة النص
+            field.addEventListener('input', function() {
+                // تأخير بسيط لتحسين الأداء
+                setTimeout(() => {
+                    updateTableOnDataChange();
+                }, 100);
+            });
+            
+            // مراقبة تغييرات القوائم المنسدلة
+            field.addEventListener('change', function() {
+                updateTableOnDataChange();
+            });
+        }
+    });
+    
+    // مراقبة تغييرات localStorage للمزامنة مع التحديثات الخارجية
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'inspectionData') {
+            console.log('تم اكتشاف تغيير في بيانات localStorage');
+            // إعادة تحميل البيانات من localStorage
+            inspectionData = JSON.parse(localStorage.getItem('inspectionData')) || defaultInspectionData.slice();
+            // تحديث الجدول فوراً
+            renderPlanTable();
+        }
+    });
+}
+
+// دالة تحديث الجدول عند تغيير البيانات
+function updateTableOnDataChange() {
+    // التأكد من أن المطور مسجل دخول
+    if (!isDev) return;
+    
+    console.log('تحديث الجدول بناءً على تغيير في البيانات');
+    
+    // إعادة عرض الجدول لعكس أي تغييرات
+    renderPlanTable();
+    
+    // تحديث قوائم المفتشين في حالة وجود تغييرات
+    fillInspectorsDropdowns();
+}
+
+// تحسين دالة حفظ البيانات لتشمل التحديث المباشر
+const originalSaveInspectionData = saveInspectionData;
+saveInspectionData = function() {
+    // استدعاء الدالة الأصلية
+    originalSaveInspectionData();
+    
+    // تحديث الجدول فوراً بعد الحفظ
+    if (isDev && liveSyncEnabled) {
+        console.log('تم حفظ البيانات وتحديث الجدول تلقائياً');
+        renderPlanTable();
+    }
+};
+
+// تحسين دالة عرض الجدول لتشمل التحديثات المباشرة
+const originalRenderPlanTable = renderPlanTable;
+renderPlanTable = function() {
+    // استدعاء الدالة الأصلية
+    originalRenderPlanTable();
+    
+    // إضافة إشعار بصري للتحديث (اختياري)
+    if (isDev && liveSyncEnabled) {
+        const container = document.getElementById('planTableContainer');
+        if (container) {
+            // إزالة أي فئة تحديث سابقة
+            container.classList.remove('live-updated');
+            // إضافة فئة التحديث لإعطاء تأثير بصري
+            container.classList.add('live-updated');
+            
+            // إزالة الفئة بعد انتهاء التأثير
+            setTimeout(() => {
+                container.classList.remove('live-updated');
+            }, 500);
+        }
+    }
+};
+
+// إضافة أنماط CSS للتأثير البصري عند التحديث المباشر
+const liveUpdateStyles = document.createElement('style');
+liveUpdateStyles.textContent = `
+/* أنماط التحديث المباشر للجدول */
+.live-updated {
+    transition: all 0.3s ease-in-out;
+    transform: scale(1.01);
+    box-shadow: 0 4px 20px rgba(35, 64, 133, 0.2) !important;
+}
+
+/* تأثير إضافي للحقول المراقبة */
+#devSection input:focus, 
+#devSection select:focus {
+    border-color: #234085;
+    box-shadow: 0 0 8px rgba(35, 64, 133, 0.3);
+    outline: none;
+}
+
+/* مؤشر المزامنة المباشرة */
+.live-sync-indicator {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: #198754;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 0.9em;
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.live-sync-indicator.show {
+    opacity: 1;
+}
+`;
+document.head.appendChild(liveUpdateStyles);
+
+// دالة عرض مؤشر المزامنة المباشرة
+function showLiveSyncIndicator(message = 'تم التحديث تلقائياً') {
+    // إنشاء عنصر المؤشر إذا لم يكن موجوداً
+    let indicator = document.getElementById('liveSyncIndicator');
+    if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.id = 'liveSyncIndicator';
+        indicator.className = 'live-sync-indicator';
+        document.body.appendChild(indicator);
+    }
+    
+    // تعيين النص وإظهار المؤشر
+    indicator.textContent = message;
+    indicator.classList.add('show');
+    
+    // إخفاء المؤشر بعد فترة
+    setTimeout(() => {
+        indicator.classList.remove('show');
+    }, 2000);
+}
+
+// تحسين دالة تسجيل دخول المطور لتفعيل المزامنة
+const originalDevLogin = document.getElementById("devLoginBtn").onclick;
+document.getElementById("devLoginBtn").onclick = function() {
+    // استدعاء دالة تسجيل الدخول الأصلية
+    originalDevLogin();
+    
+    // تفعيل نظام المزامنة المباشرة عند دخول المطور
+    if (isDev) {
+        enableLiveSync();
+        showLiveSyncIndicator('تم تفعيل المزامنة المباشرة');
+    }
+};
+
+// تحسين دالة إضافة/تعديل الخطة لتشمل التحديث المباشر
+const originalFormSubmit = document.getElementById("addEditForm").addEventListener;
+
+// إضافة مراقب إضافي لإرسال النموذج
+document.getElementById("addEditForm").addEventListener("submit", function(e){
+    // السماح للمعالج الأصلي بالعمل أولاً
+    setTimeout(() => {
+        if (isDev && liveSyncEnabled) {
+            console.log('تم إضافة/تعديل خطة مع التحديث المباشر');
+            showLiveSyncIndicator('تم حفظ التغييرات');
+            updateTableOnDataChange();
+        }
+    }, 50);
+});
+
+// مراقبة تغييرات اختيار المفتش للتحديث المباشر
+const originalInspectorChange = document.getElementById('inspectorSelect').addEventListener;
+document.getElementById('inspectorSelect').addEventListener('change', function() {
+    if (liveSyncEnabled) {
+        console.log('تم تغيير المفتش المحدد - تحديث مباشر للجدول');
+        // تأخير بسيط للسماح للمتغير selectedInspector بالتحديث
+        setTimeout(() => {
+            renderPlanTable();
+        }, 10);
+    }
+});
+
+// دالة تفعيل المزامنة عند تحميل الصفحة (إذا كان المطور مسجل دخول)
+document.addEventListener('DOMContentLoaded', function() {
+    // فحص دوري لتفعيل المزامنة عند دخول المطور
+    const checkDevStatusInterval = setInterval(() => {
+        if (isDev && !liveSyncEnabled) {
+            enableLiveSync();
+            showLiveSyncIndicator('المزامنة المباشرة نشطة');
+            clearInterval(checkDevStatusInterval);
+        }
+    }, 1000);
+    
+    // إيقاف الفحص بعد 30 ثانية لتوفير الموارد
+    setTimeout(() => {
+        clearInterval(checkDevStatusInterval);
+    }, 30000);
+});
+
+// إضافة مراقب للتعديلات المباشرة على البيانات
+let originalEditPlan = editPlan;
+editPlan = function(idx) {
+    // استدعاء الدالة الأصلية
+    originalEditPlan(idx);
+    
+    // إضافة مراقبة للتغييرات في حقول التعديل
+    if (isDev && liveSyncEnabled) {
+        console.log('تم تحديد خطة للتعديل - تفعيل المراقبة المباشرة');
+        showLiveSyncIndicator('جاري التعديل...');
+    }
+};
+
+// إضافة مراقب للحذف المباشر للبيانات
+let originalDeletePlan = deletePlan;
+deletePlan = function(idx) {
+    // استدعاء الدالة الأصلية
+    originalDeletePlan(idx);
+    
+    // تحديث فوري بعد الحذف
+    if (isDev && liveSyncEnabled) {
+        console.log('تم حذف خطة - تحديث مباشر للجدول');
+        showLiveSyncIndicator('تم الحذف');
+        setTimeout(() => {
+            renderPlanTable();
+        }, 100);
+    }
+};
+
+// مراقبة عامة لأي تغييرات في الصفحة (نسخة احتياطية)
+let lastDataState = JSON.stringify(inspectionData);
+setInterval(() => {
+    if (isDev && liveSyncEnabled) {
+        const currentDataState = JSON.stringify(inspectionData);
+        if (currentDataState !== lastDataState) {
+            console.log('تم اكتشاف تغيير عام في البيانات');
+            renderPlanTable();
+            lastDataState = currentDataState;
+        }
+    }
+}, 2000); // فحص كل ثانيتين
+
+console.log('تم تحميل نظام المزامنة المباشرة للبيانات بنجاح');
+
 </script>
 </body>
 </html>

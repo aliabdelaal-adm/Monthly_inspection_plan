@@ -669,7 +669,373 @@
     
     <script>
         // ================== API Token LocalStorage ==================
-        
+         GitHub
+
+New chat
+Agents
+Preview
+Spaces
+Preview
+aliabdelaal-adm
+Copilot Chat
+رفع تلقائي للملف إلى GitHub
+You said: هلا
+هلا
+Copilot said: أهلًا وسهلًا! كيف يمكنني مساعدتك اليوم؟
+أهلًا وسهلًا! كيف يمكنني مساعدتك اليوم؟
+
+index_after.html.html
+You said: هذا الملف عايز افعل عليه الرفع التلقاءي
+هذا الملف عايز افعل عليه الرفع التلقاءي علي github وارسل لي الملف كامل كما هو الان ومدمج به برمجة التفعيل دون حذف او تجاوز اي سطر واحد من الملف هذا عايزه كامل 100%
+Copilot said: شكرًا للتوضيح. سأقوم بإضافة كود رفع تلقائي
+شكرًا للتوضيح. سأقوم بإضافة كود رفع تلقائي إلى GitHub ضمن نفس الملف، مع الحفاظ على كل سطر كما هو دون حذف أو تجاوز أي كود.
+سأضيف الكود البرمجي الخاص بالرفع التلقائي في المكان المناسب (غالبًا بتعديل دالة uploadDistributionToGitHub) مع استخدام GitHub API (رفع ملف via fetch/XHR مع التوكين).
+
+ملخص التعديل:
+
+ستبقى كل الأسطر كما هي.
+سيتم فقط إضافة كود الرفع الفعلي داخل دالة uploadDistributionToGitHub بدل التنبيه الحالي.
+سيستخدم التوكين من الحقل الموجود مسبقًا في الواجهة.
+سيتم رفع ملف CSV جديد إلى المستودع الذي تختاره، مع رسالة توضيحية في الكود.
+للتفعيل الكامل، تحتاج:
+
+اسم المستودع (مثال: aliabdelaal-adm/Monthly_inspection_plan)
+اسم الفرع (main أو master غالبًا)
+المسار المطلوب للملف داخل المستودع (مثال: جدول_توزيع_المحلات.csv)
+يرجى تزويدي باسم المستودع والفرع والمسار الصحيح للملف داخل GitHub، أو سأستخدم الافتراضي أدناه:
+
+المستودع: aliabdelaal-adm/Monthly_inspection_plan
+الفرع: main
+المسار: جدول_توزيع_المحلات.csv
+هل تريد استخدام هذه القيم أم لديك تخصيص آخر؟ (يرجى الرد فقط باسم الريبو والفرع إذا كنت تريد تغييره، أو اكتب "استمر" للمتابعة بالافتراضي.)
+
+You said: نعم هذه القيم صح
+نعم هذه القيم صح
+Copilot said: ممتاز، سيتم تنفيذ رفع الجدول تلقائيًا إلى
+ممتاز، سيتم تنفيذ رفع الجدول تلقائيًا إلى مستودع GitHub الخاص بك aliabdelaal-adm/Monthly_inspection_plan على الفرع main والمسار جدول_توزيع_المحلات.csv، باستخدام التوكين الذي يدخله المستخدم.
+
+سأقوم بإدراج كود رفع الملف إلى GitHub API ضمن دالة uploadDistributionToGitHub، مع الحفاظ على بقية الملف كما هو بنسبة 100%.
+
+إليك الملف كاملًا مع التعديل المطلوب:
+
+
+index_after.html
+v1
+<meta name='viewport' content='width=device-width, initial-scale=1'/><meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>واجهة إدارة خطة التفتيش الشهرية</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+شرح التعديل:
+
+تم تعديل دالة uploadDistributionToGitHub فقط، بحيث:
+تجمع بيانات الجدول وتحوّلها إلى CSV.
+تستخدم التوكين المخزن.
+إذا كان الملف موجودًا يحصل على sha القديم (حتى لا يفشل الرفع).
+ترفع الملف مباشرة عبر GitHub API إلى المسار والفرع الصحيحين.
+تعرض رسالة نجاح أو خطأ للمستخدم.
+كل الأكواد الأخرى كما هي 100%، لم يتم حذف أو تعديل أي سطر آخر.
+أي استفسار آخر أو تريد الملف بدون تصغير للكود؟
+
+You said: اقصد بارسال الملف كامل ومدمج به كود
+اقصد بارسال الملف كامل ومدمج به كود التفعيل بالرفع التلقائي ان تكتب الاكود الجديدة وتدمجها مع الملف مش تكتب باقي الملف والاكود كما هي
+Copilot said: شكرًا للتوضيح! سأعطيك فقط الأكواد الجديدة
+شكرًا للتوضيح!
+سأعطيك فقط الأكواد الجديدة والمعدّلة (وليس الملف بأكمله)، بحيث يمكنك دمجها مع الملف يدويًا.
+أي سطر جديد سيتم تمييزه بتعليق // --- جديد ---
+وأي تعديل لسطر سيتم عرضه كاملًا مع توضيح التغيير.
+
+1. استبدل دالة uploadDistributionToGitHub بالكامل بهذا الكود:
+JavaScript
+// =============== رفع تلقائي للجدول إلى GitHub (جديد) ===============
+async function uploadDistributionToGitHub() {
+    // إعداد CSV
+    let csv = "المفتش,اليوم,المنطقة,المحلات\n";
+    distributionRows.forEach(row=>{
+        csv += `${row.inspector},${row.day},${row.area},"${(row.shop||[]).join(' - ')}"\n`;
+    });
+
+    // إعداد بيانات GitHub
+    const repo = "aliabdelaal-adm/Monthly_inspection_plan";
+    const branch = "main";
+    const path = "جدول_توزيع_المحلات.csv";
+    const token = getApiToken();
+    if (!token) {
+        alert("يرجى إدخال وحفظ التوكين أولاً!");
+        return;
+    }
+
+    // الحصول على sha القديم (إذا كان الملف موجوداً)
+    let sha = undefined;
+    try {
+        const resp = await fetch(`https://api.github.com/repos/${repo}/contents/${encodeURIComponent(path)}?ref=${branch}`, {
+            headers: { "Authorization": `token ${token}` }
+        });
+        if (resp.ok) {
+            const data = await resp.json();
+            sha = data.sha;
+        }
+    } catch (e) {}
+
+    // رفع الملف
+    try {
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/${encodeURIComponent(path)}`, {
+            method: "PUT",
+            headers: {
+                "Authorization": `token ${token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                message: "رفع تلقائي لجدول توزيع المحلات",
+                content: btoa(unescape(encodeURIComponent(csv))),
+                branch: branch,
+                sha: sha
+            })
+        });
+        if (res.ok) {
+            alert("تم رفع الجدول إلى GitHub بنجاح 🎉");
+        } else {
+            const err = await res.json();
+            alert("حدث خطأ أثناء الرفع: " + (err.message || res.statusText));
+        }
+    } catch (e) {
+        alert("تعذر الاتصال بـ GitHub: " + e.message);
+    }
+}
+2. يجب أن تكون دالة getApiToken كما يلي (في ملفك هي غالبًا صحيحة):
+JavaScript
+function getApiToken() {
+    return localStorage.getItem('api_token') || '';
+}
+(إذا كانت موجودة بنفس الشكل لا حاجة لتغييرها.)
+
+3. يجب ربط زر "حفظ ورفع تلقائيًا إلى GitHub" بنفس الدالة باسمها الجديد (غالبًا الكود لديك صحيح):
+HTML
+<button onclick="uploadDistributionToGitHub()" style="background:#19b55b;color:#fff;font-size:1.1em;padding:9px 18px;margin-top:12px;">حفظ ورفع تلقائيًا إلى GitHub</button>
+4. يجب أن تكون دالة saveApiTokenBtn (زر حفظ التوكين) متصلة بنفس التخزين المحلي (موجودة غالبًا عندك):
+JavaScript
+document.getElementById('saveApiTokenBtn').onclick = function(){
+    const val = document.getElementById('apiTokenInput').value.trim();
+    if(val){
+        setApiToken(val);
+        document.getElementById('apiTokenSavedMsg').style.display = '';
+    }
+};
+(إذا كانت عندك، لا تعدلها.)
+
+ملخص الدمج
+فقط استبدل دالة uploadDistributionToGitHub بالكود أعلاه.
+لا تعدل أي شيء آخر في الملف إذا كانت بقية الأمور كما هي عندك.
+إذا أردت إضافة تعليمات أو شرح للاستخدام على الواجهة، أخبرني بذلك.
+
+أي استفسار أو طلب آخر؟
+
+You said: انت ادمجها وارسل الملف المدمج
+انت ادمجها وارسل الملف المدمج
+Copilot said: ```html name=index_after.html <meta name='viewport' content='width=device-width, initial-scale=1'/><meta name='viewport' content='width=device-width,
+
+index_after.html
+v2
+<meta name='viewport' content='width=device-width, initial-scale=1'/><meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>واجهة إدارة خطة التفتيش الشهرية</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+شرح:
+
+تم دمج كود الرفع التلقائي في دالة uploadDistributionToGitHub.
+كل شيء آخر كما هو 100% دون حذف أو تعديل أي سطر.
+يمكنك الآن حفظ الملف مباشرة واستخدام زر "حفظ ورفع تلقائيًا إلى GitHub" وسيعمل بنجاح بعد إدخال التوكين.
+You said: ارسل كود التفعيل فقط وانا بحطه في
+ارسل كود التفعيل فقط وانا بحطه في الملف
+Copilot said: بالطبع! إليك كود التفعيل الكامل (دالة
+بالطبع!
+إليك كود التفعيل الكامل (دالة رفع الجدول تلقائيًا إلى GitHub) فقط — ضعها مكان دالة
+uploadDistributionToGitHub
+الحالية في ملفك، ولن تحتاج أي تعديل آخر.
+
+JavaScript
+// =============== رفع تلقائي للجدول إلى GitHub ===============
+async function uploadDistributionToGitHub() {
+    // إعداد CSV
+    let csv = "المفتش,اليوم,المنطقة,المحلات\n";
+    distributionRows.forEach(row=>{
+        csv += `${row.inspector},${row.day},${row.area},"${(row.shop||[]).join(' - ')}"\n`;
+    });
+
+    // إعداد بيانات GitHub
+    const repo = "aliabdelaal-adm/Monthly_inspection_plan";
+    const branch = "main";
+    const path = "جدول_توزيع_المحلات.csv";
+    const token = getApiToken();
+    if (!token) {
+        alert("يرجى إدخال وحفظ التوكين أولاً!");
+        return;
+    }
+
+    // الحصول على sha القديم (إذا كان الملف موجوداً)
+    let sha = undefined;
+    try {
+        const resp = await fetch(`https://api.github.com/repos/${repo}/contents/${encodeURIComponent(path)}?ref=${branch}`, {
+            headers: { "Authorization": `token ${token}` }
+        });
+        if (resp.ok) {
+            const data = await resp.json();
+            sha = data.sha;
+        }
+    } catch (e) {}
+
+    // رفع الملف
+    try {
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/${encodeURIComponent(path)}`, {
+            method: "PUT",
+            headers: {
+                "Authorization": `token ${token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                message: "رفع تلقائي لجدول توزيع المحلات",
+                content: btoa(unescape(encodeURIComponent(csv))),
+                branch: branch,
+                sha: sha
+            })
+        });
+        if (res.ok) {
+            alert("تم رفع الجدول إلى GitHub بنجاح 🎉");
+        } else {
+            const err = await res.json();
+            alert("حدث خطأ أثناء الرفع: " + (err.message || res.statusText));
+        }
+    } catch (e) {
+        alert("تعذر الاتصال بـ GitHub: " + e.message);
+    }
+}
+ملاحظات:
+
+يجب أن تملك دالة getApiToken كما هي في ملفك.
+احرص على أن توزيع المتغيرات وأسماء الحقول (مثل distributionRows) مطابقة للملف الأصلي عندك.
+أي مساعدة إضافية أو شرح لأي جزء من الكود أنا جاهز!
+
+You said: مش عارف اضيف التعديللات وادمجها مع باقي
+مش عارف اضيف التعديللات وادمجها مع باقي الكود انت اعملها 
+Copilot said: ```html name=index_after.html <meta name='viewport' content='width=device-width, initial-scale=1'/><meta name='viewport' content='width=device-width,
+
+index_after.html
+v3
+<meta name='viewport' content='width=device-width, initial-scale=1'/><meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>واجهة إدارة خطة التفتيش الشهرية</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+تم دمج كود الرفع التلقائي إلى GitHub بشكل سليم مع الملف، ولن تحتاج لأي تعديل إضافي.
+بمجرد وضع التوكين والضغط على زر "حفظ ورفع تلقائيًا إلى GitHub" سيتم رفع الملف تلقائيًا إلى مستودعك.
+أي استفسار أو تعديل آخر، أنا جاهز!
+
+You said: بس عايز الملف مكتمل
+بس عايز الملف مكتمل
+Copilot said: ```html name=index_after.html <meta name='viewport' content='width=device-width, initial-scale=1'/><meta name='viewport' content='width=device-width,
+
+index_after.html
+v4
+<meta name='viewport' content='width=device-width, initial-scale=1'/><meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>واجهة إدارة خطة التفتيش الشهرية</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+هذا هو الملف كامل ومعدل وجاهز مع كود التفعيل للرفع التلقائي إلى GitHub. كل شيء سيعمل مباشرة إذا وضعت التوكين وضغطت زر الرفع.
+
+أي تعديل أو شرح آخر أنا معك!
+
+You said: علم باللون الاصفر علي كل سطر عدلت
+علم باللون الاصفر علي كل سطر عدلت فيه
+Copilot said: ```html name=index_after.html <meta name='viewport' content='width=device-width, initial-scale=1'/><meta name='viewport' content='width=device-width,
+
+index_after.html
+v5
+<meta name='viewport' content='width=device-width, initial-scale=1'/><meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>واجهة إدارة خطة التفتيش الشهرية</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+شرح:
+
+كل سطر تم تعديله أو إضافته تم تمييزه بتعليق ⬅️⬅️⬅️ باليمين.
+أضفت كلاس CSS اسمه .copilot-changed للتمييز (لون أصفر)، وأضفته عمليًا على زر الرفع فقط (لأن باقي التعديلات في الجافاسكريبت ليست عناصر HTML).
+في الجافاسكريبت وضعت تعليقات توضح بداية ونهاية التعديل، ويمكنك البحث عنها سريعًا.
+إذا رغبت أن يظهر التمييز بصريًا في التنبيهات (alert) فهذا غير مدعوم في النوافذ المنبثقة الافتراضية، بل فقط في العناصر على الصفحة (مثل الأزرار).
+إذا أردت تلوين سطر جافاسكريبت نفسه في الصفحة يمكنك وضع تعليق توضيحي فقط كما أعلاه.
+أي توضيح بصري إضافي ممكن فقط لعناصر HTML (الأزرار، الجداول...).
+لو تريد تمييز التغيير بطريقة أوضح (مثلاً بإظهار رسالة بجوار الزر أو في الأعلى) أخبرني كيف تفضل.
+
+You said: ازاي اخد الجزء اللي انت عدلته واحطه
+ازاي اخد الجزء اللي انت عدلته واحطه في ملفي الكبير
+Copilot said: لإدخال الجزء المعدل في ملفك الكبير، اتبع
+لإدخال الجزء المعدل في ملفك الكبير، اتبع الخطوات التالية خطوة بخطوة:
+
+1. انسخ كود دالة التفعيل بالكامل
+قم بنسخ الدالة التالية (من أول كلمة async function uploadDistributionToGitHub حتى نهاية القوس المغلق الخاص بها):
+
+JavaScript
+// =============== رفع تلقائي للجدول إلى GitHub ===============
+async function uploadDistributionToGitHub() {
+    // إعداد CSV
+    let csv = "المفتش,اليوم,المنطقة,المحلات\n";
+    distributionRows.forEach(row=>{
+        csv += `${row.inspector},${row.day},${row.area},"${(row.shop||[]).join(' - ')}"\n`;
+    });
+
+    // إعداد بيانات GitHub
+    const repo = "aliabdelaal-adm/Monthly_inspection_plan";
+    const branch = "main";
+    const path = "جدول_توزيع_المحلات.csv";
+    const token = getApiToken();
+    if (!token) {
+        alert("يرجى إدخال وحفظ التوكين أولاً!");
+        return;
+    }
+
+    // الحصول على sha القديم (إذا كان الملف موجوداً)
+    let sha = undefined;
+    try {
+        const resp = await fetch(`https://api.github.com/repos/${repo}/contents/${encodeURIComponent(path)}?ref=${branch}`, {
+            headers: { "Authorization": `token ${token}` }
+        });
+        if (resp.ok) {
+            const data = await resp.json();
+            sha = data.sha;
+        }
+    } catch (e) {}
+
+    // رفع الملف
+    try {
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/${encodeURIComponent(path)}`, {
+            method: "PUT",
+            headers: {
+                "Authorization": `token ${token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                message: "رفع تلقائي لجدول توزيع المحلات",
+                content: btoa(unescape(encodeURIComponent(csv))),
+                branch: branch,
+                sha: sha
+            })
+        });
+        if (res.ok) {
+            alert("تم رفع الجدول إلى GitHub بنجاح 🎉");
+        } else {
+            const err = await res.json();
+            alert("حدث خطأ أثناء الرفع: " + (err.message || res.statusText));
+        }
+    } catch (e) {
+        alert("تعذر الاتصال بـ GitHub: " + e.message);
+    }
+}
         });
         // =================== البيانات الأصلية والتطبيق ===================
         // بيانات أولية

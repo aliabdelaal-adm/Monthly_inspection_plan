@@ -9,7 +9,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        body { font-family: 'Cairo', Arial, sans-serif; background: #f7f9fc; margin:0;}
+        /* إضافة خطوط عربية ثابتة وواضحة للواجهة - استخدام خطوط النظام */
+        
+        body { font-family: 'Segoe UI', 'Cairo', 'Tajawal', Tahoma, Arial, sans-serif; background: #f7f9fc; margin:0;}
         .main-container {
             background: #fff;
             border-radius: 18px;
@@ -84,9 +86,31 @@
             letter-spacing: 1px;
             margin:0 auto;
             box-shadow:0 2px 14px #e0e2f5;
+            /* تحسين الخط العربي - استخدام خط ثابت وواضح */
+            font-family: 'Segoe UI', 'Cairo', 'Tajawal', Tahoma, Arial, sans-serif !important;
+            font-weight: 700 !important;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
         .login-section, .inspector-select-section {margin: 10px 0 18px 0; width: 100%; display:flex;justify-content:center;align-items:center;gap:10px;}
         select, input[type="text"], input[type="date"], input[type="password"] {padding:7px 16px;font-size:1em;border-radius:6px;border:1px solid #b6b6b6;min-width:130px;max-width:210px;}
+        
+        /* تخصيص مظهر القوائم المنسدلة - خلفية زرقاء مع إطار رمادي */
+        #loginRole, #inspectorSelect {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 50%, #90caf9 100%) !important;
+            border: 2px solid #b6b6b6 !important;
+            color: #000 !important;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(33, 64, 147, 0.15);
+        }
+        
+        /* تأكيد أن أسماء المفتشين تظهر باللون الأسود */
+        #loginRole option, #inspectorSelect option {
+            color: #000 !important;
+            background: #fff !important;
+            font-weight: normal;
+        }
         .actions-row {width:100%;display:flex;justify-content:center;align-items:center;gap:18px;margin:20px 0 18px;}
         .save-box, .report-box {display:flex;gap:12px;}
         .save-box button, .report-box button {padding:10px 28px;border-radius:8px;border:none;cursor:pointer;font-size:1em;}
@@ -345,7 +369,16 @@ document.addEventListener('DOMContentLoaded', function() {
     fillInspectorsDropdowns();
     setLastUpdateDate();
     enableBirdSoundOnFirstInteraction();
-    renderPlanTable();
+    
+    /* عرض بيانات الجدول الرئيسية مباشرة من مدخلات لوحة تحكم المطور عند تحميل الصفحة */
+    renderPlanTable(); // عرض كامل البيانات عند التحميل
+    
+    // إضافة مراقب للتحديث التلقائي كل ثانيتين لضمان Live Update
+    setInterval(() => {
+        if (isDev || selectedInspector) {
+            renderPlanTable();
+        }
+    }, 2000);
 });
 
 // التحكم في تسجيل الدخول وصلاحيات المطور
@@ -377,7 +410,15 @@ document.getElementById("devLoginBtn").onclick = function() {
         document.getElementById("devLoginBtn").style.display = "none";
         document.getElementById("devError").innerText = "";
         fillInspectorsDropdowns();
+        
+        /* تحديث فوري للجدول عند دخول المطور لإظهار بيانات لوحة التحكم */
         renderPlanTable();
+        
+        // إضافة تحديث تلقائي مستمر عند تفعيل وضع المطور
+        setTimeout(() => {
+            renderPlanTable(); // تأكيد العرض الصحيح
+        }, 100);
+        
     } else {
         document.getElementById("devError").innerText = "كلمة السر غير صحيحة!";
     }
@@ -393,11 +434,20 @@ document.getElementById("devLogoutBtn").onclick = function() {
     renderPlanTable();
 };
 
-// التغيير على اختيار المفتش
+// التغيير على اختيار المفتش - تحديث تلقائي مباشر
 document.getElementById('inspectorSelect').addEventListener('change', function() {
     selectedInspector = this.value;
+    // تحديث فوري للجدول عند اختيار مفتش
     renderPlanTable();
     document.getElementById('inspectorReportDiv').style.display = "none";
+    
+    /* إضافة تحديث تلقائي لإحصائيات المفتش المختار */
+    if (selectedInspector) {
+        // تأكيد عرض بيانات المفتش المختار فقط
+        setTimeout(() => {
+            renderPlanTable(); // تحديث إضافي لضمان العرض الصحيح
+        }, 100);
+    }
 });
 
 document.getElementById("addEditForm").addEventListener("submit", function(e){
@@ -421,10 +471,54 @@ document.getElementById("addEditForm").addEventListener("submit", function(e){
         inspectionData[editingIdx] = newPlan;
     }
     saveInspectionData();
+    
+    /* تحديث تلقائي فوري للجدول والتقارير */
     renderPlanTable();
+    
+    // إذا كان هناك مفتش مختار، تحديث عرضه تلقائياً
+    if (selectedInspector) {
+        setTimeout(() => {
+            renderPlanTable(); // تحديث إضافي لضمان عرض البيانات الجديدة
+        }, 50);
+    }
+    
     this.reset();
     document.getElementById("formEditingIndex").value = "";
 });
+
+/* إضافة مراقبات التحديث التلقائي Live لحقول لوحة تحكم المطور */
+// مراقبة التغييرات في حقول النموذج للتحديث التلقائي
+function addLiveUpdateListeners() {
+    const formFields = ['formInspector', 'formDay', 'formShift', 'formArea', 'formShops'];
+    
+    formFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            // مراقبة التغييرات الفورية
+            field.addEventListener('change', function() {
+                if (isDev) {
+                    setTimeout(() => {
+                        renderPlanTable(); // تحديث الجدول عند أي تغيير في الحقول
+                    }, 200);
+                }
+            });
+            
+            // مراقبة الكتابة المباشرة للحقول النصية
+            if (field.type === 'text') {
+                field.addEventListener('input', function() {
+                    if (isDev) {
+                        setTimeout(() => {
+                            renderPlanTable(); // تحديث مباشر أثناء الكتابة
+                        }, 500);
+                    }
+                });
+            }
+        }
+    });
+}
+
+// تفعيل مراقبات التحديث التلقائي
+setTimeout(addLiveUpdateListeners, 1000);
 
 // --- عرض جدول الخطط مع صلاحيات المطور ---
 function renderPlanTable() {

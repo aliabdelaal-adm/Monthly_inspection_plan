@@ -145,6 +145,40 @@
                     <button type="submit">إضافة محل</button>
                 </form>
             </div>
+            <div class="admin-section">
+                <h3>إدارة بيانات التفتيش</h3>
+                <form class="add-row-form" id="addInspectionForm" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:15px;">
+                    <select id="inspectionInspector" required>
+                        <option value="">اختر المفتش</option>
+                    </select>
+                    <input type="date" id="inspectionDay" required />
+                    <select id="inspectionShift" required>
+                        <option value="">المناوبة</option>
+                        <option value="صباحية">صباحية</option>
+                        <option value="مسائية">مسائية</option>
+                    </select>
+                    <select id="inspectionArea" required>
+                        <option value="">اختر المنطقة</option>
+                    </select>
+                    <input type="text" id="inspectionShops" placeholder="المحلات (مفصولة بفاصلة)" required />
+                    <button type="submit">إضافة تفتيش</button>
+                </form>
+                <div style="max-height:200px;overflow-y:auto;border:1px solid #ddd;padding:8px;background:#fff;border-radius:5px;">
+                    <table style="width:100%;font-size:0.9em;" id="inspectionDataTable">
+                        <thead>
+                            <tr style="background:#f5f5f5;">
+                                <th>المفتش</th>
+                                <th>اليوم</th>
+                                <th>المناوبة</th>
+                                <th>المنطقة</th>
+                                <th>المحلات</th>
+                                <th>حذف</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
             <div class="admin-section shops-area-box">
                 <div class="shops-area-title">توزيع المحلات على المفتشين والأيام:</div>
                 <table class="distribution-table" style="width:100%;margin-bottom:10px;">
@@ -280,6 +314,7 @@
             }
             updateInspectorList(); updateShopList(); updateAreaList(); renderGoalList();
             renderShopsByArea(); renderDistributionTable(); fillInspectorsSelect(); renderInspectorPage();
+            fillInspectionSelects(); renderInspectionDataTable();
         }
         function setDefaultData() {
             inspectors = ["هاجر","آمنه","آيه","د. فايز المسالمة","د.آمنه بن صرم"];
@@ -295,6 +330,78 @@
             const json = JSON.stringify(allData, null, 2);
             await uploadToGitHubFile(json, DATA_FILE, msg || "تحديث جميع بيانات خطة التفتيش");
         }
+        // ============== دالة رفع التلقائي لبيانات التفتيش فقط ==============
+        async function uploadInspectionDataToGitHub(commitMsg = "تحديث بيانات التفتيش") {
+            const repo = "aliabdelaal-adm/Monthly_inspection_plan";
+            const branch = "main";
+            const path = encodeURIComponent(DATA_FILE);
+            const apiToken = getApiToken();
+            
+            if (!apiToken) {
+                alert("يرجى إدخال وحفظ التوكين الخاص بك أولاً.");
+                return false;
+            }
+
+            try {
+                // جلب sha الأحدث قبل الرفع
+                let fileSha = null;
+                try {
+                    const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/${path}?ref=${branch}`, {
+                        headers: { Authorization: "token " + apiToken }
+                    });
+                    if (getRes.ok) {
+                        const getData = await getRes.json();
+                        fileSha = getData.sha;
+                    }
+                } catch (e) {
+                    console.warn("فشل في جلب sha:", e);
+                }
+
+                // تحضير البيانات الكاملة مع بيانات التفتيش المحدثة
+                const allData = {inspectors, shops, areas, goals, shopsByArea, distributionRows, inspectionData};
+                const json = JSON.stringify(allData, null, 2);
+                
+                const payload = {
+                    message: commitMsg,
+                    content: btoa(unescape(encodeURIComponent(json))),
+                    branch: branch
+                };
+                if (fileSha) payload.sha = fileSha;
+
+                const res = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+                    method: "PUT",
+                    headers: {
+                        "Authorization": "token " + apiToken,
+                        "Accept": "application/vnd.github+json"
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    // إعادة المحاولة في حال sha mismatch
+                    if (err.message && err.message.includes("does not match")) {
+                        console.log("إعادة محاولة رفع بيانات التفتيش بسبب تعارض sha...");
+                        await new Promise(r => setTimeout(r, 1000));
+                        return uploadInspectionDataToGitHub(commitMsg);
+                    } else {
+                        console.error("فشل رفع بيانات التفتيش:", err.message || res.statusText);
+                        return false;
+                    }
+                } else {
+                    console.log("تم رفع بيانات التفتيش بنجاح");
+                    // رسالة نجاح
+                    document.getElementById('apiTokenSavedMsg').textContent = 'تم رفع بيانات التفتيش ✓';
+                    document.getElementById('apiTokenSavedMsg').style.display = '';
+                    setTimeout(() => {document.getElementById('apiTokenSavedMsg').style.display = 'none';}, 2000);
+                    return true;
+                }
+            } catch (error) {
+                console.error("خطأ في رفع بيانات التفتيش:", error);
+                return false;
+            }
+        }
+
         // ============== دالة رفع مع معالجة تعارض sha بشكل متكرر ==============
         async function uploadToGitHubFile(fileContent, fileName, commitMsg, retryCount = 0) {
             const repo = "aliabdelaal-adm/Monthly_inspection_plan";
@@ -368,10 +475,103 @@
                 list.appendChild(li);
             });
         }
+        // دوال إدارة بيانات التفتيش
+        function fillInspectionSelects() {
+            const inspectorSelect = document.getElementById('inspectionInspector');
+            const areaSelect = document.getElementById('inspectionArea');
+            
+            // تعبئة قائمة المفتشين
+            inspectorSelect.innerHTML = '<option value="">اختر المفتش</option>';
+            inspectors.forEach(inspector => {
+                inspectorSelect.innerHTML += `<option value="${inspector}">${inspector}</option>`;
+            });
+            
+            // تعبئة قائمة المناطق
+            areaSelect.innerHTML = '<option value="">اختر المنطقة</option>';
+            areas.forEach(area => {
+                areaSelect.innerHTML += `<option value="${area}">${area}</option>`;
+            });
+        }
+        
+        function renderInspectionDataTable() {
+            const tbody = document.getElementById('inspectionDataTable').querySelector('tbody');
+            tbody.innerHTML = '';
+            
+            inspectionData.forEach((item, idx) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${item.inspector}</td>
+                    <td>${item.day}</td>
+                    <td>${item.shift}</td>
+                    <td>${item.area}</td>
+                    <td>${item.shops.join(', ')}</td>
+                    <td><button onclick="deleteInspectionData(${idx})" style="background:#d32f2f;color:#fff;border:none;padding:2px 8px;border-radius:3px;cursor:pointer;">حذف</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        
+        function addInspectionData(e) {
+            e.preventDefault();
+            
+            const inspector = document.getElementById('inspectionInspector').value.trim();
+            const day = document.getElementById('inspectionDay').value.trim();
+            const shift = document.getElementById('inspectionShift').value.trim();
+            const area = document.getElementById('inspectionArea').value.trim();
+            const shopsText = document.getElementById('inspectionShops').value.trim();
+            
+            if (!inspector || !day || !shift || !area || !shopsText) {
+                alert('يرجى تعبئة جميع الحقول');
+                return;
+            }
+            
+            const shops = shopsText.split(',').map(shop => shop.trim()).filter(shop => shop);
+            
+            if (shops.length === 0) {
+                alert('يرجى إدخال اسم محل واحد على الأقل');
+                return;
+            }
+            
+            // إضافة البيانات الجديدة
+            inspectionData.push({
+                inspector,
+                day,
+                shift,
+                area,
+                shops
+            });
+            
+            // تحديث الجدول
+            renderInspectionDataTable();
+            
+            // رفع البيانات تلقائياً إلى GitHub
+            uploadInspectionDataToGitHub("إضافة بيانات تفتيش جديدة");
+            
+            // تفريغ النموذج
+            document.getElementById('addInspectionForm').reset();
+            
+            // تحديث عرض المفتش إذا كان محدد
+            renderInspectorPage();
+        }
+        
+        function deleteInspectionData(idx) {
+            if (confirm('هل تريد حذف هذا السجل؟')) {
+                inspectionData.splice(idx, 1);
+                renderInspectionDataTable();
+                
+                // رفع البيانات تلقائياً إلى GitHub
+                uploadInspectionDataToGitHub("حذف بيانات تفتيش");
+                
+                // تحديث عرض المفتش إذا كان محدد
+                renderInspectorPage();
+            }
+        }
+        
         function updateInspectorList() {
             const list = document.getElementById('inspectorList');
             renderList(list, inspectors, 'inspector', 'startEditInspector', 'saveEditInspector', 'deleteInspector');
             fillInspectorsSelect();
+            fillInspectionSelects(); // تحديث قائمة المفتشين في نموذج التفتيش
         }
         function addInspector(e) {
             e.preventDefault();
@@ -455,6 +655,8 @@
         function updateAreaList() {
             const list = document.getElementById('areaList');
             renderList(list, areas, 'area', 'startEditArea', 'saveEditArea', 'deleteArea');
+            renderShopsByArea(); // تحديث قائمة المناطق في إدارة المحلات
+            fillInspectionSelects(); // تحديث قائمة المناطق في نموذج التفتيش
         }
         function addArea(e) {
             e.preventDefault();
@@ -805,6 +1007,8 @@
                 renderShopsByArea();
                 renderDistributionTable();
                 handleDeveloperApiTokenBar();
+                fillInspectionSelects();
+                renderInspectionDataTable();
             } else {
                 document.getElementById('passwordError').style.display = '';
             }
@@ -830,6 +1034,7 @@
         document.getElementById('addAreaForm').onsubmit = addArea;
         document.getElementById('addGoalForm').onsubmit = addGoal;
         document.getElementById('addShopByAreaForm').onsubmit = addShopByArea;
+        document.getElementById('addInspectionForm').onsubmit = addInspectionData;
         document.addEventListener('DOMContentLoaded', ()=>{ loadAllDataFromGitHub(); });
         document.getElementById('passwordInput').addEventListener('keydown', function(e){
             if(e.key === "Enter") checkPassword();

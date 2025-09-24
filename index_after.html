@@ -101,7 +101,8 @@
         </div>
         <div id="adminPanel" style="display:none;">
             <!-- زر الحفظ اليدوي الجديد -->
-            <button onclick="uploadAllDataToGitHub('حفظ يدوي لجميع البيانات')" style="background:#234093;color:#fff;margin:10px;">💾 حفظ جميع البيانات</button>
+            <button onclick="manualSaveAllData()" style="background:#234093;color:#fff;margin:10px;">💾 حفظ جميع البيانات يدوياً</button>
+            <div id="manualSaveMessage" style="display:none;margin:10px;padding:8px;border-radius:5px;"></div>
             <div class="admin-panel">
                 <div class="admin-section">
                     <h3>إدارة أسماء المفتشين</h3>
@@ -293,7 +294,45 @@
         async function uploadAllDataToGitHub(msg) {
             const allData = {inspectors, shops, areas, goals, shopsByArea, distributionRows, inspectionData};
             const json = JSON.stringify(allData, null, 2);
-            await uploadToGitHubFile(json, DATA_FILE, msg || "تحديث جميع بيانات خطة التفتيش");
+            return await uploadToGitHubFile(json, DATA_FILE, msg || "تحديث جميع بيانات خطة التفتيش");
+        }
+        
+        // دالة الحفظ اليدوي مع عرض رسائل النجاح والفشل
+        async function manualSaveAllData() {
+            const messageDiv = document.getElementById('manualSaveMessage');
+            
+            try {
+                messageDiv.style.display = 'block';
+                messageDiv.textContent = 'جاري حفظ البيانات...';
+                messageDiv.style.backgroundColor = '#e3f2fd';
+                messageDiv.style.color = '#1976d2';
+                
+                const success = await uploadAllDataToGitHub('حفظ يدوي لجميع البيانات');
+                
+                if (success) {
+                    messageDiv.textContent = '✓ تم حفظ جميع البيانات بنجاح';
+                    messageDiv.style.backgroundColor = '#e8f5e8';
+                    messageDiv.style.color = '#2e7d32';
+                } else {
+                    messageDiv.textContent = '✗ فشل في حفظ البيانات';
+                    messageDiv.style.backgroundColor = '#ffebee';
+                    messageDiv.style.color = '#c62828';
+                }
+                
+                // إخفاء الرسالة بعد 4 ثوان
+                setTimeout(() => {
+                    messageDiv.style.display = 'none';
+                }, 4000);
+                
+            } catch (error) {
+                messageDiv.textContent = '✗ خطأ في الحفظ: ' + error.message;
+                messageDiv.style.backgroundColor = '#ffebee';
+                messageDiv.style.color = '#c62828';
+                
+                setTimeout(() => {
+                    messageDiv.style.display = 'none';
+                }, 4000);
+            }
         }
         // ============== دالة رفع مع معالجة تعارض sha بشكل متكرر ==============
         async function uploadToGitHubFile(fileContent, fileName, commitMsg, retryCount = 0) {
@@ -302,8 +341,7 @@
             const path = encodeURIComponent(fileName);
             const apiToken = getApiToken();
             if (!apiToken) {
-                alert("يرجى إدخال وحفظ التوكين الخاص بك أولاً.");
-                return;
+                throw new Error("يرجى إدخال وحفظ التوكين الخاص بك أولاً.");
             }
             // دائماً جلب sha الأحدث قبل كل محاولة رفع
             let fileSha = null;
@@ -342,13 +380,10 @@
                     await new Promise(r=>setTimeout(r, 500));
                     return uploadToGitHubFile(fileContent, fileName, commitMsg, retryCount + 1);
                 } else {
-                    alert("فشل الرفع! " + (err.message || res.statusText));
+                    throw new Error(err.message || res.statusText);
                 }
             } else {
-                // رسالة نجاح الحفظ
-                document.getElementById('apiTokenSavedMsg').textContent = 'تم حفظ ورفع البيانات ✓';
-                document.getElementById('apiTokenSavedMsg').style.display = '';
-                setTimeout(()=>{document.getElementById('apiTokenSavedMsg').style.display='none';}, 2000);
+                return true; // إرجاع true عند النجاح
             }
         }
 
@@ -380,7 +415,6 @@
                 inspectors.push(val);
                 updateInspectorList();
                 fillInspectorsSelect();
-                uploadAllDataToGitHub("إضافة مفتش");
             }
             document.getElementById('newInspector').value = '';
         }
@@ -401,7 +435,6 @@
                 inspectors[idx] = val;
                 updateInspectorList();
                 fillInspectorsSelect();
-                uploadAllDataToGitHub("تعديل اسم مفتش");
             }
         }
         function deleteInspector(idx) {
@@ -409,7 +442,6 @@
                 inspectors.splice(idx,1);
                 updateInspectorList();
                 fillInspectorsSelect();
-                uploadAllDataToGitHub("حذف مفتش");
             }
         }
         function updateShopList() {
@@ -422,7 +454,6 @@
             if(val && !shops.includes(val)) {
                 shops.push(val);
                 updateShopList();
-                uploadAllDataToGitHub("إضافة محل");
             }
             document.getElementById('newShop').value = '';
         }
@@ -442,14 +473,12 @@
             if(val && !shops.includes(val)) {
                 shops[idx] = val;
                 updateShopList();
-                uploadAllDataToGitHub("تعديل اسم محل");
             }
         }
         function deleteShop(idx) {
             if(confirm("هل تريد حذف هذا المحل؟")) {
                 shops.splice(idx,1);
                 updateShopList();
-                uploadAllDataToGitHub("حذف محل");
             }
         }
         function updateAreaList() {
@@ -462,7 +491,6 @@
             if(val && !areas.includes(val)) {
                 areas.push(val);
                 updateAreaList();
-                uploadAllDataToGitHub("إضافة منطقة");
             }
             document.getElementById('newArea').value = '';
         }
@@ -482,14 +510,12 @@
             if(val && !areas.includes(val)) {
                 areas[idx] = val;
                 updateAreaList();
-                uploadAllDataToGitHub("تعديل اسم منطقة");
             }
         }
         function deleteArea(idx) {
             if(confirm("هل تريد حذف هذه المنطقة؟")) {
                 areas.splice(idx,1);
                 updateAreaList();
-                uploadAllDataToGitHub("حذف منطقة");
             }
         }
         function renderGoalList() {
@@ -514,7 +540,6 @@
             if(val && !goals.includes(val)) {
                 goals.push(val);
                 renderGoalList();
-                uploadAllDataToGitHub("إضافة هدف");
             }
             document.getElementById('newGoal').value = '';
         }
@@ -534,14 +559,12 @@
             if(val && !goals.includes(val)) {
                 goals[idx] = val;
                 renderGoalList();
-                uploadAllDataToGitHub("تعديل هدف");
             }
         }
         function deleteGoal(idx) {
             if(confirm("هل تريد حذف هذا الهدف؟")) {
                 goals.splice(idx,1);
                 renderGoalList();
-                uploadAllDataToGitHub("حذف هدف");
             }
         }
         function fillShopsByAreaDefault() {
@@ -591,7 +614,6 @@
                     if (!shops.includes(shopName)) shops.push(shopName);
                     renderShopsByArea();
                     updateShopList();
-                    uploadAllDataToGitHub("إضافة محل لمنطقة");
                 }
             }
             document.getElementById('newShopByArea').value = '';
@@ -609,7 +631,6 @@
                     if (i > -1) shops.splice(i,1);
                     updateShopList();
                 }
-                uploadAllDataToGitHub("حذف محل من منطقة");
             }
         }
         let weekendDays = [5, 6, 0];
@@ -617,13 +638,13 @@
             const tbody = document.getElementById('distributionTableBody');
             tbody.innerHTML = '';
             distributionRows.forEach((row, idx) => {
-                let inspectorSelect = `<select onchange="distributionRows[${idx}].inspector=this.value; renderDistributionTable(); uploadAllDataToGitHub('تعديل توزيع')">
+                let inspectorSelect = `<select onchange="distributionRows[${idx}].inspector=this.value; renderDistributionTable();">
                     <option value=""></option>
                     ${inspectors.map(inspector =>
                         `<option value="${inspector}" ${row.inspector===inspector?'selected':''}>${inspector}</option>`
                     ).join('')}
                 </select>`;
-                let areaSelect = `<select onchange="distributionRows[${idx}].area=this.value; distributionRows[${idx}].shop=[]; renderDistributionTable(); uploadAllDataToGitHub('تعديل توزيع')">
+                let areaSelect = `<select onchange="distributionRows[${idx}].area=this.value; distributionRows[${idx}].shop=[]; renderDistributionTable();">
                     <option value=""></option>
                     ${areas.map(area =>
                         `<option value="${area}" ${row.area===area?'selected':''}>${area}</option>`
@@ -638,7 +659,7 @@
                 tbody.innerHTML += `
                     <tr>
                         <td>${inspectorSelect}</td>
-                        <td><input type="date" value="${row.day||''}" onchange="distributionRows[${idx}].day=this.value; uploadAllDataToGitHub('تعديل توزيع')"></td>
+                        <td><input type="date" value="${row.day||''}" onchange="distributionRows[${idx}].day=this.value;"></td>
                         <td>${areaSelect}</td>
                         <td>${shopSelect}</td>
                         <td><button onclick="deleteDistributionRow(${idx})">حذف</button></td>
@@ -649,17 +670,14 @@
         function handleShopMultiSelect(sel, idx) {
             const selected = Array.from(sel.selectedOptions).map(opt=>opt.value);
             distributionRows[idx].shop = selected;
-            uploadAllDataToGitHub("تعديل توزيع");
         }
         function addDistributionRow() {
             distributionRows.push({inspector:'', day:'', area:'', shop:[]});
             renderDistributionTable();
-            uploadAllDataToGitHub("إضافة توزيع جديد");
         }
         function deleteDistributionRow(idx) {
             distributionRows.splice(idx,1);
             renderDistributionTable();
-            uploadAllDataToGitHub("حذف توزيع");
         }
         function autoDistributeShops() {
             distributionRows = [];
@@ -686,7 +704,6 @@
                 }
             }
             renderDistributionTable();
-            uploadAllDataToGitHub("توزيع تلقائي للمحلات");
         }
         function saveDistributionToFile() {
             let csv = "المفتش,اليوم,المنطقة,المحلات\n";

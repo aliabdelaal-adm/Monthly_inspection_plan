@@ -1,243 +1,0 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>واجهة إدارة خطة التفتيش الشهرية</title>
-    <style>
-        body {
-            font-family: 'Cairo', Tahoma, Arial, sans-serif;
-            background: #f7f8fa;
-            margin: 0;
-            padding: 0;
-        }
-        /* ... بقية التنسيقات كما هي في ملفك ... */
-    </style>
-</head>
-<body>
-    <div class="container">
-        <!-- العنوان الرئيسي -->
-        <div class="main-title">
-            خطة التفتيش الشهرية
-        </div>
-        <!-- شريط الأدوات العلوي -->
-        <div class="top-bar">
-            <div>
-                <span class="user-type-label">نوع المستخدم:</span>
-                <select id="userTypeSelect" onchange="handleUserTypeChange()">
-                    <option value="inspector">مفتش</option>
-                    <option value="developer">المطور</option>
-                </select>
-                <span id="inspectorSelectBox" style="display:inline-block;">
-                    <label for="inspectorSelect">اسم المفتش:</label>
-                    <select id="inspectorSelect" onchange="renderInspectorPage()"></select>
-                </span>
-                <button onclick="window.print()">طباعة أو حفظ PDF</button>
-                <button id="bellButton" onclick="playBirdSound()" title="تشغيل صوت العصافير" style="background: #228B22; margin-right: 10px;">🔔</button>
-            </div>
-        </div>
-        <!-- مربع التوكين يظهر فقط في وضع المطور -->
-        <div id="apiTokenBar" class="api-token-bar" style="display:none;">
-            <label for="apiTokenInput">API Token:</label>
-            <input type="password" id="apiTokenInput" placeholder="أدخل التوكين هنا" autocomplete="off" />
-            <button type="button" id="saveApiTokenBtn">حفظ التوكين</button>
-            <span id="apiTokenSavedMsg" class="api-token-saved" style="display:none;">تم الحفظ ✓</span>
-            <button type="button" id="toggleApiTokenInputBtn" style="background:#888;" title="إظهار/إخفاء">👁️</button>
-        </div>
-        <!-- لوحة الإدارة للمطور -->
-        <div id="adminPanel" style="display:none;">
-            <div class="admin-panel">
-                <!-- إدارة المفتشين -->
-                <div class="admin-section">
-                    <h3>إدارة أسماء المفتشين</h3>
-                    <form class="add-row-form" id="addInspectorForm">
-                        <input type="text" id="newInspector" placeholder="اسم المفتش الجديد" required />
-                        <button type="submit">إضافة</button>
-                    </form>
-                    <ul class="admin-list" id="inspectorList"></ul>
-                </div>
-                <!-- إدارة المحلات -->
-                <div class="admin-section">
-                    <h3>إدارة أسماء المحلات</h3>
-                    <form class="add-row-form" id="addShopForm">
-                        <input type="text" id="newShop" placeholder="اسم المحل الجديد" required />
-                        <button type="submit">إضافة</button>
-                    </form>
-                    <ul class="admin-list" id="shopList"></ul>
-                </div>
-                <!-- إدارة المناطق -->
-                <div class="admin-section">
-                    <h3>إدارة أسماء المناطق</h3>
-                    <form class="add-row-form" id="addAreaForm">
-                        <input type="text" id="newArea" placeholder="اسم المنطقة الجديدة" required />
-                        <button type="submit">إضافة</button>
-                    </form>
-                    <ul class="admin-list" id="areaList"></ul>
-                </div>
-            </div>
-            <div class="goal-section">
-                <h3>إدارة أهداف التفتيش</h3>
-                <form class="add-row-form" id="addGoalForm">
-                    <input type="text" id="newGoal" placeholder="هدف جديد..." required />
-                    <button type="submit">إضافة</button>
-                </form>
-                <ul class="goal-list" id="goalList"></ul>
-            </div>
-            <!-- إدارة المحلات حسب المنطقة -->
-            <div class="admin-section shops-area-box">
-                <div class="shops-area-title">إدارة المحلات حسب المنطقة:</div>
-                <div id="shopsByAreaList"></div>
-                <form class="add-row-form" id="addShopByAreaForm" style="margin-top:8px;">
-                    <input type="text" id="newShopByArea" placeholder="اسم محل جديد" required />
-                    <select id="areaForShop"></select>
-                    <button type="submit">إضافة محل</button>
-                </form>
-            </div>
-            <!-- توزيع المحلات علي المفتشين والأيام -->
-            <div class="admin-section shops-area-box">
-                <div class="shops-area-title">توزيع المحلات على المفتشين والأيام:</div>
-                <table class="distribution-table" style="width:100%;margin-bottom:10px;">
-                    <thead>
-                        <tr>
-                            <th>المفتش</th>
-                            <th>اليوم</th>
-                            <th>المنطقة</th>
-                            <th>المحل</th>
-                            <th>حذف</th>
-                        </tr>
-                    </thead>
-                    <tbody id="distributionTableBody"></tbody>
-                </table>
-                <button onclick="addDistributionRow()" style="margin-bottom: 8px;">إضافة صف</button>
-                <button onclick="autoDistributeShops()" style="background:#234093;color:#fff;">توزيع تلقائي</button>
-                <br>
-                <button onclick="saveDistributionToFile()" style="background:#223;color:#fff;font-size:1.1em;padding:9px 18px;margin-top:12px;">حفظ الخطة (تحميل ملف)</button>
-                <button onclick="uploadDistributionToGitHub()" style="background:#19b55b;color:#fff;font-size:1.1em;padding:9px 18px;margin-top:12px;">حفظ ورفع تلقائيًا إلى GitHub</button>
-            </div>
-        </div>
-        <!-- صفحة المفتش -->
-        <div id="inspectorPage">
-            <!-- جدول التفتيش -->
-            <div class="section-box">
-                <div class="table-title">جدول التفتيش</div>
-                <table id="inspectionTable">
-                    <thead>
-                        <tr>
-                            <th>اليوم</th>
-                            <th>وقت المناوبة</th>
-                            <th>المنطقة</th>
-                            <th>المحلات</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- الصفوف ديناميكياً -->
-                    </tbody>
-                </table>
-            </div>
-            <!-- إحصائيات المفتش -->
-            <div class="section-box">
-                <div class="stats-title">احصائيات التفتيش</div>
-                <table class="stats-table" id="inspectorStatsTable">
-                    <thead>
-                        <tr>
-                            <th>عدد التفتيشات (كل الشهر)</th>
-                            <th>عدد التفتيشات الصباحية</th>
-                            <th>عدد التفتيشات المسائية</th>
-                            <th>عدد التفتيشات في العطلة (جمعة/سبت/أحد)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- الإحصائيات ديناميكياً -->
-                    </tbody>
-                </table>
-            </div>
-            <!-- أهداف التفتيش -->
-            <div class="goals-section">
-                <h3>أهداف التفتيش هذا الشهر:</h3>
-                <ul id="goalsList"></ul>
-            </div>
-            <div class="copyright">
-                جميع الحقوق محفوظة &copy; المطور د. علي عبدالعال
-            </div>
-        </div>
-    </div>
-    <!-- نافذة عرض المحلات -->
-    <div id="shopsModal" class="modal-overlay" style="display:none;">
-        <div class="modal-content">
-            <h4>قائمة المحلات</h4>
-            <ul id="shopsList"></ul>
-            <button onclick="closeShopsModal()">إغلاق</button>
-        </div>
-    </div>
-    <!-- نافذة الرقم السري -->
-    <div id="modalPassword" class="modal-overlay" style="display:none;">
-        <div class="modal-content">
-            <label>من فضلك أدخل الرقم السري للمطور:</label>
-            <input type="password" id="passwordInput" maxlength="10" autocomplete="off" />
-            <div class="error-msg" id="passwordError" style="display:none;">الرقم السري غير صحيح!</div>
-            <button onclick="checkPassword()">دخول</button>
-        </div>
-    </div>
-    <!-- صوت الطيور المغردة -->
-    <audio id="birds-audio" src="https://cdn.pixabay.com/audio/2022/07/26/audio_124bfa5c1c.mp3"></audio>
-    <script>
-        // ... باقي الدوال البرمجية حسب الملف الأصلي ...
-        // =============== رفع تلقائي للجدول إلى GitHub ===============
-        async function uploadDistributionToGitHub() {
-            // إعداد CSV
-            let csv = "المفتش,اليوم,المنطقة,المحلات\n";
-            distributionRows.forEach(row=>{
-                csv += `${row.inspector},${row.day},${row.area},"${(row.shop||[]).join(' - ')}"\n`;
-            });
-
-            // إعداد بيانات GitHub
-            const repo = "aliabdelaal-adm/Monthly_inspection_plan";
-            const branch = "main";
-            const path = "جدول_توزيع_المحلات.csv";
-            const token = getApiToken();
-            if (!token) {
-                alert("يرجى إدخال وحفظ التوكين أولاً!");
-                return;
-            }
-
-            // الحصول على sha القديم (إذا كان الملف موجوداً)
-            let sha = undefined;
-            try {
-                const resp = await fetch(`https://api.github.com/repos/${repo}/contents/${encodeURIComponent(path)}?ref=${branch}`, {
-                    headers: { "Authorization": `token ${token}` }
-                });
-                if (resp.ok) {
-                    const data = await resp.json();
-                    sha = data.sha;
-                }
-            } catch (e) {}
-
-            // رفع الملف
-            try {
-                const res = await fetch(`https://api.github.com/repos/${repo}/contents/${encodeURIComponent(path)}`, {
-                    method: "PUT",
-                    headers: {
-                        "Authorization": `token ${token}`,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        message: "رفع تلقائي لجدول توزيع المحلات",
-                        content: btoa(unescape(encodeURIComponent(csv))),
-                        branch: branch,
-                        sha: sha
-                    })
-                });
-                if (res.ok) {
-                    alert("تم رفع الجدول إلى GitHub بنجاح 🎉");
-                } else {
-                    const err = await res.json();
-                    alert("حدث خطأ أثناء الرفع: " + (err.message || res.statusText));
-                }
-            } catch (e) {
-                alert("تعذر الاتصال بـ GitHub: " + e.message);
-            }
-        }
-        // ... بقية الدوال البرمجية ...
-    </script>
-</body>
-</html>

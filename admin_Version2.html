@@ -9,6 +9,9 @@
     textarea {width:100%; font-size:1.1em; padding:8px; border-radius:6px; border:1px solid #ccc;}
     button {background:#2336a0; color:#fff; border:none; border-radius:6px; padding:10px 28px; font-size:1.08em; cursor:pointer;}
     button:disabled {background:#999;}
+    #uploadBtn {background:#0d7377; margin-left: 10px;}
+    #uploadBtn:hover {background:#0a5d61;}
+    #uploadBtn:disabled {background:#999;}
     .status {margin:14px 0 0 0;}
     label {font-weight:bold; color:#2336a0;}
     input[type="password"] {font-size:1.1em; padding:7px; border-radius:6px; border:1px solid #bbb;}
@@ -39,6 +42,7 @@
     <label>بيانات JSON (يمكنك التعديل هنا):</label>
     <textarea id="json" rows="18"></textarea><br>
     <button onclick="updatePlan()" id="saveBtn">حفظ التعديلات</button>
+    <button onclick="uploadDistributionToGitHub()" id="uploadBtn" style="margin-right: 10px;">حفظ ورفع تلقائيًا إلى GitHub</button>
     <div class="status" id="status"></div>
   </div>
   <script>
@@ -127,6 +131,74 @@
         }
       }
       document.getElementById("saveBtn").disabled = false;
+    }
+
+    // ---- Upload Distribution CSV to GitHub ----
+    async function uploadDistributionToGitHub() {
+      const token = getToken();
+      if (!token) { showTokenPopup(); return; }
+      
+      const distributionPath = "جدول_توزيع_المحلات.csv";
+      let distributionSha = "";
+      
+      document.getElementById("uploadBtn").disabled = true;
+      document.getElementById("status").textContent = "جاري رفع جدول التوزيع...";
+      
+      try {
+        // First, try to get the existing file to get its SHA
+        const existingRes = await fetch(`https://api.github.com/repos/${repo}/contents/${distributionPath}`);
+        if (existingRes.ok) {
+          const existingFile = await existingRes.json();
+          distributionSha = existingFile.sha;
+        }
+        
+        // Read the current CSV file from the repo
+        const csvRes = await fetch(`https://raw.githubusercontent.com/${repo}/main/${distributionPath}`);
+        let csvContent;
+        if (csvRes.ok) {
+          csvContent = await csvRes.text();
+        } else {
+          // If file doesn't exist, create a basic CSV structure
+          csvContent = "المفتش,اليوم,المنطقة,المحلات\n";
+        }
+        
+        // Encode the CSV content for GitHub API
+        const encodedContent = btoa(unescape(encodeURIComponent(csvContent)));
+        
+        // Upload/update the file
+        const uploadData = {
+          message: "تحديث جدول توزيع المحلات من لوحة المطور",
+          content: encodedContent
+        };
+        
+        if (distributionSha) {
+          uploadData.sha = distributionSha;
+        }
+        
+        const uploadRes = await fetch(`https://api.github.com/repos/${repo}/contents/${distributionPath}`, {
+          method: "PUT",
+          headers: {
+            "Authorization": `token ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(uploadData)
+        });
+        
+        if (uploadRes.status === 200 || uploadRes.status === 201) {
+          document.getElementById("status").textContent = "تم رفع الجدول بنجاح إلى GitHub ✅";
+        } else {
+          const err = await uploadRes.json();
+          document.getElementById("status").textContent = "❌ فشل في رفع الجدول: " + (err.message || "تحقق من التوكن أو الصلاحيات.");
+          if (uploadRes.status === 401 || uploadRes.status === 403) {
+            removeToken();
+            setTimeout(showTokenPopup, 500);
+          }
+        }
+      } catch (error) {
+        document.getElementById("status").textContent = "❌ خطأ في الاتصال: " + error.message;
+      }
+      
+      document.getElementById("uploadBtn").disabled = false;
     }
 
     // ---- On Load ----

@@ -195,7 +195,8 @@ async function fetchPlanFromGitHub() {
         const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${PLAN_FILE}`);
         if (!res.ok) throw new Error('تعذر تحميل البيانات');
         const json = await res.json();
-        const planContent = atob(json.content.replace(/\n/g,''));
+        // فك التشفير بشكل يدعم العربية
+        const planContent = decodeURIComponent(escape(atob(json.content.replace(/\n/g,''))));
         data = JSON.parse(planContent);
         renderAll();
         document.getElementById('lastUpdate').textContent = 'آخر تحديث: ' + (data.lastUpdate || '');
@@ -218,7 +219,7 @@ async function savePlanToGitHub() {
         const json = await res.json();
         sha = json.sha;
     } catch {}
-    // رفع الملف
+    // رفع الملف مع ترميز يدعم العربية
     const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${PLAN_FILE}`, {
         method: "PUT",
         headers: {

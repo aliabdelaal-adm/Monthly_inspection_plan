@@ -58,7 +58,7 @@ except ImportError:
 
 # قائمة الملفات المراقبة - يمكن إضافة ملفات أخرى هنا
 FILES_TO_MONITOR = [
-    "plan-data.json",
+    "خطة التفتيش الشهرية.json",
     # يمكن إضافة ملفات أخرى هنا
     # "config.json",
     # "data.txt",

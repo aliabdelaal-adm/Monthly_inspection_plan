@@ -68,7 +68,7 @@ nohup python auto_push_on_change.py &
 
 ```python
 FILES_TO_MONITOR = [
-    "plan-data.json",
+    "خطة التفتيش الشهرية.json",
     "config.json",        # ملف جديد
     "data.txt",          # ملف آخر
 ]
@@ -134,7 +134,7 @@ git remote add origin <URL-REPOSITORY>
 راقب ملف `auto_push.log` للتأكد من عمل السكريبت بشكل صحيح.
 
 ### 3. اختبار قبل الاستخدام
-- جرب تعديل `plan-data.json` يدوياً
+- جرب تعديل `خطة التفتيش الشهرية.json` يدوياً
 - تأكد من حدوث commit و push تلقائياً
 - راجع السجلات للتأكد من عدم وجود أخطاء
 

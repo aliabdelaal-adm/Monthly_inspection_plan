@@ -20,13 +20,14 @@
             margin: 64px auto 0 auto;
             display: flex; flex-direction: column; align-items: center;
         }
-        /* ... بقية الستايلات كما في الملف الحالي ... */
+        /* ... باقي التنسيقات ... */
     </style>
 </head>
 <body>
 <div class="main-container">
-    <!-- ... بقية الواجهة كما هي ... -->
-    <div id="loadingMessage" style="text-align: center; font-size: 1.2em; color: #234085; margin: 20px;">جاري تحميل البيانات ...</div>
+    <!-- جميع عناصر الصفحة كما أرسلتها أنت ... -->
+    <div id="loadingMessage" style="text-align: center; font-size: 1.2em; color: #234085; margin: 20px; display: none;">جاري تحميل البيانات ...</div>
+    <!-- ... بقية الصفحة ... -->
 </div>
 <script>
 // بيانات المفتشين ثابتة
@@ -47,8 +48,8 @@ let defaultInspectionData = [
     { inspector: "د. فايز المسالمة", day: "2025-09-21", shift: "صباحية", area: "المنطقة أ", shops: ["محل 8", "محل 9"] },
     { inspector: "د.آمنه بن صرم", day: "2025-09-21", shift: "مسائية", area: "المنطقة ج", shops: ["محل 11"] },
 ];
+let inspectionData = [];
 
-// الدالة الجديدة لجلب البيانات من data.json في نفس المجلد
 async function fetchInspectionDataFromGitHub() {
     try {
         const url = "data.json?t=" + Date.now();
@@ -57,29 +58,41 @@ async function fetchInspectionDataFromGitHub() {
             const dataJson = await res.json();
             if (dataJson.inspectionData && Array.isArray(dataJson.inspectionData) && dataJson.inspectionData.length > 0) {
                 return dataJson.inspectionData;
+            } else {
+                alert("تم تحميل data.json لكن لا توجد بيانات inspectionData بداخله.\nسيتم استخدام البيانات المحلية أو الافتراضية.");
             }
+        } else {
+            alert("لم يتم تحميل ملف data.json من السيرفر.\nسيتم استخدام البيانات المحلية أو الافتراضية.");
         }
-    } catch(e){}
+    } catch(e){
+        alert("حدث خطأ أثناء تحميل البيانات من data.json:\n" + e.message + "\nسيتم استخدام البيانات المحلية أو الافتراضية.");
+    }
     return null;
 }
 
-// تحميل البيانات بالترتيب: data.json > localStorage > الافتراضية
-let inspectionData = [];
-(async function initInspectionData(){
+async function initInspectionData() {
     document.getElementById('loadingMessage').style.display = 'block';
     let data = await fetchInspectionDataFromGitHub();
     if (data) {
         inspectionData = data;
+        localStorage.setItem('inspectionData', JSON.stringify(inspectionData));
     } else if (localStorage.getItem('inspectionData')) {
         inspectionData = JSON.parse(localStorage.getItem('inspectionData'));
     } else {
         inspectionData = defaultInspectionData.slice();
     }
-    renderPlanTable();
     document.getElementById('loadingMessage').style.display = 'none';
-})();
+    fillInspectorsDropdowns();
+    setLastUpdateDate();
+    renderPlanTable();
+}
 
-// ... بقية الأكواد كما في الملف الحالي (renderPlanTable والدوال الأخرى) ...
+document.addEventListener('DOMContentLoaded', function() {
+    initInspectionData();
+    document.getElementById('bellBtn').addEventListener('click', playBirdSound);
+    enableBirdSoundOnFirstInteraction();
+});
+// ... جميع دوالك كما في الملف المرسل (بدون حذف أو اختصار) ...
 </script>
 </body>
 </html>

@@ -256,6 +256,14 @@
             <button type="submit" style="background:#198754;color:#fff;border:none;padding:8px 22px;border-radius:7px;font-size:1em;cursor:pointer;">إضافة / تعديل</button>
             <input type="hidden" id="formEditingIndex" value="">
         </form>
+        
+        <!-- زر إرجاع البيانات الافتراضية -->
+        <!-- Default Data Restoration Button -->
+        <div style="margin-top:20px;text-align:center;">
+            <button id="restoreDefaultDataBtn" onclick="restoreDefaultData()" style="background:#ff6b35;color:#fff;border:none;padding:12px 24px;border-radius:8px;font-size:1.1em;cursor:pointer;font-weight:bold;box-shadow:0 2px 8px rgba(255,107,53,0.3);">
+                📋 إرجاع البيانات الافتراضية
+            </button>
+        </div>
     </div>
     <div id="planTableContainer" class="plan-table-container"></div>
     <div class="actions-row">
@@ -303,7 +311,9 @@ let defaultInspectionData = [
     { inspector: "د. فايز المسالمة", day: "2025-09-21", shift: "صباحية", area: "المنطقة أ", shops: ["محل 8", "محل 9"] },
     { inspector: "د.آمنه بن صرم", day: "2025-09-21", shift: "مسائية", area: "المنطقة ج", shops: ["محل 11"] },
 ];
-let inspectionData = JSON.parse(localStorage.getItem('inspectionData')) || defaultInspectionData.slice();
+// تعديل التهيئة: البدء ببيانات فارغة بدلاً من البيانات الافتراضية
+// Modified initialization: Start with empty data instead of default data
+let inspectionData = JSON.parse(localStorage.getItem('inspectionData')) || [];
 
 function saveInspectionData() {
     localStorage.setItem('inspectionData', JSON.stringify(inspectionData));
@@ -324,6 +334,33 @@ function setLastUpdateDate() {
     let dateStr = year+'-'+month+'-'+day;
     row.textContent = "آخر تعديل للبيانات والخطة: " + dateStr + "    " + timeStr;
 }
+
+// دالة إرجاع البيانات الافتراضية مع رسالة تأكيد
+// Function to restore default data with confirmation message  
+function restoreDefaultData() {
+    // رسالة تأكيد قبل إرجاع البيانات
+    // Confirmation message before restoring data
+    const confirmMessage = "هل أنت متأكد من إرجاع البيانات الافتراضية؟\n\nسيتم استبدال جميع البيانات الحالية بالبيانات الافتراضية.\n\nهذا الإجراء لا يمكن التراجع عنه.";
+    
+    if (confirm(confirmMessage)) {
+        // نسخ البيانات الافتراضية إلى البيانات الحالية
+        // Copy default data to current inspection data
+        inspectionData = defaultInspectionData.slice();
+        
+        // حفظ فوري في localStorage
+        // Immediate save to localStorage
+        saveInspectionData();
+        
+        // تحديث الجدول فوراً
+        // Update table immediately
+        renderPlanTable();
+        
+        // رسالة نجاح
+        // Success message
+        alert("تم إرجاع البيانات الافتراضية بنجاح! ✅");
+    }
+}
+
 function fillInspectorsDropdowns() {
     // مفتشين لأداة الاختيار
     const selectInspect = document.getElementById('inspectorSelect');

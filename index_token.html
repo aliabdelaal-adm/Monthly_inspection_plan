@@ -238,10 +238,27 @@
         }
         document.addEventListener('DOMContentLoaded', function(){
             document.getElementById('saveApiTokenBtn').onclick = function(){
-                const val = document.getElementById('apiTokenInput').value.trim();
+                const input = document.getElementById('apiTokenInput');
+                const val = input.value.trim();
                 if(val){
+                    // التحقق من صحة التوكين (يجب أن يبدأ بـ ghp_ أو github_pat_)
+                    if (!val.startsWith('ghp_') && !val.startsWith('github_pat_')) {
+                        showErrorMessage("تنسيق التوكين غير صحيح. يجب أن يبدأ بـ ghp_ أو github_pat_", "warning");
+                        input.focus();
+                        return;
+                    }
+                    
                     setApiToken(val);
-                    document.getElementById('apiTokenSavedMsg').style.display = '';
+                    showSuccessMessage('تم حفظ التوكين بنجاح ✓');
+                    
+                    // محاولة اختبار التوكين
+                    testApiToken().then(valid => {
+                        if (!valid) {
+                            showErrorMessage("التوكين محفوظ لكن قد يكون غير صالح أو لا يملك الصلاحيات المطلوبة", "warning");
+                        }
+                    });
+                } else {
+                    showErrorMessage("يرجى إدخال التوكين أولاً");
                 }
             };
             document.getElementById('toggleApiTokenInputBtn').onclick = function(){
@@ -293,7 +310,7 @@
         async function uploadAllDataToGitHub(msg) {
             const allData = {inspectors, shops, areas, goals, shopsByArea, distributionRows, inspectionData};
             const json = JSON.stringify(allData, null, 2);
-            await uploadToGitHubFile(json, DATA_FILE, msg || "تحديث جميع بيانات خطة التفتيش");
+            return await uploadToGitHubFile(json, DATA_FILE, msg || "تحديث جميع بيانات خطة التفتيش");
         }
         // ============== دالة رفع مع معالجة تعارض sha بشكل متكرر ==============
         async function uploadToGitHubFile(fileContent, fileName, commitMsg, retryCount = 0) {
@@ -301,54 +318,169 @@
             const branch = "main";
             const path = encodeURIComponent(fileName);
             const apiToken = getApiToken();
+            
+            // تحسين رسائل الخطأ للتوكين
             if (!apiToken) {
-                alert("يرجى إدخال وحفظ التوكين الخاص بك أولاً.");
-                return;
+                showErrorMessage("يرجى إدخال وحفظ التوكين الخاص بك أولاً لحفظ البيانات على GitHub.", "warning");
+                return false;
             }
-            // دائماً جلب sha الأحدث قبل كل محاولة رفع
-            let fileSha = null;
+            
+            // إظهار حالة التحميل
+            showLoadingMessage("جاري رفع البيانات إلى GitHub...");
+            
             try {
-                const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/${path}?ref=${branch}`, {
-                    headers: { Authorization: "token " + apiToken }
+                // دائماً جلب sha الأحدث قبل كل محاولة رفع
+                let fileSha = null;
+                try {
+                    const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/${path}?ref=${branch}`, {
+                        headers: { Authorization: "token " + apiToken }
+                    });
+                    if (getRes.ok) {
+                        const getData = await getRes.json();
+                        fileSha = getData.sha;
+                    } else if (getRes.status === 401) {
+                        throw new Error("التوكين غير صالح أو منتهي الصلاحية");
+                    } else if (getRes.status === 403) {
+                        throw new Error("التوكين لا يملك الصلاحيات المطلوبة");
+                    }
+                } catch (error) {
+                    if (error.message.includes("التوكين")) {
+                        hideLoadingMessage();
+                        showErrorMessage(error.message, "error");
+                        return false;
+                    }
+                }
+                const payload = {
+                    message: commitMsg || "تحديث تلقائي",
+                    content: btoa(unescape(encodeURIComponent(fileContent))),
+                    branch: branch
+                };
+                if (fileSha) payload.sha = fileSha;
+                
+                const res = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+                    method: "PUT",
+                    headers: {
+                        "Authorization": "token " + apiToken,
+                        "Accept": "application/vnd.github+json"
+                    },
+                    body: JSON.stringify(payload)
                 });
-                if (getRes.ok) {
-                    const getData = await getRes.json();
-                    fileSha = getData.sha;
-                }
-            } catch {}
-            const payload = {
-                message: commitMsg || "تحديث تلقائي",
-                content: btoa(unescape(encodeURIComponent(fileContent))),
-                branch: branch
-            };
-            if (fileSha) payload.sha = fileSha;
-            const res = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
-                method: "PUT",
-                headers: {
-                    "Authorization": "token " + apiToken,
-                    "Accept": "application/vnd.github+json"
-                },
-                body: JSON.stringify(payload)
-            });
-            if (!res.ok) {
-                const err = await res.json();
-                // معالجة مشكلة sha conflict تلقائياً حتى 2 إعادة فقط
-                if (
-                    err.message &&
-                    err.message.includes("does not match") &&
-                    retryCount < 2
-                ) {
-                    // انتظر نصف ثانية ثم أعد المحاولة (لحل تضارب الرفع المتزامن)
-                    await new Promise(r=>setTimeout(r, 500));
-                    return uploadToGitHubFile(fileContent, fileName, commitMsg, retryCount + 1);
+                
+                if (!res.ok) {
+                    const err = await res.json();
+                    // معالجة مشكلة sha conflict تلقائياً حتى 2 إعادة فقط
+                    if (
+                        err.message &&
+                        err.message.includes("does not match") &&
+                        retryCount < 2
+                    ) {
+                        // انتظر نصف ثانية ثم أعد المحاولة (لحل تضارب الرفع المتزامن)
+                        await new Promise(r=>setTimeout(r, 500));
+                        return uploadToGitHubFile(fileContent, fileName, commitMsg, retryCount + 1);
+                    } else {
+                        hideLoadingMessage();
+                        // رسائل خطأ مُحسّنة حسب نوع الخطأ
+                        let errorMsg = "فشل في رفع البيانات: ";
+                        if (res.status === 401) {
+                            errorMsg += "التوكين غير صالح أو منتهي الصلاحية";
+                        } else if (res.status === 403) {
+                            errorMsg += "التوكين لا يملك الصلاحيات المطلوبة للكتابة في المستودع";
+                        } else if (res.status === 404) {
+                            errorMsg += "المستودع أو الملف غير موجود";
+                        } else if (res.status === 422) {
+                            errorMsg += "خطأ في البيانات المرسلة";
+                        } else {
+                            errorMsg += (err.message || res.statusText || "خطأ غير معروف");
+                        }
+                        showErrorMessage(errorMsg, "error");
+                        return false;
+                    }
                 } else {
-                    alert("فشل الرفع! " + (err.message || res.statusText));
+                    // رسالة نجاح الحفظ
+                    hideLoadingMessage();
+                    showSuccessMessage("تم حفظ ورفع البيانات بنجاح ✓");
+                    return true;
                 }
-            } else {
-                // رسالة نجاح الحفظ
-                document.getElementById('apiTokenSavedMsg').textContent = 'تم حفظ ورفع البيانات ✓';
-                document.getElementById('apiTokenSavedMsg').style.display = '';
-                setTimeout(()=>{document.getElementById('apiTokenSavedMsg').style.display='none';}, 2000);
+            } catch (error) {
+                hideLoadingMessage();
+                showErrorMessage("خطأ في الاتصال: " + error.message, "error");
+                return false;
+            }
+        }
+
+        // ============== دوال عرض الرسائل المُحسّنة ==============
+        function showSuccessMessage(message) {
+            const msgElement = document.getElementById('apiTokenSavedMsg');
+            msgElement.textContent = message;
+            msgElement.className = 'api-token-saved';
+            msgElement.style.color = '#388e3c';
+            msgElement.style.display = '';
+            setTimeout(() => {msgElement.style.display = 'none';}, 3000);
+        }
+
+        function showErrorMessage(message, type = "error") {
+            const msgElement = document.getElementById('apiTokenSavedMsg');
+            msgElement.textContent = message;
+            if (type === "error") {
+                msgElement.className = 'api-token-warning';
+                msgElement.style.color = '#d32f2f';
+            } else if (type === "warning") {
+                msgElement.className = 'api-token-warning';
+                msgElement.style.color = '#f57c00';
+            }
+            msgElement.style.display = '';
+            setTimeout(() => {msgElement.style.display = 'none';}, 5000);
+        }
+
+        function showLoadingMessage(message) {
+            const msgElement = document.getElementById('apiTokenSavedMsg');
+            msgElement.textContent = message;
+            msgElement.className = 'api-token-saved';
+            msgElement.style.color = '#1976d2';
+            msgElement.style.display = '';
+        }
+
+        function hideLoadingMessage() {
+            const msgElement = document.getElementById('apiTokenSavedMsg');
+            msgElement.style.display = 'none';
+        }
+
+        // ============== دوال التحقق من صحة المدخلات ==============
+        function validateInput(value, fieldName) {
+            if (!value || value.trim() === '') {
+                showErrorMessage(`يرجى إدخال ${fieldName} صالح`);
+                return false;
+            }
+            if (value.trim().length < 2) {
+                showErrorMessage(`${fieldName} يجب أن يحتوي على حرفين على الأقل`);
+                return false;
+            }
+            return true;
+        }
+
+        function checkDuplicate(value, array, fieldName) {
+            if (array.includes(value)) {
+                showErrorMessage(`${fieldName} "${value}" موجود بالفعل`);
+                return true;
+            }
+            return false;
+        }
+
+        // ============== دالة اختبار صحة التوكين ==============
+        async function testApiToken() {
+            const token = getApiToken();
+            if (!token) return false;
+            
+            try {
+                const response = await fetch('https://api.github.com/user', {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github+json'
+                    }
+                });
+                return response.ok;
+            } catch {
+                return false;
             }
         }
 
@@ -418,13 +550,33 @@
         }
         function addShop(e) {
             e.preventDefault();
-            const val = document.getElementById('newShop').value.trim();
-            if(val && !shops.includes(val)) {
-                shops.push(val);
-                updateShopList();
-                uploadAllDataToGitHub("إضافة محل");
+            const input = document.getElementById('newShop');
+            const val = input.value.trim();
+            
+            // التحقق من صحة المدخلات مع رسائل خطأ واضحة
+            if (!validateInput(val, "اسم المحل")) {
+                input.focus();
+                return;
             }
-            document.getElementById('newShop').value = '';
+            
+            // التحقق من التكرار مع رسالة واضحة
+            if (checkDuplicate(val, shops, "المحل")) {
+                input.focus();
+                return;
+            }
+            
+            // إضافة المحل وتحديث الواجهة
+            shops.push(val);
+            updateShopList();
+            input.value = '';
+            
+            // رفع البيانات مع معالجة النتيجة
+            uploadAllDataToGitHub("إضافة محل: " + val).then(success => {
+                if (!success) {
+                    // في حالة فشل الرفع، المحل سيبقى محفوظاً محلياً
+                    showErrorMessage("تم إضافة المحل محلياً لكن فشل رفعه إلى GitHub");
+                }
+            });
         }
         function startEditShop(idx) {
             const item = document.getElementById(`shop-item-${idx}`);
@@ -438,18 +590,44 @@
             document.getElementById(`editShopInput${idx}`).focus();
         }
         function saveEditShop(idx) {
-            const val = document.getElementById(`editShopInput${idx}`).value.trim();
-            if(val && !shops.includes(val)) {
-                shops[idx] = val;
-                updateShopList();
-                uploadAllDataToGitHub("تعديل اسم محل");
+            const input = document.getElementById(`editShopInput${idx}`);
+            const val = input.value.trim();
+            
+            // التحقق من صحة المدخلات
+            if (!validateInput(val, "اسم المحل")) {
+                input.focus();
+                return;
             }
+            
+            // التحقق من عدم التكرار (مع استثناء العنصر الحالي)
+            if (val !== shops[idx] && checkDuplicate(val, shops, "المحل")) {
+                input.focus();
+                return;
+            }
+            
+            const oldName = shops[idx];
+            shops[idx] = val;
+            updateShopList();
+            
+            // رفع البيانات مع معالجة النتيجة
+            uploadAllDataToGitHub(`تعديل اسم محل من "${oldName}" إلى "${val}"`).then(success => {
+                if (!success) {
+                    showErrorMessage("تم التعديل محلياً لكن فشل رفعه إلى GitHub");
+                }
+            });
         }
         function deleteShop(idx) {
             if(confirm("هل تريد حذف هذا المحل؟")) {
+                const deletedShop = shops[idx];
                 shops.splice(idx,1);
                 updateShopList();
-                uploadAllDataToGitHub("حذف محل");
+                
+                // رفع البيانات مع معالجة النتيجة
+                uploadAllDataToGitHub(`حذف محل: ${deletedShop}`).then(success => {
+                    if (!success) {
+                        showErrorMessage("تم الحذف محلياً لكن فشل رفعه إلى GitHub");
+                    }
+                });
             }
         }
         function updateAreaList() {
@@ -458,13 +636,34 @@
         }
         function addArea(e) {
             e.preventDefault();
-            const val = document.getElementById('newArea').value.trim();
-            if(val && !areas.includes(val)) {
-                areas.push(val);
-                updateAreaList();
-                uploadAllDataToGitHub("إضافة منطقة");
+            const input = document.getElementById('newArea');
+            const val = input.value.trim();
+            
+            // التحقق من صحة المدخلات مع رسائل خطأ واضحة
+            if (!validateInput(val, "اسم المنطقة")) {
+                input.focus();
+                return;
             }
-            document.getElementById('newArea').value = '';
+            
+            // التحقق من التكرار مع رسالة واضحة
+            if (checkDuplicate(val, areas, "المنطقة")) {
+                input.focus();
+                return;
+            }
+            
+            // إضافة المنطقة وتحديث الواجهة
+            areas.push(val);
+            updateAreaList();
+            renderShopsByArea(); // تحديث قائمة المناطق في قسم المحلات حسب المنطقة
+            input.value = '';
+            
+            // رفع البيانات مع معالجة النتيجة
+            uploadAllDataToGitHub("إضافة منطقة: " + val).then(success => {
+                if (!success) {
+                    // في حالة فشل الرفع، المنطقة ستبقى محفوظة محلياً
+                    showErrorMessage("تم إضافة المنطقة محلياً لكن فشل رفعها إلى GitHub");
+                }
+            });
         }
         function startEditArea(idx) {
             const item = document.getElementById(`area-item-${idx}`);
@@ -478,18 +677,46 @@
             document.getElementById(`editAreaInput${idx}`).focus();
         }
         function saveEditArea(idx) {
-            const val = document.getElementById(`editAreaInput${idx}`).value.trim();
-            if(val && !areas.includes(val)) {
-                areas[idx] = val;
-                updateAreaList();
-                uploadAllDataToGitHub("تعديل اسم منطقة");
+            const input = document.getElementById(`editAreaInput${idx}`);
+            const val = input.value.trim();
+            
+            // التحقق من صحة المدخلات
+            if (!validateInput(val, "اسم المنطقة")) {
+                input.focus();
+                return;
             }
+            
+            // التحقق من عدم التكرار (مع استثناء العنصر الحالي)
+            if (val !== areas[idx] && checkDuplicate(val, areas, "المنطقة")) {
+                input.focus();
+                return;
+            }
+            
+            const oldName = areas[idx];
+            areas[idx] = val;
+            updateAreaList();
+            renderShopsByArea(); // تحديث قائمة المناطق في قسم المحلات
+            
+            // رفع البيانات مع معالجة النتيجة
+            uploadAllDataToGitHub(`تعديل اسم منطقة من "${oldName}" إلى "${val}"`).then(success => {
+                if (!success) {
+                    showErrorMessage("تم التعديل محلياً لكن فشل رفعه إلى GitHub");
+                }
+            });
         }
         function deleteArea(idx) {
             if(confirm("هل تريد حذف هذه المنطقة؟")) {
+                const deletedArea = areas[idx];
                 areas.splice(idx,1);
                 updateAreaList();
-                uploadAllDataToGitHub("حذف منطقة");
+                renderShopsByArea(); // تحديث قائمة المناطق في قسم المحلات
+                
+                // رفع البيانات مع معالجة النتيجة
+                uploadAllDataToGitHub(`حذف منطقة: ${deletedArea}`).then(success => {
+                    if (!success) {
+                        showErrorMessage("تم الحذف محلياً لكن فشل رفعه إلى GitHub");
+                    }
+                });
             }
         }
         function renderGoalList() {
@@ -582,25 +809,54 @@
         }
         function addShopByArea(e) {
             e.preventDefault();
-            const shopName = document.getElementById('newShopByArea').value.trim();
+            const shopInput = document.getElementById('newShopByArea');
+            const shopName = shopInput.value.trim();
             const area = document.getElementById('areaForShop').value;
-            if(shopName && area){
-                if(!shopsByArea[area]) shopsByArea[area] = [];
-                if(!shopsByArea[area].includes(shopName)){
-                    shopsByArea[area].push(shopName);
-                    if (!shops.includes(shopName)) shops.push(shopName);
-                    renderShopsByArea();
-                    updateShopList();
-                    uploadAllDataToGitHub("إضافة محل لمنطقة");
-                }
+            
+            // التحقق من صحة المدخلات
+            if (!validateInput(shopName, "اسم المحل")) {
+                shopInput.focus();
+                return;
             }
-            document.getElementById('newShopByArea').value = '';
+            
+            if (!area) {
+                showErrorMessage("يرجى اختيار منطقة صالحة");
+                return;
+            }
+            
+            // إنشاء المصفوفة إذا لم تكن موجودة
+            if (!shopsByArea[area]) shopsByArea[area] = [];
+            
+            // التحقق من عدم تكرار المحل في نفس المنطقة
+            if (shopsByArea[area].includes(shopName)) {
+                showErrorMessage(`المحل "${shopName}" موجود بالفعل في منطقة "${area}"`);
+                shopInput.focus();
+                return;
+            }
+            
+            // إضافة المحل للمنطقة والقائمة العامة
+            shopsByArea[area].push(shopName);
+            if (!shops.includes(shopName)) shops.push(shopName);
+            
+            // تحديث الواجهة
+            renderShopsByArea();
+            updateShopList();
+            shopInput.value = '';
+            
+            // رفع البيانات مع معالجة النتيجة
+            uploadAllDataToGitHub(`إضافة محل "${shopName}" لمنطقة "${area}"`).then(success => {
+                if (!success) {
+                    showErrorMessage("تم إضافة المحل محلياً لكن فشل رفعه إلى GitHub");
+                }
+            });
         }
         function deleteShopFromArea(area, idx) {
             if(confirm("حذف هذا المحل من المنطقة؟")){
                 const shopName = shopsByArea[area][idx];
                 shopsByArea[area].splice(idx,1);
                 renderShopsByArea();
+                
+                // فحص إذا كان المحل مستخدم في مناطق أخرى
                 let used = false;
                 for (let a in shopsByArea)
                     if (shopsByArea[a].includes(shopName)) used = true;
@@ -609,7 +865,13 @@
                     if (i > -1) shops.splice(i,1);
                     updateShopList();
                 }
-                uploadAllDataToGitHub("حذف محل من منطقة");
+                
+                // رفع البيانات مع معالجة النتيجة
+                uploadAllDataToGitHub(`حذف محل "${shopName}" من منطقة "${area}"`).then(success => {
+                    if (!success) {
+                        showErrorMessage("تم الحذف محلياً لكن فشل رفعه إلى GitHub");
+                    }
+                });
             }
         }
         let weekendDays = [5, 6, 0];

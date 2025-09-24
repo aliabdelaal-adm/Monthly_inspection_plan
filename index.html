@@ -10,12 +10,26 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body { font-family: 'Cairo', Arial, sans-serif; background: #f7f9fc; margin:0;}
-        /* ... بقية الـ CSS كما هو ... */
+        /* ... باقي الـ CSS ... */
     </style>
 </head>
 <body>
 <div class="main-container">
-    <!-- ... محتوى الصفحة كما هو ... -->
+    <!-- ... هنا توضع واجهة المستخدم كما هي ... -->
+    <div class="login-section">
+        <label for="loginRole">اختر الدور:</label>
+        <select id="loginRole">
+            <option value="">-- اختر الدور --</option>
+            <option value="inspector">مفتش</option>
+            <option value="developer">مطوّر</option>
+        </select>
+        <input type="password" id="devPassword" placeholder="كلمة مرور المطور" style="display:none;">
+        <input type="password" id="devToken" placeholder="GitHub Token" style="display:none;">
+        <button id="devLoginBtn" style="display:none;background:#198754;color:#fff;border:none;padding:7px 20px;border-radius:6px;font-size:1em;cursor:pointer;">تسجيل دخول</button>
+        <button id="devLogoutBtn" style="display:none;background:#d32f2f;color:#fff;border:none;padding:7px 20px;border-radius:6px;font-size:1em;cursor:pointer;">تسجيل خروج</button>
+        <span id="devError" style="color:#d32f2f;margin-right:10px;"></span>
+    </div>
+    <!-- ... بقية الصفحة ... -->
 </div>
 <script>
 // --------- بيانات المفتشين ---------
@@ -72,14 +86,14 @@ function setLastUpdateDate() {
     }
 }
 
-// --------- بقية الدوال كما هي مع اعتماد inspectionData فقط من GitHub ---------
-
 function fillInspectorsDropdowns() {
     const selectInspect = document.getElementById('inspectorSelect');
-    selectInspect.innerHTML = '<option value="">-- اختر المفتش --</option>';
-    inspectorsData.forEach(inspector => {
-        selectInspect.innerHTML += `<option value="${inspector.name}">${inspector.name}</option>`;
-    });
+    if(selectInspect){
+        selectInspect.innerHTML = '<option value="">-- اختر المفتش --</option>';
+        inspectorsData.forEach(inspector => {
+            selectInspect.innerHTML += `<option value="${inspector.name}">${inspector.name}</option>`;
+        });
+    }
     // مفتشين في نموذج المطور
     const select2 = document.getElementById('formInspector');
     if (select2) {
@@ -90,18 +104,130 @@ function fillInspectorsDropdowns() {
     }
 }
 
+// --------- تخزين التوكن في أول دخول فقط ---------
+function showDevTokenInputIfNeeded() {
+    if (!sessionStorage.getItem('github_token')) {
+        document.getElementById('devToken').style.display = '';
+    } else {
+        document.getElementById('devToken').style.display = 'none';
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('bellBtn').addEventListener('click', playBirdSound);
+    // إعداد واجهة تسجيل دخول المطور
+    document.getElementById('loginRole').addEventListener('change', function() {
+        const role = this.value;
+        if(role === "developer") {
+            document.getElementById('devPassword').style.display = '';
+            document.getElementById('devLoginBtn').style.display = '';
+            showDevTokenInputIfNeeded();
+        } else {
+            document.getElementById('devPassword').style.display = 'none';
+            document.getElementById('devLoginBtn').style.display = 'none';
+            document.getElementById('devToken').style.display = 'none';
+        }
+    });
+
+    document.getElementById('devLoginBtn').addEventListener('click', function() {
+        let password = document.getElementById('devPassword').value;
+        if (password === DEV_PASSWORD) {
+            let token = sessionStorage.getItem('github_token');
+            if (!token) {
+                token = document.getElementById('devToken').value.trim();
+                if (!token) {
+                    alert("يرجى إدخال GitHub Token");
+                    return;
+                }
+                sessionStorage.setItem('github_token', token);
+            }
+            isDev = true;
+            document.getElementById('devSection').style.display = '';
+            document.getElementById('devLogoutBtn').style.display = '';
+            document.getElementById('devLoginBtn').style.display = 'none';
+            document.getElementById('devPassword').style.display = 'none';
+            document.getElementById('devToken').style.display = 'none';
+            document.getElementById('devError').textContent = "";
+            // ... أي منطق إضافي عند دخول المطور ...
+        } else {
+            document.getElementById('devError').textContent = "كلمة المرور غير صحيحة";
+        }
+    });
+
+    document.getElementById('devLogoutBtn').addEventListener('click', function() {
+        isDev = false;
+        sessionStorage.removeItem('github_token');
+        document.getElementById('devSection').style.display = 'none';
+        document.getElementById('devLogoutBtn').style.display = 'none';
+        document.getElementById('devLoginBtn').style.display = '';
+        document.getElementById('devPassword').style.display = '';
+        showDevTokenInputIfNeeded();
+    });
+
+    // باقي الأحداث:
     fetchInspectionData();
-    enableBirdSoundOnFirstInteraction();
 });
 
-document.getElementById('inspectorSelect').addEventListener('change', function() {
+document.getElementById('inspectorSelect')?.addEventListener('change', function() {
     selectedInspector = this.value;
     renderPlanTable();
     document.getElementById('inspectorReportDiv').style.display = "none";
 });
-// ... باقي السكربتات كما هي ...
+
+// ----------- تحديث خطة التفتيش على GitHub (إضافة/تعديل/حذف) -----------
+async function updatePlanOnGitHub(newPlanObj) {
+    const devToken = sessionStorage.getItem('github_token');
+    if (!devToken) {
+        alert("يرجى إعادة تسجيل الدخول وإدخال GitHub Token");
+        return false;
+    }
+    const owner = "aliabdelaal-adm";
+    const repo = "Monthly_inspection_plan";
+    const path = "inspection_plan.json";
+    try {
+        // جلب sha للملف الحالي
+        const getRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
+            headers: { Authorization: `token ${devToken}` }
+        });
+        if (!getRes.ok) { alert("تعذر جلب ملف الخطة من GitHub"); return false; }
+        const getData = await getRes.json();
+        const fileSha = getData.sha;
+        // تجهيز البيانات الجديدة
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(newPlanObj, null, 2))));
+        const commitMsg = "تحديث خطة التفتيش من المطور من خلال الواجهة";
+        // رفع التحديث للملف
+        const putRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
+            method: "PUT",
+            headers: {
+                "Authorization": `token ${devToken}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                message: commitMsg,
+                content: content,
+                sha: fileSha
+            })
+        });
+        if (putRes.ok) {
+            await fetchInspectionData(); // جلب التحديث الأحدث!
+            renderPlanTable();
+            alert("تم تحديث الخطة بنجاح وستظهر للجميع فوراً.");
+            return true;
+        } else {
+            alert("حدث خطأ أثناء رفع التحديث إلى GitHub");
+            return false;
+        }
+    } catch(e) {
+        alert("حدث خطأ أثناء الاتصال بـ GitHub: "+e.message);
+        return false;
+    }
+}
+
+// عند أي عملية إضافة/تعديل/حذف يستدعي المطور:
+async function onDevSaveOrEditOrDelete(newPlanObj) {
+    await updatePlanOnGitHub(newPlanObj);
+}
+
+// ... باقي الدوال مثل renderPlanTable وغيرها كما هي دون أي حذف ...
 </script>
 </body>
 </html>

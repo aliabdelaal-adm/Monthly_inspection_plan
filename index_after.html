@@ -283,7 +283,7 @@
         }
         function setDefaultData() {
             inspectors = ["هاجر","آمنه","آيه","د. فايز المسالمة","د.آمنه بن صرم"];
-            shops = ["محل 1", "محل 2", "محل 3", "محل 4","محل 5", "محل 6", "محل 7", "محل 8","محل 9", "محل 10", "محل 11"];
+            shops = [];
             areas = ["المصفح", "مدينة خليفة", "المنطقة أ", "المنطقة ب", "المنطقة ج", "المنطقة د"];
             goals = ["ضمان سلامة المنتجات","الالتزام بالاشتراطات الصحية"];
             shopsByArea = {};
@@ -372,6 +372,7 @@
             const list = document.getElementById('inspectorList');
             renderList(list, inspectors, 'inspector', 'startEditInspector', 'saveEditInspector', 'deleteInspector');
             fillInspectorsSelect();
+            renderDistributionTable();
         }
         function addInspector(e) {
             e.preventDefault();
@@ -379,7 +380,6 @@
             if(val && !inspectors.includes(val)) {
                 inspectors.push(val);
                 updateInspectorList();
-                fillInspectorsSelect();
                 uploadAllDataToGitHub("إضافة مفتش");
             }
             document.getElementById('newInspector').value = '';
@@ -400,7 +400,6 @@
             if(val && !inspectors.includes(val)) {
                 inspectors[idx] = val;
                 updateInspectorList();
-                fillInspectorsSelect();
                 uploadAllDataToGitHub("تعديل اسم مفتش");
             }
         }
@@ -408,7 +407,6 @@
             if(confirm("هل تريد حذف هذا المفتش؟")) {
                 inspectors.splice(idx,1);
                 updateInspectorList();
-                fillInspectorsSelect();
                 uploadAllDataToGitHub("حذف مفتش");
             }
         }

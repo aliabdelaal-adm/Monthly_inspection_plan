@@ -305,8 +305,22 @@ let defaultInspectionData = [
 ];
 let inspectionData = JSON.parse(localStorage.getItem('inspectionData')) || defaultInspectionData.slice();
 
+// *** إضافة جديدة: متغيرات لمراقبة البيانات من devSection فقط ***
+// هذا المتغير يحتوي على البيانات الجديدة التي تم إضافتها من خلال devSection فقط
+let devSectionData = JSON.parse(localStorage.getItem('devSectionData')) || [];
+// متغير لتتبع ما إذا كان يجب عرض البيانات الجديدة فقط أم كل البيانات
+let showOnlyDevData = localStorage.getItem('showOnlyDevData') === 'true' || false;
+
 function saveInspectionData() {
     localStorage.setItem('inspectionData', JSON.stringify(inspectionData));
+    setLastUpdateDate();
+}
+
+// *** إضافة جديدة: وظيفة حفظ البيانات الجديدة من devSection فقط ***
+// تقوم بحفظ البيانات التي تم إضافتها من خلال لوحة تحكم المطور في التخزين المحلي
+function saveDevSectionData() {
+    localStorage.setItem('devSectionData', JSON.stringify(devSectionData));
+    localStorage.setItem('showOnlyDevData', showOnlyDevData.toString());
     setLastUpdateDate();
 }
 function setLastUpdateDate() {
@@ -345,8 +359,121 @@ document.addEventListener('DOMContentLoaded', function() {
     fillInspectorsDropdowns();
     setLastUpdateDate();
     enableBirdSoundOnFirstInteraction();
+    
+    // *** إضافة جديدة: تشغيل مراقب devSection التلقائي ***
+    // يتم تشغيل هذه الوظيفة عند تحميل الصفحة لبدء مراقبة التغييرات
+    initializeDevSectionMonitoring();
+    
     renderPlanTable();
 });
+
+// *** إضافة جديدة: وظيفة تهيئة مراقبة devSection ***
+// تقوم بإعداد المراقبة التلقائية لأي تغييرات تحدث في بيانات devSection
+function initializeDevSectionMonitoring() {
+    // مراقبة التغييرات في نموذج إضافة/تعديل البيانات
+    const devForm = document.getElementById('addEditForm');
+    if (devForm) {
+        // إضافة مستمع للأحداث عند إرسال النموذج (إضافة أو تعديل بيانات)
+        devForm.addEventListener('submit', function() {
+            // تأخير قصير للسماح للبيانات بالحفظ أولاً، ثم تحديث العرض
+            setTimeout(() => {
+                updateDevSectionDataAndRefreshTable();
+            }, 100);
+        });
+    }
+    
+    // مراقبة التغييرات في صلاحيات المطور (دخول/خروج)
+    const loginRole = document.getElementById('loginRole');
+    if (loginRole) {
+        loginRole.addEventListener('change', function() {
+            // عند تغيير دور المستخدم، تحديث العرض بناءً على الصلاحيات
+            setTimeout(() => {
+                updateTableBasedOnDevStatus();
+            }, 100);
+        });
+    }
+    
+    // مراقبة النقر على أزرار الحذف لتحديث البيانات فوراً
+    document.addEventListener('click', function(event) {
+        if (event.target.classList.contains('delete-btn')) {
+            // تأخير قصير للسماح لعملية الحذف بالاكتمال، ثم تحديث البيانات
+            setTimeout(() => {
+                updateDevSectionDataAndRefreshTable();
+            }, 100);
+        }
+    });
+}
+
+// *** إضافة جديدة: وظيفة تحديث بيانات devSection وإعادة عرض الجدول ***
+// تقوم بتحديث البيانات المخزنة من devSection وإعادة عرض الجدول تلقائياً
+function updateDevSectionDataAndRefreshTable() {
+    if (isDev) {
+        // إذا كان المطور مسجل الدخول، تحديث البيانات من devSection
+        syncDevSectionData();
+        // تفعيل عرض البيانات الجديدة فقط
+        showOnlyDevData = true;
+        saveDevSectionData();
+    }
+    // إعادة عرض الجدول بالبيانات المحدثة
+    renderPlanTable();
+}
+
+// *** إضافة جديدة: وظيفة مزامنة بيانات devSection ***
+// تقوم بنسخ البيانات الجديدة من inspectionData إلى devSectionData
+function syncDevSectionData() {
+    // نسخ جميع البيانات الحالية باعتبارها بيانات جديدة من devSection
+    // (هذا يحدث فقط عندما يكون المطور مسجل الدخول ويقوم بإضافة/تعديل البيانات)
+    devSectionData = inspectionData.filter(item => {
+        // فلترة البيانات للتأكد من أنها ليست من البيانات الافتراضية الأصلية
+        return !isDefaultData(item);
+    });
+    
+    // إضافة أي بيانات جديدة تم إضافتها حديثاً
+    inspectionData.forEach(item => {
+        if (!isInDevSectionData(item) && !isDefaultData(item)) {
+            devSectionData.push(item);
+        }
+    });
+}
+
+// *** إضافة جديدة: وظيفة للتحقق من كون البيانات افتراضية ***
+// تتحقق مما إذا كانت البيانات المرسلة جزءاً من البيانات الافتراضية الأصلية
+function isDefaultData(item) {
+    return defaultInspectionData.some(defaultItem => 
+        defaultItem.inspector === item.inspector &&
+        defaultItem.day === item.day &&
+        defaultItem.shift === item.shift &&
+        defaultItem.area === item.area &&
+        JSON.stringify(defaultItem.shops.sort()) === JSON.stringify(item.shops.sort())
+    );
+}
+
+// *** إضافة جديدة: وظيفة للتحقق من وجود البيانات في devSectionData ***
+// تتحقق مما إذا كانت البيانات موجودة بالفعل في بيانات devSection
+function isInDevSectionData(item) {
+    return devSectionData.some(devItem => 
+        devItem.inspector === item.inspector &&
+        devItem.day === item.day &&
+        devItem.shift === item.shift &&
+        devItem.area === item.area &&
+        JSON.stringify(devItem.shops.sort()) === JSON.stringify(item.shops.sort())
+    );
+}
+
+// *** إضافة جديدة: وظيفة تحديث الجدول بناءً على حالة المطور ***
+// تقوم بتحديد نوع البيانات المعروضة حسب ما إذا كان المطور مسجل الدخول أم لا
+function updateTableBasedOnDevStatus() {
+    if (isDev) {
+        // إذا كان المطور مسجل الدخول، عرض البيانات الجديدة من devSection فقط
+        showOnlyDevData = true;
+        syncDevSectionData();
+    } else {
+        // إذا لم يكن المطور مسجل الدخول، عرض جميع البيانات (الافتراضية والجديدة)
+        showOnlyDevData = false;
+    }
+    saveDevSectionData();
+    renderPlanTable();
+}
 
 // التحكم في تسجيل الدخول وصلاحيات المطور
 document.getElementById("loginRole").addEventListener("change", function() {
@@ -364,7 +491,10 @@ document.getElementById("loginRole").addEventListener("change", function() {
         document.getElementById("devLogoutBtn").style.display = "none";
         document.getElementById("devSection").style.display = "none";
         isDev = false;
-        renderPlanTable();
+        
+        // *** إضافة جديدة: تحديث العرض عند تغيير الدور ***
+        // عند اختيار دور غير المطور، تحديث العرض لإظهار البيانات المناسبة
+        updateTableBasedOnDevStatus();
     }
 });
 document.getElementById("devLoginBtn").onclick = function() {
@@ -377,7 +507,10 @@ document.getElementById("devLoginBtn").onclick = function() {
         document.getElementById("devLoginBtn").style.display = "none";
         document.getElementById("devError").innerText = "";
         fillInspectorsDropdowns();
-        renderPlanTable();
+        
+        // *** إضافة جديدة: تحديث العرض لإظهار البيانات الجديدة فقط ***
+        // عند دخول المطور، يتم تحديث النظام لعرض البيانات الجديدة من devSection فقط
+        updateTableBasedOnDevStatus();
     } else {
         document.getElementById("devError").innerText = "كلمة السر غير صحيحة!";
     }
@@ -390,7 +523,10 @@ document.getElementById("devLogoutBtn").onclick = function() {
     document.getElementById("devLoginBtn").style.display = "none";
     document.getElementById("loginRole").value = "";
     document.getElementById("devError").innerText = "";
-    renderPlanTable();
+    
+    // *** إضافة جديدة: تحديث العرض لإظهار جميع البيانات ***
+    // عند خروج المطور، يتم تحديث النظام لعرض جميع البيانات (الافتراضية والجديدة)
+    updateTableBasedOnDevStatus();
 };
 
 // التغيير على اختيار المفتش
@@ -416,28 +552,83 @@ document.getElementById("addEditForm").addEventListener("submit", function(e){
     }
     let newPlan = {inspector, day, shift, area, shops};
     if(editingIdx==="") {
+        // *** إضافة جديدة: إضافة البيانات الجديدة إلى كلا المصفوفتين ***
         inspectionData.push(newPlan);
+        // إضافة البيانات الجديدة إلى devSectionData مباشرة لأنها تأتي من devSection
+        devSectionData.push(newPlan);
+        console.log('تم إضافة بيانات جديدة من devSection:', newPlan);
     } else {
+        // *** تحديث: التعامل مع تعديل البيانات الموجودة ***
+        let oldPlan = inspectionData[editingIdx];
         inspectionData[editingIdx] = newPlan;
+        
+        // العثور على البيانات في devSectionData وتحديثها أيضاً
+        let devIdx = devSectionData.findIndex(item => 
+            item.inspector === oldPlan.inspector &&
+            item.day === oldPlan.day &&
+            item.shift === oldPlan.shift &&
+            item.area === oldPlan.area &&
+            JSON.stringify(item.shops.sort()) === JSON.stringify(oldPlan.shops.sort())
+        );
+        
+        if (devIdx !== -1) {
+            devSectionData[devIdx] = newPlan;
+            console.log('تم تحديث البيانات في devSection:', newPlan);
+        } else {
+            // إذا لم توجد في devSectionData، إضافتها كبيانات جديدة
+            devSectionData.push(newPlan);
+            console.log('تم إضافة البيانات المحدثة إلى devSection:', newPlan);
+        }
     }
+    
+    // *** إضافة جديدة: حفظ كلاً من البيانات العامة وبيانات devSection ***
     saveInspectionData();
+    saveDevSectionData();
+    
+    // *** إضافة جديدة: تفعيل عرض البيانات الجديدة فقط وإعادة عرض الجدول ***
+    showOnlyDevData = true;
+    saveDevSectionData();
     renderPlanTable();
+    
     this.reset();
     document.getElementById("formEditingIndex").value = "";
+    
+    console.log('إجمالي البيانات الجديدة من devSection:', devSectionData.length);
 });
 
 // --- عرض جدول الخطط مع صلاحيات المطور ---
 function renderPlanTable() {
     const container = document.getElementById('planTableContainer');
     let rows = inspectionData;
-    // إذا تم اختيار مفتش معيّن
-    if(selectedInspector) {
-        rows = inspectionData.filter(item => item.inspector === selectedInspector);
+    
+    // *** إضافة جديدة: اختيار مصدر البيانات حسب حالة المطور ***
+    // إذا كان المطور مسجل الدخول وتم تفعيل عرض البيانات الجديدة فقط
+    if (isDev && showOnlyDevData) {
+        // عرض البيانات الجديدة من devSection فقط، وتجاهل البيانات الافتراضية
+        rows = devSectionData.slice(); // نسخة من البيانات الجديدة
+        console.log('عرض البيانات الجديدة من devSection فقط:', rows.length, 'عنصر');
+    } else {
+        // عرض جميع البيانات (الافتراضية والجديدة) للمستخدمين العاديين أو عند إيقاف الفلترة
+        rows = inspectionData.slice(); // نسخة من جميع البيانات
+        console.log('عرض جميع البيانات:', rows.length, 'عنصر');
     }
+    
+    // إذا تم اختيار مفتش معيّن، فلترة البيانات حسب المفتش المحدد
+    if(selectedInspector) {
+        rows = rows.filter(item => item.inspector === selectedInspector);
+        console.log('فلترة حسب المفتش:', selectedInspector, '- النتائج:', rows.length, 'عنصر');
+    }
+    
+    // إذا لم توجد بيانات للعرض، إظهار رسالة مناسبة
     if (rows.length === 0) {
-        container.innerHTML = '<div style="text-align:center;color:#c00;font-weight:bold;margin:30px 0;">لا توجد أي خطة تفتيش.</div>';
+        let message = 'لا توجد أي خطة تفتيش.';
+        if (isDev && showOnlyDevData) {
+            message = 'لا توجد بيانات جديدة من لوحة تحكم المطور. يرجى إضافة بيانات جديدة من خلال النموذج أعلاه.';
+        }
+        container.innerHTML = `<div style="text-align:center;color:#c00;font-weight:bold;margin:30px 0;">${message}</div>`;
         return;
     }
+    
     let html = `
     <table class="plan-table" id="inspectorPlanTable">
         <thead>
@@ -454,7 +645,17 @@ function renderPlanTable() {
     `;
     rows.forEach((row, idx) => {
         let shopsStr = row.shops.map(shop=>`<li>${shop}</li>`).join('');
-        let realIdx = inspectionData.indexOf(row);
+        
+        // *** تحديث: العثور على الفهرس الصحيح للعنصر في المصفوفة الأصلية ***
+        // يتم البحث عن الفهرس في المصفوفة الأصلية inspectionData لضمان عمل التعديل والحذف بشكل صحيح
+        let realIdx = inspectionData.findIndex(item => 
+            item.inspector === row.inspector &&
+            item.day === row.day &&
+            item.shift === row.shift &&
+            item.area === row.area &&
+            JSON.stringify(item.shops.sort()) === JSON.stringify(row.shops.sort())
+        );
+        
         html += `
             <tr>
                 <td>${row.inspector}</td>
@@ -498,9 +699,33 @@ function editPlan(idx) {
 function deletePlan(idx) {
     if (!isDev) return;
     if(!confirm("هل تريد حذف هذه الخطة نهائياً؟")) return;
+    
+    // *** إضافة جديدة: الاحتفاظ بنسخة من البيانات قبل الحذف ***
+    let planToDelete = inspectionData[idx];
+    
+    // حذف من المصفوفة الرئيسية
     inspectionData.splice(idx,1);
+    
+    // *** إضافة جديدة: حذف البيانات من devSectionData أيضاً إذا كانت موجودة ***
+    let devIdx = devSectionData.findIndex(item => 
+        item.inspector === planToDelete.inspector &&
+        item.day === planToDelete.day &&
+        item.shift === planToDelete.shift &&
+        item.area === planToDelete.area &&
+        JSON.stringify(item.shops.sort()) === JSON.stringify(planToDelete.shops.sort())
+    );
+    
+    if (devIdx !== -1) {
+        devSectionData.splice(devIdx, 1);
+        console.log('تم حذف البيانات من devSection أيضاً');
+    }
+    
+    // *** إضافة جديدة: حفظ كلاً من البيانات العامة وبيانات devSection ***
     saveInspectionData();
+    saveDevSectionData();
     renderPlanTable();
+    
+    console.log('تم حذف البيانات. إجمالي البيانات المتبقية في devSection:', devSectionData.length);
 }
 
 // --- المحلات المنسدلة ---

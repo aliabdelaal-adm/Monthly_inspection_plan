@@ -462,6 +462,7 @@
             if(val && !areas.includes(val)) {
                 areas.push(val);
                 updateAreaList();
+                updateAreaDropdown();
                 uploadAllDataToGitHub("إضافة منطقة");
             }
             document.getElementById('newArea').value = '';
@@ -482,6 +483,7 @@
             if(val && !areas.includes(val)) {
                 areas[idx] = val;
                 updateAreaList();
+                updateAreaDropdown();
                 uploadAllDataToGitHub("تعديل اسم منطقة");
             }
         }
@@ -489,6 +491,7 @@
             if(confirm("هل تريد حذف هذه المنطقة؟")) {
                 areas.splice(idx,1);
                 updateAreaList();
+                updateAreaDropdown();
                 uploadAllDataToGitHub("حذف منطقة");
             }
         }
@@ -555,6 +558,16 @@
                 });
             }
         }
+        function updateAreaDropdown() {
+            const sel = document.getElementById('areaForShop');
+            sel.innerHTML = '';
+            areas.forEach(area=>{
+                const opt = document.createElement('option');
+                opt.value = area;
+                opt.textContent = area;
+                sel.appendChild(opt);
+            });
+        }
         function renderShopsByArea() {
             fillShopsByAreaDefault();
             const container = document.getElementById('shopsByAreaList');
@@ -571,14 +584,7 @@
                 html += '</div>';
                 container.innerHTML += html;
             }
-            const sel = document.getElementById('areaForShop');
-            sel.innerHTML = '';
-            areas.forEach(area=>{
-                const opt = document.createElement('option');
-                opt.value = area;
-                opt.textContent = area;
-                sel.appendChild(opt);
-            });
+            updateAreaDropdown();
         }
         function addShopByArea(e) {
             e.preventDefault();

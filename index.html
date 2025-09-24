@@ -4,10 +4,6 @@
     <meta charset="UTF-8">
     <title>خطة التفتيش الشهرية</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- مكتبات التصدير -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body { font-family: 'Cairo', Arial, sans-serif; background: #f7f9fc; margin:0;}
         .main-container {
@@ -20,26 +16,17 @@
             margin: 64px auto 0 auto;
             display: flex; flex-direction: column; align-items: center;
         }
-        /* ... باقي التنسيقات ... */
+        table {margin-top: 24px;}
+        th, td {padding: 8px;}
     </style>
 </head>
 <body>
 <div class="main-container">
-    <!-- جميع عناصر الصفحة كما أرسلتها أنت ... -->
-    <div id="loadingMessage" style="text-align: center; font-size: 1.2em; color: #234085; margin: 20px; display: none;">جاري تحميل البيانات ...</div>
-    <!-- ... بقية الصفحة ... -->
+    <h2>خطة التفتيش الشهرية</h2>
+    <div id="planTable"></div>
 </div>
 <script>
-// بيانات المفتشين ثابتة
-let inspectorsData = [
-    {id:"hager", name:"هاجر"}, {id:"amna", name:"آمنه"}, {id:"aya", name:"آيه"},
-    {id:"faiz", name:"د. فايز المسالمة"}, {id:"amna2", name:"د.آمنه بن صرم"}
-];
-let inspectors = inspectorsData.map(i=>i.name);
-let isDev = false;
-let selectedInspector = "";
-const DEV_PASSWORD = "1983";
-// البيانات الحقيقية مباشرة في المتغير
+// بيانات التفتيش مباشرة
 let inspectionData = [
     { inspector: "هاجر", day: "2025-09-22", shift: "صباحية", area: "المصفح", shops: ["محل 1", "محل 2"] },
     { inspector: "هاجر", day: "2025-09-28", shift: "مسائية", area: "المصفح", shops: ["محل 5"] },
@@ -49,25 +36,24 @@ let inspectionData = [
     { inspector: "د.آمنه بن صرم", day: "2025-09-21", shift: "مسائية", area: "المنطقة ج", shops: ["محل 11"] },
 ];
 
-function fillInspectorsDropdowns() {
-    // ... دالتك الاصلية ...
-}
-function setLastUpdateDate() {
-    // ... دالتك الاصلية ...
-}
 function renderPlanTable() {
-    // ... دالتك الاصلية التي تعرض البيانات من inspectionData ...
+    let html = '<table border="1" style="width:100%;text-align:center"><tr><th>المفتش</th><th>اليوم</th><th>الوردية</th><th>المنطقة</th><th>المحلات</th></tr>';
+    inspectionData.forEach(row => {
+        html += `<tr>
+            <td>${row.inspector}</td>
+            <td>${row.day}</td>
+            <td>${row.shift}</td>
+            <td>${row.area}</td>
+            <td>${row.shops.join(', ')}</td>
+        </tr>`;
+    });
+    html += '</table>';
+    document.getElementById('planTable').innerHTML = html;
 }
 
-// عند تحميل الصفحة
 window.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('loadingMessage').style.display = 'none';
-    fillInspectorsDropdowns();
-    setLastUpdateDate();
     renderPlanTable();
-    // ... أي أكواد أخرى ...
 });
-// ... جميع دوالك كما في الملف المرسل (بدون حذف أو اختصار) ...
 </script>
 </body>
 </html>

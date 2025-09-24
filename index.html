@@ -266,7 +266,7 @@
         })
         .catch(err => {
             document.getElementById('inspectorSelect').innerHTML = '<option value="">تعذّر تحميل البيانات!</option>';
-            document.getElementById('planTableContainer').innerHTML = '<div style="color:#c00;text-align:center;font-weight:bold;margin:25px 0;">تعذّر تحميل بيانات الخطة من GitHub. تأكد من توفر ملف data.json.</div>';
+            document.getElementById('planTableContainer').innerHTML = '<div style="color:#c00;text-align:center;font-weight:bold;margin:25px 0;">تعذّر تحميل بيانات الخطة من GitHub!</div>';
         });
     }
 
@@ -317,11 +317,22 @@
             selectedInspector = null;
             document.getElementById('planTableContainer').innerHTML = '';
             document.getElementById('inspectorReportDiv').style.display = "none";
+            // إذا كان هناك نافذة التقرير الشهري مفتوحة، أغلقها
+            if (document.getElementById('monthlyReportModal')) {
+                document.getElementById('monthlyReportModal').style.display = "none";
+            }
             return;
         }
         selectedInspector = inspectors[idx];
         renderPlanTable(selectedInspector);
-        document.getElementById('inspectorReportDiv').style.display = "none";
+        // عرض تقرير المفتش تلقائياً
+        if (typeof showInspectorReport === "function") {
+            showInspectorReport();
+        }
+        // عرض التقرير الشهري تلقائياً (نافذة منبثقة)
+        if (typeof showMonthlyReport === "function") {
+            showMonthlyReport();
+        }
     });
 
     // --- باقي السكريبت كما هو --- 

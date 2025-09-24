@@ -246,27 +246,27 @@
     </div>
 </div>
 <script>
-    // الربط مع data.json على GitHub
-    const PLAN_URL = "https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/data.json?t=" + Date.now();
+    // الربط مع data.json المحلي
+    const PLAN_URL = "./data.json?t=" + Date.now();
     let planData = null; // البيانات الكاملة للخطة
     let inspectors = []; // أسماء المفتشين
     let inspectionData = []; // جدول التوزيع
     let selectedInspector = null;
 
-    // جلب البيانات من GitHub عند تحميل الصفحة
+    // جلب البيانات من الملف المحلي عند تحميل الصفحة
     function fetchPlanData() {
         fetch(PLAN_URL)
         .then(r => r.json())
         .then(data => {
             planData = data;
             inspectors = Array.isArray(planData.inspectors) ? planData.inspectors : [];
-            inspectionData = Array.isArray(planData.distribution) ? planData.distribution : [];
+            inspectionData = Array.isArray(planData.inspectionData) ? planData.inspectionData : [];
             fillInspectorsDropdown();
             setLastUpdateDate();
         })
         .catch(err => {
             document.getElementById('inspectorSelect').innerHTML = '<option value="">تعذّر تحميل البيانات!</option>';
-            document.getElementById('planTableContainer').innerHTML = '<div style="color:#c00;text-align:center;font-weight:bold;margin:25px 0;">تعذّر تحميل بيانات الخطة من GitHub. تأكد من توفر ملف data.json.</div>';
+            document.getElementById('planTableContainer').innerHTML = '<div style="color:#c00;text-align:center;font-weight:bold;margin:25px 0;">تعذّر تحميل بيانات الخطة من الملف المحلي. تأكد من توفر ملف data.json.</div>';
         });
     }
 
@@ -310,7 +310,284 @@
         });
     }
 
-    // عند اختيار المفتش
+    // عرض جدول خطة التفتيش للمفتش المحدد
+    function renderPlanTable(inspectorName) {
+        const container = document.getElementById('planTableContainer');
+        const inspectorData = inspectionData.filter(item => item.inspector === inspectorName);
+        
+        if (inspectorData.length === 0) {
+            container.innerHTML = '<div style="text-align:center;color:#888;margin:20px 0;">لا توجد بيانات متاحة لهذا المفتش</div>';
+            return;
+        }
+
+        let tableHTML = `
+            <table class="plan-table">
+                <thead>
+                    <tr>
+                        <th>التاريخ</th>
+                        <th>الفترة</th>
+                        <th>المنطقة</th>
+                        <th>المحلات</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        inspectorData.forEach(item => {
+            const shops = Array.isArray(item.shops) ? item.shops.join(' - ') : '';
+            tableHTML += `
+                <tr>
+                    <td>${item.day}</td>
+                    <td>${item.shift}</td>
+                    <td>${item.area}</td>
+                    <td>${shops}</td>
+                </tr>
+            `;
+        });
+
+        tableHTML += `
+                </tbody>
+            </table>
+        `;
+        
+        container.innerHTML = tableHTML;
+    }
+
+    // عرض تقرير المفتش
+    function showInspectorReport() {
+        if (!selectedInspector) {
+            alert('يرجى اختيار مفتش أولاً');
+            return;
+        }
+
+        const inspectorData = inspectionData.filter(item => item.inspector === selectedInspector);
+        const total = inspectorData.length;
+        const morning = inspectorData.filter(item => item.shift === 'صباحية').length;
+        const evening = inspectorData.filter(item => item.shift === 'مسائية').length;
+        
+        // حساب المحلات الإجمالية
+        const totalShops = inspectorData.reduce((count, item) => {
+            return count + (Array.isArray(item.shops) ? item.shops.length : 0);
+        }, 0);
+
+        const reportDiv = document.getElementById('inspectorReportDiv');
+        reportDiv.innerHTML = `
+            <h3>تقرير المفتش: ${selectedInspector}</h3>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin:15px 0;">
+                <div style="background:#e3f2fd;padding:15px;border-radius:8px;text-align:center;">
+                    <div style="font-size:1.5em;font-weight:bold;color:#1976d2;">${total}</div>
+                    <div>إجمالي أيام التفتيش</div>
+                </div>
+                <div style="background:#f3e5f5;padding:15px;border-radius:8px;text-align:center;">
+                    <div style="font-size:1.5em;font-weight:bold;color:#7b1fa2;">${morning}</div>
+                    <div>الفترة الصباحية</div>
+                </div>
+                <div style="background:#fff3e0;padding:15px;border-radius:8px;text-align:center;">
+                    <div style="font-size:1.5em;font-weight:bold;color:#f57c00;">${evening}</div>
+                    <div>الفترة المسائية</div>
+                </div>
+                <div style="background:#e8f5e8;padding:15px;border-radius:8px;text-align:center;">
+                    <div style="font-size:1.5em;font-weight:bold;color:#388e3c;">${totalShops}</div>
+                    <div>إجمالي المحلات</div>
+                </div>
+            </div>
+        `;
+        reportDiv.style.display = 'block';
+    }
+
+    // عرض التقرير الشهري
+    function showMonthlyReport() {
+        const modal = document.getElementById('monthlyReportModal');
+        const content = document.getElementById('monthlyReportContent');
+        
+        // إحصائيات شاملة لجميع المفتشين
+        const allInspectors = [...new Set(inspectionData.map(item => item.inspector))];
+        let reportHTML = `
+            <table class="stats-table">
+                <thead>
+                    <tr>
+                        <th>المفتش</th>
+                        <th>إجمالي الأيام</th>
+                        <th>صباحية</th>
+                        <th>مسائية</th>
+                        <th>المحلات</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        let totalDays = 0;
+        let totalMorning = 0;
+        let totalEvening = 0;
+        let totalShops = 0;
+
+        allInspectors.forEach(inspector => {
+            const data = inspectionData.filter(item => item.inspector === inspector);
+            const days = data.length;
+            const morning = data.filter(item => item.shift === 'صباحية').length;
+            const evening = data.filter(item => item.shift === 'مسائية').length;
+            const shops = data.reduce((count, item) => count + (Array.isArray(item.shops) ? item.shops.length : 0), 0);
+            
+            totalDays += days;
+            totalMorning += morning;
+            totalEvening += evening;
+            totalShops += shops;
+
+            reportHTML += `
+                <tr>
+                    <td>${inspector}</td>
+                    <td>${days}</td>
+                    <td>${morning}</td>
+                    <td>${evening}</td>
+                    <td>${shops}</td>
+                </tr>
+            `;
+        });
+
+        reportHTML += `
+                <tr class="red-total">
+                    <td><strong>المجموع</strong></td>
+                    <td><strong>${totalDays}</strong></td>
+                    <td><strong>${totalMorning}</strong></td>
+                    <td><strong>${totalEvening}</strong></td>
+                    <td><strong>${totalShops}</strong></td>
+                </tr>
+                </tbody>
+            </table>
+        `;
+
+        content.innerHTML = reportHTML;
+        modal.style.display = 'flex';
+    }
+
+    // إغلاق نافذة التقرير الشهري
+    function closeMonthlyReportModal() {
+        document.getElementById('monthlyReportModal').style.display = 'none';
+    }
+
+    // تصدير الجدول إلى PDF
+    function exportTableToPDF() {
+        if (!selectedInspector) {
+            alert('يرجى اختيار مفتش أولاً');
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // إضافة عنوان باللغة العربية
+        doc.setFont('helvetica');
+        doc.setFontSize(16);
+        doc.text(`خطة تفتيش المفتش: ${selectedInspector}`, 105, 20, { align: 'center' });
+        
+        const table = document.querySelector('.plan-table');
+        if (table) {
+            html2canvas(table).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const imgWidth = 190;
+                const pageHeight = 295;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                let heightLeft = imgHeight;
+                let position = 30;
+
+                doc.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    doc.addPage();
+                    doc.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+
+                doc.save(`خطة_تفتيش_${selectedInspector}.pdf`);
+            });
+        } else {
+            alert('لا يوجد جدول لتصديره');
+        }
+    }
+
+    // تصدير الجدول إلى Excel
+    function exportTableToExcel() {
+        if (!selectedInspector) {
+            alert('يرجى اختيار مفتش أولاً');
+            return;
+        }
+
+        const inspectorData = inspectionData.filter(item => item.inspector === selectedInspector);
+        const data = inspectorData.map(item => ({
+            'التاريخ': item.day,
+            'الفترة': item.shift,
+            'المنطقة': item.area,
+            'المحلات': Array.isArray(item.shops) ? item.shops.join(' - ') : ''
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'خطة التفتيش');
+        XLSX.writeFile(wb, `خطة_تفتيش_${selectedInspector}.xlsx`);
+    }
+
+    // تصدير التقرير الشهري إلى PDF
+    function exportMonthlyReportToPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        doc.setFont('helvetica');
+        doc.setFontSize(16);
+        doc.text('التقرير الشهري - خطة التفتيش', 105, 20, { align: 'center' });
+        
+        const table = document.querySelector('#monthlyReportContent .stats-table');
+        if (table) {
+            html2canvas(table).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const imgWidth = 190;
+                const pageHeight = 295;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                let heightLeft = imgHeight;
+                let position = 30;
+
+                doc.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    doc.addPage();
+                    doc.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+
+                doc.save('التقرير_الشهري.pdf');
+            });
+        }
+    }
+
+    // تصدير التقرير الشهري إلى Excel
+    function exportMonthlyReportToExcel() {
+        const allInspectors = [...new Set(inspectionData.map(item => item.inspector))];
+        const data = allInspectors.map(inspector => {
+            const inspectorData = inspectionData.filter(item => item.inspector === inspector);
+            const days = inspectorData.length;
+            const morning = inspectorData.filter(item => item.shift === 'صباحية').length;
+            const evening = inspectorData.filter(item => item.shift === 'مسائية').length;
+            const shops = inspectorData.reduce((count, item) => count + (Array.isArray(item.shops) ? item.shops.length : 0), 0);
+            
+            return {
+                'المفتش': inspector,
+                'إجمالي الأيام': days,
+                'صباحية': morning,
+                'مسائية': evening,
+                'المحلات': shops
+            };
+        });
+
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'التقرير الشهري');
+        XLSX.writeFile(wb, 'التقرير_الشهري.xlsx');
+    }
+
+    // عند اختيار المفتش - عرض جميع البيانات تلقائياً
     document.getElementById('inspectorSelect').addEventListener('change', function() {
         let idx = this.value;
         if (idx === "" || !inspectors[idx]) {
@@ -320,12 +597,13 @@
             return;
         }
         selectedInspector = inspectors[idx];
+        
+        // عرض جدول المحلات تلقائياً
         renderPlanTable(selectedInspector);
-        document.getElementById('inspectorReportDiv').style.display = "none";
+        
+        // عرض تقرير المفتش تلقائياً
+        showInspectorReport();
     });
-
-    // --- باقي السكريبت كما هو --- 
-    // ... (نفس الكود السابق بدون تغيير)
     // بدء تحميل البيانات عند فتح الصفحة
     document.addEventListener('DOMContentLoaded', fetchPlanData);
 </script>

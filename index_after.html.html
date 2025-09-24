@@ -1562,7 +1562,43 @@ async function uploadDistributionToGitHub() {
                 showApiTokenBar(false);
             }
         }
-        
+        // داخل <script>
+document.getElementById('userTypeSelect').addEventListener('change', handleUserTypeChange); // ⬅️⬅️
+
+function handleUserTypeChange() {
+    const type = document.getElementById('userTypeSelect').value;
+    const inspectorSelectBox = document.getElementById('inspectorSelectBox');
+    if(type === 'developer') {
+        showPasswordModal(); // ⬅️⬅️
+        inspectorSelectBox.style.display = 'none';
+    } else {
+        document.getElementById('adminPanel').style.display = 'none';
+        document.getElementById('modalPassword').style.display = 'none';
+        document.getElementById('inspectorPage').style.display = '';
+        inspectorSelectBox.style.display = 'inline-block';
+        fillInspectorsSelect();
+        renderInspectorPage();
+        document.getElementById('apiTokenBar').style.display = 'none'; // ⬅️⬅️
+    }
+}
+
+function checkPassword() {
+    const val = document.getElementById('passwordInput').value;
+    if(val === "1983") { // ⬅️⬅️
+        document.getElementById('modalPassword').style.display = 'none';
+        document.getElementById('adminPanel').style.display = ''; // ⬅️⬅️
+        document.getElementById('inspectorPage').style.display = 'none';
+        updateInspectorList();
+        updateShopList();
+        updateAreaList();
+        renderGoalList();
+        renderShopsByArea();
+        renderDistributionTable();
+        document.getElementById('apiTokenBar').style.display = ''; // ⬅️⬅️
+    } else {
+        document.getElementById('passwordError').style.display = '';
+    }
+}
         // ================= وظائف الصوت ========================
         function playBirdSound() {
             const audio = document.getElementById('birds-audio');
@@ -1619,12 +1655,12 @@ async function uploadDistributionToGitHub() {
         function playBirdSoundManually(notification) {
             const audio = document.getElementById('birds-audio');
             if (audio) {
-                audio.currentTime = 0;
+                audio.currentTime = 6;
                 audio.play().then(() => {
                     // توقيت الصوت لمدة 6 ثوان
                     setTimeout(() => {
                         audio.pause();
-                        audio.currentTime = 0;
+                        audio.currentTime = 6;
                     }, 6000);
                     if (notification) {
                         notification.remove();

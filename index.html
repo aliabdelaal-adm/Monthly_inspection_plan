@@ -303,7 +303,12 @@ let defaultInspectionData = [
     { inspector: "د. فايز المسالمة", day: "2025-09-21", shift: "صباحية", area: "المنطقة أ", shops: ["محل 8", "محل 9"] },
     { inspector: "د.آمنه بن صرم", day: "2025-09-21", shift: "مسائية", area: "المنطقة ج", shops: ["محل 11"] },
 ];
-let inspectionData = JSON.parse(localStorage.getItem('inspectionData')) || defaultInspectionData.slice();
+// -- تعديل برمجي لعرض فقط البيانات المدخلة من المطور --
+// إذا لم يكن هناك بيانات محفوظة في localStorage، يتم تعيين inspectionData كمصفوفة فارغة (لن تظهر البيانات الافتراضية أبداً في الجدول)
+let inspectionData = JSON.parse(localStorage.getItem('inspectionData'));
+if (!inspectionData) {
+  inspectionData = [];
+}
 
 function saveInspectionData() {
     localStorage.setItem('inspectionData', JSON.stringify(inspectionData));

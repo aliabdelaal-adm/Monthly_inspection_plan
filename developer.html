@@ -67,10 +67,7 @@
                 التوكن يُخزن في متصفحك فقط ويمكنك مسحه من الإعدادات في أي وقت.
             </div>
         </div>
-
-        <!-- لوحة الأدوات الرئيسية -->
         <div class="admin-panel">
-            <!-- إدارة المفتشين -->
             <div class="admin-section">
                 <h3>إدارة المفتشين</h3>
                 <form class="add-row-form" id="inspectorForm">
@@ -86,7 +83,6 @@
                     </table>
                 </div>
             </div>
-            <!-- إدارة المناطق -->
             <div class="admin-section">
                 <h3>إدارة المناطق</h3>
                 <form class="add-row-form" id="areaForm">
@@ -102,7 +98,6 @@
                     </table>
                 </div>
             </div>
-            <!-- إدارة المحلات -->
             <div class="admin-section">
                 <h3>إدارة المحلات</h3>
                 <form class="add-row-form" id="shopForm">
@@ -119,8 +114,6 @@
                 </div>
             </div>
         </div>
-        
-        <!-- إدارة جدول خطة التفتيش -->
         <div class="admin-section">
             <h3>جدول خطة التفتيش</h3>
             <form class="add-row-form" id="planForm">
@@ -156,8 +149,6 @@
                 </table>
             </div>
         </div>
-
-        <!-- أدوات التصدير والاستيراد -->
         <div class="flex-between" style="margin-top:20px;">
             <div>
                 <button class="action-btn export" onclick="exportToExcel()">تصدير Excel</button>
@@ -169,359 +160,12 @@
             </div>
             <button class="action-btn delete" onclick="resetAllData()" style="margin-left:12px;">إعادة ضبط جميع البيانات</button>
         </div>
-
         <div style="margin-top:22px;color:#888;font-size:1.05em;text-align:center;">
             <span id="lastUpdate"></span>
         </div>
     </div>
 <script>
-/* ================== إعدادات الريبو ================== */
-const GITHUB_OWNER = "aliabdelaal-adm";
-const GITHUB_REPO = "Monthly_inspection_plan";
-const PLAN_JSON_FILE = "inspection_plan.json";
-
-/* ================== تخزين التوكن ================== */
-let GITHUB_TOKEN = localStorage.getItem('github_token') || "";
-document.getElementById('githubTokenInput').value = GITHUB_TOKEN;
-
-function setGithubToken() {
-    let val = document.getElementById('githubTokenInput').value.trim();
-    if (val.startsWith("ghp_") && val.length > 20) {
-        GITHUB_TOKEN = val;
-        localStorage.setItem('github_token', GITHUB_TOKEN);
-        document.getElementById('tokenResultMsg').textContent = "✔ تم حفظ التوكن (لن تحتاج إدخاله إلا إذا مسحت الكاش)";
-        document.getElementById('tokenResultMsg').className = "api-token-saved";
-    } else {
-        document.getElementById('tokenResultMsg').textContent = "توكن غير صحيح!";
-        document.getElementById('tokenResultMsg').className = "api-token-warning";
-    }
-}
-
-/* ================== تحميل وحفظ البيانات ================== */
-let inspectionData = { inspectors:[], areas:[], shops:[], plan:[] };
-
-function loadLocalData() {
-    let d = localStorage.getItem('inspectionData');
-    if(d) try { inspectionData = JSON.parse(d); } catch(e){}
-}
-
-function saveLocalData() {
-    localStorage.setItem('inspectionData', JSON.stringify(inspectionData));
-}
-
-async function fetchPlanFromGitHub() {
-    try {
-        const url = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/${PLAN_JSON_FILE}`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error("فشل تحميل بيانات الخطة من GitHub");
-        const data = await res.json();
-        inspectionData = data;
-        saveLocalData();
-        renderAll();
-        setLastUpdateDate();
-    } catch (e) {
-        alert("تعذر تحميل خطة التفتيش من GitHub: " + e.message);
-        loadLocalData();
-        renderAll();
-    }
-}
-
-async function pushPlanToGitHub() {
-    if (!GITHUB_TOKEN || !GITHUB_TOKEN.startsWith("ghp_")) {
-        alert("يرجى إدخال GitHub Token أولاً!");
-        return false;
-    }
-    try {
-        const apiUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${PLAN_JSON_FILE}`;
-        let getRes = await fetch(apiUrl, {headers:{"Accept":"application/vnd.github.v3+json"}});
-        if (!getRes.ok) throw new Error("فشل جلب sha الملف من GitHub");
-        let meta = await getRes.json();
-        let sha = meta.sha;
-        let content = btoa(unescape(encodeURIComponent(JSON.stringify(inspectionData, null, 2))));
-        let body = {
-            message: "تحديث خطة التفتيش من خلال لوحة المطور",
-            content: content,
-            sha: sha
-        };
-        let res = await fetch(apiUrl, {
-            method: "PUT",
-            headers: {
-                "Authorization": "token " + GITHUB_TOKEN,
-                "Accept":"application/vnd.github.v3+json"
-            },
-            body: JSON.stringify(body)
-        });
-        if (!res.ok) {
-            let err = await res.json();
-            throw new Error(err.message || "فشل رفع التغييرات!");
-        }
-        alert("تم رفع التغييرات بنجاح إلى GitHub!");
-        setLastUpdateDate();
-        return true;
-    } catch (e) {
-        alert("فشل رفع التغييرات:\n" + e.message);
-        return false;
-    }
-}
-
-function setLastUpdateDate() {
-    const now = new Date();
-    const dateString = now.getFullYear() + "-" + 
-        ("0"+(now.getMonth()+1)).slice(-2) + "-" + 
-        ("0"+now.getDate()).slice(-2) + " " +
-        ("0"+now.getHours()).slice(-2) + ":" +
-        ("0"+now.getMinutes()).slice(-2);
-    document.getElementById("lastUpdate").textContent = "آخر تعديل للبيانات: " + dateString;
-}
-
-/* ================== واجهات إدارة المفتشين ================== */
-function renderInspectors() {
-    let tbody = document.getElementById('inspectorTable');
-    tbody.innerHTML = '';
-    inspectionData.inspectors.forEach((inspector,i)=>{
-        let tr = document.createElement('tr');
-        tr.innerHTML = `<td>${inspector}</td>
-            <td>
-                <button class="action-btn edit" onclick="editInspector(${i})">تعديل</button>
-                <button class="action-btn delete" onclick="deleteInspector(${i})">حذف</button>
-            </td>`;
-        tbody.appendChild(tr);
-    });
-    // تحديث قائمة المفتشين في خطة التفتيش
-    let sel = document.getElementById('planInspector');
-    sel.innerHTML = '<option value="">اختر المفتش</option>';
-    inspectionData.inspectors.forEach(i=>{
-        let opt = document.createElement('option');
-        opt.value = i; opt.textContent = i;
-        sel.appendChild(opt);
-    });
-}
-document.getElementById('inspectorForm').onsubmit = function(e){
-    e.preventDefault();
-    let val = document.getElementById('inspectorName').value.trim();
-    if(val && !inspectionData.inspectors.includes(val)){
-        inspectionData.inspectors.push(val);
-        saveLocalData(); renderInspectors(); pushPlanToGitHub();
-        this.reset();
-    }
-};
-window.editInspector = function(idx){
-    let name = inspectionData.inspectors[idx];
-    let newName = prompt("تعديل اسم المفتش:", name);
-    if(newName && newName.trim() && !inspectionData.inspectors.includes(newName.trim())){
-        inspectionData.inspectors[idx] = newName.trim();
-        saveLocalData(); renderInspectors(); pushPlanToGitHub();
-    }
-};
-window.deleteInspector = function(idx){
-    if(confirm("تأكيد حذف المفتش؟")){
-        inspectionData.inspectors.splice(idx,1);
-        saveLocalData(); renderInspectors(); pushPlanToGitHub();
-    }
-};
-
-/* ================== واجهات إدارة المناطق ================== */
-function renderAreas() {
-    let tbody = document.getElementById('areaTable');
-    tbody.innerHTML = '';
-    inspectionData.areas.forEach((area,i)=>{
-        let tr = document.createElement('tr');
-        tr.innerHTML = `<td>${area}</td>
-            <td>
-                <button class="action-btn edit" onclick="editArea(${i})">تعديل</button>
-                <button class="action-btn delete" onclick="deleteArea(${i})">حذف</button>
-            </td>`;
-        tbody.appendChild(tr);
-    });
-    // تحديث قائمة المناطق في خطة التفتيش
-    let sel = document.getElementById('planArea');
-    sel.innerHTML = '<option value="">اختر المنطقة</option>';
-    inspectionData.areas.forEach(i=>{
-        let opt = document.createElement('option');
-        opt.value = i; opt.textContent = i;
-        sel.appendChild(opt);
-    });
-}
-document.getElementById('areaForm').onsubmit = function(e){
-    e.preventDefault();
-    let val = document.getElementById('areaName').value.trim();
-    if(val && !inspectionData.areas.includes(val)){
-        inspectionData.areas.push(val);
-        saveLocalData(); renderAreas(); pushPlanToGitHub();
-        this.reset();
-    }
-};
-window.editArea = function(idx){
-    let name = inspectionData.areas[idx];
-    let newName = prompt("تعديل اسم المنطقة:", name);
-    if(newName && newName.trim() && !inspectionData.areas.includes(newName.trim())){
-        inspectionData.areas[idx] = newName.trim();
-        saveLocalData(); renderAreas(); pushPlanToGitHub();
-    }
-};
-window.deleteArea = function(idx){
-    if(confirm("تأكيد حذف المنطقة؟")){
-        inspectionData.areas.splice(idx,1);
-        saveLocalData(); renderAreas(); pushPlanToGitHub();
-    }
-};
-
-/* ================== واجهات إدارة المحلات ================== */
-function renderShops() {
-    let tbody = document.getElementById('shopTable');
-    tbody.innerHTML = '';
-    inspectionData.shops.forEach((shop,i)=>{
-        let tr = document.createElement('tr');
-        tr.innerHTML = `<td>${shop}</td>
-            <td>
-                <button class="action-btn edit" onclick="editShop(${i})">تعديل</button>
-                <button class="action-btn delete" onclick="deleteShop(${i})">حذف</button>
-            </td>`;
-        tbody.appendChild(tr);
-    });
-}
-document.getElementById('shopForm').onsubmit = function(e){
-    e.preventDefault();
-    let val = document.getElementById('shopName').value.trim();
-    if(val && !inspectionData.shops.includes(val)){
-        inspectionData.shops.push(val);
-        saveLocalData(); renderShops(); pushPlanToGitHub();
-        this.reset();
-    }
-};
-window.editShop = function(idx){
-    let name = inspectionData.shops[idx];
-    let newName = prompt("تعديل اسم المحل:", name);
-    if(newName && newName.trim() && !inspectionData.shops.includes(newName.trim())){
-        inspectionData.shops[idx] = newName.trim();
-        saveLocalData(); renderShops(); pushPlanToGitHub();
-    }
-};
-window.deleteShop = function(idx){
-    if(confirm("تأكيد حذف المحل؟")){
-        inspectionData.shops.splice(idx,1);
-        saveLocalData(); renderShops(); pushPlanToGitHub();
-    }
-};
-
-/* ================== إدارة خطة التفتيش ================== */
-function renderPlanTable() {
-    let tbody = document.getElementById('planTable');
-    tbody.innerHTML = '';
-    inspectionData.plan.forEach((row,i)=>{
-        let shops = (Array.isArray(row.shops) ? row.shops.join(", ") : row.shops);
-        let tr = document.createElement('tr');
-        tr.innerHTML = `<td>${row.inspector}</td>
-            <td>${row.day}</td>
-            <td>${row.shift}</td>
-            <td>${row.area}</td>
-            <td>${shops}</td>
-            <td>
-                <button class="action-btn edit" onclick="editPlan(${i})">تعديل</button>
-                <button class="action-btn delete" onclick="deletePlan(${i})">حذف</button>
-            </td>`;
-        tbody.appendChild(tr);
-    });
-}
-document.getElementById('planForm').onsubmit = function(e){
-    e.preventDefault();
-    let idx = document.getElementById('planEditingIndex').value;
-    let planObj = {
-        inspector: document.getElementById('planInspector').value,
-        day: document.getElementById('planDate').value,
-        shift: document.getElementById('planShift').value,
-        area: document.getElementById('planArea').value,
-        shops: document.getElementById('planShops').value.split(',').map(s=>s.trim()).filter(Boolean)
-    };
-    if(idx===""){
-        inspectionData.plan.push(planObj);
-    } else {
-        inspectionData.plan[+idx] = planObj;
-    }
-    saveLocalData(); renderPlanTable(); pushPlanToGitHub();
-    this.reset();
-    document.getElementById('planEditingIndex').value = "";
-};
-window.editPlan = function(idx){
-    let row = inspectionData.plan[idx];
-    document.getElementById('planInspector').value = row.inspector;
-    document.getElementById('planDate').value = row.day;
-    document.getElementById('planShift').value = row.shift;
-    document.getElementById('planArea').value = row.area;
-    document.getElementById('planShops').value = (Array.isArray(row.shops) ? row.shops.join(", ") : row.shops);
-    document.getElementById('planEditingIndex').value = idx;
-};
-window.deletePlan = function(idx){
-    if(confirm("تأكيد حذف صف الخطة؟")){
-        inspectionData.plan.splice(idx,1);
-        saveLocalData(); renderPlanTable(); pushPlanToGitHub();
-    }
-};
-
-/* ================== تصدير واستيراد ================== */
-window.exportToExcel = function(){
-    let ws = XLSX.utils.json_to_sheet(inspectionData.plan.map(row=>({
-        "اسم المفتش": row.inspector,
-        "اليوم": row.day,
-        "وقت المناوبة": row.shift,
-        "المنطقة": row.area,
-        "المحلات": Array.isArray(row.shops) ? row.shops.join(", ") : row.shops
-    })));
-    let wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "خطة التفتيش");
-    XLSX.writeFile(wb, "inspection_plan.xlsx");
-};
-window.exportToPDF = function(){
-    html2canvas(document.querySelector('.admin-section:last-child .table-wrapper')).then(canvas => {
-        const pdf = new window.jspdf.jsPDF({
-            orientation: "landscape",
-            unit: "pt",
-            format: "a4"
-        });
-        pdf.addImage(canvas, 'PNG', 10, 10, 800, 0);
-        pdf.save("inspection_plan.pdf");
-    });
-};
-window.importFromFile = function(input){
-    let file = input.files[0];
-    if(!file) return;
-    let reader = new FileReader();
-    reader.onload = function(e){
-        try {
-            let d = JSON.parse(e.target.result);
-            if(d.inspectors && d.areas && d.shops && d.plan) {
-                inspectionData = d;
-                saveLocalData(); renderAll(); pushPlanToGitHub();
-            } else {
-                alert("صيغة الملف غير صحيحة!");
-            }
-        } catch(e) {
-            alert("فشل قراءة الملف!");
-        }
-    };
-    reader.readAsText(file);
-};
-
-/* ================== إعادة ضبط البيانات ================== */
-window.resetAllData = function(){
-    if(confirm("هل أنت متأكد أنك تريد حذف جميع البيانات؟")){
-        inspectionData = { inspectors:[], areas:[], shops:[], plan:[] };
-        saveLocalData(); renderAll(); pushPlanToGitHub();
-    }
-};
-
-/* ================== عرض جميع الجداول ================== */
-function renderAll(){
-    renderInspectors();
-    renderAreas();
-    renderShops();
-    renderPlanTable();
-}
-
-/* ================== تحميل البيانات عند بداية الصفحة ================== */
-window.addEventListener('DOMContentLoaded', fetchPlanFromGitHub);
-</script><script>
-// ============== متغيرات البيانات =============
+// ============== متغيرات البيانات ==============
 let data = {
     inspectors: [],
     areas: [],
@@ -531,7 +175,6 @@ let data = {
 };
 const GITHUB_REPO = "aliabdelaal-adm/Monthly_inspection_plan";
 const PLAN_FILE = "inspection_plan.json";
-
 // ============== إدارة التوكن ==============
 function getGithubToken() {
     return localStorage.getItem('github_token') || '';
@@ -546,7 +189,6 @@ function setGithubToken() {
     }
 }
 document.getElementById('githubTokenInput').value = getGithubToken();
-
 // ============== تحميل/حفظ البيانات من/إلى GitHub ==============
 async function fetchPlanFromGitHub() {
     try {
@@ -596,20 +238,15 @@ async function savePlanToGitHub() {
         alert("تعذر حفظ البيانات. تأكد من صحة التوكن وصلاحياته.");
     }
 }
-
 // ============== دوال عرض البيانات ==============
 function renderInspectors() {
     const tbody = document.getElementById('inspectorTable');
     tbody.innerHTML = '';
     data.inspectors.forEach((name, idx) => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${name}</td>
-            <td>
-                <button class="action-btn delete" onclick="deleteInspector(${idx})">حذف</button>
-            </td>`;
+        tr.innerHTML = `<td>${name}</td>\n            <td>\n                <button class=\"action-btn delete\" onclick=\"deleteInspector(${idx})\">حذف</button>\n            </td>`;
         tbody.appendChild(tr);
     });
-    // تحديث قائمة المفتشين في جدول الخطة
     renderInspectorOptions();
 }
 function renderAreas() {
@@ -617,10 +254,7 @@ function renderAreas() {
     tbody.innerHTML = '';
     data.areas.forEach((name, idx) => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${name}</td>
-            <td>
-                <button class="action-btn delete" onclick="deleteArea(${idx})">حذف</button>
-            </td>`;
+        tr.innerHTML = `<td>${name}</td>\n            <td>\n                <button class=\"action-btn delete\" onclick=\"deleteArea(${idx})\">حذف</button>\n            </td>`;
         tbody.appendChild(tr);
     });
     renderAreaOptions();
@@ -630,10 +264,7 @@ function renderShops() {
     tbody.innerHTML = '';
     data.shops.forEach((name, idx) => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${name}</td>
-            <td>
-                <button class="action-btn delete" onclick="deleteShop(${idx})">حذف</button>
-            </td>`;
+        tr.innerHTML = `<td>${name}</td>\n            <td>\n                <button class=\"action-btn delete\" onclick=\"deleteShop(${idx})\">حذف</button>\n            </td>`;
         tbody.appendChild(tr);
     });
 }
@@ -643,32 +274,22 @@ function renderPlan() {
     data.plan.forEach((row, idx) => {
         const shops = (row.shops||[]).join(', ');
         const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${row.inspector}</td>
-            <td>${row.date}</td>
-            <td>${row.shift}</td>
-            <td>${row.area}</td>
-            <td>${shops}</td>
-            <td>
-                <button class="action-btn edit" onclick="editPlanRow(${idx})">تعديل</button>
-                <button class="action-btn delete" onclick="deletePlanRow(${idx})">حذف</button>
-            </td>
-        `;
+        tr.innerHTML = `\n            <td>${row.inspector}</td>\n            <td>${row.date}</td>\n            <td>${row.shift}</td>\n            <td>${row.area}</td>\n            <td>${shops}</td>\n            <td>\n                <button class=\"action-btn edit\" onclick=\"editPlanRow(${idx})\">تعديل</button>\n                <button class=\"action-btn delete\" onclick=\"deletePlanRow(${idx})\">حذف</button>\n            </td>\n        `;
         tbody.appendChild(tr);
     });
 }
 function renderInspectorOptions() {
     const sel = document.getElementById('planInspector');
-    sel.innerHTML = `<option value="">اختر المفتش</option>`;
+    sel.innerHTML = `<option value=\"\">اختر المفتش</option>`;
     data.inspectors.forEach(name => {
-        sel.innerHTML += `<option value="${name}">${name}</option>`;
+        sel.innerHTML += `<option value=\"${name}\">${name}</option>`;
     });
 }
 function renderAreaOptions() {
     const sel = document.getElementById('planArea');
-    sel.innerHTML = `<option value="">اختر المنطقة</option>`;
+    sel.innerHTML = `<option value=\"\">اختر المنطقة</option>`;
     data.areas.forEach(name => {
-        sel.innerHTML += `<option value="${name}">${name}</option>`;
+        sel.innerHTML += `<option value=\"${name}\">${name}</option>`;
     });
 }
 function renderAll() {
@@ -677,8 +298,6 @@ function renderAll() {
     renderShops();
     renderPlan();
 }
-
-// ============== إدارة نماذج الإدخال ==============
 document.getElementById('inspectorForm').onsubmit = function(e) {
     e.preventDefault();
     const name = document.getElementById('inspectorName').value.trim();
@@ -730,8 +349,6 @@ function deleteShop(idx) {
         savePlanToGitHub();
     }
 }
-
-// إدارة جدول الخطة
 document.getElementById('planForm').onsubmit = function(e) {
     e.preventDefault();
     const inspector = document.getElementById('planInspector').value;
@@ -775,14 +392,12 @@ function deletePlanRow(idx) {
         savePlanToGitHub();
     }
 }
-
-// ============== أدوات التصدير والاستيراد ==============
 function exportToExcel() {
     const ws = XLSX.utils.json_to_sheet(data.plan.map(r=>({
         المفتش: r.inspector,
         اليوم: r.date,
         المناوبة: r.shift,
-        المنطقة: r.area,9
+        المنطقة: r.area,
         المحلات: (r.shops||[]).join(', ')
     })));
     const wb = XLSX.utils.book_new();
@@ -824,8 +439,6 @@ function resetAllData() {
         savePlanToGitHub();
     }
 }
-
-// تحميل البيانات عند فتح الصفحة
 window.addEventListener('DOMContentLoaded', fetchPlanFromGitHub);
 </script>
 </body>

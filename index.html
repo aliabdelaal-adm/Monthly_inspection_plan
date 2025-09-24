@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>خطة التفتيش الشهرية</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- مكتبات الحفظ -->
+    <!-- مكتبات التصدير -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -85,8 +85,8 @@
             margin:0 auto;
             box-shadow:0 2px 14px #e0e2f5;
         }
-        .dropdown-section {margin: 10px 0 22px 0; width: 100%; display:flex;justify-content:center;align-items:center;gap:8px;}
-        select, input[type="text"] {padding:7px 16px;font-size:1em;border-radius:6px;border:1px solid #b6b6b6;min-width:170px;}
+        .login-section, .inspector-select-section {margin: 10px 0 18px 0; width: 100%; display:flex;justify-content:center;align-items:center;gap:10px;}
+        select, input[type="text"], input[type="date"], input[type="password"] {padding:7px 16px;font-size:1em;border-radius:6px;border:1px solid #b6b6b6;min-width:130px;max-width:210px;}
         .actions-row {width:100%;display:flex;justify-content:center;align-items:center;gap:18px;margin:20px 0 18px;}
         .save-box, .report-box {display:flex;gap:12px;}
         .save-box button, .report-box button {padding:10px 28px;border-radius:8px;border:none;cursor:pointer;font-size:1em;}
@@ -182,6 +182,15 @@
             width: 100%;
             margin-top: 0;
         }
+        .edit-btn, .delete-btn {
+            background: #6c757d; color: #fff; border: none; border-radius: 5px; padding: 6px 12px; margin: 2px; cursor: pointer; font-size: 0.95em;
+        }
+        .edit-btn:hover { background: #495057; }
+        .delete-btn { background: #d32f2f; }
+        .delete-btn:hover { background: #b71c1c; }
+        .dev-section {background:#e9ecef;border-radius:8px;padding:16px 11px;margin:14px 0 14px 0;}
+        .dev-section .close-btn {background:#d32f2f;color:#fff;border:none;border-radius:5px;padding:0 13px;font-size:1.1em;cursor:pointer;float:left;}
+        #devPasswordForm {margin-bottom:6px;}
         @media (max-width:600px) {
             .main-container {padding:10px 1vw 7px 1vw;}
             .main-title-box {font-size:1em;padding:16px 0;}
@@ -212,11 +221,41 @@
     <div class="title-bar">
         <div class="main-title-box">خطة التفتيش الشهرية</div>
     </div>
-    <div class="dropdown-section">
-        <label for="inspectorSelect">اختر اسم المفتش :</label>
-        <select id="inspectorSelect">
-            <option value="">-- جاري التحميل --</option>
+    <div class="login-section">
+        <label for="loginRole">تسجيل الدخول:</label>
+        <select id="loginRole">
+            <option value="">-- اختر --</option>
+            <option value="inspector">مفتش</option>
+            <option value="developer">المطور</option>
         </select>
+        <input type="password" id="devPassword" placeholder="كلمة سر المطور" style="display:none;">
+        <button id="devLoginBtn" style="display:none;background:#198754;color:#fff;border:none;padding:7px 20px;border-radius:6px;font-size:1em;cursor:pointer;">دخول المطور</button>
+        <button id="devLogoutBtn" style="display:none;background:#d32f2f;color:#fff;border:none;padding:7px 20px;border-radius:6px;font-size:1em;cursor:pointer;">إغلاق المطور</button>
+        <span id="devError" style="color:#d32f2f;margin-right:10px;"></span>
+    </div>
+    <div class="inspector-select-section">
+        <label for="inspectorSelect">اختر المفتش :</label>
+        <select id="inspectorSelect">
+            <option value="">-- اختر المفتش --</option>
+        </select>
+    </div>
+    <!-- قسم المطور: إضافة/تعديل خطة -->
+    <div id="devSection" class="dev-section" style="display:none;">
+        <form id="addEditForm" style="width:100%;max-width:700px;display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:center;margin-bottom:12px;">
+            <select id="formInspector" required>
+                <option value="">مفتش</option>
+            </select>
+            <input type="date" id="formDay" required>
+            <select id="formShift" required>
+                <option value="">وقت المناوبة</option>
+                <option value="صباحية">صباحية</option>
+                <option value="مسائية">مسائية</option>
+            </select>
+            <input type="text" id="formArea" placeholder="المنطقة" required>
+            <input type="text" id="formShops" placeholder="المحلات (افصل بينها بفاصلة ,)" required>
+            <button type="submit" style="background:#198754;color:#fff;border:none;padding:8px 22px;border-radius:7px;font-size:1em;cursor:pointer;">إضافة / تعديل</button>
+            <input type="hidden" id="formEditingIndex" value="">
+        </form>
     </div>
     <div id="planTableContainer" class="plan-table-container"></div>
     <div class="actions-row">
@@ -246,99 +285,472 @@
     </div>
 </div>
 <script>
-    // الربط مع data.json على GitHub
-    const PLAN_URL = "https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/data.json?t=" + Date.now();
-    let planData = null; // البيانات الكاملة للخطة
-    let inspectors = []; // أسماء المفتشين
-    let inspectionData = []; // جدول التوزيع
-    let selectedInspector = null;
+// بيانات المفتشين ثابتة
+let inspectorsData = [
+    {id:"hager", name:"هاجر"}, {id:"amna", name:"آمنه"}, {id:"aya", name:"آيه"},
+    {id:"faiz", name:"د. فايز المسالمة"}, {id:"amna2", name:"د.آمنه بن صرم"}
+];
+let inspectors = inspectorsData.map(i=>i.name);
+let isDev = false;
+let selectedInspector = "";
+const DEV_PASSWORD = "1983";
+// بيانات افتراضية
+let defaultInspectionData = [
+    { inspector: "هاجر", day: "2025-09-22", shift: "صباحية", area: "المصفح", shops: ["محل 1", "محل 2"] },
+    { inspector: "هاجر", day: "2025-09-28", shift: "مسائية", area: "المصفح", shops: ["محل 5"] },
+    { inspector: "آمنه", day: "2025-09-25", shift: "مسائية", area: "مدينة خليفة", shops: ["محل 3", "محل 4"] },
+    { inspector: "آيه", day: "2025-09-22", shift: "صباحية", area: "المصفح", shops: ["محل 7"] },
+    { inspector: "د. فايز المسالمة", day: "2025-09-21", shift: "صباحية", area: "المنطقة أ", shops: ["محل 8", "محل 9"] },
+    { inspector: "د.آمنه بن صرم", day: "2025-09-21", shift: "مسائية", area: "المنطقة ج", shops: ["محل 11"] },
+];
+let inspectionData = JSON.parse(localStorage.getItem('inspectionData')) || defaultInspectionData.slice();
 
-    // جلب البيانات من GitHub عند تحميل الصفحة
-    function fetchPlanData() {
-        fetch(PLAN_URL)
-        .then(r => r.json())
-        .then(data => {
-            planData = data;
-            inspectors = Array.isArray(planData.inspectors) ? planData.inspectors : [];
-            inspectionData = Array.isArray(planData.distribution) ? planData.distribution : [];
-            fillInspectorsDropdown();
-            setLastUpdateDate();
-        })
-        .catch(err => {
-            document.getElementById('inspectorSelect').innerHTML = '<option value="">تعذّر تحميل البيانات!</option>';
-            document.getElementById('planTableContainer').innerHTML = '<div style="color:#c00;text-align:center;font-weight:bold;margin:25px 0;">تعذّر تحميل بيانات الخطة من GitHub!</div>';
-        });
-    }
-
-    // تحديث التاريخ تلقائي حسب آخر تحديث (من planData أو من الآن)
-    function setLastUpdateDate() {
-        let row = document.getElementById('lastUpdateRow');
-        if (planData && planData.updated_at) {
-            let d = new Date(planData.updated_at);
-            let year = d.getFullYear();
-            let month = String(d.getMonth()+1).padStart(2,'0');
-            let day = String(d.getDate()).padStart(2,'0');
-            let hours = d.getHours();
-            let minutes = String(d.getMinutes()).padStart(2,'0');
-            let period = hours >= 12 ? 'مساءً' : 'صباحًا';
-            let hour12 = hours % 12; if (hour12 === 0) hour12 = 12;
-            let timeStr = hour12 + ':' + minutes + ' ' + period;
-            let dateStr = year+'-'+month+'-'+day;
-            row.textContent = "آخر تعديل للخطة: " + dateStr + "    " + timeStr;
-        } else {
-            // في حال عدم وجود updated_at، استخدم الآن
-            let today = new Date();
-            let year = today.getFullYear();
-            let month = String(today.getMonth()+1).padStart(2,'0');
-            let day = String(today.getDate()).padStart(2,'0');
-            let hours = today.getHours();
-            let minutes = String(today.getMinutes()).padStart(2,'0');
-            let period = hours >= 12 ? 'مساءً' : 'صباحًا';
-            let hour12 = hours % 12; if (hour12 === 0) hour12 = 12;
-            let timeStr = hour12 + ':' + minutes + ' ' + period;
-            let dateStr = year+'-'+month+'-'+day;
-            row.textContent = "آخر دخول: " + dateStr + "    " + timeStr;
-        }
-    }
-
-    // تعبئة قائمة المفتشين من البيانات
-    function fillInspectorsDropdown() {
-        const select = document.getElementById('inspectorSelect');
-        select.innerHTML = '<option value="">-- اختر المفتش --</option>';
-        inspectors.forEach((name, idx) => {
-            select.innerHTML += `<option value="${idx}">${name}</option>`;
-        });
-    }
-
-    // عند اختيار المفتش
-    document.getElementById('inspectorSelect').addEventListener('change', function() {
-        let idx = this.value;
-        if (idx === "" || !inspectors[idx]) {
-            selectedInspector = null;
-            document.getElementById('planTableContainer').innerHTML = '';
-            document.getElementById('inspectorReportDiv').style.display = "none";
-            // إذا كان هناك نافذة التقرير الشهري مفتوحة، أغلقها
-            if (document.getElementById('monthlyReportModal')) {
-                document.getElementById('monthlyReportModal').style.display = "none";
-            }
-            return;
-        }
-        selectedInspector = inspectors[idx];
-        renderPlanTable(selectedInspector);
-        // عرض تقرير المفتش تلقائياً
-        if (typeof showInspectorReport === "function") {
-            showInspectorReport();
-        }
-        // عرض التقرير الشهري تلقائياً (نافذة منبثقة)
-        if (typeof showMonthlyReport === "function") {
-            showMonthlyReport();
-        }
+function saveInspectionData() {
+    localStorage.setItem('inspectionData', JSON.stringify(inspectionData));
+    setLastUpdateDate();
+}
+function setLastUpdateDate() {
+    let row = document.getElementById('lastUpdateRow');
+    let today = new Date();
+    let year = today.getFullYear();
+    let month = String(today.getMonth()+1).padStart(2,'0');
+    let day = String(today.getDate()).padStart(2,'0');
+    let hours = today.getHours();
+    let minutes = String(today.getMinutes()).padStart(2,'0');
+    let period = hours >= 12 ? 'مساءً' : 'صباحًا';
+    let hour12 = hours % 12;
+    if(hour12 === 0) hour12 = 12;
+    let timeStr = hour12 + ':' + minutes + ' ' + period;
+    let dateStr = year+'-'+month+'-'+day;
+    row.textContent = "آخر تعديل للبيانات والخطة: " + dateStr + "    " + timeStr;
+}
+function fillInspectorsDropdowns() {
+    // مفتشين لأداة الاختيار
+    const selectInspect = document.getElementById('inspectorSelect');
+    selectInspect.innerHTML = '<option value="">-- اختر المفتش --</option>';
+    inspectorsData.forEach(inspector => {
+        selectInspect.innerHTML += `<option value="${inspector.name}">${inspector.name}</option>`;
     });
+    // مفتشين في نموذج المطور
+    const select2 = document.getElementById('formInspector');
+    if (select2) {
+        select2.innerHTML = `<option value="">مفتش</option>`;
+        inspectorsData.forEach(inspector => {
+            select2.innerHTML += `<option value="${inspector.name}">${inspector.name}</option>`;
+        });
+    }
+}
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('bellBtn').addEventListener('click', playBirdSound);
+    fillInspectorsDropdowns();
+    setLastUpdateDate();
+    enableBirdSoundOnFirstInteraction();
+    renderPlanTable();
+});
 
-    // --- باقي السكريبت كما هو --- 
-    // ... (نفس الكود السابق بدون تغيير)
-    // بدء تحميل البيانات عند فتح الصفحة
-    document.addEventListener('DOMContentLoaded', fetchPlanData);
+// التحكم في تسجيل الدخول وصلاحيات المطور
+document.getElementById("loginRole").addEventListener("change", function() {
+    let role = this.value;
+    document.getElementById("devError").innerText = "";
+    if(role === "developer") {
+        document.getElementById("devPassword").style.display = "inline-block";
+        document.getElementById("devLoginBtn").style.display = "inline-block";
+        document.getElementById("devLogoutBtn").style.display = "none";
+        document.getElementById("devSection").style.display = "none";
+        isDev = false;
+    } else {
+        document.getElementById("devPassword").style.display = "none";
+        document.getElementById("devLoginBtn").style.display = "none";
+        document.getElementById("devLogoutBtn").style.display = "none";
+        document.getElementById("devSection").style.display = "none";
+        isDev = false;
+        renderPlanTable();
+    }
+});
+document.getElementById("devLoginBtn").onclick = function() {
+    let pw = document.getElementById("devPassword").value.trim();
+    if (pw === DEV_PASSWORD) {
+        isDev = true;
+        document.getElementById("devSection").style.display = "block";
+        document.getElementById("devLogoutBtn").style.display = "inline-block";
+        document.getElementById("devPassword").style.display = "none";
+        document.getElementById("devLoginBtn").style.display = "none";
+        document.getElementById("devError").innerText = "";
+        fillInspectorsDropdowns();
+        renderPlanTable();
+    } else {
+        document.getElementById("devError").innerText = "كلمة السر غير صحيحة!";
+    }
+}
+document.getElementById("devLogoutBtn").onclick = function() {
+    isDev = false;
+    document.getElementById("devSection").style.display = "none";
+    document.getElementById("devLogoutBtn").style.display = "none";
+    document.getElementById("devPassword").style.display = "none";
+    document.getElementById("devLoginBtn").style.display = "none";
+    document.getElementById("loginRole").value = "";
+    document.getElementById("devError").innerText = "";
+    renderPlanTable();
+};
+
+// التغيير على اختيار المفتش
+document.getElementById('inspectorSelect').addEventListener('change', function() {
+    selectedInspector = this.value;
+    renderPlanTable();
+    document.getElementById('inspectorReportDiv').style.display = "none";
+});
+
+document.getElementById("addEditForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    if (!isDev) return;
+    let inspector = document.getElementById("formInspector").value;
+    let day = document.getElementById("formDay").value;
+    let shift = document.getElementById("formShift").value;
+    let area = document.getElementById("formArea").value.trim();
+    let shops = document.getElementById("formShops").value.split(",").map(s=>s.trim()).filter(Boolean);
+    let editingIdx = document.getElementById("formEditingIndex").value;
+
+    if(!inspector || !day || !shift || !area || shops.length === 0) {
+        alert("يرجى تعبئة جميع الحقول!");
+        return;
+    }
+    let newPlan = {inspector, day, shift, area, shops};
+    if(editingIdx==="") {
+        inspectionData.push(newPlan);
+    } else {
+        inspectionData[editingIdx] = newPlan;
+    }
+    saveInspectionData();
+    renderPlanTable();
+    this.reset();
+    document.getElementById("formEditingIndex").value = "";
+});
+
+// --- عرض جدول الخطط مع صلاحيات المطور ---
+function renderPlanTable() {
+    const container = document.getElementById('planTableContainer');
+    let rows = inspectionData;
+    // إذا تم اختيار مفتش معيّن
+    if(selectedInspector) {
+        rows = inspectionData.filter(item => item.inspector === selectedInspector);
+    }
+    if (rows.length === 0) {
+        container.innerHTML = '<div style="text-align:center;color:#c00;font-weight:bold;margin:30px 0;">لا توجد أي خطة تفتيش.</div>';
+        return;
+    }
+    let html = `
+    <table class="plan-table" id="inspectorPlanTable">
+        <thead>
+            <tr>
+                <th>اسم المفتش</th>
+                <th>اليوم</th>
+                <th>وقت المناوبة</th>
+                <th>المنطقة</th>
+                <th>المحلات</th>
+                ${isDev?'<th>تعديل/حذف</th>':''}
+            </tr>
+        </thead>
+        <tbody>
+    `;
+    rows.forEach((row, idx) => {
+        let shopsStr = row.shops.map(shop=>`<li>${shop}</li>`).join('');
+        let realIdx = inspectionData.indexOf(row);
+        html += `
+            <tr>
+                <td>${row.inspector}</td>
+                <td>${row.day}</td>
+                <td>${row.shift}</td>
+                <td>${row.area}</td>
+                <td>
+                    <div class="shops-dropdown-wrap" id="shopsDropdownWrap${idx}">
+                        <button class="dropdown-shops-btn" onclick="toggleShopsDropdown(event, ${idx})">عرض المحلات</button>
+                        <div class="shops-dropdown-list" id="shopsDropdownList${idx}">
+                            <ul>
+                                ${shopsStr}
+                            </ul>
+                        </div>
+                    </div>
+                </td>
+                ${isDev?`
+                <td>
+                    <button class="edit-btn" onclick="editPlan(${realIdx})">تعديل</button>
+                    <button class="delete-btn" onclick="deletePlan(${realIdx})">حذف</button>
+                </td>
+                `:``}
+            </tr>
+        `;
+    });
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+}
+
+function editPlan(idx) {
+    if (!isDev) return;
+    let plan = inspectionData[idx];
+    document.getElementById("formInspector").value = plan.inspector;
+    document.getElementById("formDay").value = plan.day;
+    document.getElementById("formShift").value = plan.shift;
+    document.getElementById("formArea").value = plan.area;
+    document.getElementById("formShops").value = plan.shops.join(", ");
+    document.getElementById("formEditingIndex").value = idx;
+    window.scrollTo({top:0,behavior:'smooth'});
+}
+function deletePlan(idx) {
+    if (!isDev) return;
+    if(!confirm("هل تريد حذف هذه الخطة نهائياً؟")) return;
+    inspectionData.splice(idx,1);
+    saveInspectionData();
+    renderPlanTable();
+}
+
+// --- المحلات المنسدلة ---
+window.toggleShopsDropdown = function(event, idx) {
+    event.stopPropagation();
+    document.querySelectorAll('.shops-dropdown-list').forEach((el,i)=>{
+        if(i!==idx) el.style.display='none';
+    });
+    let btn = event.target;
+    let rect = btn.getBoundingClientRect();
+    let list = document.getElementById('shopsDropdownList'+idx);
+    list.style.display = 'block';
+    let top = rect.bottom + window.scrollY + 2;
+    let left = rect.right - list.offsetWidth + window.scrollX;
+    if ((top + list.offsetHeight) > (window.innerHeight + window.scrollY)) {
+        top = rect.top + window.scrollY - list.offsetHeight - 2;
+    }
+    list.style.top = top+"px";
+    list.style.left = (rect.left + window.scrollX) + "px";
+};
+document.addEventListener('click', function(e){
+    if (![...document.querySelectorAll('.shops-dropdown-wrap *')].includes(e.target)) {
+        document.querySelectorAll('.shops-dropdown-list').forEach(el=>el.style.display='none');
+    }
+});
+
+// --- صوت الجرس والعصافير ---
+function playBirdSound() {
+    var audio = document.getElementById('birdSound');
+    if (!audio) return;
+    audio.currentTime = 0;
+    audio.play().catch(function(err){});
+    setTimeout(function(){ audio.pause(); }, 7000);
+}
+function enableBirdSoundOnFirstInteraction() {
+    function handler() {
+        playBirdSound();
+        window.removeEventListener('click', handler, true);
+        window.removeEventListener('keydown', handler, true);
+        window.removeEventListener('touchstart', handler, true);
+        window.removeEventListener('change', handler, true);
+    }
+    window.addEventListener('click', handler, true);
+    window.addEventListener('keydown', handler, true);
+    window.addEventListener('touchstart', handler, true);
+    window.addEventListener('change', handler, true);
+}
+
+// --- دوال التصدير والتقارير بالكامل ---
+function exportTableToPDF() {
+    let table = document.getElementById('inspectorPlanTable');
+    if (!table) { alert("لا يوجد جدول للتصدير"); return; }
+    let wrap = document.createElement('div');
+    wrap.style.background = '#fff';
+    wrap.style.padding = '18px';
+    wrap.style.width = table.offsetWidth + 'px';
+    let titleBox = document.createElement('div');
+    titleBox.className = "pdf-title-arabic";
+    titleBox.innerText = "خطة التفتيش الشهرية";
+    wrap.appendChild(titleBox);
+    let tableClone = table.cloneNode(true);
+    tableClone.style.marginTop = '10px';
+    wrap.appendChild(tableClone);
+    document.body.appendChild(wrap);
+    html2canvas(wrap, {backgroundColor:'#fff', scale:2}).then(function(canvas) {
+        const imgData = canvas.toDataURL('image/png');
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({orientation:"landscape",unit:"pt",format:"a4"});
+        let pageWidth = doc.internal.pageSize.getWidth();
+        let imgProps = doc.getImageProperties(imgData);
+        let pdfWidth = pageWidth - 80;
+        let pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        doc.addImage(imgData, 'PNG', 40, 35, pdfWidth, pdfHeight);
+        doc.save(`خطة_التفتيش.pdf`);
+        document.body.removeChild(wrap);
+    });
+}
+function exportTableToExcel() {
+    let table = document.getElementById('inspectorPlanTable');
+    if (!table) { alert("لا يوجد جدول للتصدير"); return; }
+    let ws_data = [];
+    for(let r of table.rows) {
+        let row = [];
+        for(let c of r.cells) row.push(c.textContent);
+        ws_data.push(row);
+    }
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(ws_data);
+    XLSX.utils.book_append_sheet(wb, ws, "الخطة");
+    XLSX.writeFile(wb, `خطة_التفتيش.xlsx`);
+}
+function showInspectorReport() {
+    let inspectorName = selectedInspector || "";
+    if (!inspectorName) { alert("يرجى اختيار مفتش أولاً."); return; }
+    const div = document.getElementById('inspectorReportDiv');
+    const rows = inspectionData.filter(item => item.inspector === inspectorName);
+    let total = rows.length;
+    let morning = rows.filter(r => r.shift === "صباحية").length;
+    let evening = rows.filter(r => r.shift === "مسائية").length;
+    let weekend = rows.filter(r => {
+        const dayOfWeek = new Date(r.day).getDay();
+        return [5,6,0].includes(dayOfWeek);
+    }).length;
+    let table = `
+    <div class="pdf-title-arabic" id="inspectorReportTitle">تقرير المفتش: ${inspectorName}</div>
+    <div class="save-box" style="margin-bottom:8px;">
+        <button class="pdf-btn" onclick="exportInspectorReportToPDF()">حفظ التقرير كـ PDF</button>
+        <button class="excel-btn" onclick="exportInspectorReportToExcel()">حفظ التقرير كـ Excel</button>
+    </div>
+    <table class="stats-table" id="inspectorStatsTable">
+        <thead>
+            <tr>
+                <th>عدد التفتيشات</th>
+                <th>الصباحية</th>
+                <th>المسائية</th>
+                <th>العطلة</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>${total}</td>
+                <td>${morning}</td>
+                <td>${evening}</td>
+                <td>${weekend}</td>
+            </tr>
+        </tbody>
+    </table>
+    `;
+    div.innerHTML = table;
+    div.style.display = "block";
+}
+function exportInspectorReportToPDF() {
+    let titleBox = document.getElementById('inspectorReportTitle');
+    let table = document.getElementById('inspectorStatsTable');
+    if (!table || !titleBox) return;
+    let wrap = document.createElement('div');
+    wrap.style.background = '#fff';
+    wrap.style.padding = '18px';
+    wrap.style.width = table.offsetWidth + 'px';
+    let titleClone = titleBox.cloneNode(true);
+    let tableClone = table.cloneNode(true);
+    tableClone.style.marginTop = '10px';
+    wrap.appendChild(titleClone);
+    wrap.appendChild(tableClone);
+    document.body.appendChild(wrap);
+    html2canvas(wrap, {backgroundColor:'#fff', scale:2}).then(function(canvas){
+        const imgData = canvas.toDataURL('image/png');
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({orientation:"p",unit:"pt",format:"a4"});
+        let pageWidth = doc.internal.pageSize.getWidth();
+        let imgProps = doc.getImageProperties(imgData);
+        let pdfWidth = pageWidth - 80;
+        let pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        doc.addImage(imgData, 'PNG', 40, 35, pdfWidth, pdfHeight);
+        doc.save(`تقرير_${selectedInspector}.pdf`);
+        document.body.removeChild(wrap);
+    });
+}
+function exportInspectorReportToExcel() {
+    let table = document.getElementById("inspectorStatsTable");
+    if (!table) return;
+    let ws_data = [];
+    for(let r of table.rows) {
+        let row = [];
+        for(let c of r.cells) row.push(c.textContent);
+        ws_data.push(row);
+    }
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(ws_data);
+    XLSX.utils.book_append_sheet(wb, ws, "تقرير المفتش");
+    XLSX.writeFile(wb, `تقرير_${selectedInspector}.xlsx`);
+}
+function showMonthlyReport() {
+    let allDays = Array.from(new Set(inspectionData.map(r => r.day))).sort();
+    let html = `<div class="pdf-title-arabic" id="monthlyReportTitle">التقرير الشهري</div>`;
+    html += `<table class="stats-table" id="monthlyStatsTable"><thead><tr>
+        <th>المفتش</th>`;
+    allDays.forEach(day => html += `<th>${day}</th>`);
+    html += `<th>الإجمالي</th><th>الصباحية</th><th>المسائية</th><th>العطلة</th></tr></thead><tbody>`;
+    let totals = { total:0, morning:0, evening:0, weekend:0, days: Array(allDays.length).fill(0) };
+    inspectors.forEach(inspector => {
+        const rows = inspectionData.filter(item => item.inspector === inspector);
+        html += `<tr><td>${inspector}</td>`;
+        allDays.forEach((day,i) => {
+            let count = rows.filter(r=>r.day===day).length;
+            html += `<td>${count||''}</td>`;
+            totals.days[i] += count;
+        });
+        let total = rows.length;
+        let morning = rows.filter(r=>r.shift==="صباحية").length;
+        let evening = rows.filter(r=>r.shift==="مسائية").length;
+        let weekend = rows.filter(r=>{
+            const dow = new Date(r.day).getDay();
+            return [5,6,0].includes(dow);
+        }).length;
+        html += `<td>${total}</td><td>${morning}</td><td>${evening}</td><td>${weekend}</td></tr>`;
+        totals.total += total; totals.morning += morning; totals.evening += evening; totals.weekend += weekend;
+    });
+    html += `<tr class="red-total">
+        <td>الإجمالي</td>`;
+    totals.days.forEach(sum=>html+=`<td>${sum}</td>`);
+    html += `<td>${totals.total}</td><td>${totals.morning}</td><td>${totals.evening}</td><td>${totals.weekend}</td></tr>`;
+    html += `</tbody></table>`;
+    document.getElementById('monthlyReportContent').innerHTML = html;
+    document.getElementById('monthlyReportModal').style.display = 'flex';
+}
+function closeMonthlyReportModal() {
+    document.getElementById('monthlyReportModal').style.display = 'none';
+}
+function exportMonthlyReportToPDF() {
+    let titleBox = document.getElementById('monthlyReportTitle');
+    let table = document.getElementById("monthlyStatsTable");
+    if (!table || !titleBox) return;
+    let wrap = document.createElement('div');
+    wrap.style.background = '#fff';
+    wrap.style.padding = '18px';
+    wrap.style.width = table.offsetWidth + 'px';
+    let titleClone = titleBox.cloneNode(true);
+    let tableClone = table.cloneNode(true);
+    tableClone.style.marginTop = '10px';
+    wrap.appendChild(titleClone);
+    wrap.appendChild(tableClone);
+    document.body.appendChild(wrap);
+    html2canvas(wrap, {backgroundColor:'#fff', scale:2}).then(function(canvas){
+        const imgData = canvas.toDataURL('image/png');
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({orientation:"landscape",unit:"pt",format:"a4"});
+        let pageWidth = doc.internal.pageSize.getWidth();
+        let imgProps = doc.getImageProperties(imgData);
+        let pdfWidth = pageWidth - 80;
+        let pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        doc.addImage(imgData, 'PNG', 40, 35, pdfWidth, pdfHeight);
+        doc.save(`التقرير_الشهري.pdf`);
+        document.body.removeChild(wrap);
+    });
+}
+function exportMonthlyReportToExcel() {
+    let table = document.getElementById("monthlyStatsTable");
+    if (!table) return;
+    let ws_data = [];
+    for(let r of table.rows) {
+        let row = [];
+        for(let c of r.cells) row.push(c.textContent);
+        ws_data.push(row);
+    }
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(ws_data);
+    XLSX.utils.book_append_sheet(wb, ws, "التقرير الشهري");
+    XLSX.writeFile(wb, `التقرير_الشهري.xlsx`);
+}
 </script>
 </body>
 </html>

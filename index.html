@@ -660,24 +660,100 @@ async function saveToExternalFile() {
             lastUpdate: new Date().toISOString()
         };
         
-        // Create a download link for the updated JSON file
         const dataStr = JSON.stringify(planData, null, 2);
-        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
         
-        const exportFileDefaultName = 'plan-data.json';
+        // Method 1: Direct file write (works in local file:// protocol)
+        try {
+            const response = await fetch('./plan-data.json', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: dataStr
+            });
+            
+            if (response.ok) {
+                showUpdateMessage('✅ تم حفظ البيانات في plan-data.json بنجاح!');
+                console.log('✅ Data saved directly to plan-data.json:', planData);
+                return;
+            }
+        } catch (fetchError) {
+            console.log('Direct file write not available (expected in browser):', fetchError.message);
+        }
         
-        const linkElement = document.createElement('a');
-        linkElement.setAttribute('href', dataUri);
-        linkElement.setAttribute('download', exportFileDefaultName);
-        linkElement.click();
+        // Method 2: Use File System Access API (Chrome/Edge)
+        if ('showSaveFilePicker' in window) {
+            try {
+                const fileHandle = await window.showSaveFilePicker({
+                    suggestedName: 'plan-data.json',
+                    types: [{
+                        description: 'JSON files',
+                        accept: {'application/json': ['.json']},
+                    }],
+                });
+                const writable = await fileHandle.createWritable();
+                await writable.write(dataStr);
+                await writable.close();
+                showUpdateMessage('✅ تم حفظ ملف plan-data.json بنجاح!');
+                console.log('✅ Data saved using File System Access API:', planData);
+                return;
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.log('File System Access API error:', err);
+                }
+            }
+        }
         
-        // Display a message to the user
-        showUpdateMessage('تم تصدير ملف plan-data.json المحدث - يرجى استبدال الملف الأصلي');
+        // Method 3: Automatic download + helper script
+        // Download the updated plan-data.json file
+        const jsonBlob = new Blob([dataStr], {type: 'application/json'});
+        const jsonUrl = URL.createObjectURL(jsonBlob);
         
-        console.log('Data exported to plan-data.json:', planData);
+        const jsonLink = document.createElement('a');
+        jsonLink.href = jsonUrl;
+        jsonLink.download = 'plan-data.json';
+        jsonLink.style.display = 'none';
+        document.body.appendChild(jsonLink);
+        jsonLink.click();
+        document.body.removeChild(jsonLink);
+        URL.revokeObjectURL(jsonUrl);
+        
+        // Store the data for potential script access
+        localStorage.setItem('latestPlanData', dataStr);
+        localStorage.setItem('latestPlanDataTimestamp', new Date().toISOString());
+        
+        // Create and show detailed instructions
+        const instructions = `
+📋 تعليمات حفظ البيانات:
+
+الطريقة الأولى (الأسهل):
+1. تم تنزيل ملف plan-data.json جديد
+2. انسخ الملف المنزل إلى مجلد المشروع (استبدل الملف الموجود)
+
+الطريقة الثانية (استخدام سكريبت Python):
+1. افتح سطر الأوامر في مجلد المشروع
+2. شغل الأمر: python save_from_browser.py
+3. الصق البيانات JSON عندما يطلب منك
+
+الطريقة الثالثة (يدوياً):
+1. انسخ البيانات من وحدة التحكم (console)
+2. افتح plan-data.json في محرر النصوص
+3. استبدل المحتوى والصق البيانات الجديدة
+        `;
+        
+        console.log('📋 تعليمات الحفظ:', instructions);
+        console.log('📊 البيانات الجديدة:', dataStr);
+        
+        showUpdateMessage(`✅ تم تصدير plan-data.json - راجع وحدة التحكم (F12) للتعليمات التفصيلية`);
+        
+        // Show a modal with instructions if possible
+        if (confirm('تم تصدير البيانات بنجاح!\n\nهل تريد عرض التعليمات التفصيلية؟')) {
+            alert(instructions.trim());
+        }
+        
     } catch (error) {
-        console.error('Failed to save to external file:', error);
-        showUpdateMessage('تم الحفظ محلياً فقط');
+        console.error('❌ Failed to save to external file:', error);
+        showUpdateMessage('❌ خطأ في التصدير - تم الحفظ محلياً فقط');
     }
 }
 

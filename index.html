@@ -1,756 +1,140 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <title>خطة التفتيش الشهرية</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- مكتبات التصدير -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <style>
-        body { font-family: 'Cairo', Arial, sans-serif; background: #f7f9fc; margin:0;}
-        .main-container {
-            background: #fff;
-            border-radius: 18px;
-            box-shadow: 0 2px 16px #dadce0;
-            padding: 36px 18px 24px 18px;
-            max-width: 900px;
-            min-width:320px;
-            margin: 64px auto 0 auto;
-            display: flex; flex-direction: column; align-items: center;
+    <title>خطة التفتيش الشهرية</title>
+    <script>
+        // تعريف المتغير isDev
+        var isDev = true; // قم بتغيير ذلك حسب الحاجة
+        var inspectionData = {}; // تأكد من أن لديك بيانات التفتيش هنا
+
+        // إضافة الأكواد الجديدة
+        // زر الحفظ في GitHub ونافذة التوكن
+        
+        <div id="githubSaveBar" style="display:none; margin: 15px 0;">
+          <button id="saveToGitHubBtn" style="background:#222;color:#fff;padding:8px 25px;border-radius:8px;border:none;font-size:16px;cursor:pointer">
+            💾 حفظ البيانات في GitHub
+          </button>
+          <span id="githubSaveMsg" style="margin-right:15px;color:green;font-weight:bold"></span>
+        </div>
+        <!-- نافذة إدخال التوكن السري -->
+        <div id="githubTokenModal" style="display:none; position:fixed;top:0;left:0;width:100vw;height:100vh;background:#0008;z-index:1000;justify-content:center;align-items:center">
+          <div style="background:#fff;padding:30px 25px;border-radius:12px;max-width:350px">
+            <h4 style="margin-bottom:10px">إدخال GitHub Token</h4>
+            <input type="password" id="githubTokenInput" style="width:100%;padding:8px" placeholder="الصق التوكن هنا" />
+            <div id="githubTokenMsg" style="color:red;margin:7px 0 0"></div>
+            <button onclick="saveGithubToken()" style="margin-top:10px;padding:6px 25px;border-radius:7px;background:#1976d2;color:#fff">حفظ</button>
+          </div>
+        </div>
+
+        // =============================================
+        //   أكواد زر حفظ البيانات في GitHub (جديدة)
+        // =============================================
+
+        // إعدادات GitHub
+        const GITHUB_REPO = "aliabdelaal-adm/Monthly_inspection_plan"; // غيره لو الريبو مختلف
+        const PLAN_FILE = "plan-data.json"; // غيره لو تريد اسم ملف آخر
+
+        function getGithubToken() {
+            return localStorage.getItem("github_token") || "";
         }
-        .header-top-bar {
-            width:100%;
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            margin-bottom: 8px;
-            position: relative;
+        function setGithubToken(token) {
+            localStorage.setItem("github_token", token);
         }
-        .last-update-row {
-            color: #666;
-            font-size: 0.97em;
-            margin-right: 8px;
-            margin-top: 0;
-            text-align: right;
-            direction: ltr;
+        function showGithubTokenModal(msg="") {
+            document.getElementById("githubTokenModal").style.display = "flex";
+            document.getElementById("githubTokenInput").value = "";
+            document.getElementById("githubTokenMsg").innerText = msg;
+            document.getElementById("githubTokenInput").focus();
         }
-        .bell-container {
-            margin-left:8px;
-            margin-top:0;
+        function saveGithubToken() {
+            const token = document.getElementById("githubTokenInput").value.trim();
+            if(token.length < 10) {
+                document.getElementById("githubTokenMsg").innerText = "توكن غير صحيح!";
+                return;
+            }
+            setGithubToken(token);
+            document.getElementById("githubTokenModal").style.display = "none";
+            document.getElementById("githubSaveMsg").innerText = "تم حفظ التوكن، يمكنك الحفظ الآن.";
         }
-        .bell-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            outline: none;
-            padding: 0;
+
+        // إظهار زر الحفظ فقط إذا كان المستخدم مطور
+        function showGithubSaveIfDeveloper() {
+            if(isDev) {
+                document.getElementById('githubSaveBar').style.display = '';
+            } else {
+                document.getElementById('githubSaveBar').style.display = 'none';
+            }
         }
-        .bell-icon {
-            width: 38px;
-            height: 38px;
-            fill: #ffc107;
-            transition: fill 0.2s;
-        }
-        .bell-btn:hover .bell-icon {
-            fill: #ff9800;
-        }
-        .horizontal-line {
-            width: 100%;
-            border: none;
-            border-top: 1.5px solid #e0e3ea;
-            margin: 16px 0 0 0;
-        }
-        .title-bar {
-            width:100%;
-            display:flex;
-            justify-content:center;
-            align-items:center;
-            margin-top: 18px;
-            margin-bottom: 24px;
-        }
-        .main-title-box {
-            background:#234085;
-            color:#fff;
-            padding:28px 0 28px 0;
-            border-radius:14px;
-            width: 96%;
-            max-width: 600px;
-            min-height: 56px;
-            font-size:2.12em;
-            text-align:center;
-            font-weight: bold;
-            letter-spacing: 1px;
-            margin:0 auto;
-            box-shadow:0 2px 14px #e0e2f5;
-        }
-        .login-section, .inspector-select-section {margin: 10px 0 18px 0; width: 100%; display:flex;justify-content:center;align-items:center;gap:10px;}
-        select, input[type="text"], input[type="date"], input[type="password"] {padding:7px 16px;font-size:1em;border-radius:6px;border:1px solid #b6b6b6;min-width:130px;max-width:210px;}
-        .actions-row {width:100%;display:flex;justify-content:center;align-items:center;gap:18px;margin:20px 0 18px;}
-        .save-box, .report-box {display:flex;gap:12px;}
-        .save-box button, .report-box button {padding:10px 28px;border-radius:8px;border:none;cursor:pointer;font-size:1em;}
-        .pdf-btn {background:#d63384;color:#fff;}
-        .excel-btn {background:#198754;color:#fff;}
-        .inspector-report-btn {background:#234085;color:#fff;}
-        .monthly-report-btn {background:#ff9800;color:#fff;}
-        .plan-table-container {width:100%;margin:18px 0;}
-        .plan-table {width:100%;border-collapse:collapse;border-radius:13px;overflow:hidden;box-shadow:0 2px 14px #eee;}
-        .plan-table th,.plan-table td {padding:10px 8px;text-align:center;}
-        .plan-table th {
-            background:#234085;
-            color:#fff;
-            font-weight:bold;
-            font-size:1.12em;
-        }
-        .plan-table tr:nth-child(even) {background:#f5f7fb;}
-        .plan-table td {
-            border-bottom:1px solid #d7dcef;
-            font-size:1em;
-        }
-        .dropdown-shops-btn {
-            background:#234085;
-            color:#fff;
-            border:none;
-            border-radius:6px;
-            padding:6px 18px;
-            cursor:pointer;
-            font-size:0.98em;
-            min-width:90px;
-        }
-        .shops-dropdown-list {
-            display:none;
-            position:fixed;
-            background:#fff;
-            border:1px solid #23408577;
-            border-radius:9px;
-            margin-top:5px;
-            min-width:130px;
-            max-height:210px;
-            box-shadow:0 2px 14px #eaeaea;
-            z-index:1000;
-            right:unset;
-            left:unset;
-            text-align:right;
-            overflow-y:auto;
-        }
-        .shops-dropdown-list ul {
-            list-style: none;
-            margin:0; padding:7px 5px;
-        }
-        .shops-dropdown-list ul li {
-            padding:3px 0 3px 0;
-            border-bottom:1px solid #eee;
-            font-size:0.97em;
-        }
-        .shops-dropdown-list ul li:last-child {border-bottom:none;}
-        .shops-dropdown-wrap {position:relative; display:inline-block;}
-        .inspector-report-div {margin:16px 0 0 0;background:#f7f9fc;border-radius:10px;padding:18px 12px;width:100%;color:#234085;font-size:1.1em;box-shadow:0 1px 5px #e2e2e2;}
-        .modal-overlay {
-            display:none; position:fixed;z-index:9999;right:0;left:0;top:0;bottom:0; background:rgba(0,0,0,0.18);align-items:center;justify-content:center;
-        }
-        .modal-content {
-            background:#fff; border-radius:16px; box-shadow:0 2px 16px #23409333;
-            padding:32px 18px; margin:50px auto; max-width:95vw; min-width:70vw; position:relative; text-align:center;
-        }
-        .modal-content button.close-btn {
-            position:absolute; left:10px; top:10px; border:none; background:#d32f2f; color:#fff; border-radius:50%; font-size:1.4em;width:38px;height:38px;cursor:pointer;
-        }
-        .modal-actions {
-            margin: 16px 0 0 0;
-            display:flex;
-            justify-content:center;
-            gap:10px;
-        }
-        .stats-title {color:#134093;font-size:1.18em;text-align:center;margin-bottom:15px;}
-        .stats-table {width:100%;border-collapse:collapse;margin-bottom:0;font-size:1.04em;}
-        .stats-table th, .stats-table td {border:1px solid #234093;padding:10px 6px;text-align:center;}
-        .stats-table th {background:#234093;color:#fff;}
-        .stats-table tr:nth-child(even) {background:#f3f5fa;}
-        .footer {text-align:center;margin-top:22px;color:#234085;font-size:0.85em;}
-        .red-total {
-            color: #d32f2f !important;
-            font-weight: bold !important;
-            background: #fffbe9;
-        }
-        .pdf-title-arabic {
-            font-size: 1.18em;
-            text-align: center;
-            color: #234085;
-            font-weight: bold;
-            margin-bottom: 10px;
-            width: 100%;
-            margin-top: 0;
-        }
-        .edit-btn, .delete-btn {
-            background: #6c757d; color: #fff; border: none; border-radius: 5px; padding: 6px 12px; margin: 2px; cursor: pointer; font-size: 0.95em;
-        }
-        .edit-btn:hover { background: #495057; }
-        .delete-btn { background: #d32f2f; }
-        .delete-btn:hover { background: #b71c1c; }
-        .dev-section {background:#e9ecef;border-radius:8px;padding:16px 11px;margin:14px 0 14px 0;}
-        .dev-section .close-btn {background:#d32f2f;color:#fff;border:none;border-radius:5px;padding:0 13px;font-size:1.1em;cursor:pointer;float:left;}
-        #devPasswordForm {margin-bottom:6px;}
-        @media (max-width:600px) {
-            .main-container {padding:10px 1vw 7px 1vw;}
-            .main-title-box {font-size:1em;padding:16px 0;}
-            .plan-table th, .plan-table td {padding:7px 2px;font-size:0.94em;}
-            .dropdown-shops-btn {padding:4px 8px;font-size:0.91em;}
-            .modal-content {padding:10px 2vw; min-width:unset; max-width:99vw;}
-            .stats-table th, .stats-table td {padding:7px 2px;}
-            .actions-row {gap:7px;}
-        }
-    </style>
+        // حدث ظهور الزر عند دخول/خروج المطور
+        // أضف هذه الأسطر بعد كل ظهور/إخفاء لصلاحية المطور:
+        let origDevLoginBtn = document.getElementById("devLoginBtn").onclick;
+        document.getElementById("devLoginBtn").onclick = function() {
+            if(origDevLoginBtn) origDevLoginBtn();
+            setTimeout(showGithubSaveIfDeveloper, 50);
+        };
+        let origDevLogoutBtn = document.getElementById("devLogoutBtn").onclick;
+        document.getElementById("devLogoutBtn").onclick = function() {
+            if(origDevLogoutBtn) origDevLogoutBtn();
+            setTimeout(showGithubSaveIfDeveloper, 50);
+        };
+        // عند تحميل الصفحة أيضًا
+        document.addEventListener('DOMContentLoaded', function(){
+            showGithubSaveIfDeveloper();
+        });
+
+        // منطق الحفظ
+        document.getElementById("saveToGitHubBtn").onclick = async function() {
+            let token = getGithubToken();
+            if (!token) { showGithubTokenModal(); return; }
+            // استخدام بيانات inspectionData كما هي في مشروعك
+            let planData = inspectionData;
+            if (!planData) {
+                document.getElementById("githubSaveMsg").innerText = "لم يتم العثور على بيانات للحفظ!";
+                return;
+            }
+            document.getElementById("githubSaveMsg").innerText = "جاري الحفظ...";
+            // تحديث وقت الحفظ
+            let nowDate = new Date();
+            planData.lastUpdate = nowDate.getFullYear()+"-"+String(nowDate.getMonth()+1).padStart(2,'0')+"-"+String(nowDate.getDate()).padStart(2,'0')
+                +" "+String(nowDate.getHours()).padStart(2,'0')+":"+String(nowDate.getMinutes()).padStart(2,'0');
+            let planContent = JSON.stringify(planData,null,2);
+            // احضر sha للملف (إن وجد)
+            let sha = null;
+            try {
+                const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${PLAN_FILE}`);
+                if(res.ok) {
+                    const json = await res.json();
+                    sha = json.sha;
+                }
+            } catch {}
+            // رفع البيانات
+            const putRes = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${PLAN_FILE}`, {
+                method: "PUT",
+                headers: {
+                    "Authorization": `token ${token}`,
+                    "Accept": "application/vnd.github+json"
+                },
+                body: JSON.stringify({
+                    message: "تحديث خطة التفتيش من صفحة المطور",
+                    content: btoa(unescape(encodeURIComponent(planContent))),
+                    sha: sha
+                })
+            });
+            if(putRes.ok) {
+                document.getElementById("githubSaveMsg").innerText = "✅ تم الحفظ بنجاح في GitHub!";
+            } else {
+                document.getElementById("githubSaveMsg").innerText = "❌ خطأ في الحفظ (تحقق من التوكن/الصلاحيات)!";
+                if(putRes.status === 401) showGithubTokenModal("توكن غير صالح أو منتهي!");
+            }
+        } 
+    </script>
 </head>
 <body>
-<div class="main-container">
-    <div class="header-top-bar">
-        <div class="bell-container">
-            <button class="bell-btn" id="bellBtn" title="تنبيه صوتي">
-                <svg class="bell-icon" id="bellIcon" viewBox="0 0 24 24">
-                  <path d="M12 24c1.3 0 2.4-1 2.5-2.3h-5c.1 1.3 1.2 2.3 2.5 2.3zm7-6v-5c0-3.1-1.6-5.6-4.5-6.3V6c0-.8-.7-1.5-1.5-1.5S11.5 5.2 11.5 6v.7C8.6 7.4 7 9.9 7 13v5l-2 2v1h16v-1l-2-2z"/>
-                </svg>
-            </button>
-            <audio id="birdSound">
-              <source src="https://cdn.pixabay.com/audio/2022/07/26/audio_124bfa93e3.mp3" type="audio/mp3">
-            </audio>
-        </div>
-        <div class="last-update-row" id="lastUpdateRow"></div>
+    <div id="devSection">
+        <!-- قسم المطورين هنا -->
     </div>
-    <hr class="horizontal-line">
-    <div class="title-bar">
-        <div class="main-title-box">خطة التفتيش الشهرية</div>
-    </div>
-    <div class="login-section">
-        <label for="loginRole">تسجيل الدخول:</label>
-        <select id="loginRole">
-            <option value="">-- اختر --</option>
-            <option value="inspector">مفتش</option>
-            <option value="developer">المطور</option>
-        </select>
-        <input type="password" id="devPassword" placeholder="كلمة سر المطور" style="display:none;">
-        <button id="devLoginBtn" style="display:none;background:#198754;color:#fff;border:none;padding:7px 20px;border-radius:6px;font-size:1em;cursor:pointer;">دخول المطور</button>
-        <button id="devLogoutBtn" style="display:none;background:#d32f2f;color:#fff;border:none;padding:7px 20px;border-radius:6px;font-size:1em;cursor:pointer;">إغلاق المطور</button>
-        <span id="devError" style="color:#d32f2f;margin-right:10px;"></span>
-    </div>
-    <div class="inspector-select-section">
-        <label for="inspectorSelect">اختر المفتش :</label>
-        <select id="inspectorSelect">
-            <option value="">-- اختر المفتش --</option>
-        </select>
-    </div>
-    <!-- قسم المطور: إضافة/تعديل خطة -->
-    <div id="devSection" class="dev-section" style="display:none;">
-        <form id="addEditForm" style="width:100%;max-width:700px;display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:center;margin-bottom:12px;">
-            <select id="formInspector" required>
-                <option value="">مفتش</option>
-            </select>
-            <input type="date" id="formDay" required>
-            <select id="formShift" required>
-                <option value="">وقت المناوبة</option>
-                <option value="صباحية">صباحية</option>
-                <option value="مسائية">مسائية</option>
-            </select>
-            <input type="text" id="formArea" placeholder="المنطقة" required>
-            <input type="text" id="formShops" placeholder="المحلات (افصل بينها بفاصلة ,)" required>
-            <button type="submit" style="background:#198754;color:#fff;border:none;padding:8px 22px;border-radius:7px;font-size:1em;cursor:pointer;">إضافة / تعديل</button>
-            <input type="hidden" id="formEditingIndex" value="">
-        </form>
-    </div>
-    <div id="planTableContainer" class="plan-table-container"></div>
-    <div class="actions-row">
-        <div class="save-box">
-            <button class="pdf-btn" onclick="exportTableToPDF()">حفظ كـ PDF</button>
-            <button class="excel-btn" onclick="exportTableToExcel()">حفظ كـ Excel</button>
-        </div>
-        <div class="report-box">
-            <button class="inspector-report-btn" onclick="showInspectorReport()">تقرير المفتش</button>
-            <button class="monthly-report-btn" onclick="showMonthlyReport()">التقرير الشهري</button>
-        </div>
-    </div>
-    <div id="inspectorReportDiv" class="inspector-report-div" style="display:none;"></div>
-    <div id="monthlyReportModal" class="modal-overlay">
-      <div class="modal-content">
-        <button class="close-btn" onclick="closeMonthlyReportModal()">×</button>
-        <div class="stats-title">التقرير الشهري</div>
-        <div class="modal-actions">
-            <button class="pdf-btn" onclick="exportMonthlyReportToPDF()">حفظ التقرير كـ PDF</button>
-            <button class="excel-btn" onclick="exportMonthlyReportToExcel()">حفظ التقرير كـ Excel</button>
-        </div>
-        <div id="monthlyReportContent"></div>
-      </div>
-    </div>
-    <div class="footer">
-        تم التطوير بواسطة &copy; المطور د. علي عبدالعال
-    </div>
-</div>
-<script>
-// بيانات المفتشين ثابتة
-let inspectorsData = [
-    {id:"hager", name:"هاجر"}, {id:"amna", name:"آمنه"}, {id:"aya", name:"آيه"},
-    {id:"faiz", name:"د. فايز المسالمة"}, {id:"amna2", name:"د.آمنه بن صرم"}
-];
-let inspectors = inspectorsData.map(i=>i.name);
-let isDev = false;
-let selectedInspector = "";
-const DEV_PASSWORD = "1983";
-// بيانات افتراضية
-let defaultInspectionData = [
-    { inspector: "هاجر", day: "2025-09-22", shift: "صباحية", area: "المصفح", shops: ["محل 1", "محل 2"] },
-    { inspector: "هاجر", day: "2025-09-28", shift: "مسائية", area: "المصفح", shops: ["محل 5"] },
-    { inspector: "آمنه", day: "2025-09-25", shift: "مسائية", area: "مدينة خليفة", shops: ["محل 3", "محل 4"] },
-    { inspector: "آيه", day: "2025-09-22", shift: "صباحية", area: "المصفح", shops: ["محل 7"] },
-    { inspector: "د. فايز المسالمة", day: "2025-09-21", shift: "صباحية", area: "المنطقة أ", shops: ["محل 8", "محل 9"] },
-    { inspector: "د.آمنه بن صرم", day: "2025-09-21", shift: "مسائية", area: "المنطقة ج", shops: ["محل 11"] },
-];
-let inspectionData = JSON.parse(localStorage.getItem('inspectionData')) || defaultInspectionData.slice();
-
-function saveInspectionData() {
-    localStorage.setItem('inspectionData', JSON.stringify(inspectionData));
-    setLastUpdateDate();
-}
-function setLastUpdateDate() {
-    let row = document.getElementById('lastUpdateRow');
-    let today = new Date();
-    let year = today.getFullYear();
-    let month = String(today.getMonth()+1).padStart(2,'0');
-    let day = String(today.getDate()).padStart(2,'0');
-    let hours = today.getHours();
-    let minutes = String(today.getMinutes()).padStart(2,'0');
-    let period = hours >= 12 ? 'مساءً' : 'صباحًا';
-    let hour12 = hours % 12;
-    if(hour12 === 0) hour12 = 12;
-    let timeStr = hour12 + ':' + minutes + ' ' + period;
-    let dateStr = year+'-'+month+'-'+day;
-    row.textContent = "آخر تعديل للبيانات والخطة: " + dateStr + "    " + timeStr;
-}
-function fillInspectorsDropdowns() {
-    // مفتشين لأداة الاختيار
-    const selectInspect = document.getElementById('inspectorSelect');
-    selectInspect.innerHTML = '<option value="">-- اختر المفتش --</option>';
-    inspectorsData.forEach(inspector => {
-        selectInspect.innerHTML += `<option value="${inspector.name}">${inspector.name}</option>`;
-    });
-    // مفتشين في نموذج المطور
-    const select2 = document.getElementById('formInspector');
-    if (select2) {
-        select2.innerHTML = `<option value="">مفتش</option>`;
-        inspectorsData.forEach(inspector => {
-            select2.innerHTML += `<option value="${inspector.name}">${inspector.name}</option>`;
-        });
-    }
-}
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('bellBtn').addEventListener('click', playBirdSound);
-    fillInspectorsDropdowns();
-    setLastUpdateDate();
-    enableBirdSoundOnFirstInteraction();
-    renderPlanTable();
-});
-
-// التحكم في تسجيل الدخول وصلاحيات المطور
-document.getElementById("loginRole").addEventListener("change", function() {
-    let role = this.value;
-    document.getElementById("devError").innerText = "";
-    if(role === "developer") {
-        document.getElementById("devPassword").style.display = "inline-block";
-        document.getElementById("devLoginBtn").style.display = "inline-block";
-        document.getElementById("devLogoutBtn").style.display = "none";
-        document.getElementById("devSection").style.display = "none";
-        isDev = false;
-    } else {
-        document.getElementById("devPassword").style.display = "none";
-        document.getElementById("devLoginBtn").style.display = "none";
-        document.getElementById("devLogoutBtn").style.display = "none";
-        document.getElementById("devSection").style.display = "none";
-        isDev = false;
-        renderPlanTable();
-    }
-});
-document.getElementById("devLoginBtn").onclick = function() {
-    let pw = document.getElementById("devPassword").value.trim();
-    if (pw === DEV_PASSWORD) {
-        isDev = true;
-        document.getElementById("devSection").style.display = "block";
-        document.getElementById("devLogoutBtn").style.display = "inline-block";
-        document.getElementById("devPassword").style.display = "none";
-        document.getElementById("devLoginBtn").style.display = "none";
-        document.getElementById("devError").innerText = "";
-        fillInspectorsDropdowns();
-        renderPlanTable();
-    } else {
-        document.getElementById("devError").innerText = "كلمة السر غير صحيحة!";
-    }
-}
-document.getElementById("devLogoutBtn").onclick = function() {
-    isDev = false;
-    document.getElementById("devSection").style.display = "none";
-    document.getElementById("devLogoutBtn").style.display = "none";
-    document.getElementById("devPassword").style.display = "none";
-    document.getElementById("devLoginBtn").style.display = "none";
-    document.getElementById("loginRole").value = "";
-    document.getElementById("devError").innerText = "";
-    renderPlanTable();
-};
-
-// التغيير على اختيار المفتش
-document.getElementById('inspectorSelect').addEventListener('change', function() {
-    selectedInspector = this.value;
-    renderPlanTable();
-    document.getElementById('inspectorReportDiv').style.display = "none";
-});
-
-document.getElementById("addEditForm").addEventListener("submit", function(e){
-    e.preventDefault();
-    if (!isDev) return;
-    let inspector = document.getElementById("formInspector").value;
-    let day = document.getElementById("formDay").value;
-    let shift = document.getElementById("formShift").value;
-    let area = document.getElementById("formArea").value.trim();
-    let shops = document.getElementById("formShops").value.split(",").map(s=>s.trim()).filter(Boolean);
-    let editingIdx = document.getElementById("formEditingIndex").value;
-
-    if(!inspector || !day || !shift || !area || shops.length === 0) {
-        alert("يرجى تعبئة جميع الحقول!");
-        return;
-    }
-    let newPlan = {inspector, day, shift, area, shops};
-    if(editingIdx==="") {
-        inspectionData.push(newPlan);
-    } else {
-        inspectionData[editingIdx] = newPlan;
-    }
-    saveInspectionData();
-    renderPlanTable();
-    this.reset();
-    document.getElementById("formEditingIndex").value = "";
-});
-
-// --- عرض جدول الخطط مع صلاحيات المطور ---
-function renderPlanTable() {
-    const container = document.getElementById('planTableContainer');
-    let rows = inspectionData;
-    // إذا تم اختيار مفتش معيّن
-    if(selectedInspector) {
-        rows = inspectionData.filter(item => item.inspector === selectedInspector);
-    }
-    if (rows.length === 0) {
-        container.innerHTML = '<div style="text-align:center;color:#c00;font-weight:bold;margin:30px 0;">لا توجد أي خطة تفتيش.</div>';
-        return;
-    }
-    let html = `
-    <table class="plan-table" id="inspectorPlanTable">
-        <thead>
-            <tr>
-                <th>اسم المفتش</th>
-                <th>اليوم</th>
-                <th>وقت المناوبة</th>
-                <th>المنطقة</th>
-                <th>المحلات</th>
-                ${isDev?'<th>تعديل/حذف</th>':''}
-            </tr>
-        </thead>
-        <tbody>
-    `;
-    rows.forEach((row, idx) => {
-        let shopsStr = row.shops.map(shop=>`<li>${shop}</li>`).join('');
-        let realIdx = inspectionData.indexOf(row);
-        html += `
-            <tr>
-                <td>${row.inspector}</td>
-                <td>${row.day}</td>
-                <td>${row.shift}</td>
-                <td>${row.area}</td>
-                <td>
-                    <div class="shops-dropdown-wrap" id="shopsDropdownWrap${idx}">
-                        <button class="dropdown-shops-btn" onclick="toggleShopsDropdown(event, ${idx})">عرض المحلات</button>
-                        <div class="shops-dropdown-list" id="shopsDropdownList${idx}">
-                            <ul>
-                                ${shopsStr}
-                            </ul>
-                        </div>
-                    </div>
-                </td>
-                ${isDev?`
-                <td>
-                    <button class="edit-btn" onclick="editPlan(${realIdx})">تعديل</button>
-                    <button class="delete-btn" onclick="deletePlan(${realIdx})">حذف</button>
-                </td>
-                `:``}
-            </tr>
-        `;
-    });
-    html += `</tbody></table>`;
-    container.innerHTML = html;
-}
-
-function editPlan(idx) {
-    if (!isDev) return;
-    let plan = inspectionData[idx];
-    document.getElementById("formInspector").value = plan.inspector;
-    document.getElementById("formDay").value = plan.day;
-    document.getElementById("formShift").value = plan.shift;
-    document.getElementById("formArea").value = plan.area;
-    document.getElementById("formShops").value = plan.shops.join(", ");
-    document.getElementById("formEditingIndex").value = idx;
-    window.scrollTo({top:0,behavior:'smooth'});
-}
-function deletePlan(idx) {
-    if (!isDev) return;
-    if(!confirm("هل تريد حذف هذه الخطة نهائياً؟")) return;
-    inspectionData.splice(idx,1);
-    saveInspectionData();
-    renderPlanTable();
-}
-
-// --- المحلات المنسدلة ---
-window.toggleShopsDropdown = function(event, idx) {
-    event.stopPropagation();
-    document.querySelectorAll('.shops-dropdown-list').forEach((el,i)=>{
-        if(i!==idx) el.style.display='none';
-    });
-    let btn = event.target;
-    let rect = btn.getBoundingClientRect();
-    let list = document.getElementById('shopsDropdownList'+idx);
-    list.style.display = 'block';
-    let top = rect.bottom + window.scrollY + 2;
-    let left = rect.right - list.offsetWidth + window.scrollX;
-    if ((top + list.offsetHeight) > (window.innerHeight + window.scrollY)) {
-        top = rect.top + window.scrollY - list.offsetHeight - 2;
-    }
-    list.style.top = top+"px";
-    list.style.left = (rect.left + window.scrollX) + "px";
-};
-document.addEventListener('click', function(e){
-    if (![...document.querySelectorAll('.shops-dropdown-wrap *')].includes(e.target)) {
-        document.querySelectorAll('.shops-dropdown-list').forEach(el=>el.style.display='none');
-    }
-});
-
-// --- صوت الجرس والعصافير ---
-function playBirdSound() {
-    var audio = document.getElementById('birdSound');
-    if (!audio) return;
-    audio.currentTime = 0;
-    audio.play().catch(function(err){});
-    setTimeout(function(){ audio.pause(); }, 7000);
-}
-function enableBirdSoundOnFirstInteraction() {
-    function handler() {
-        playBirdSound();
-        window.removeEventListener('click', handler, true);
-        window.removeEventListener('keydown', handler, true);
-        window.removeEventListener('touchstart', handler, true);
-        window.removeEventListener('change', handler, true);
-    }
-    window.addEventListener('click', handler, true);
-    window.addEventListener('keydown', handler, true);
-    window.addEventListener('touchstart', handler, true);
-    window.addEventListener('change', handler, true);
-}
-
-// --- دوال التصدير والتقارير بالكامل ---
-function exportTableToPDF() {
-    let table = document.getElementById('inspectorPlanTable');
-    if (!table) { alert("لا يوجد جدول للتصدير"); return; }
-    let wrap = document.createElement('div');
-    wrap.style.background = '#fff';
-    wrap.style.padding = '18px';
-    wrap.style.width = table.offsetWidth + 'px';
-    let titleBox = document.createElement('div');
-    titleBox.className = "pdf-title-arabic";
-    titleBox.innerText = "خطة التفتيش الشهرية";
-    wrap.appendChild(titleBox);
-    let tableClone = table.cloneNode(true);
-    tableClone.style.marginTop = '10px';
-    wrap.appendChild(tableClone);
-    document.body.appendChild(wrap);
-    html2canvas(wrap, {backgroundColor:'#fff', scale:2}).then(function(canvas) {
-        const imgData = canvas.toDataURL('image/png');
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({orientation:"landscape",unit:"pt",format:"a4"});
-        let pageWidth = doc.internal.pageSize.getWidth();
-        let imgProps = doc.getImageProperties(imgData);
-        let pdfWidth = pageWidth - 80;
-        let pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        doc.addImage(imgData, 'PNG', 40, 35, pdfWidth, pdfHeight);
-        doc.save(`خطة_التفتيش.pdf`);
-        document.body.removeChild(wrap);
-    });
-}
-function exportTableToExcel() {
-    let table = document.getElementById('inspectorPlanTable');
-    if (!table) { alert("لا يوجد جدول للتصدير"); return; }
-    let ws_data = [];
-    for(let r of table.rows) {
-        let row = [];
-        for(let c of r.cells) row.push(c.textContent);
-        ws_data.push(row);
-    }
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(ws_data);
-    XLSX.utils.book_append_sheet(wb, ws, "الخطة");
-    XLSX.writeFile(wb, `خطة_التفتيش.xlsx`);
-}
-function showInspectorReport() {
-    let inspectorName = selectedInspector || "";
-    if (!inspectorName) { alert("يرجى اختيار مفتش أولاً."); return; }
-    const div = document.getElementById('inspectorReportDiv');
-    const rows = inspectionData.filter(item => item.inspector === inspectorName);
-    let total = rows.length;
-    let morning = rows.filter(r => r.shift === "صباحية").length;
-    let evening = rows.filter(r => r.shift === "مسائية").length;
-    let weekend = rows.filter(r => {
-        const dayOfWeek = new Date(r.day).getDay();
-        return [5,6,0].includes(dayOfWeek);
-    }).length;
-    let table = `
-    <div class="pdf-title-arabic" id="inspectorReportTitle">تقرير المفتش: ${inspectorName}</div>
-    <div class="save-box" style="margin-bottom:8px;">
-        <button class="pdf-btn" onclick="exportInspectorReportToPDF()">حفظ التقرير كـ PDF</button>
-        <button class="excel-btn" onclick="exportInspectorReportToExcel()">حفظ التقرير كـ Excel</button>
-    </div>
-    <table class="stats-table" id="inspectorStatsTable">
-        <thead>
-            <tr>
-                <th>عدد التفتيشات</th>
-                <th>الصباحية</th>
-                <th>المسائية</th>
-                <th>العطلة</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>${total}</td>
-                <td>${morning}</td>
-                <td>${evening}</td>
-                <td>${weekend}</td>
-            </tr>
-        </tbody>
-    </table>
-    `;
-    div.innerHTML = table;
-    div.style.display = "block";
-}
-function exportInspectorReportToPDF() {
-    let titleBox = document.getElementById('inspectorReportTitle');
-    let table = document.getElementById('inspectorStatsTable');
-    if (!table || !titleBox) return;
-    let wrap = document.createElement('div');
-    wrap.style.background = '#fff';
-    wrap.style.padding = '18px';
-    wrap.style.width = table.offsetWidth + 'px';
-    let titleClone = titleBox.cloneNode(true);
-    let tableClone = table.cloneNode(true);
-    tableClone.style.marginTop = '10px';
-    wrap.appendChild(titleClone);
-    wrap.appendChild(tableClone);
-    document.body.appendChild(wrap);
-    html2canvas(wrap, {backgroundColor:'#fff', scale:2}).then(function(canvas){
-        const imgData = canvas.toDataURL('image/png');
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({orientation:"p",unit:"pt",format:"a4"});
-        let pageWidth = doc.internal.pageSize.getWidth();
-        let imgProps = doc.getImageProperties(imgData);
-        let pdfWidth = pageWidth - 80;
-        let pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        doc.addImage(imgData, 'PNG', 40, 35, pdfWidth, pdfHeight);
-        doc.save(`تقرير_${selectedInspector}.pdf`);
-        document.body.removeChild(wrap);
-    });
-}
-function exportInspectorReportToExcel() {
-    let table = document.getElementById("inspectorStatsTable");
-    if (!table) return;
-    let ws_data = [];
-    for(let r of table.rows) {
-        let row = [];
-        for(let c of r.cells) row.push(c.textContent);
-        ws_data.push(row);
-    }
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(ws_data);
-    XLSX.utils.book_append_sheet(wb, ws, "تقرير المفتش");
-    XLSX.writeFile(wb, `تقرير_${selectedInspector}.xlsx`);
-}
-function showMonthlyReport() {
-    let allDays = Array.from(new Set(inspectionData.map(r => r.day))).sort();
-    let html = `<div class="pdf-title-arabic" id="monthlyReportTitle">التقرير الشهري</div>`;
-    html += `<table class="stats-table" id="monthlyStatsTable"><thead><tr>
-        <th>المفتش</th>`;
-    allDays.forEach(day => html += `<th>${day}</th>`);
-    html += `<th>الإجمالي</th><th>الصباحية</th><th>المسائية</th><th>العطلة</th></tr></thead><tbody>`;
-    let totals = { total:0, morning:0, evening:0, weekend:0, days: Array(allDays.length).fill(0) };
-    inspectors.forEach(inspector => {
-        const rows = inspectionData.filter(item => item.inspector === inspector);
-        html += `<tr><td>${inspector}</td>`;
-        allDays.forEach((day,i) => {
-            let count = rows.filter(r=>r.day===day).length;
-            html += `<td>${count||''}</td>`;
-            totals.days[i] += count;
-        });
-        let total = rows.length;
-        let morning = rows.filter(r=>r.shift==="صباحية").length;
-        let evening = rows.filter(r=>r.shift==="مسائية").length;
-        let weekend = rows.filter(r=>{
-            const dow = new Date(r.day).getDay();
-            return [5,6,0].includes(dow);
-        }).length;
-        html += `<td>${total}</td><td>${morning}</td><td>${evening}</td><td>${weekend}</td></tr>`;
-        totals.total += total; totals.morning += morning; totals.evening += evening; totals.weekend += weekend;
-    });
-    html += `<tr class="red-total">
-        <td>الإجمالي</td>`;
-    totals.days.forEach(sum=>html+=`<td>${sum}</td>`);
-    html += `<td>${totals.total}</td><td>${totals.morning}</td><td>${totals.evening}</td><td>${totals.weekend}</td></tr>`;
-    html += `</tbody></table>`;
-    document.getElementById('monthlyReportContent').innerHTML = html;
-    document.getElementById('monthlyReportModal').style.display = 'flex';
-}
-function closeMonthlyReportModal() {
-    document.getElementById('monthlyReportModal').style.display = 'none';
-}
-function exportMonthlyReportToPDF() {
-    let titleBox = document.getElementById('monthlyReportTitle');
-    let table = document.getElementById("monthlyStatsTable");
-    if (!table || !titleBox) return;
-    let wrap = document.createElement('div');
-    wrap.style.background = '#fff';
-    wrap.style.padding = '18px';
-    wrap.style.width = table.offsetWidth + 'px';
-    let titleClone = titleBox.cloneNode(true);
-    let tableClone = table.cloneNode(true);
-    tableClone.style.marginTop = '10px';
-    wrap.appendChild(titleClone);
-    wrap.appendChild(tableClone);
-    document.body.appendChild(wrap);
-    html2canvas(wrap, {backgroundColor:'#fff', scale:2}).then(function(canvas){
-        const imgData = canvas.toDataURL('image/png');
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({orientation:"landscape",unit:"pt",format:"a4"});
-        let pageWidth = doc.internal.pageSize.getWidth();
-        let imgProps = doc.getImageProperties(imgData);
-        let pdfWidth = pageWidth - 80;
-        let pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        doc.addImage(imgData, 'PNG', 40, 35, pdfWidth, pdfHeight);
-        doc.save(`التقرير_الشهري.pdf`);
-        document.body.removeChild(wrap);
-    });
-}
-function exportMonthlyReportToExcel() {
-    let table = document.getElementById("monthlyStatsTable");
-    if (!table) return;
-    let ws_data = [];
-    for(let r of table.rows) {
-        let row = [];
-        for(let c of r.cells) row.push(c.textContent);
-        ws_data.push(row);
-    }
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(ws_data);
-    XLSX.utils.book_append_sheet(wb, ws, "التقرير الشهري");
-    XLSX.writeFile(wb, `التقرير_الشهري.xlsx`);
-}
-</script>
+    <!-- بقية محتوى الصفحة -->
 </body>
 </html>

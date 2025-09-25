@@ -462,6 +462,30 @@ document.getElementById("loginRole").addEventListener("change", function() {
         isDev = false;
         renderPlanTable();
     }
+  
+async function loadInspectionData() {
+  const response = await fetch('./plan-data.json');
+  if (response.ok) {
+    const data = await response.json();
+    // Use developer's function to update inspectors list dynamically
+    updateInspectorList(data.inspectors);
+    // ...rest of your logic to display inspectionData
+  }
+}
+
+// Example updateInspectorList implementation
+function updateInspectorList(inspectors) {
+  // Populate dropdowns or UI elements based on the inspectors array
+  const dropdown = document.getElementById('inspectorsDropdown');
+  dropdown.innerHTML = '';
+  inspectors.forEach(inspector => {
+    const option = document.createElement('option');
+    option.value = inspector.id || inspector.name;
+    option.textContent = inspector.name;
+    dropdown.appendChild(option);
+  });
+}
+  
 });
 document.getElementById("devLoginBtn").onclick = function() {
     let pw = document.getElementById("devPassword").value.trim();

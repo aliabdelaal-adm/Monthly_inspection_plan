@@ -365,6 +365,10 @@
                 <button id="manageAreasBtn" class="management-btn" style="background:#fd7e14;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">إدارة المناطق</button>
                 <button id="manageShopsBtn" class="management-btn" style="background:#20c997;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">إدارة المحلات</button>
             </div>
+            <div style="margin-top:15px;padding-top:15px;border-top:1px solid #dee2e6;text-align:center;">
+                <button id="exportDataBtn" onclick="saveToExternalFile()" style="background:#dc3545;color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-weight:bold;">تصدير البيانات إلى ملف JSON</button>
+                <p style="margin:8px 0 0 0;font-size:0.9em;color:#666;">احفظ التغييرات في ملف plan-data.json جديد</p>
+            </div>
         </div>
 
         <form id="addEditForm" style="width:100%;max-width:700px;display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:center;margin-bottom:12px;">
@@ -572,11 +576,42 @@ async function loadInspectionData() {
             console.warn('Failed to fetch plan data - response not ok:', response.status);
         }
     } catch (error) {
+ copilot/fix-75d922ee-617b-4877-ac34-8b4b7f8a9983
+        console.warn('Failed to load plan data, using fallback data:', error);
+        // First try to load complete data from localStorage
+        const allLocalData = localStorage.getItem('allPlanData');
+        if (allLocalData) {
+            try {
+                const allData = JSON.parse(allLocalData);
+                if (allData.inspectionData) inspectionData = allData.inspectionData;
+                if (allData.inspectors) {
+                    inspectorsData = allData.inspectors;
+                    inspectors = inspectorsData.map(i => i.name);
+                }
+                if (allData.areas) areasData = allData.areas;
+                if (allData.shops) shopsData = allData.shops;
+                console.log('Loaded complete data from localStorage backup');
+            } catch (parseError) {
+                console.warn('Failed to parse localStorage data, using individual fallback');
+                // Fall back to individual localStorage items
+                const localInspectionData = localStorage.getItem('inspectionData');
+                if (localInspectionData) {
+                    inspectionData = JSON.parse(localInspectionData);
+                }
+            }
+        } else {
+            // Fall back to individual localStorage item
+            const localInspectionData = localStorage.getItem('inspectionData');
+            if (localInspectionData) {
+                inspectionData = JSON.parse(localInspectionData);
+            }
+
         console.warn('Failed to load plan data, using fallback:', error);
         // Fall back to localStorage if JSON fails
         const localData = localStorage.getItem('inspectionData');
         if (localData) {
             inspectionData = JSON.parse(localData);
+ main
         }
         // If localStorage is also empty, keep the default data but ensure rendering
     } finally {
@@ -629,15 +664,26 @@ async function saveToExternalFile() {
         const planData = {
             inspectionData: inspectionData,
             inspectors: inspectorsData,
+            areas: areasData,
+            shops: shopsData,
             lastUpdate: new Date().toISOString()
         };
         
-        // This would require a backend service or GitHub API integration
-        // For now, we'll update the local JSON conceptually
-        console.log('Data would be saved to plan-data.json:', planData);
+        // Create a download link for the updated JSON file
+        const dataStr = JSON.stringify(planData, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        
+        const exportFileDefaultName = 'plan-data.json';
+        
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
         
         // Display a message to the user
-        showUpdateMessage('تم حفظ البيانات في ملف الخطة الخارجي');
+        showUpdateMessage('تم تصدير ملف plan-data.json المحدث - يرجى استبدال الملف الأصلي');
+        
+        console.log('Data exported to plan-data.json:', planData);
     } catch (error) {
         console.error('Failed to save to external file:', error);
         showUpdateMessage('تم الحفظ محلياً فقط');
@@ -1452,8 +1498,14 @@ function saveDataToJSON() {
     };
     localStorage.setItem('allPlanData', JSON.stringify(allData));
     
-    // In a real application, this would save to the server
-    console.log('Data saved to localStorage');
+    // In developer mode, also trigger external file save
+    if (isDev) {
+        // Show a notification that data needs to be saved externally
+        showUpdateMessage('تم الحفظ محلياً - استخدم زر "تصدير البيانات" لحفظ التغييرات نهائياً');
+        console.log('Data saved to localStorage - developer should export for permanent save');
+    } else {
+        console.log('Data saved to localStorage');
+    }
 }
 
 // Call loadInspectionData when the DOM is ready

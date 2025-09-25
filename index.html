@@ -305,6 +305,27 @@ let defaultInspectionData = [
 ];
 let inspectionData = JSON.parse(localStorage.getItem('inspectionData')) || defaultInspectionData.slice();
 
+// تحميل البيانات من plan-data.json
+async function loadPlanData() {
+    try {
+        const response = await fetch('./plan-data.json');
+        if (response.ok) {
+            const planData = await response.json();
+            if (Array.isArray(planData) && planData.length > 0) {
+                inspectionData = planData;
+                saveInspectionData();
+                renderPlanTable();
+                setLastUpdateDate();
+                console.log('تم تحميل بيانات الخطة من plan-data.json بنجاح');
+                return true;
+            }
+        }
+    } catch (error) {
+        console.warn('تعذر تحميل plan-data.json، سيتم استخدام البيانات الافتراضية:', error);
+    }
+    return false;
+}
+
 function saveInspectionData() {
     localStorage.setItem('inspectionData', JSON.stringify(inspectionData));
     setLastUpdateDate();
@@ -340,12 +361,15 @@ function fillInspectorsDropdowns() {
         });
     }
 }
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     document.getElementById('bellBtn').addEventListener('click', playBirdSound);
     fillInspectorsDropdowns();
     setLastUpdateDate();
     enableBirdSoundOnFirstInteraction();
     renderPlanTable();
+    
+    // تحميل البيانات من plan-data.json
+    await loadPlanData();
 });
 
 // التحكم في تسجيل الدخول وصلاحيات المطور

@@ -696,13 +696,19 @@ async function saveToExternalFile() {
                 console.log('✅ Data saved using File System Access API:', planData);
                 return;
             } catch (err) {
-                if (err.name !== 'AbortError') {
+                if (err.name === 'AbortError') {
+                    // User cancelled the file picker - don't proceed with automatic download
+                    showUpdateMessage('تم إلغاء عملية الحفظ');
+                    console.log('File save cancelled by user');
+                    return;
+                } else {
                     console.log('File System Access API error:', err);
+                    // Continue to Method 3 only if there was a real error (not user cancellation)
                 }
             }
         }
         
-        // Method 3: Automatic download + helper script
+        // Method 3: Automatic download + helper script (only as last resort)
         // Download the updated plan-data.json file
         const jsonBlob = new Blob([dataStr], {type: 'application/json'});
         const jsonUrl = URL.createObjectURL(jsonBlob);
@@ -720,7 +726,7 @@ async function saveToExternalFile() {
         localStorage.setItem('latestPlanData', dataStr);
         localStorage.setItem('latestPlanDataTimestamp', new Date().toISOString());
         
-        // Create and show detailed instructions
+        // Create and show detailed instructions only for automatic download
         const instructions = `
 📋 تعليمات حفظ البيانات:
 
@@ -744,10 +750,12 @@ async function saveToExternalFile() {
         
         showUpdateMessage(`✅ تم تصدير plan-data.json - راجع وحدة التحكم (F12) للتعليمات التفصيلية`);
         
-        // Show a modal with instructions if possible
-        if (confirm('تم تصدير البيانات بنجاح!\n\nهل تريد عرض التعليمات التفصيلية؟')) {
-            alert(instructions.trim());
-        }
+        // Show instructions only if user wants them
+        setTimeout(() => {
+            if (confirm('تم تصدير البيانات بنجاح!\n\nهل تريد عرض التعليمات التفصيلية؟')) {
+                alert(instructions.trim());
+            }
+        }, 100);
         
     } catch (error) {
         console.error('❌ Failed to save to external file:', error);

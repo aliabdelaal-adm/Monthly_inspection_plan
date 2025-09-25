@@ -568,16 +568,19 @@ async function loadInspectionData() {
                 fillShopsDropdowns();
                 setLastUpdateDate();
             }
+        } else {
+            console.warn('Failed to fetch plan data - response not ok:', response.status);
         }
     } catch (error) {
-        console.warn('Failed to load plan data, using default data:', error);
+        console.warn('Failed to load plan data, using fallback:', error);
         // Fall back to localStorage if JSON fails
         const localData = localStorage.getItem('inspectionData');
         if (localData) {
             inspectionData = JSON.parse(localData);
         }
+        // If localStorage is also empty, keep the default data but ensure rendering
     } finally {
-        // Always ensure dropdowns are populated, even if JSON loading fails
+        // Always ensure dropdowns are populated and table is rendered
         fillInspectorsDropdowns();
         fillAreasDropdowns();
         fillShopsDropdowns();
@@ -1266,39 +1269,6 @@ function exportMonthlyReportToExcel() {
 }
 </script>
    <script>
-// Example function to fetch and update inspector list
-async function loadInspectionData() {
-  try {
-    const response = await fetch('./plan-data.json');
-    if (!response.ok) throw new Error('Failed to fetch plan-data.json');
-    const data = await response.json();
-
-    // Dynamically update inspector list
-    if (data.inspectors && Array.isArray(data.inspectors)) {
-      updateInspectorList(data.inspectors);
-    }
-
-    // Continue processing inspectionData as needed...
-    // For example: renderPlanTable(data.inspectionData);
-  } catch (error) {
-    console.error('Error loading inspection data:', error);
-    // Optionally handle fallback logic here
-  }
-}
-
-// Example implementation of updateInspectorList
-function updateInspectorList(inspectors) {
-  const dropdown = document.getElementById('inspectorsDropdown');
-  if (!dropdown) return;
-  dropdown.innerHTML = '';
-  inspectors.forEach(inspector => {
-    const option = document.createElement('option');
-    option.value = inspector.id || inspector.name;
-    option.textContent = inspector.name;
-    dropdown.appendChild(option);
-  });
-}
-
 // --- Toggle Functions for Inspector/Area Input Fields ---
 function resetFormToggles() {
     // Reset inspector toggle

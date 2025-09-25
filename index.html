@@ -242,18 +242,52 @@
     </div>
     <!-- قسم المطور: إضافة/تعديل خطة -->
     <div id="devSection" class="dev-section" style="display:none;">
+        <!-- إدارة البيانات الأساسية -->
+        <div id="dataManagementSection" style="margin-bottom:20px;padding:15px;background:#f8f9fa;border-radius:8px;border:1px solid #dee2e6;">
+            <h3 style="margin:0 0 15px 0;color:#234085;text-align:center;">إدارة البيانات الأساسية</h3>
+            <div style="display:flex;gap:15px;justify-content:center;flex-wrap:wrap;">
+                <button id="manageInspectorsBtn" class="management-btn" style="background:#17a2b8;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">إدارة المفتشين</button>
+                <button id="manageAreasBtn" class="management-btn" style="background:#fd7e14;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">إدارة المناطق</button>
+                <button id="manageShopsBtn" class="management-btn" style="background:#20c997;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">إدارة المحلات</button>
+            </div>
+        </div>
+
         <form id="addEditForm" style="width:100%;max-width:700px;display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:center;margin-bottom:12px;">
-            <select id="formInspector" required>
-                <option value="">مفتش</option>
-            </select>
+            <!-- مفتش مع إمكانية الإضافة -->
+            <div style="position:relative;">
+                <select id="formInspector" required style="min-width:150px;">
+                    <option value="">اختر مفتش</option>
+                </select>
+                <input type="text" id="newInspectorInput" placeholder="أو أدخل اسم مفتش جديد" style="display:none;min-width:150px;">
+                <button type="button" id="toggleInspectorInput" style="position:absolute;left:-30px;top:0;background:#007bff;color:#fff;border:none;padding:7px 8px;border-radius:4px;cursor:pointer;font-size:0.8em;">+</button>
+            </div>
+            
             <input type="date" id="formDay" required>
+            
             <select id="formShift" required>
                 <option value="">وقت المناوبة</option>
                 <option value="صباحية">صباحية</option>
                 <option value="مسائية">مسائية</option>
             </select>
-            <input type="text" id="formArea" placeholder="المنطقة" required>
-            <input type="text" id="formShops" placeholder="المحلات (افصل بينها بفاصلة ,)" required>
+            
+            <!-- منطقة مع إمكانية الإضافة -->
+            <div style="position:relative;">
+                <select id="formArea" required style="min-width:150px;">
+                    <option value="">اختر منطقة</option>
+                </select>
+                <input type="text" id="newAreaInput" placeholder="أو أدخل منطقة جديدة" style="display:none;min-width:150px;">
+                <button type="button" id="toggleAreaInput" style="position:absolute;left:-30px;top:0;background:#007bff;color:#fff;border:none;padding:7px 8px;border-radius:4px;cursor:pointer;font-size:0.8em;">+</button>
+            </div>
+            
+            <!-- محلات مع اختيار متعدد -->
+            <div style="position:relative;min-width:200px;">
+                <select id="formShops" multiple style="min-height:60px;min-width:200px;" required>
+                    <option value="">اختر المحلات</option>
+                </select>
+                <button type="button" id="addNewShop" style="position:absolute;left:-30px;top:0;background:#007bff;color:#fff;border:none;padding:7px 8px;border-radius:4px;cursor:pointer;font-size:0.8em;">+</button>
+                <small style="display:block;margin-top:4px;color:#666;font-size:0.85em;">اضغط Ctrl للاختيار المتعدد</small>
+            </div>
+            
             <button type="submit" style="background:#198754;color:#fff;border:none;padding:8px 22px;border-radius:7px;font-size:1em;cursor:pointer;">إضافة / تعديل</button>
             <input type="hidden" id="formEditingIndex" value="">
         </form>
@@ -282,6 +316,48 @@
         <div id="monthlyReportContent"></div>
       </div>
     </div>
+
+    <!-- مودال إدارة المفتشين -->
+    <div id="inspectorsModal" class="modal-overlay" style="display:none;">
+      <div class="modal-content">
+        <button class="close-btn" onclick="closeInspectorsModal()">×</button>
+        <div class="stats-title">إدارة المفتشين</div>
+        <div style="margin-bottom:15px;">
+            <input type="text" id="newInspectorName" placeholder="اسم المفتش الجديد" style="padding:8px;border:1px solid #ccc;border-radius:4px;margin-left:10px;">
+            <button onclick="addNewInspector()" style="background:#28a745;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;">إضافة مفتش</button>
+        </div>
+        <div id="inspectorsList" style="max-height:300px;overflow-y:auto;"></div>
+      </div>
+    </div>
+
+    <!-- مودال إدارة المناطق -->
+    <div id="areasModal" class="modal-overlay" style="display:none;">
+      <div class="modal-content">
+        <button class="close-btn" onclick="closeAreasModal()">×</button>
+        <div class="stats-title">إدارة المناطق</div>
+        <div style="margin-bottom:15px;">
+            <input type="text" id="newAreaName" placeholder="اسم المنطقة الجديدة" style="padding:8px;border:1px solid #ccc;border-radius:4px;margin-left:10px;">
+            <button onclick="addNewArea()" style="background:#28a745;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;">إضافة منطقة</button>
+        </div>
+        <div id="areasList" style="max-height:300px;overflow-y:auto;"></div>
+      </div>
+    </div>
+
+    <!-- مودال إدارة المحلات -->
+    <div id="shopsModal" class="modal-overlay" style="display:none;">
+      <div class="modal-content">
+        <button class="close-btn" onclick="closeShopsModal()">×</button>
+        <div class="stats-title">إدارة المحلات</div>
+        <div style="margin-bottom:15px;">
+            <input type="text" id="newShopName" placeholder="اسم المحل الجديد" style="padding:8px;border:1px solid #ccc;border-radius:4px;margin-left:10px;">
+            <select id="newShopArea" style="padding:8px;border:1px solid #ccc;border-radius:4px;margin-left:10px;">
+                <option value="">اختر المنطقة</option>
+            </select>
+            <button onclick="addNewShop()" style="background:#28a745;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;">إضافة محل</button>
+        </div>
+        <div id="shopsList" style="max-height:300px;overflow-y:auto;"></div>
+      </div>
+    </div>
     <div class="footer">
         تم التطوير بواسطة &copy; المطور د. علي عبدالعال
     </div>
@@ -293,6 +369,27 @@ let inspectorsData = [
     {id:"faiz", name:"د. فايز المسالمة"}, {id:"amna2", name:"د.آمنه بن صرم"}
 ];
 let inspectors = inspectorsData.map(i=>i.name);
+
+// بيانات المناطق والمحلات
+let areasData = [
+    {id:"musaffah", name:"المصفح"},
+    {id:"khalifa", name:"مدينة خليفة"},
+    {id:"area_a", name:"المنطقة أ"},
+    {id:"area_c", name:"المنطقة ج"}
+];
+
+let shopsData = [
+    {id:"shop1", name:"محل 1", areaId:"musaffah"},
+    {id:"shop2", name:"محل 2", areaId:"musaffah"},
+    {id:"shop3", name:"محل 3", areaId:"khalifa"},
+    {id:"shop4", name:"محل 4", areaId:"khalifa"},
+    {id:"shop5", name:"محل 5", areaId:"musaffah"},
+    {id:"shop7", name:"محل 7", areaId:"musaffah"},
+    {id:"shop8", name:"محل 8", areaId:"area_a"},
+    {id:"shop9", name:"محل 9", areaId:"area_a"},
+    {id:"shop11", name:"محل 11", areaId:"area_c"}
+];
+
 let isDev = false;
 let selectedInspector = "";
 const DEV_PASSWORD = "1983";
@@ -344,8 +441,16 @@ async function loadInspectionData() {
                     inspectorsData = data.inspectors;
                     inspectors = inspectorsData.map(i=>i.name);
                 }
+                if (data.areas && Array.isArray(data.areas)) {
+                    areasData = data.areas;
+                }
+                if (data.shops && Array.isArray(data.shops)) {
+                    shopsData = data.shops;
+                }
                 renderPlanTable();
                 fillInspectorsDropdowns();
+                fillAreasDropdowns();
+                fillShopsDropdowns();
                 setLastUpdateDate();
             }
         }
@@ -359,6 +464,8 @@ async function loadInspectionData() {
     } finally {
         // Always ensure dropdowns are populated, even if JSON loading fails
         fillInspectorsDropdowns();
+        fillAreasDropdowns();
+        fillShopsDropdowns();
         renderPlanTable();
         if (statusDiv) {
             setTimeout(() => statusDiv.style.display = 'none', 1000);
@@ -430,9 +537,48 @@ function fillInspectorsDropdowns() {
     // مفتشين في نموذج المطور
     const select2 = document.getElementById('formInspector');
     if (select2) {
-        select2.innerHTML = `<option value="">مفتش</option>`;
+        select2.innerHTML = `<option value="">اختر مفتش</option>`;
         inspectorsData.forEach(inspector => {
             select2.innerHTML += `<option value="${inspector.name}">${inspector.name}</option>`;
+        });
+    }
+}
+
+function fillAreasDropdowns() {
+    // منطقة في نموذج المطور
+    const areaSelect = document.getElementById('formArea');
+    if (areaSelect) {
+        areaSelect.innerHTML = '<option value="">اختر منطقة</option>';
+        areasData.forEach(area => {
+            areaSelect.innerHTML += `<option value="${area.name}">${area.name}</option>`;
+        });
+    }
+    
+    // منطقة في مودال إضافة محل جديد
+    const newShopAreaSelect = document.getElementById('newShopArea');
+    if (newShopAreaSelect) {
+        newShopAreaSelect.innerHTML = '<option value="">اختر المنطقة</option>';
+        areasData.forEach(area => {
+            newShopAreaSelect.innerHTML += `<option value="${area.id}">${area.name}</option>`;
+        });
+    }
+}
+
+function fillShopsDropdowns(selectedAreaId = null) {
+    const shopsSelect = document.getElementById('formShops');
+    if (shopsSelect) {
+        shopsSelect.innerHTML = '';
+        let shopsToShow = shopsData;
+        
+        if (selectedAreaId) {
+            shopsToShow = shopsData.filter(shop => shop.areaId === selectedAreaId);
+        }
+        
+        shopsToShow.forEach(shop => {
+            const option = document.createElement('option');
+            option.value = shop.name;
+            option.textContent = shop.name;
+            shopsSelect.appendChild(option);
         });
     }
 }
@@ -442,6 +588,77 @@ document.addEventListener('DOMContentLoaded', function() {
     enableBirdSoundOnFirstInteraction();
     loadInspectionData(); // Load data from JSON file - will call fillInspectorsDropdowns() when complete
     startAutoRefresh(); // Start auto-refresh functionality
+    
+    // Add event listeners for toggle buttons and management buttons
+    
+    // Inspector toggle
+    document.getElementById('toggleInspectorInput').addEventListener('click', function() {
+        const select = document.getElementById('formInspector');
+        const input = document.getElementById('newInspectorInput');
+        if (select.style.display === 'none') {
+            select.style.display = 'inline-block';
+            input.style.display = 'none';
+            this.textContent = '+';
+            this.title = 'إضافة مفتش جديد';
+        } else {
+            select.style.display = 'none';  
+            input.style.display = 'inline-block';
+            input.focus();
+            this.textContent = '×';
+            this.title = 'إلغاء إدخال مفتش جديد';
+        }
+    });
+    
+    // Area toggle
+    document.getElementById('toggleAreaInput').addEventListener('click', function() {
+        const select = document.getElementById('formArea');
+        const input = document.getElementById('newAreaInput');
+        if (select.style.display === 'none') {
+            select.style.display = 'inline-block';
+            input.style.display = 'none';
+            this.textContent = '+';
+            this.title = 'إضافة منطقة جديدة';
+        } else {
+            select.style.display = 'none';
+            input.style.display = 'inline-block';
+            input.focus();
+            this.textContent = '×';
+            this.title = 'إلغاء إدخال منطقة جديدة';
+        }
+    });
+    
+    // Area change handler to filter shops
+    document.getElementById('formArea').addEventListener('change', function() {
+        const selectedAreaName = this.value;
+        const selectedArea = areasData.find(area => area.name === selectedAreaName);
+        if (selectedArea) {
+            fillShopsDropdowns(selectedArea.id);
+        } else {
+            fillShopsDropdowns();
+        }
+    });
+    
+    // Management buttons
+    document.getElementById('manageInspectorsBtn').addEventListener('click', function() {
+        document.getElementById('inspectorsModal').style.display = 'flex';
+        displayInspectorsList();
+    });
+    
+    document.getElementById('manageAreasBtn').addEventListener('click', function() {
+        document.getElementById('areasModal').style.display = 'flex';
+        displayAreasList();
+    });
+    
+    document.getElementById('manageShopsBtn').addEventListener('click', function() {
+        document.getElementById('shopsModal').style.display = 'flex';
+        displayShopsList();
+    });
+    
+    // Add new shop button  
+    document.getElementById('addNewShop').addEventListener('click', function() {
+        document.getElementById('shopsModal').style.display = 'flex';
+        displayShopsList();
+    });
 });
 
 // التحكم في تسجيل الدخول وصلاحيات المطور
@@ -523,17 +740,50 @@ document.getElementById('inspectorSelect').addEventListener('change', function()
 document.getElementById("addEditForm").addEventListener("submit", function(e){
     e.preventDefault();
     if (!isDev) return;
+    
+    // Get inspector (from dropdown or new input)
     let inspector = document.getElementById("formInspector").value;
+    const newInspectorInput = document.getElementById("newInspectorInput");
+    if (newInspectorInput.style.display !== 'none' && newInspectorInput.value.trim()) {
+        inspector = newInspectorInput.value.trim();
+    }
+    
     let day = document.getElementById("formDay").value;
     let shift = document.getElementById("formShift").value;
-    let area = document.getElementById("formArea").value.trim();
-    let shops = document.getElementById("formShops").value.split(",").map(s=>s.trim()).filter(Boolean);
+    
+    // Get area (from dropdown or new input)
+    let area = document.getElementById("formArea").value;
+    const newAreaInput = document.getElementById("newAreaInput");
+    if (newAreaInput.style.display !== 'none' && newAreaInput.value.trim()) {
+        area = newAreaInput.value.trim();
+    }
+    
+    // Get selected shops from multi-select
+    const shopsSelect = document.getElementById("formShops");
+    let shops = Array.from(shopsSelect.selectedOptions).map(option => option.value);
+    
     let editingIdx = document.getElementById("formEditingIndex").value;
 
     if(!inspector || !day || !shift || !area || shops.length === 0) {
         alert("يرجى تعبئة جميع الحقول!");
         return;
     }
+    
+    // If new inspector, add to inspectorsData
+    if (!inspectorsData.find(insp => insp.name === inspector)) {
+        const newId = 'insp_' + Date.now();
+        inspectorsData.push({id: newId, name: inspector});
+        inspectors = inspectorsData.map(i => i.name);
+        fillInspectorsDropdowns();
+    }
+    
+    // If new area, add to areasData
+    if (!areasData.find(ar => ar.name === area)) {
+        const newId = 'area_' + Date.now();
+        areasData.push({id: newId, name: area});
+        fillAreasDropdowns();
+    }
+    
     let newPlan = {inspector, day, shift, area, shops};
     if(editingIdx==="") {
         inspectionData.push(newPlan);
@@ -544,6 +794,9 @@ document.getElementById("addEditForm").addEventListener("submit", function(e){
     renderPlanTable();
     this.reset();
     document.getElementById("formEditingIndex").value = "";
+    
+    // Reset toggle states
+    resetFormToggles();
 });
 
 // --- عرض جدول الخطط مع صلاحيات المطور ---
@@ -607,11 +860,32 @@ function renderPlanTable() {
 function editPlan(idx) {
     if (!isDev) return;
     let plan = inspectionData[idx];
+    
+    // Reset toggles to show dropdowns
+    resetFormToggles();
+    
+    // Set inspector
     document.getElementById("formInspector").value = plan.inspector;
     document.getElementById("formDay").value = plan.day;
     document.getElementById("formShift").value = plan.shift;
+    
+    // Set area and update shops accordingly
     document.getElementById("formArea").value = plan.area;
-    document.getElementById("formShops").value = plan.shops.join(", ");
+    const selectedArea = areasData.find(area => area.name === plan.area);
+    if (selectedArea) {
+        fillShopsDropdowns(selectedArea.id);
+    } else {
+        fillShopsDropdowns();
+    }
+    
+    // Set selected shops in multi-select
+    const shopsSelect = document.getElementById("formShops");
+    setTimeout(() => {
+        for (let option of shopsSelect.options) {
+            option.selected = plan.shops.includes(option.value);
+        }
+    }, 100);
+    
     document.getElementById("formEditingIndex").value = idx;
     window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -904,6 +1178,193 @@ function updateInspectorList(inspectors) {
     option.textContent = inspector.name;
     dropdown.appendChild(option);
   });
+}
+
+// --- Toggle Functions for Inspector/Area Input Fields ---
+function resetFormToggles() {
+    // Reset inspector toggle
+    document.getElementById('formInspector').style.display = 'inline-block';
+    document.getElementById('newInspectorInput').style.display = 'none';
+    document.getElementById('newInspectorInput').value = '';
+    
+    // Reset area toggle
+    document.getElementById('formArea').style.display = 'inline-block';
+    document.getElementById('newAreaInput').style.display = 'none';
+    document.getElementById('newAreaInput').value = '';
+    
+    // Update area-based shops
+    fillShopsDropdowns();
+}
+
+// --- Modal Management Functions ---
+function closeInspectorsModal() {
+    document.getElementById('inspectorsModal').style.display = 'none';
+}
+
+function closeAreasModal() {
+    document.getElementById('areasModal').style.display = 'none';
+}
+
+function closeShopsModal() {
+    document.getElementById('shopsModal').style.display = 'none';
+}
+
+function addNewInspector() {
+    const nameInput = document.getElementById('newInspectorName');
+    const name = nameInput.value.trim();
+    if (!name) {
+        alert('يرجى إدخال اسم المفتش');
+        return;
+    }
+    
+    if (inspectorsData.find(insp => insp.name === name)) {
+        alert('هذا المفتش موجود بالفعل');
+        return;
+    }
+    
+    const newId = 'insp_' + Date.now();
+    inspectorsData.push({id: newId, name: name});
+    inspectors = inspectorsData.map(i => i.name);
+    
+    fillInspectorsDropdowns();
+    displayInspectorsList();
+    nameInput.value = '';
+    saveDataToJSON();
+}
+
+function addNewArea() {
+    const nameInput = document.getElementById('newAreaName');
+    const name = nameInput.value.trim();
+    if (!name) {
+        alert('يرجى إدخال اسم المنطقة');
+        return;
+    }
+    
+    if (areasData.find(area => area.name === name)) {
+        alert('هذه المنطقة موجودة بالفعل');
+        return;
+    }
+    
+    const newId = 'area_' + Date.now();
+    areasData.push({id: newId, name: name});
+    
+    fillAreasDropdowns();
+    displayAreasList();
+    nameInput.value = '';
+    saveDataToJSON();
+}
+
+function addNewShop() {
+    const nameInput = document.getElementById('newShopName');
+    const areaSelect = document.getElementById('newShopArea');
+    const name = nameInput.value.trim();
+    const areaId = areaSelect.value;
+    
+    if (!name || !areaId) {
+        alert('يرجى إدخال اسم المحل واختيار المنطقة');
+        return;
+    }
+    
+    if (shopsData.find(shop => shop.name === name)) {
+        alert('هذا المحل موجود بالفعل');
+        return;
+    }
+    
+    const newId = 'shop_' + Date.now();
+    shopsData.push({id: newId, name: name, areaId: areaId});
+    
+    fillShopsDropdowns();
+    displayShopsList();
+    nameInput.value = '';
+    areaSelect.value = '';
+    saveDataToJSON();
+}
+
+function displayInspectorsList() {
+    const container = document.getElementById('inspectorsList');
+    let html = '';
+    inspectorsData.forEach((inspector, index) => {
+        html += `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;border-bottom:1px solid #eee;">
+                <span>${inspector.name}</span>
+                <button onclick="deleteInspector(${index})" style="background:#dc3545;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">حذف</button>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+}
+
+function displayAreasList() {
+    const container = document.getElementById('areasList');
+    let html = '';
+    areasData.forEach((area, index) => {
+        html += `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;border-bottom:1px solid #eee;">
+                <span>${area.name}</span>
+                <button onclick="deleteArea(${index})" style="background:#dc3545;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">حذف</button>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+}
+
+function displayShopsList() {
+    const container = document.getElementById('shopsList');
+    let html = '';
+    shopsData.forEach((shop, index) => {
+        const area = areasData.find(a => a.id === shop.areaId);
+        const areaName = area ? area.name : 'غير محدد';
+        html += `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;border-bottom:1px solid #eee;">
+                <span>${shop.name} - ${areaName}</span>
+                <button onclick="deleteShop(${index})" style="background:#dc3545;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">حذف</button>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+}
+
+function deleteInspector(index) {
+    if (confirm('هل أنت متأكد من حذف هذا المفتش؟')) {
+        inspectorsData.splice(index, 1);
+        inspectors = inspectorsData.map(i => i.name);
+        fillInspectorsDropdowns();
+        displayInspectorsList();
+        saveDataToJSON();
+    }
+}
+
+function deleteArea(index) {
+    if (confirm('هل أنت متأكد من حذف هذه المنطقة؟')) {
+        areasData.splice(index, 1);
+        fillAreasDropdowns();
+        displayAreasList();
+        saveDataToJSON();
+    }
+}
+
+function deleteShop(index) {
+    if (confirm('هل أنت متأكد من حذف هذا المحل؟')) {
+        shopsData.splice(index, 1);
+        fillShopsDropdowns();
+        displayShopsList();
+        saveDataToJSON();
+    }
+}
+
+function saveDataToJSON() {
+    // Save all data to localStorage as backup
+    const allData = {
+        inspectionData: inspectionData,
+        inspectors: inspectorsData,
+        areas: areasData,
+        shops: shopsData,
+        lastUpdate: new Date().toISOString()
+    };
+    localStorage.setItem('allPlanData', JSON.stringify(allData));
+    
+    // In a real application, this would save to the server
+    console.log('Data saved to localStorage');
 }
 
 // Call loadInspectionData when the DOM is ready

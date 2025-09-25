@@ -357,6 +357,9 @@ async function loadInspectionData() {
             inspectionData = JSON.parse(localData);
         }
     } finally {
+        // Always ensure dropdowns are populated, even if JSON loading fails
+        fillInspectorsDropdowns();
+        renderPlanTable();
         if (statusDiv) {
             setTimeout(() => statusDiv.style.display = 'none', 1000);
         }
@@ -435,10 +438,9 @@ function fillInspectorsDropdowns() {
 }
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('bellBtn').addEventListener('click', playBirdSound);
-    fillInspectorsDropdowns();
     setLastUpdateDate();
     enableBirdSoundOnFirstInteraction();
-    loadInspectionData(); // Load data from JSON file
+    loadInspectionData(); // Load data from JSON file - will call fillInspectorsDropdowns() when complete
     startAutoRefresh(); // Start auto-refresh functionality
 });
 

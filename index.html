@@ -588,6 +588,27 @@ async function loadInspectionData() {
     }
 }
 
+// تحميل البيانات من plan-data.json
+async function loadPlanData() {
+    try {
+        const response = await fetch('./plan-data.json');
+        if (response.ok) {
+            const planData = await response.json();
+            if (Array.isArray(planData) && planData.length > 0) {
+                inspectionData = planData;
+                saveInspectionData();
+                renderPlanTable();
+                setLastUpdateDate();
+                console.log('تم تحميل بيانات الخطة من plan-data.json بنجاح');
+                return true;
+            }
+        }
+    } catch (error) {
+        console.warn('تعذر تحميل plan-data.json، سيتم استخدام البيانات الافتراضية:', error);
+    }
+    return false;
+}
+
 function saveInspectionData() {
     // Save to localStorage as backup
     localStorage.setItem('inspectionData', JSON.stringify(inspectionData));
@@ -658,6 +679,9 @@ function fillInspectorsDropdowns() {
         });
     }
 }
+ copilot/fix-62522671-eb35-45a5-9a90-cd692a0cf2f1
+document.addEventListener('DOMContentLoaded', async function() {
+=======
 
 function fillAreasDropdowns() {
     // منطقة في نموذج المطور
@@ -698,9 +722,16 @@ function fillShopsDropdowns(selectedAreaId = null) {
     }
 }
 document.addEventListener('DOMContentLoaded', function() {
+ main
     document.getElementById('bellBtn').addEventListener('click', playBirdSound);
     setLastUpdateDate();
     enableBirdSoundOnFirstInteraction();
+ copilot/fix-62522671-eb35-45a5-9a90-cd692a0cf2f1
+    renderPlanTable();
+    
+    // تحميل البيانات من plan-data.json
+    await loadPlanData();
+=======
     loadInspectionData(); // Load data from JSON file - will call fillInspectorsDropdowns() when complete
     startAutoRefresh(); // Start auto-refresh functionality
     
@@ -779,6 +810,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('shopsModal').style.display = 'flex';
         displayShopsList();
     });
+ main
 });
 
 // التحكم في تسجيل الدخول وصلاحيات المطور

@@ -679,10 +679,6 @@ function fillInspectorsDropdowns() {
         });
     }
 }
- copilot/fix-62522671-eb35-45a5-9a90-cd692a0cf2f1
-document.addEventListener('DOMContentLoaded', async function() {
-=======
-
 function fillAreasDropdowns() {
     // منطقة في نموذج المطور
     const areaSelect = document.getElementById('formArea');
@@ -721,17 +717,11 @@ function fillShopsDropdowns(selectedAreaId = null) {
         });
     }
 }
+
 document.addEventListener('DOMContentLoaded', function() {
- main
     document.getElementById('bellBtn').addEventListener('click', playBirdSound);
     setLastUpdateDate();
     enableBirdSoundOnFirstInteraction();
- copilot/fix-62522671-eb35-45a5-9a90-cd692a0cf2f1
-    renderPlanTable();
-    
-    // تحميل البيانات من plan-data.json
-    await loadPlanData();
-=======
     loadInspectionData(); // Load data from JSON file - will call fillInspectorsDropdowns() when complete
     startAutoRefresh(); // Start auto-refresh functionality
     
@@ -810,51 +800,28 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('shopsModal').style.display = 'flex';
         displayShopsList();
     });
- main
 });
 
 // التحكم في تسجيل الدخول وصلاحيات المطور
-document.getElementById("loginRole").addEventListener("change", function() {
-    let role = this.value;
-    document.getElementById("devError").innerText = "";
-    if(role === "developer") {
-        document.getElementById("devPassword").style.display = "inline-block";
-        document.getElementById("devLoginBtn").style.display = "inline-block";
-        document.getElementById("devLogoutBtn").style.display = "none";
-        document.getElementById("devSection").style.display = "none";
-        isDev = false;
-    } else {
-        document.getElementById("devPassword").style.display = "none";
-        document.getElementById("devLoginBtn").style.display = "none";
-        document.getElementById("devLogoutBtn").style.display = "none";
-        document.getElementById("devSection").style.display = "none";
-        isDev = false;
-        renderPlanTable();
-    }
-  
-async function loadInspectionData() {
-  const response = await fetch('./plan-data.json');
-  if (response.ok) {
-    const data = await response.json();
-    // Use developer's function to update inspectors list dynamically
-    updateInspectorList(data.inspectors);
-    // ...rest of your logic to display inspectionData
-  }
-}
-
-// Example updateInspectorList implementation
-function updateInspectorList(inspectors) {
-  // Populate dropdowns or UI elements based on the inspectors array
-  const dropdown = document.getElementById('inspectorsDropdown');
-  dropdown.innerHTML = '';
-  inspectors.forEach(inspector => {
-    const option = document.createElement('option');
-    option.value = inspector.id || inspector.name;
-    option.textContent = inspector.name;
-    dropdown.appendChild(option);
-  });
-}
-  
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById("loginRole").addEventListener("change", function() {
+        let role = this.value;
+        document.getElementById("devError").innerText = "";
+        if(role === "developer") {
+            document.getElementById("devPassword").style.display = "inline-block";
+            document.getElementById("devLoginBtn").style.display = "inline-block";
+            document.getElementById("devLogoutBtn").style.display = "none";
+            document.getElementById("devSection").style.display = "none";
+            isDev = false;
+        } else {
+            document.getElementById("devPassword").style.display = "none";
+            document.getElementById("devLoginBtn").style.display = "none";
+            document.getElementById("devLogoutBtn").style.display = "none";
+            document.getElementById("devSection").style.display = "none";
+            isDev = false;
+            renderPlanTable();
+        }
+    });
 });
 document.getElementById("devLoginBtn").onclick = function() {
     let pw = document.getElementById("devPassword").value.trim();

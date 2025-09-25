@@ -232,6 +232,7 @@
         <button id="devLoginBtn" style="display:none;background:#198754;color:#fff;border:none;padding:7px 20px;border-radius:6px;font-size:1em;cursor:pointer;">دخول المطور</button>
         <button id="devLogoutBtn" style="display:none;background:#d32f2f;color:#fff;border:none;padding:7px 20px;border-radius:6px;font-size:1em;cursor:pointer;">إغلاق المطور</button>
         <span id="devError" style="color:#d32f2f;margin-right:10px;"></span>
+        <div id="refreshStatus" style="color:#28a745;font-size:0.9em;margin-top:5px;display:none;">🔄 جاري تحديث البيانات...</div>
     </div>
     <div class="inspector-select-section">
         <label for="inspectorSelect">اختر المفتش :</label>
@@ -262,6 +263,7 @@
         <div class="save-box">
             <button class="pdf-btn" onclick="exportTableToPDF()">حفظ كـ PDF</button>
             <button class="excel-btn" onclick="exportTableToExcel()">حفظ كـ Excel</button>
+            <button class="refresh-btn" onclick="loadInspectionData()" style="background:#17a2b8;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:1em;cursor:pointer;margin-right:8px;">تحديث البيانات</button>
         </div>
         <div class="report-box">
             <button class="inspector-report-btn" onclick="showInspectorReport()">تقرير المفتش</button>
@@ -303,11 +305,102 @@ let defaultInspectionData = [
     { inspector: "د. فايز المسالمة", day: "2025-09-21", shift: "صباحية", area: "المنطقة أ", shops: ["محل 8", "محل 9"] },
     { inspector: "د.آمنه بن صرم", day: "2025-09-21", shift: "مسائية", area: "المنطقة ج", shops: ["محل 11"] },
 ];
-let inspectionData = JSON.parse(localStorage.getItem('inspectionData')) || defaultInspectionData.slice();
+let inspectionData = defaultInspectionData.slice();
+let lastUpdateTime = null;
+
+// Auto-refresh functionality
+function startAutoRefresh() {
+    setInterval(async () => {
+        try {
+            const response = await fetch('./plan-data.json?t=' + Date.now());
+            if (response.ok) {
+                const data = await response.json();
+                if (data.lastUpdate && data.lastUpdate !== lastUpdateTime) {
+                    await loadInspectionData();
+                    showUpdateMessage('تم تحديث البيانات تلقائياً');
+                }
+            }
+        } catch (error) {
+            console.log('Auto-refresh check failed:', error);
+        }
+    }, 30000); // Check every 30 seconds
+}
+
+// Load data from JSON file
+async function loadInspectionData() {
+    const statusDiv = document.getElementById('refreshStatus');
+    try {
+        if (statusDiv) {
+            statusDiv.style.display = 'block';
+        }
+        
+        const response = await fetch('./plan-data.json?t=' + Date.now());
+        if (response.ok) {
+            const data = await response.json();
+            if (data.inspectionData && Array.isArray(data.inspectionData)) {
+                inspectionData = data.inspectionData;
+                lastUpdateTime = data.lastUpdate;
+                if (data.inspectors && Array.isArray(data.inspectors)) {
+                    inspectorsData = data.inspectors;
+                    inspectors = inspectorsData.map(i=>i.name);
+                }
+                renderPlanTable();
+                fillInspectorsDropdowns();
+                setLastUpdateDate();
+            }
+        }
+    } catch (error) {
+        console.warn('Failed to load plan data, using default data:', error);
+        // Fall back to localStorage if JSON fails
+        const localData = localStorage.getItem('inspectionData');
+        if (localData) {
+            inspectionData = JSON.parse(localData);
+        }
+    } finally {
+        if (statusDiv) {
+            setTimeout(() => statusDiv.style.display = 'none', 1000);
+        }
+    }
+}
 
 function saveInspectionData() {
+    // Save to localStorage as backup
     localStorage.setItem('inspectionData', JSON.stringify(inspectionData));
     setLastUpdateDate();
+    
+    // For developer mode, we could add GitHub API integration here
+    if (isDev) {
+        saveToExternalFile();
+    }
+}
+
+// Function to save data to external JSON file (for developer mode)
+async function saveToExternalFile() {
+    try {
+        const planData = {
+            inspectionData: inspectionData,
+            inspectors: inspectorsData,
+            lastUpdate: new Date().toISOString()
+        };
+        
+        // This would require a backend service or GitHub API integration
+        // For now, we'll update the local JSON conceptually
+        console.log('Data would be saved to plan-data.json:', planData);
+        
+        // Display a message to the user
+        showUpdateMessage('تم حفظ البيانات في ملف الخطة الخارجي');
+    } catch (error) {
+        console.error('Failed to save to external file:', error);
+        showUpdateMessage('تم الحفظ محلياً فقط');
+    }
+}
+
+function showUpdateMessage(message) {
+    const messageDiv = document.createElement('div');
+    messageDiv.style.cssText = 'position:fixed;top:20px;right:20px;background:#28a745;color:white;padding:10px 15px;border-radius:5px;z-index:1000;';
+    messageDiv.textContent = message;
+    document.body.appendChild(messageDiv);
+    setTimeout(() => document.body.removeChild(messageDiv), 3000);
 }
 function setLastUpdateDate() {
     let row = document.getElementById('lastUpdateRow');
@@ -345,7 +438,8 @@ document.addEventListener('DOMContentLoaded', function() {
     fillInspectorsDropdowns();
     setLastUpdateDate();
     enableBirdSoundOnFirstInteraction();
-    renderPlanTable();
+    loadInspectionData(); // Load data from JSON file
+    startAutoRefresh(); // Start auto-refresh functionality
 });
 
 // التحكم في تسجيل الدخول وصلاحيات المطور

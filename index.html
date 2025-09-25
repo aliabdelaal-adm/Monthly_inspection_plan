@@ -825,16 +825,15 @@ function fillShopsDropdowns(selectedAreaId = null) {
     const shopsSelect = document.getElementById('formShops');
     if (shopsSelect) {
         shopsSelect.innerHTML = '';
+        // Always show all shops, not filtered by area - allow mixing different areas
         let shopsToShow = shopsData;
         
-        if (selectedAreaId) {
-            shopsToShow = shopsData.filter(shop => shop.areaId === selectedAreaId);
-        }
-        
         shopsToShow.forEach(shop => {
+            const area = areasData.find(a => a.id === shop.areaId);
+            const areaName = area ? area.name : 'غير محدد';
             const option = document.createElement('option');
             option.value = shop.name;
-            option.textContent = shop.name;
+            option.textContent = `${shop.name} (${areaName})`;  // Show area name in option for clarity
             shopsSelect.appendChild(option);
         });
     }
@@ -843,7 +842,7 @@ function fillShopsDropdowns(selectedAreaId = null) {
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('bellBtn').addEventListener('click', playBirdSound);
     setLastUpdateDate();
-    enableBirdSoundOnFirstInteraction();
+    enableBirdSoundOnAnyInteraction();
     loadInspectionData(); // Load data from JSON file - will call fillInspectorsDropdowns() when complete
     startAutoRefresh(); // Start auto-refresh functionality
     
@@ -890,15 +889,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Area change handler to filter shops
+    // Area change handler - no longer filters shops, always show all shops for free selection
     document.getElementById('formArea').addEventListener('change', function() {
-        const selectedAreaName = this.value;
-        const selectedArea = areasData.find(area => area.name === selectedAreaName);
-        if (selectedArea) {
-            fillShopsDropdowns(selectedArea.id);
-        } else {
-            fillShopsDropdowns();
-        }
+        // Just refresh the shops dropdown without filtering
+        fillShopsDropdowns();
     });
     
     // Management buttons
@@ -1112,12 +1106,8 @@ function editPlan(idx) {
     
     // Set area and update shops accordingly
     document.getElementById("formArea").value = plan.area;
-    const selectedArea = areasData.find(area => area.name === plan.area);
-    if (selectedArea) {
-        fillShopsDropdowns(selectedArea.id);
-    } else {
-        fillShopsDropdowns();
-    }
+    // Always show all shops regardless of area selection
+    fillShopsDropdowns();
     
     // Set selected shops in multi-select
     const shopsSelect = document.getElementById("formShops");
@@ -1163,25 +1153,39 @@ document.addEventListener('click', function(e){
 });
 
 // --- صوت الجرس والعصافير ---
+let lastBirdSoundTime = 0;
+const BIRD_SOUND_COOLDOWN = 3000; // 3 seconds between sounds
+
 function playBirdSound() {
     var audio = document.getElementById('birdSound');
     if (!audio) return;
+    
+    const currentTime = Date.now();
+    // Check cooldown to prevent too frequent sounds
+    if (currentTime - lastBirdSoundTime < BIRD_SOUND_COOLDOWN) {
+        return;
+    }
+    
+    lastBirdSoundTime = currentTime;
     audio.currentTime = 0;
     audio.play().catch(function(err){});
     setTimeout(function(){ audio.pause(); }, 7000);
 }
-function enableBirdSoundOnFirstInteraction() {
-    function handler() {
+
+function enableBirdSoundOnAnyInteraction() {
+    function handler(e) {
+        // Play bird sound on any interaction
         playBirdSound();
-        window.removeEventListener('click', handler, true);
-        window.removeEventListener('keydown', handler, true);
-        window.removeEventListener('touchstart', handler, true);
-        window.removeEventListener('change', handler, true);
     }
+    
+    // Add listeners for various interaction types without removing them
     window.addEventListener('click', handler, true);
     window.addEventListener('keydown', handler, true);
     window.addEventListener('touchstart', handler, true);
+    window.addEventListener('touchend', handler, true);
     window.addEventListener('change', handler, true);
+    window.addEventListener('scroll', handler, true);
+    window.addEventListener('mousemove', handler, true);
 }
 
 // --- دوال التصدير والتقارير بالكامل ---
@@ -1495,7 +1499,10 @@ function displayInspectorsList() {
         html += `
             <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;border-bottom:1px solid #eee;">
                 <span>${inspector.name}</span>
-                <button onclick="deleteInspector(${index})" style="background:#dc3545;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">حذف</button>
+                <div style="display:flex;gap:4px;">
+                    <button onclick="editInspector(${index})" style="background:#6c757d;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">تعديل</button>
+                    <button onclick="deleteInspector(${index})" style="background:#dc3545;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">حذف</button>
+                </div>
             </div>
         `;
     });
@@ -1509,7 +1516,10 @@ function displayAreasList() {
         html += `
             <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;border-bottom:1px solid #eee;">
                 <span>${area.name}</span>
-                <button onclick="deleteArea(${index})" style="background:#dc3545;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">حذف</button>
+                <div style="display:flex;gap:4px;">
+                    <button onclick="editArea(${index})" style="background:#6c757d;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">تعديل</button>
+                    <button onclick="deleteArea(${index})" style="background:#dc3545;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">حذف</button>
+                </div>
             </div>
         `;
     });
@@ -1525,7 +1535,10 @@ function displayShopsList() {
         html += `
             <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;border-bottom:1px solid #eee;">
                 <span>${shop.name} - ${areaName}</span>
-                <button onclick="deleteShop(${index})" style="background:#dc3545;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">حذف</button>
+                <div style="display:flex;gap:4px;">
+                    <button onclick="editShop(${index})" style="background:#6c757d;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">تعديل</button>
+                    <button onclick="deleteShop(${index})" style="background:#dc3545;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">حذف</button>
+                </div>
             </div>
         `;
     });
@@ -1542,6 +1555,34 @@ function deleteInspector(index) {
     }
 }
 
+function editInspector(index) {
+    const inspector = inspectorsData[index];
+    const newName = prompt('تعديل اسم المفتش:', inspector.name);
+    
+    if (newName === null) return; // User cancelled
+    
+    const newNameTrimmed = newName.trim();
+    if (!newNameTrimmed) {
+        alert('يرجى إدخال اسم صحيح للمفتش');
+        return;
+    }
+    
+    // Check if name already exists (but not for the same inspector)
+    const existingInspector = inspectorsData.find((i, idx) => i.name === newNameTrimmed && idx !== index);
+    if (existingInspector) {
+        alert('هذا المفتش موجود بالفعل');
+        return;
+    }
+    
+    // Update inspector data
+    inspector.name = newNameTrimmed;
+    inspectors = inspectorsData.map(i => i.name); // Update the inspectors array too
+    
+    fillInspectorsDropdowns();
+    displayInspectorsList();
+    saveDataToJSON();
+}
+
 function deleteArea(index) {
     if (confirm('هل أنت متأكد من حذف هذه المنطقة؟')) {
         areasData.splice(index, 1);
@@ -1551,6 +1592,33 @@ function deleteArea(index) {
     }
 }
 
+function editArea(index) {
+    const area = areasData[index];
+    const newName = prompt('تعديل اسم المنطقة:', area.name);
+    
+    if (newName === null) return; // User cancelled
+    
+    const newNameTrimmed = newName.trim();
+    if (!newNameTrimmed) {
+        alert('يرجى إدخال اسم صحيح للمنطقة');
+        return;
+    }
+    
+    // Check if name already exists (but not for the same area)
+    const existingArea = areasData.find((a, i) => a.name === newNameTrimmed && i !== index);
+    if (existingArea) {
+        alert('هذه المنطقة موجودة بالفعل');
+        return;
+    }
+    
+    // Update area data
+    area.name = newNameTrimmed;
+    
+    fillAreasDropdowns();
+    displayAreasList();
+    saveDataToJSON();
+}
+
 function deleteShop(index) {
     if (confirm('هل أنت متأكد من حذف هذا المحل؟')) {
         shopsData.splice(index, 1);
@@ -1558,6 +1626,59 @@ function deleteShop(index) {
         displayShopsList();
         saveDataToJSON();
     }
+}
+
+function editShop(index) {
+    const shop = shopsData[index];
+    const area = areasData.find(a => a.id === shop.areaId);
+    
+    const newName = prompt('تعديل اسم المحل:', shop.name);
+    if (newName === null) return; // User cancelled
+    
+    const newNameTrimmed = newName.trim();
+    if (!newNameTrimmed) {
+        alert('يرجى إدخال اسم صحيح للمحل');
+        return;
+    }
+    
+    // Check if name already exists (but not for the same shop)
+    const existingShop = shopsData.find((s, i) => s.name === newNameTrimmed && i !== index);
+    if (existingShop) {
+        alert('هذا المحل موجود بالفعل');
+        return;
+    }
+    
+    // Get new area
+    const areaNames = areasData.map(a => a.name);
+    const currentAreaName = area ? area.name : 'غير محدد';
+    let selectedAreaName = currentAreaName;
+    
+    // Simple area selection using confirm dialogs (basic approach)
+    let areaChoice = confirm(`المنطقة الحالية: ${currentAreaName}\nهل تريد تغيير المنطقة؟`);
+    if (areaChoice) {
+        let areaOptions = areaNames.join('\n');
+        let newAreaName = prompt(`اختر المنطقة الجديدة:\n${areaOptions}`, currentAreaName);
+        if (newAreaName !== null) {
+            const newArea = areasData.find(a => a.name === newAreaName.trim());
+            if (newArea) {
+                selectedAreaName = newArea.name;
+            } else {
+                alert('المنطقة غير موجودة');
+                return;
+            }
+        }
+    }
+    
+    // Update shop data
+    shop.name = newNameTrimmed;
+    const selectedArea = areasData.find(a => a.name === selectedAreaName);
+    if (selectedArea) {
+        shop.areaId = selectedArea.id;
+    }
+    
+    fillShopsDropdowns();
+    displayShopsList();
+    saveDataToJSON();
 }
 
 function saveDataToJSON() {

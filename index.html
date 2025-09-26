@@ -104,6 +104,7 @@
             outline: none;
             padding: 8px;
             transition: transform 0.2s;
+            font-size: 28px;
         }
         .bell-btn:hover {
             transform: scale(1.1);
@@ -298,6 +299,8 @@
             resize: vertical;
             outline: none;
             transition: border-color 0.3s;
+            line-height: 1.6;
+            font-weight: 500;
         }
         
         .bell-notes-textarea:focus {
@@ -429,7 +432,7 @@
         .shops-dropdown-list {
             display:none;
             position:fixed;
-            background:#fff;
+            background:#90EE90;
             border:1px solid #23408577;
             border-radius:9px;
             margin-top:5px;
@@ -652,11 +655,7 @@
     <div class="header-top-bar">
         <div class="bell-container">
             <button class="bell-btn" id="bellBtn" title="الجرس - اضغط للكتابة">
-                <div class="bell-3d" id="bell3d">
-                    <div class="bell-body">
-                        <div class="bell-shine"></div>
-                    </div>
-                </div>
+                🔔
             </button>
         </div>
         <div class="last-update-row" id="lastUpdateRow"></div>
@@ -820,8 +819,9 @@
 <div class="bell-modal" id="bellModal">
     <div class="bell-bubble">
         <h3>ملاحظات الجرس</h3>
-        <div class="bell-info">
-            اكتب ملاحظاتك هنا. سيتم حفظها محلياً في المتصفح.
+        <div class="bell-info" id="bellInfo">
+            <div id="bellInfoText" style="cursor: pointer;">اكتب ملاحظاتك هنا. سيتم حفظها محلياً في المتصفح.</div>
+            <input type="text" id="bellInfoEdit" style="display: none; width: 100%; border: none; background: transparent; font: inherit; color: inherit; text-align: center;" value="اكتب ملاحظاتك هنا. سيتم حفظها محلياً في المتصفح.">
         </div>
         <textarea 
             class="bell-notes-textarea" 
@@ -1579,10 +1579,17 @@ function playBellSound() {
 function showBellModal() {
     const modal = document.getElementById('bellModal');
     const textarea = document.getElementById('bellNotesTextarea');
+    const bellInfoText = document.getElementById('bellInfoText');
+    const bellInfoEdit = document.getElementById('bellInfoEdit');
     
     // Load saved notes from localStorage
     const savedNotes = localStorage.getItem('bellNotes') || '';
     textarea.value = savedNotes;
+    
+    // Load saved bell info text
+    const savedBellInfo = localStorage.getItem('bellInfoText') || 'اكتب ملاحظاتك هنا. سيتم حفظها محلياً في المتصفح.';
+    bellInfoText.textContent = savedBellInfo;
+    bellInfoEdit.value = savedBellInfo;
     
     // Check if user is developer to enable/disable editing
     // Use window.isDev to ensure we get the global variable
@@ -1595,6 +1602,28 @@ function showBellModal() {
         // Show save and clear buttons for developer
         document.getElementById('bellSaveBtn').style.display = 'inline-block';
         document.getElementById('bellClearBtn').style.display = 'inline-block';
+        
+        // Make bell info text editable for developer
+        bellInfoText.style.cursor = 'pointer';
+        bellInfoText.onclick = function() {
+            bellInfoText.style.display = 'none';
+            bellInfoEdit.style.display = 'block';
+            bellInfoEdit.focus();
+        };
+        
+        bellInfoEdit.onblur = function() {
+            const newText = bellInfoEdit.value.trim() || 'اكتب ملاحظاتك هنا. سيتم حفظها محلياً في المتصفح.';
+            bellInfoText.textContent = newText;
+            localStorage.setItem('bellInfoText', newText);
+            bellInfoText.style.display = 'block';
+            bellInfoEdit.style.display = 'none';
+        };
+        
+        bellInfoEdit.onkeypress = function(e) {
+            if (e.key === 'Enter') {
+                bellInfoEdit.blur();
+            }
+        };
     } else {
         textarea.disabled = true;
         textarea.placeholder = 'عرض الملاحظات فقط - يمكن للمطور فقط التعديل';
@@ -1603,6 +1632,10 @@ function showBellModal() {
         // Hide save and clear buttons for non-developers
         document.getElementById('bellSaveBtn').style.display = 'none';
         document.getElementById('bellClearBtn').style.display = 'none';
+        
+        // Make bell info text non-editable for non-developers
+        bellInfoText.style.cursor = 'default';
+        bellInfoText.onclick = null;
     }
     
     modal.classList.add('show');

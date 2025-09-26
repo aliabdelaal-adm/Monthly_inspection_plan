@@ -2,17 +2,19 @@
 # Custom Bell Sound Setup Instructions
 
 ## نظرة عامة / Overview
-تم تحديث نظام الجرس ليستخدم ملف صوتي خارجي بدلاً من الصوت المدمج في النظام.
+تم تحديث نظام الجرس ليستخدم ملف صوتي خارجي بدلاً من الصوت المدمج في النظام. إذا لم يوجد الملف، سيتم استخدام صوت عصافير محسن مولد تلقائياً.
 
-The bell system has been updated to use an external audio file instead of the embedded sound.
+The bell system has been updated to use an external audio file instead of the embedded sound. If the file is not found, an enhanced synthetic bird sound will be used as fallback.
 
 ## الخطوات المطلوبة / Required Steps
 
 ### 1. تحضير الملف الصوتي / Prepare Audio File
-- احصل على الملف الصوتي المطلوب بصيغة MP3
+- احصل على ملف صوتي لأصوات العصافير بصيغة MP3 (متوفر في الرابط أدناه)
 - تأكد من أن الملف بجودة جيدة وحجم مناسب (يُفضل أقل من 1 ميجابايت)
-- Get your desired audio file in MP3 format
+- يُفضل أن يكون طول الصوت بين 2-5 ثواني لتجربة مستخدم أفضل
+- Get a bird song audio file in MP3 format (available in the link below)
 - Ensure the file is good quality and reasonable size (preferably under 1MB)
+- Ideally 2-5 seconds duration for better user experience
 
 ### 2. تسمية الملف / File Naming
 - أعد تسمية الملف الصوتي إلى: `bell_sound.mp3`
@@ -59,16 +61,18 @@ To download from Google Drive:
 - تأكد من أن المتصفح يدعم تشغيل ملفات MP3
 - تحقق من إعدادات الصوت في المتصفح
 - جرب متصفح آخر للاختبار
+- إذا لم يعمل الملف الخارجي، سيتم تشغيل صوت عصافير محسن تلقائياً
 
 - Ensure your browser supports MP3 playback
 - Check browser audio settings
 - Try a different browser for testing
+- If external file doesn't work, enhanced synthetic bird sound will play automatically
 
 ## هيكل الملفات المطلوب / Required File Structure
 ```
 Monthly_inspection_plan/
 ├── index.html
-├── bell_sound.mp3    ← الملف الصوتي الجديد
+├── bell_sound.mp3    ← الملف الصوتي الجديد (ملف أصوات العصافير)
 ├── admin.html
 ├── plan-data.json
 └── ... (ملفات أخرى)
@@ -79,8 +83,21 @@ Monthly_inspection_plan/
 - يُنصح بملفات أقل من 1 ميجابايت
 - الصوت سيتوقف تلقائياً بعد 10 ثواني
 - يمكن تشغيل الصوت مرة واحدة كل ثانية لتجنب التكرار السريع
+- تم تحسين الصوت الاحتياطي ليبدو مثل أصوات العصافير الطبيعية
 
 - Audio file size affects website loading speed
 - Files under 1MB are recommended
 - Sound will automatically stop after 10 seconds
 - Sound can only be played once per second to prevent spam
+- Fallback sound has been enhanced to sound like natural bird songs
+
+## التحديثات الأخيرة / Recent Updates
+- ✅ تم إضافة مصدر الصوت لعنصر الصوت في HTML
+- ✅ تم تحسين صوت العصافير الاحتياطي بشكل كبير ليبدو طبيعياً
+- ✅ تم تحسين معالجة الأخطاء والرسائل التوضيحية
+- ✅ إزالة الضوضاء الخلفية من الصوت الاصطناعي
+
+- ✅ Added audio source to HTML audio element
+- ✅ Significantly enhanced fallback bird sound to sound natural
+- ✅ Improved error handling and user messages
+- ✅ Eliminated background noise from synthetic audio

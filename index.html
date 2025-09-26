@@ -962,15 +962,15 @@
 <!-- Bell Notes Modal -->
 <div class="bell-modal" id="bellModal">
     <div class="bell-bubble">
-        <h3>ملاحظات الجرس</h3>
+        <h3>توجيهات وإشعارات</h3>
         <div class="bell-info" id="bellInfo">
-            <div id="bellInfoText" style="cursor: pointer;">اكتب ملاحظاتك هنا. سيتم حفظها محلياً في المتصفح.</div>
-            <input type="text" id="bellInfoEdit" style="display: none; width: 100%; border: none; background: transparent; font: inherit; color: inherit; text-align: center;" value="اكتب ملاحظاتك هنا. سيتم حفظها محلياً في المتصفح.">
+            <div id="bellInfoText" style="cursor: pointer;">توجيهات وإشعارات للمفتشين - يتم حفظها مركزياً لجميع المفتشين</div>
+            <input type="text" id="bellInfoEdit" style="display: none; width: 100%; border: none; background: transparent; font: inherit; color: inherit; text-align: center;" value="توجيهات وإشعارات للمفتشين - يتم حفظها مركزياً لجميع المفتشين">
         </div>
         <textarea 
             class="bell-notes-textarea" 
             id="bellNotesTextarea" 
-            placeholder="اكتب ملاحظاتك هنا..."
+            placeholder="اكتب توجيهاتك وإشعاراتك هنا..."
             dir="rtl"
         ></textarea>
         <div class="bell-bubble-actions">
@@ -1029,6 +1029,7 @@ let defaultInspectionData = [
     { inspector: "د.آمنه بن صرم", day: "2025-09-21", shift: "مسائية", area: "المنطقة ج", shops: ["محل 11"] },
 ];
 let inspectionData = defaultInspectionData.slice();
+let bellNotesData = { infoText: "توجيهات وإشعارات للمفتشين - يتم حفظها مركزياً لجميع المفتشين", notes: "" };
 let lastUpdateTime = null;
 
 // Auto-refresh functionality
@@ -1073,6 +1074,10 @@ async function loadInspectionData() {
                 if (data.shops && Array.isArray(data.shops)) {
                     shopsData = data.shops;
                 }
+                // Load bell notes data if available
+                if (data.bellNotes) {
+                    bellNotesData = data.bellNotes;
+                }
                 // Display last update date/time for all users
                 displayLastUpdateFromData(data.lastUpdate);
                 renderPlanTable();
@@ -1097,6 +1102,7 @@ async function loadInspectionData() {
                 }
                 if (allData.areas) areasData = allData.areas;
                 if (allData.shops) shopsData = allData.shops;
+                if (allData.bellNotes) bellNotesData = allData.bellNotes;
                 // Display last update from localStorage backup
                 displayLastUpdateFromData(allData.lastUpdate);
                 console.log('Loaded complete data from localStorage backup');
@@ -1168,6 +1174,7 @@ async function saveToExternalFile() {
             inspectors: inspectorsData,
             areas: areasData,
             shops: shopsData,
+            bellNotes: bellNotesData,
             lastUpdate: new Date().toISOString()
         };
         
@@ -1879,12 +1886,12 @@ function showBellModal() {
     const bellInfoText = document.getElementById('bellInfoText');
     const bellInfoEdit = document.getElementById('bellInfoEdit');
     
-    // Load saved notes from localStorage
-    const savedNotes = localStorage.getItem('bellNotes') || '';
+    // Load saved notes from central storage (bellNotesData)
+    const savedNotes = bellNotesData.notes || '';
     textarea.value = savedNotes;
     
-    // Load saved bell info text
-    const savedBellInfo = localStorage.getItem('bellInfoText') || 'اكتب ملاحظاتك هنا. سيتم حفظها محلياً في المتصفح.';
+    // Load saved bell info text from central storage
+    const savedBellInfo = bellNotesData.infoText || 'توجيهات وإشعارات للمفتشين - يتم حفظها مركزياً لجميع المفتشين';
     bellInfoText.textContent = savedBellInfo;
     bellInfoEdit.value = savedBellInfo;
     
@@ -1893,7 +1900,7 @@ function showBellModal() {
     const isDevUser = window.isDev || isDev || false;
     if (isDevUser) {
         textarea.disabled = false;
-        textarea.placeholder = 'اكتب ملاحظاتك هنا... (وضع المطور)';
+        textarea.placeholder = 'اكتب توجيهاتك وإشعاراتك هنا... (وضع المطور)';
         textarea.style.backgroundColor = '#fff';
         textarea.style.cursor = 'text';
         // Show save and clear buttons for developer
@@ -1909,9 +1916,11 @@ function showBellModal() {
         };
         
         bellInfoEdit.onblur = function() {
-            const newText = bellInfoEdit.value.trim() || 'اكتب ملاحظاتك هنا. سيتم حفظها محلياً في المتصفح.';
+            const newText = bellInfoEdit.value.trim() || 'توجيهات وإشعارات للمفتشين - يتم حفظها مركزياً لجميع المفتشين';
             bellInfoText.textContent = newText;
-            localStorage.setItem('bellInfoText', newText);
+            bellNotesData.infoText = newText;
+            // Save to central file
+            saveDataToJSON();
             bellInfoText.style.display = 'block';
             bellInfoEdit.style.display = 'none';
         };
@@ -1923,7 +1932,7 @@ function showBellModal() {
         };
     } else {
         textarea.disabled = true;
-        textarea.placeholder = 'عرض الملاحظات فقط - يمكن للمطور فقط التعديل';
+        textarea.placeholder = 'عرض التوجيهات والإشعارات فقط - يمكن للمطور فقط التعديل';
         textarea.style.backgroundColor = '#f5f5f5';
         textarea.style.cursor = 'not-allowed';
         // Hide save and clear buttons for non-developers
@@ -1954,7 +1963,9 @@ function saveBellNotes() {
     const textarea = document.getElementById('bellNotesTextarea');
     const notes = textarea.value.trim();
     
-    localStorage.setItem('bellNotes', notes);
+    // Save to central storage instead of localStorage
+    bellNotesData.notes = notes;
+    saveDataToJSON();
     
     // Show success feedback
     const saveBtn = document.getElementById('bellSaveBtn');
@@ -1969,10 +1980,12 @@ function saveBellNotes() {
 }
 
 function clearBellNotes() {
-    if (confirm('هل أنت متأكد من مسح جميع الملاحظات؟')) {
+    if (confirm('هل أنت متأكد من مسح جميع التوجيهات والإشعارات؟')) {
         const textarea = document.getElementById('bellNotesTextarea');
         textarea.value = '';
-        localStorage.removeItem('bellNotes');
+        // Clear from central storage instead of localStorage
+        bellNotesData.notes = '';
+        saveDataToJSON();
         
         // Show clear feedback
         const clearBtn = document.getElementById('bellClearBtn');
@@ -3043,6 +3056,7 @@ function saveDataToJSON() {
         inspectors: inspectorsData,
         areas: areasData,
         shops: shopsData,
+        bellNotes: bellNotesData,
         lastUpdate: new Date().toISOString()
     };
     localStorage.setItem('allPlanData', JSON.stringify(allData));

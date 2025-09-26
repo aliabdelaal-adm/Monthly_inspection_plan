@@ -933,7 +933,6 @@ async function loadInspectionData() {
                 fillInspectorsDropdowns();
                 fillAreasDropdowns();
                 fillShopsDropdowns();
-                setLastUpdateDate();
             }
         } else {
             console.warn('Failed to fetch plan data - response not ok:', response.status);
@@ -990,7 +989,6 @@ async function loadPlanData() {
                 inspectionData = planData;
                 saveInspectionData();
                 renderPlanTable();
-                setLastUpdateDate();
                 console.log('تم تحميل بيانات الخطة من plan-data.json بنجاح');
                 return true;
             }
@@ -1134,6 +1132,9 @@ function showUpdateMessage(message) {
     setTimeout(() => document.body.removeChild(messageDiv), 3000);
 }
 function setLastUpdateDate() {
+    // Only update the date/time if user is a developer
+    if (!isDev && !window.isDev) return;
+    
     let row = document.getElementById('lastUpdateRow');
     let today = new Date();
     let year = today.getFullYear();
@@ -1146,7 +1147,13 @@ function setLastUpdateDate() {
     if(hour12 === 0) hour12 = 12;
     let timeStr = hour12 + ':' + minutes + ' ' + period;
     let dateStr = year+'-'+month+'-'+day;
-    row.textContent = "آخر تعديل للبيانات والخطة: " + dateStr + "    " + timeStr;
+    row.textContent = "آخر تحديث للخطة: " + dateStr + "    " + timeStr;
+}
+
+function initializeLastUpdateDate() {
+    // Initialize the last update display on page load with a static message
+    let row = document.getElementById('lastUpdateRow');
+    row.textContent = "آخر تحديث للخطة: متاح للمطور فقط";
 }
 function fillInspectorsDropdowns() {
     // مفتشين لأداة الاختيار
@@ -1203,7 +1210,7 @@ function fillShopsDropdowns(selectedAreaId = null) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    setLastUpdateDate();
+    initializeLastUpdateDate();
     // Removed automatic playback - sound only plays on user touch/click interactions
     loadInspectionData(); // Load data from JSON file - will call fillInspectorsDropdowns() when complete
     startAutoRefresh(); // Start auto-refresh functionality
@@ -1305,6 +1312,7 @@ document.getElementById("devLoginBtn").onclick = function() {
     let pw = document.getElementById("devPassword").value.trim();
     if (pw === DEV_PASSWORD) {
         isDev = true;
+        setLastUpdateDate();
         document.getElementById("devSection").style.display = "block";
         document.getElementById("devLogoutBtn").style.display = "inline-block";
         document.getElementById("devPassword").style.display = "none";
@@ -1825,13 +1833,30 @@ function showInspectorReport() {
     if (!inspectorName) { alert("يرجى اختيار مفتش أولاً."); return; }
     const div = document.getElementById('inspectorReportDiv');
     const rows = inspectionData.filter(item => item.inspector === inspectorName);
-    let total = rows.length;
-    let morning = rows.filter(r => r.shift === "صباحية").length;
-    let evening = rows.filter(r => r.shift === "مسائية").length;
-    let weekend = rows.filter(r => {
+    
+    // Count total shops assigned to this inspector
+    let totalShops = 0;
+    let morningShops = 0;
+    let eveningShops = 0;
+    let weekendShops = 0;
+    
+    rows.forEach(r => {
+        const shopsCount = r.shops ? r.shops.length : 0;
+        totalShops += shopsCount;
+        
+        if (r.shift === "صباحية") {
+            morningShops += shopsCount;
+        } else if (r.shift === "مسائية") {
+            eveningShops += shopsCount;
+        }
+        
+        // Check if it's a weekend day
         const dayOfWeek = new Date(r.day).getDay();
-        return [5,6,0].includes(dayOfWeek);
-    }).length;
+        if ([5,6,0].includes(dayOfWeek)) {
+            weekendShops += shopsCount;
+        }
+    });
+    
     let table = `
     <div class="pdf-title-arabic" id="inspectorReportTitle">تقرير المفتش: ${inspectorName}</div>
     <div class="save-box" style="margin-bottom:8px;">
@@ -1849,10 +1874,10 @@ function showInspectorReport() {
         </thead>
         <tbody>
             <tr>
-                <td>${total}</td>
-                <td>${morning}</td>
-                <td>${evening}</td>
-                <td>${weekend}</td>
+                <td>${totalShops}</td>
+                <td>${morningShops}</td>
+                <td>${eveningShops}</td>
+                <td>${weekendShops}</td>
             </tr>
         </tbody>
     </table>
@@ -1913,19 +1938,40 @@ function showMonthlyReport() {
         const rows = inspectionData.filter(item => item.inspector === inspector);
         html += `<tr><td>${inspector}</td>`;
         allDays.forEach((day,i) => {
-            let count = rows.filter(r=>r.day===day).length;
-            html += `<td>${count||''}</td>`;
-            totals.days[i] += count;
+            let dayRows = rows.filter(r=>r.day===day);
+            let shopsCount = 0;
+            dayRows.forEach(row => {
+                shopsCount += row.shops ? row.shops.length : 0;
+            });
+            html += `<td>${shopsCount||''}</td>`;
+            totals.days[i] += shopsCount;
         });
-        let total = rows.length;
-        let morning = rows.filter(r=>r.shift==="صباحية").length;
-        let evening = rows.filter(r=>r.shift==="مسائية").length;
-        let weekend = rows.filter(r=>{
+        
+        // Calculate totals based on shops, not days
+        let totalShops = 0;
+        let morningShops = 0;
+        let eveningShops = 0;
+        let weekendShops = 0;
+        
+        rows.forEach(r => {
+            const shopsCount = r.shops ? r.shops.length : 0;
+            totalShops += shopsCount;
+            
+            if (r.shift === "صباحية") {
+                morningShops += shopsCount;
+            } else if (r.shift === "مسائية") {
+                eveningShops += shopsCount;
+            }
+            
+            // Check if it's a weekend day
             const dow = new Date(r.day).getDay();
-            return [5,6,0].includes(dow);
-        }).length;
-        html += `<td>${total}</td><td>${morning}</td><td>${evening}</td><td>${weekend}</td></tr>`;
-        totals.total += total; totals.morning += morning; totals.evening += evening; totals.weekend += weekend;
+            if ([5,6,0].includes(dow)) {
+                weekendShops += shopsCount;
+            }
+        });
+        
+        html += `<td>${totalShops}</td><td>${morningShops}</td><td>${eveningShops}</td><td>${weekendShops}</td></tr>`;
+        totals.total += totalShops; totals.morning += morningShops; totals.evening += eveningShops; totals.weekend += weekendShops;
     });
     html += `<tr class="red-total">
         <td>الإجمالي</td>`;
@@ -2361,6 +2407,8 @@ function saveDataToJSON() {
                 
                 if (pw === DEV_PASSWORD) {
                     window.isDev = true;
+                    isDev = true;
+                    setLastUpdateDate();
                     document.getElementById('devSection').style.display = 'block';
                     document.getElementById('devLogoutBtn').style.display = 'inline-block';
                     document.getElementById('devPassword').style.display = 'none';

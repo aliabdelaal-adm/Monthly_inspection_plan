@@ -48,3 +48,14 @@
 - **Production data**: `plan-data.json` (in repository root)
 - **Backup data**: Browser localStorage (`allPlanData` key)
 - **Exported data**: Downloaded as `plan-data.json` when using export function
+
+## Data Consolidation (Completed)
+
+✅ **Multiple files merged successfully** - All inspection data from `plan-data.json`, `plan-data20.json`, and `plan-data (17) (1).json` have been consolidated into a single `plan-data.json` file as the validated active main source for screen preview for all inspectors.
+
+**Merge Results:**
+- **27 inspection entries** (consolidated from multiple sources)
+- **9 inspectors** (no duplicates)
+- **22 areas** (comprehensive coverage)
+- **111 shops** (complete database)
+- **Single source of truth** established for all inspection data

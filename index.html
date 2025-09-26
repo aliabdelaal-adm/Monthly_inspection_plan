@@ -860,6 +860,10 @@
                     <input type="radio" name="reportType" value="all-yearly">
                     تقرير سنوي لجميع المفتشين
                 </label>
+                <label style="display:flex;align-items:center;gap:5px;">
+                    <input type="radio" name="reportType" value="shop-analytics">
+                    📊 تحليلات المحلات الذكية
+                </label>
             </div>
         </div>
         
@@ -2534,6 +2538,9 @@ function generateEnhancedReport() {
     } else if (reportType === 'all-yearly') {
         reportTitle = `تقرير سنوي لجميع المفتشين - ${selectedYear}`;
         reportHtml = generateAllInspectorsYearlyReport(filteredData);
+    } else if (reportType === 'shop-analytics') {
+        reportTitle = `📊 تحليلات المحلات الذكية - ${selectedYear}`;
+        reportHtml = generateShopAnalyticsReport(filteredData, selectedYear, selectedMonth);
     }
     
     const fullReportHtml = `
@@ -2832,6 +2839,246 @@ function generateAllInspectorsYearlyReport(data) {
     html += `</tbody></table>`;
     
     return html;
+}
+
+function generateShopAnalyticsReport(data, selectedYear, selectedMonth) {
+    // Create comprehensive shop analytics with intelligent recommendations
+    const shopAnalytics = {};
+    const areaAnalytics = {};
+    
+    // Process inspection data to extract shop statistics
+    data.forEach(item => {
+        if (!item.shops || !Array.isArray(item.shops)) return;
+        
+        const weekOfYear = getWeekOfYear(item.day);
+        const area = item.area;
+        
+        // Initialize area if not exists
+        if (!areaAnalytics[area]) {
+            areaAnalytics[area] = {
+                totalInspections: 0,
+                shops: new Set(),
+                weeks: new Set()
+            };
+        }
+        
+        areaAnalytics[area].totalInspections++;
+        areaAnalytics[area].weeks.add(weekOfYear);
+        
+        item.shops.forEach(shop => {
+            // Initialize shop analytics
+            if (!shopAnalytics[shop]) {
+                shopAnalytics[shop] = {
+                    name: shop,
+                    area: area,
+                    totalInspections: 0,
+                    weeks: new Set(),
+                    inspectors: new Set(),
+                    shifts: { morning: 0, evening: 0 },
+                    lastInspected: null
+                };
+            }
+            
+            // Update shop statistics
+            shopAnalytics[shop].totalInspections++;
+            shopAnalytics[shop].weeks.add(weekOfYear);
+            shopAnalytics[shop].inspectors.add(item.inspector);
+            shopAnalytics[shop].area = area;
+            
+            // Update shift counts
+            if (item.shift === 'صباحية') {
+                shopAnalytics[shop].shifts.morning++;
+            } else if (item.shift === 'مسائية') {
+                shopAnalytics[shop].shifts.evening++;
+            }
+            
+            // Update last inspection date
+            if (!shopAnalytics[shop].lastInspected || item.day > shopAnalytics[shop].lastInspected) {
+                shopAnalytics[shop].lastInspected = item.day;
+            }
+            
+            areaAnalytics[area].shops.add(shop);
+        });
+    });
+    
+    // Convert shop analytics to array and calculate additional metrics
+    const shopsArray = Object.values(shopAnalytics).map(shop => {
+        const weekCount = shop.weeks.size;
+        const inspectionRate = weekCount > 0 ? (shop.totalInspections / weekCount).toFixed(2) : 0;
+        const daysSinceLastInspection = shop.lastInspected ? 
+            Math.floor((new Date() - new Date(shop.lastInspected)) / (1000 * 60 * 60 * 24)) : 999;
+        
+        return {
+            ...shop,
+            weekCount,
+            inspectionRate: parseFloat(inspectionRate),
+            daysSinceLastInspection,
+            weeks: Array.from(shop.weeks),
+            inspectors: Array.from(shop.inspectors)
+        };
+    });
+    
+    // Sort by inspection count (high to low as requested)
+    shopsArray.sort((a, b) => b.totalInspections - a.totalInspections);
+    
+    // Calculate statistics
+    const totalShops = shopsArray.length;
+    const avgInspectionRate = totalShops > 0 ? 
+        (shopsArray.reduce((sum, shop) => sum + shop.totalInspections, 0) / totalShops).toFixed(2) : 0;
+    
+    // Identify under-inspected shops (bottom 30%)
+    const threshold = Math.ceil(totalShops * 0.3);
+    const underInspectedShops = shopsArray.slice(-threshold);
+    
+    // Generate HTML report
+    let html = `
+        <!-- Digital Statistics Dashboard -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin:20px 0;padding:15px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:12px;color:white;">
+            <div style="text-align:center;">
+                <div style="font-size:2em;font-weight:bold;margin-bottom:5px;">${totalShops}</div>
+                <div style="font-size:0.9em;opacity:0.9;">إجمالي المحلات</div>
+            </div>
+            <div style="text-align:center;">
+                <div style="font-size:2em;font-weight:bold;margin-bottom:5px;">${avgInspectionRate}</div>
+                <div style="font-size:0.9em;opacity:0.9;">متوسط التفتيشات</div>
+            </div>
+            <div style="text-align:center;">
+                <div style="font-size:2em;font-weight:bold;margin-bottom:5px;">${Object.keys(areaAnalytics).length}</div>
+                <div style="font-size:0.9em;opacity:0.9;">عدد المناطق</div>
+            </div>
+            <div style="text-align:center;">
+                <div style="font-size:2em;font-weight:bold;margin-bottom:5px;">${underInspectedShops.length}</div>
+                <div style="font-size:0.9em;opacity:0.9;">محلات تحتاج أولوية</div>
+            </div>
+        </div>
+        
+        <!-- Intelligence Recommendations -->
+        <div style="margin:20px 0;padding:15px;background:#fff3cd;border:1px solid #ffeaa7;border-radius:8px;">
+            <h4 style="margin:0 0 10px 0;color:#856404;display:flex;align-items:center;gap:8px;">
+                🧠 التوصيات الذكية
+            </h4>
+            <div style="font-size:0.95em;line-height:1.6;">
+                <p style="margin:5px 0;"><strong>الأولوية العالية:</strong> زيادة تفتيش المحلات التالية:</p>
+                <ul style="margin:5px 0;padding-right:20px;">`;
+    
+    underInspectedShops.slice(0, 5).forEach(shop => {
+        const urgencyLevel = shop.daysSinceLastInspection > 14 ? '🔴 عاجل' : 
+                            shop.daysSinceLastInspection > 7 ? '🟡 متوسط' : '🟢 عادي';
+        html += `<li>${shop.name} (${shop.area}) - ${shop.totalInspections} تفتيش ${urgencyLevel}</li>`;
+    });
+    
+    html += `
+                </ul>
+                <p style="margin:10px 0 5px 0;"><strong>توصيات عامة:</strong></p>
+                <p style="margin:5px 0;">• يُنصح بتوزيع التفتيشات بشكل أكثر عدالة عبر جميع المحلات</p>
+                <p style="margin:5px 0;">• التركيز على المحلات التي لم يتم تفتيشها منذ أكثر من أسبوعين</p>
+                <p style="margin:5px 0;">• تحسين التغطية الأسبوعية للمناطق ذات التفتيش المنخفض</p>
+            </div>
+        </div>
+        
+        <!-- Visual Statistics Chart -->
+        <div style="margin:20px 0;padding:15px;background:#f8f9fa;border-radius:8px;">
+            <h4 style="margin:0 0 15px 0;color:#234085;">📊 الإحصائيات المرئية</h4>
+            <div id="shopChartContainer" style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;">`;
+    
+    // Create simple visual bars for top shops
+    const maxInspections = Math.max(...shopsArray.map(s => s.totalInspections));
+    shopsArray.slice(0, 10).forEach(shop => {
+        const percentage = (shop.totalInspections / maxInspections) * 100;
+        const color = shop.totalInspections >= avgInspectionRate ? '#28a745' : 
+                     shop.totalInspections >= avgInspectionRate * 0.5 ? '#ffc107' : '#dc3545';
+        
+        html += `
+            <div style="text-align:center;margin:5px;">
+                <div style="width:40px;height:${Math.max(20, percentage * 2)}px;background:${color};border-radius:4px;margin:0 auto 5px;position:relative;">
+                    <span style="position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-size:0.8em;font-weight:bold;">${shop.totalInspections}</span>
+                </div>
+                <div style="font-size:0.7em;max-width:80px;word-wrap:break-word;">${shop.name.substring(0, 15)}${shop.name.length > 15 ? '...' : ''}</div>
+            </div>`;
+    });
+    
+    html += `
+            </div>
+            <div style="display:flex;justify-content:center;gap:20px;margin-top:15px;font-size:0.9em;">
+                <span><span style="display:inline-block;width:12px;height:12px;background:#28a745;border-radius:2px;margin-left:5px;"></span>مرتفع</span>
+                <span><span style="display:inline-block;width:12px;height:12px;background:#ffc107;border-radius:2px;margin-left:5px;"></span>متوسط</span>
+                <span><span style="display:inline-block;width:12px;height:12px;background:#dc3545;border-radius:2px;margin-left:5px;"></span>منخفض</span>
+            </div>
+        </div>
+        
+        <!-- Detailed Shop Analytics Table -->
+        <table class="stats-table" id="enhancedReportTable">
+            <thead>
+                <tr>
+                    <th>المحل</th>
+                    <th>المنطقة</th>
+                    <th>إجمالي التفتيشات</th>
+                    <th>عدد الأسابيع</th>
+                    <th>معدل التفتيش الأسبوعي</th>
+                    <th>آخر تفتيش</th>
+                    <th>عدد المفتشين</th>
+                    <th>صباحي/مسائي</th>
+                    <th>الحالة</th>
+                </tr>
+            </thead>
+            <tbody>`;
+    
+    shopsArray.forEach(shop => {
+        const status = shop.totalInspections >= avgInspectionRate ? '🟢 جيد' : 
+                      shop.totalInspections >= avgInspectionRate * 0.5 ? '🟡 متوسط' : '🔴 يحتاج أولوية';
+        const statusColor = shop.totalInspections >= avgInspectionRate ? '#d4edda' : 
+                           shop.totalInspections >= avgInspectionRate * 0.5 ? '#fff3cd' : '#f8d7da';
+        
+        html += `
+            <tr style="background:${statusColor};">
+                <td style="font-weight:bold;">${shop.name}</td>
+                <td>${shop.area}</td>
+                <td style="text-align:center;font-weight:bold;">${shop.totalInspections}</td>
+                <td style="text-align:center;">${shop.weekCount}</td>
+                <td style="text-align:center;">${shop.inspectionRate}</td>
+                <td style="text-align:center;">${shop.lastInspected || 'غير محدد'}</td>
+                <td style="text-align:center;">${shop.inspectors.length}</td>
+                <td style="text-align:center;">${shop.shifts.morning}/${shop.shifts.evening}</td>
+                <td style="text-align:center;">${status}</td>
+            </tr>`;
+    });
+    
+    html += `
+            </tbody>
+        </table>
+        
+        <!-- Area Summary -->
+        <div style="margin-top:25px;">
+            <h4 style="color:#234085;margin-bottom:15px;">📍 ملخص المناطق</h4>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px;">`;
+    
+    Object.entries(areaAnalytics).forEach(([area, stats]) => {
+        const shopCount = stats.shops.size;
+        const avgInspectionsPerShop = shopCount > 0 ? (stats.totalInspections / shopCount).toFixed(1) : 0;
+        
+        html += `
+            <div style="padding:15px;background:#ffffff;border:1px solid #e0e0e0;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+                <h5 style="margin:0 0 10px 0;color:#234085;">${area}</h5>
+                <p style="margin:5px 0;font-size:0.9em;"><strong>المحلات:</strong> ${shopCount}</p>
+                <p style="margin:5px 0;font-size:0.9em;"><strong>إجمالي التفتيشات:</strong> ${stats.totalInspections}</p>
+                <p style="margin:5px 0;font-size:0.9em;"><strong>متوسط التفتيش:</strong> ${avgInspectionsPerShop}/محل</p>
+                <p style="margin:5px 0;font-size:0.9em;"><strong>الأسابيع المغطاة:</strong> ${stats.weeks.size}</p>
+            </div>`;
+    });
+    
+    html += `
+            </div>
+        </div>`;
+    
+    return html;
+}
+
+// Helper function to get week number of year
+function getWeekOfYear(dateString) {
+    const date = new Date(dateString);
+    const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+    const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+    return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
 }
 
 function getMonthName(monthNumber) {

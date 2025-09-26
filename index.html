@@ -1066,6 +1066,8 @@ async function loadInspectionData() {
                 if (data.shops && Array.isArray(data.shops)) {
                     shopsData = data.shops;
                 }
+                // Display last update date/time for all users
+                displayLastUpdateFromData(data.lastUpdate);
                 renderPlanTable();
                 fillInspectorsDropdowns();
                 fillAreasDropdowns();
@@ -1088,6 +1090,8 @@ async function loadInspectionData() {
                 }
                 if (allData.areas) areasData = allData.areas;
                 if (allData.shops) shopsData = allData.shops;
+                // Display last update from localStorage backup
+                displayLastUpdateFromData(allData.lastUpdate);
                 console.log('Loaded complete data from localStorage backup');
             } catch (parseError) {
                 console.warn('Failed to parse localStorage data, using individual fallback');
@@ -1096,6 +1100,8 @@ async function loadInspectionData() {
                 if (localInspectionData) {
                     inspectionData = JSON.parse(localInspectionData);
                 }
+                // No lastUpdate available in individual fallback
+                displayLastUpdateFromData(null);
             }
         } else {
             // Fall back to individual localStorage item
@@ -1103,6 +1109,8 @@ async function loadInspectionData() {
             if (localInspectionData) {
                 inspectionData = JSON.parse(localInspectionData);
             }
+            // No lastUpdate available in individual fallback
+            displayLastUpdateFromData(null);
         }
     } finally {
         // Always ensure dropdowns are populated and table is rendered
@@ -1269,7 +1277,7 @@ function showUpdateMessage(message) {
     setTimeout(() => document.body.removeChild(messageDiv), 3000);
 }
 function setLastUpdateDate() {
-    // Only update the date/time if user is a developer
+    // Only update the date/time dynamically if user is a developer making changes
     if (!isDev && !window.isDev) return;
     
     let row = document.getElementById('lastUpdateRow');
@@ -1287,10 +1295,38 @@ function setLastUpdateDate() {
     row.textContent = "آخر تحديث للخطة: " + dateStr + "    " + timeStr;
 }
 
-function initializeLastUpdateDate() {
-    // Initialize the last update display on page load with a static message
+function displayLastUpdateFromData(lastUpdateISO) {
+    // Display the last update date/time from loaded data - visible to all users
     let row = document.getElementById('lastUpdateRow');
-    row.textContent = "آخر تحديث للخطة: متاح للمطور فقط";
+    
+    if (!lastUpdateISO) {
+        row.textContent = "آخر تحديث للخطة: غير متاح";
+        return;
+    }
+    
+    try {
+        let updateDate = new Date(lastUpdateISO);
+        let year = updateDate.getFullYear();
+        let month = String(updateDate.getMonth()+1).padStart(2,'0');
+        let day = String(updateDate.getDate()).padStart(2,'0');
+        let hours = updateDate.getHours();
+        let minutes = String(updateDate.getMinutes()).padStart(2,'0');
+        let period = hours >= 12 ? 'مساءً' : 'صباحًا';
+        let hour12 = hours % 12;
+        if(hour12 === 0) hour12 = 12;
+        let timeStr = hour12 + ':' + minutes + ' ' + period;
+        let dateStr = year+'-'+month+'-'+day;
+        row.textContent = "آخر تحديث للخطة: " + dateStr + "    " + timeStr;
+    } catch (error) {
+        console.warn('Error parsing last update date:', error);
+        row.textContent = "آخر تحديث للخطة: غير متاح";
+    }
+}
+
+function initializeLastUpdateDate() {
+    // Initialize the last update display on page load with a loading message
+    let row = document.getElementById('lastUpdateRow');
+    row.textContent = "آخر تحديث للخطة: جاري التحميل...";
 }
 function fillInspectorsDropdowns() {
     // مفتشين لأداة الاختيار

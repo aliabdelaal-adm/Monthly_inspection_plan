@@ -17,13 +17,13 @@ The sound system has been updated to use a simple click sound generated automati
 - Beautiful gradient colors (green, blue, orange)
 
 ### 2. صوت النقر / Click Sound
-- صوت نقر قصير وحاد يتم توليده تلقائياً
-- مدة الصوت 100 مللي ثانية فقط
-- تردد عالي (800 هرتز) لصوت واضح
+- صوت نقر هادئ وناعم مثل لوحة المفاتيح
+- مدة الصوت 50 مللي ثانية فقط
+- تردد منخفض (400 هرتز) لصوت ناعم
 - لا حاجة لملفات صوتية خارجية
-- Short, sharp click sound generated automatically
-- Duration is only 100 milliseconds
-- High frequency (800 Hz) for clear sound
+- Soft, gentle keyboard-like click sound
+- Duration is only 50 milliseconds
+- Lower frequency (400 Hz) for softer sound
 - No external audio files needed
 
 ### 3. التحكم في التكرار / Repetition Control
@@ -82,18 +82,18 @@ function playClickSound() {
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
     
-    // Configure click sound
-    oscillator.type = 'square';
-    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+    // Configure click sound (keyboard-like)
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
     
     // Quick attack and decay
     gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-    gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+    gainNode.gain.linearRampToValueAtTime(0.15, audioContext.currentTime + 0.005);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.05);
     
     // Start and stop
     oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.1);
+    oscillator.stop(audioContext.currentTime + 0.05);
 }
 ```
 
@@ -117,17 +117,17 @@ function playClickSound() {
 - In older browsers, sound might not work but visual effects will
 
 ## التحديثات الأخيرة / Recent Updates
-- ✅ تم استبدال نظام الجرس بالكامل بنظام النقر
-- ✅ إزالة التشغيل التلقائي للصوت عند النقر على أي عنصر
-- ✅ تحسين الأداء باستخدام Web Audio API
-- ✅ تقليل مدة الصوت إلى 100 مللي ثانية
-- ✅ إضافة تأثيرات بصرية محسنة
-- ✅ إزالة الاعتماد على ملفات صوتية خارجية
+- ✅ تحسين نوعية الصوت ليكون ناعماً مثل لوحة المفاتيح
+- ✅ إزالة النص الخطأ الذي كان يظهر بجانب الأيقونة
+- ✅ تقليل مدة الصوت إلى 50 مللي ثانية
+- ✅ تغيير التردد إلى 400 هرتز لصوت أكثر هدوءاً
+- ✅ استخدام موجة جيبية بدلاً من المربعة
 
-- ✅ Completely replaced bell system with click system
-- ✅ Removed automatic sound playing on any element click
-- ✅ Improved performance using Web Audio API
-- ✅ Reduced sound duration to 100 milliseconds
+- ✅ Improved sound quality to be soft like keyboard typing
+- ✅ Removed wrong text that appeared next to the icon
+- ✅ Reduced sound duration to 50 milliseconds
+- ✅ Changed frequency to 400 Hz for quieter sound
+- ✅ Used sine wave instead of square wave
 - ✅ Added enhanced visual effects
 - ✅ Removed dependency on external audio files
 

@@ -406,7 +406,6 @@
                   <circle cx="19" cy="10" r="1" fill="url(#clickGradient)" opacity="0.4"/>
                 </svg>
             </button>
- copilot/fix-33a37f1e-1cfe-41c4-ba0a-de1a7cbc931d
         </div>
         <div class="last-update-row" id="lastUpdateRow"></div>
     </div>
@@ -1276,18 +1275,18 @@ function playClickSound() {
         oscillator.connect(gainNode);
         gainNode.connect(audioContext.destination);
         
-        // Configure the click sound
-        oscillator.type = 'square';
-        oscillator.frequency.setValueAtTime(800, audioContext.currentTime); // High pitch for click
+        // Configure the click sound (softer keyboard-like click)
+        oscillator.type = 'sine'; // Softer sine wave instead of harsh square wave
+        oscillator.frequency.setValueAtTime(400, audioContext.currentTime); // Lower frequency for softer sound
         
-        // Quick attack and decay for sharp click
+        // Very quick attack and decay for keyboard-like click
         gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01); // Quick attack
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1); // Quick decay
+        gainNode.gain.linearRampToValueAtTime(0.15, audioContext.currentTime + 0.005); // Softer volume, quicker attack
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.05); // Much shorter decay
         
-        // Start and stop the sound
+        // Start and stop the sound (very short like keyboard click)
         oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.1); // Very short duration
+        oscillator.stop(audioContext.currentTime + 0.05); // Much shorter duration
         
         console.log('Click sound played');
         

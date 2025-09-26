@@ -1050,6 +1050,52 @@ function startAutoRefresh() {
     }, 30000); // Check every 30 seconds
 }
 
+// Daily auto-refresh functionality at midnight
+function startDailyRefresh() {
+    let lastCheckedDay = new Date().getDate(); // Keep track of the current day
+    
+    // Check every 30 seconds for day change (including midnight transition)
+    setInterval(() => {
+        const now = new Date();
+        const currentDay = now.getDate();
+        
+        // Check if the day has changed (this handles midnight transition)
+        if (currentDay !== lastCheckedDay) {
+            console.log('Day change detected - refreshing daily inspections');
+            console.log('Previous day:', lastCheckedDay, 'Current day:', currentDay);
+            
+            lastCheckedDay = currentDay;
+            
+            // Clear any active search filters to show today's inspections
+            if (Object.keys(currentSearchFilters).length > 0) {
+                clearSearchFilters();
+            } else {
+                // Just refresh the table to show new day's inspections
+                renderPlanTable();
+            }
+            
+            const todayStr = now.toLocaleDateString('ar-EG');
+            showUpdateMessage(`تم تحديث التفتيشات اليومية - عرض تفتيشات ${todayStr}`);
+        }
+        
+        // Also check specifically for midnight for immediate response
+        if (now.getHours() === 0 && now.getMinutes() === 0 && now.getSeconds() < 30) {
+            console.log('Midnight detected - ensuring daily inspections are current');
+            
+            // Clear any active search filters to show today's inspections
+            if (Object.keys(currentSearchFilters).length > 0) {
+                clearSearchFilters();
+            } else {
+                // Just refresh the table to show new day's inspections
+                renderPlanTable();
+            }
+            
+            const todayStr = now.toLocaleDateString('ar-EG');
+            showUpdateMessage(`🌙 منتصف الليل - تم تحديث التفتيشات لليوم الجديد ${todayStr}`);
+        }
+    }, 30000); // Check every 30 seconds (same as auto-refresh)
+}
+
 // Load data from JSON file
 async function loadInspectionData() {
     const statusDiv = document.getElementById('refreshStatus');
@@ -1474,6 +1520,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Removed automatic playback - sound only plays on user touch/click interactions
     loadInspectionData(); // Load data from JSON file - will call fillInspectorsDropdowns() when complete
     startAutoRefresh(); // Start auto-refresh functionality
+    startDailyRefresh(); // Start daily midnight refresh functionality
     
     // Ensure dropdowns are filled on page load
     fillInspectorsDropdowns();

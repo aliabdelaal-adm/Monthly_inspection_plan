@@ -1760,21 +1760,43 @@ function renderPlanTable() {
         rows = inspectionData.filter(item => item.inspector === selectedInspector);
     }
     
+    // تطبيق فلتر اليوم الحالي كافتراضي (إلا إذا كان المستخدم يستخدم البحث)
+    const hasActiveSearchFilters = Object.keys(currentSearchFilters).length > 0 && 
+        (currentSearchFilters.fromDate || currentSearchFilters.toDate || 
+         currentSearchFilters.area || currentSearchFilters.shift);
+    
+    if (!hasActiveSearchFilters) {
+        // عرض تفتيشات اليوم الحالي فقط
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+        rows = rows.filter(item => item.day === today);
+    }
+    
     // Apply search filters
     rows = filterInspectionData(rows);
     
     // Update search results info
     const searchResultsInfo = document.getElementById('searchResultsInfo');
     const searchResultsCount = document.getElementById('searchResultsCount');
-    if (Object.keys(currentSearchFilters).length > 0 && currentSearchFilters.fromDate || currentSearchFilters.toDate || currentSearchFilters.area || currentSearchFilters.shift) {
+    if (hasActiveSearchFilters) {
         searchResultsInfo.style.display = 'block';
         searchResultsCount.textContent = rows.length;
     } else {
-        searchResultsInfo.style.display = 'none';
+        // عرض معلومات التفتيشات اليومية
+        if (rows.length > 0) {
+            searchResultsInfo.style.display = 'block';
+            const today = new Date().toLocaleDateString('ar-EG');
+            searchResultsInfo.innerHTML = `<strong>تفتيشات اليوم (${today}):</strong> <span id="searchResultsCount">${rows.length}</span> تفتيش`;
+        } else {
+            searchResultsInfo.style.display = 'none';
+        }
     }
     
     if (rows.length === 0) {
-        container.innerHTML = '<div style="text-align:center;color:#c00;font-weight:bold;margin:30px 0;">لا توجد أي خطة تفتيش.</div>';
+        if (hasActiveSearchFilters) {
+            container.innerHTML = '<div style="text-align:center;color:#c00;font-weight:bold;margin:30px 0;">لا توجد نتائج للبحث المحدد.</div>';
+        } else {
+            container.innerHTML = '<div style="text-align:center;color:#666;font-weight:bold;margin:30px 0;">لا توجد تفتيشات لليوم الحالي.<br><small style="font-weight:normal;">استخدم البحث للعثور على تفتيشات الأيام السابقة</small></div>';
+        }
         return;
     }
     let html = `

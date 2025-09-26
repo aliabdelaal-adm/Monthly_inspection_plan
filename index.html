@@ -1384,17 +1384,81 @@ function fillShopsDropdowns(selectedAreaId = null) {
     const shopsSelect = document.getElementById('formShops');
     if (shopsSelect) {
         shopsSelect.innerHTML = '';
-        // Always show all shops, not filtered by area - allow mixing different areas
-        let shopsToShow = shopsData;
         
-        shopsToShow.forEach(shop => {
-            const area = areasData.find(a => a.id === shop.areaId);
-            const areaName = area ? area.name : 'غير محدد';
-            const option = document.createElement('option');
-            option.value = shop.name;
-            option.textContent = `${shop.name} (${areaName})`;  // Show area name in option for clarity
-            shopsSelect.appendChild(option);
-        });
+        // Get the selected area name if not provided
+        let selectedAreaName = null;
+        if (!selectedAreaId) {
+            const areaSelect = document.getElementById('formArea');
+            selectedAreaName = areaSelect ? areaSelect.value : null;
+        } else {
+            const selectedArea = areasData.find(a => a.id === selectedAreaId);
+            selectedAreaName = selectedArea ? selectedArea.name : null;
+        }
+        
+        if (selectedAreaName) {
+            // First, add shops from the selected area
+            const selectedAreaShops = shopsData.filter(shop => {
+                const area = areasData.find(a => a.id === shop.areaId);
+                return area && area.name === selectedAreaName;
+            });
+            
+            // Add selected area shops with a special label
+            if (selectedAreaShops.length > 0) {
+                const selectedAreaGroup = document.createElement('optgroup');
+                selectedAreaGroup.label = `محلات ${selectedAreaName} (المنطقة المحددة)`;
+                selectedAreaShops.forEach(shop => {
+                    const option = document.createElement('option');
+                    option.value = shop.name;
+                    option.textContent = shop.name;
+                    selectedAreaGroup.appendChild(option);
+                });
+                shopsSelect.appendChild(selectedAreaGroup);
+            }
+            
+            // Then, add shops from other areas
+            const otherAreaShops = shopsData.filter(shop => {
+                const area = areasData.find(a => a.id === shop.areaId);
+                return !area || area.name !== selectedAreaName;
+            });
+            
+            if (otherAreaShops.length > 0) {
+                const otherAreasGroup = document.createElement('optgroup');
+                otherAreasGroup.label = 'محلات من مناطق أخرى (اختياري)';
+                otherAreaShops.forEach(shop => {
+                    const area = areasData.find(a => a.id === shop.areaId);
+                    const areaName = area ? area.name : 'غير محدد';
+                    const option = document.createElement('option');
+                    option.value = shop.name;
+                    option.textContent = `${shop.name} (${areaName})`;
+                    otherAreasGroup.appendChild(option);
+                });
+                shopsSelect.appendChild(otherAreasGroup);
+            }
+        } else {
+            // No area selected - show all shops grouped by area
+            const groupedShops = {};
+            shopsData.forEach(shop => {
+                const area = areasData.find(a => a.id === shop.areaId);
+                const areaName = area ? area.name : 'غير محدد';
+                if (!groupedShops[areaName]) {
+                    groupedShops[areaName] = [];
+                }
+                groupedShops[areaName].push(shop);
+            });
+            
+            // Add each area group
+            Object.keys(groupedShops).sort().forEach(areaName => {
+                const areaGroup = document.createElement('optgroup');
+                areaGroup.label = areaName;
+                groupedShops[areaName].forEach(shop => {
+                    const option = document.createElement('option');
+                    option.value = shop.name;
+                    option.textContent = shop.name;
+                    areaGroup.appendChild(option);
+                });
+                shopsSelect.appendChild(areaGroup);
+            });
+        }
     }
 }
 

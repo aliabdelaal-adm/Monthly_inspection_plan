@@ -1417,12 +1417,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const input = document.getElementById('newInspectorInput');
         if (select.style.display === 'none') {
             select.style.display = 'inline-block';
+            select.setAttribute('required', 'required'); // Re-enable validation for select
             input.style.display = 'none';
+            input.removeAttribute('required'); // Remove validation from input
             this.textContent = '+';
             this.title = 'إضافة مفتش جديد';
         } else {
-            select.style.display = 'none';  
+            select.style.display = 'none';
+            select.removeAttribute('required'); // Remove validation from hidden select
             input.style.display = 'inline-block';
+            input.setAttribute('required', 'required'); // Enable validation for input
             input.focus();
             this.textContent = '×';
             this.title = 'إلغاء إدخال مفتش جديد';
@@ -1435,12 +1439,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const input = document.getElementById('newAreaInput');
         if (select.style.display === 'none') {
             select.style.display = 'inline-block';
+            select.setAttribute('required', 'required'); // Re-enable validation for select
             input.style.display = 'none';
+            input.removeAttribute('required'); // Remove validation from input
             this.textContent = '+';
             this.title = 'إضافة منطقة جديدة';
         } else {
             select.style.display = 'none';
+            select.removeAttribute('required'); // Remove validation from hidden select
             input.style.display = 'inline-block';
+            input.setAttribute('required', 'required'); // Enable validation for input
             input.focus();
             this.textContent = '×';
             this.title = 'إلغاء إدخال منطقة جديدة';
@@ -2750,14 +2758,22 @@ function exportEnhancedReportToExcel() {
 // --- Toggle Functions for Inspector/Area Input Fields ---
 function resetFormToggles() {
     // Reset inspector toggle
-    document.getElementById('formInspector').style.display = 'inline-block';
-    document.getElementById('newInspectorInput').style.display = 'none';
-    document.getElementById('newInspectorInput').value = '';
+    const inspectorSelect = document.getElementById('formInspector');
+    const inspectorInput = document.getElementById('newInspectorInput');
+    inspectorSelect.style.display = 'inline-block';
+    inspectorSelect.setAttribute('required', 'required'); // Ensure select has required
+    inspectorInput.style.display = 'none';
+    inspectorInput.removeAttribute('required'); // Remove required from input
+    inspectorInput.value = '';
     
     // Reset area toggle
-    document.getElementById('formArea').style.display = 'inline-block';
-    document.getElementById('newAreaInput').style.display = 'none';
-    document.getElementById('newAreaInput').value = '';
+    const areaSelect = document.getElementById('formArea');
+    const areaInput = document.getElementById('newAreaInput');
+    areaSelect.style.display = 'inline-block';
+    areaSelect.setAttribute('required', 'required'); // Ensure select has required
+    areaInput.style.display = 'none';
+    areaInput.removeAttribute('required'); // Remove required from input
+    areaInput.value = '';
     
     // Update area-based shops
     fillShopsDropdowns();

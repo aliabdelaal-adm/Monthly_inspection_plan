@@ -432,13 +432,13 @@
         .shops-dropdown-list {
             display:none;
             position:fixed;
-            background:#90EE90;
-            border:1px solid #23408577;
-            border-radius:9px;
+            background:#ffffff;
+            border:2px solid #234085;
+            border-radius:8px;
             margin-top:5px;
-            min-width:130px;
-            max-height:210px;
-            box-shadow:0 2px 14px #eaeaea;
+            min-width:180px;
+            max-height:250px;
+            box-shadow:0 4px 16px rgba(0,0,0,0.2);
             z-index:1000;
             right:unset;
             left:unset;
@@ -450,9 +450,13 @@
             margin:0; padding:7px 5px;
         }
         .shops-dropdown-list ul li {
-            padding:3px 0 3px 0;
-            border-bottom:1px solid #eee;
+            padding:8px 12px;
+            border-bottom:1px solid #e0e0e0;
             font-size:0.97em;
+            transition: background-color 0.2s;
+        }
+        .shops-dropdown-list ul li:hover {
+            background-color:#f0f8ff;
         }
         .shops-dropdown-list ul li:last-child {border-bottom:none;}
         .shops-dropdown-wrap {position:relative; display:inline-block;}
@@ -702,11 +706,14 @@
         <select id="inspectorSelect">
             <option value="">-- اختر المفتش --</option>
         </select>
+        <button id="searchToggleBtn" style="background:#234085;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;margin-right:10px;font-size:0.9em;" title="البحث">
+            🔍 البحث
+        </button>
     </div>
     
-    <!-- قسم البحث والتصفية -->
-    <div class="search-filters-section" style="background:#f8f9fa;padding:15px;border-radius:8px;margin:15px 0;border:1px solid #dee2e6;">
-        <h3 style="margin:0 0 15px 0;color:#234085;text-align:center;">🔍 البحث والتصفية</h3>
+    <!-- قسم البحث -->
+    <div id="searchFiltersSection" class="search-filters-section" style="background:#f8f9fa;padding:15px;border-radius:8px;margin:15px 0;border:1px solid #dee2e6;display:none;">
+        <h3 style="margin:0 0 15px 0;color:#234085;text-align:center;">🔍 البحث</h3>
         <div class="search-filters-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;align-items:end;">
             <div>
                 <label for="searchFromDate" style="display:block;margin-bottom:5px;font-weight:bold;">من تاريخ:</label>
@@ -1471,6 +1478,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Search functionality
     document.getElementById('applySearchBtn').addEventListener('click', applySearchFilters);
     document.getElementById('clearSearchBtn').addEventListener('click', clearSearchFilters);
+    
+    // Search toggle functionality
+    document.getElementById('searchToggleBtn').addEventListener('click', function() {
+        const searchSection = document.getElementById('searchFiltersSection');
+        if (searchSection.style.display === 'none' || searchSection.style.display === '') {
+            searchSection.style.display = 'block';
+            this.innerHTML = '🔍 إخفاء البحث';
+            this.style.background = '#dc3545';
+        } else {
+            searchSection.style.display = 'none';
+            this.innerHTML = '🔍 البحث';
+            this.style.background = '#234085';
+        }
+    });
     
     // Real-time search on input changes
     document.getElementById('searchFromDate').addEventListener('change', applySearchFilters);

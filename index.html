@@ -2054,12 +2054,12 @@ function renderPlanTable() {
                 <td>${row.area}</td>
                 <td>
                     <div class="shops-inline-display" id="shopsInlineDisplay${idx}">
-                        <div class="shops-inline-content" style="background:#f8f9fa;border:1px solid #ddd;border-radius:4px;padding:8px;margin-bottom:5px;font-size:0.9em;line-height:1.4;">
+                        <div class="shops-inline-content" style="background:#f8f9fa;border:1px solid #ddd;border-radius:4px;padding:8px;margin-bottom:5px;font-size:0.9em;line-height:1.4;display:none;">
                             <strong style="color:#234085;display:block;margin-bottom:4px;">المحلات (${row.shops ? row.shops.length : 0}):</strong>
                             <span style="color:#333;">${row.shops ? row.shops.join(' • ') : 'لا توجد محلات'}</span>
                         </div>
                         <button class="dropdown-shops-btn" onclick="toggleShopsVisibility(${idx})" style="font-size:0.8em;padding:4px 12px;">
-                            <span id="toggleText${idx}">إخفاء المحلات</span>
+                            <span id="toggleText${idx}">عرض المحلات (${row.shops ? row.shops.length : 0})</span>
                         </button>
                     </div>
                 </td>
@@ -2133,7 +2133,10 @@ window.toggleShopsVisibility = function(idx) {
         toggleText.textContent = 'إخفاء المحلات';
     } else {
         content.style.display = 'none';
-        toggleText.textContent = 'عرض المحلات';
+        // Get the shops count from the content to display in the button
+        let shopsCountMatch = content.querySelector('strong').textContent.match(/\((\d+)\)/);
+        let shopsCount = shopsCountMatch ? shopsCountMatch[1] : '0';
+        toggleText.textContent = `عرض المحلات (${shopsCount})`;
     }
 };
 document.addEventListener('click', function(e){

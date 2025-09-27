@@ -532,6 +532,7 @@
         .plan-table tbody tr:nth-child(odd) {
             background:#ffffff;
         }
+ copilot/fix-2648184b-23a6-45da-b5cc-3c6e6e95699e
         
         /* Desktop column widths - optimized for content */
         .plan-table th:nth-child(1), .plan-table td:nth-child(1) { /* المفتش */
@@ -560,21 +561,34 @@
         }
         
         /* Dropdown shops styles removed - now using inline display */
+
+        /* Enhanced floating dropdown styles for shops list */
+ main
         .shops-dropdown-list {
             display:none;
             position:fixed;
             background:#90EE90;
             border:2px solid #234085;
             border-radius:8px;
-            margin-top:5px;
-            min-width:180px;
+            min-width:200px;
+            max-width:300px;
             max-height:250px;
-            box-shadow:0 4px 16px rgba(0,0,0,0.2);
-            z-index:1000;
-            right:unset;
-            left:unset;
+            box-shadow:0 8px 24px rgba(0,0,0,0.3);
+            z-index:9999;
             text-align:right;
             overflow-y:auto;
+            /* Smooth transition effects */
+            opacity:0;
+            transform:translateY(-10px);
+            transition:all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            /* Ensure it's removed from normal flow */
+            pointer-events:none;
+        }
+        
+        .shops-dropdown-list.show {
+            opacity:1;
+            transform:translateY(0);
+            pointer-events:auto;
         }
         .shops-dropdown-list ul {
             list-style: none;
@@ -2261,39 +2275,118 @@ function deletePlan(idx) {
     renderPlanTable();
 }
 
-// --- وظيفة إظهار/إخفاء قائمة المحلات المنسدلة ---
+// --- وظيفة إظهار/إخفاء قائمة المحلات المنسدلة مع تأثيرات سلسة ---
 function toggleShopsDropdown(rowIndex) {
     const dropdownId = `shops-dropdown-${rowIndex}`;
     const dropdown = document.getElementById(dropdownId);
     
     if (!dropdown) return;
     
-    // إخفاء جميع القوائم المنسدلة الأخرى
+    // إخفاء جميع القوائم المنسدلة الأخرى بسرعة
     document.querySelectorAll('.shops-dropdown-list').forEach(el => {
         if (el.id !== dropdownId) {
-            el.style.display = 'none';
+            el.classList.remove('show');
+            setTimeout(() => {
+                if (!el.classList.contains('show')) {
+                    el.style.display = 'none';
+                    // إعادة القائمة إلى موضعها الأصلي في DOM
+                    const originalParent = document.querySelector(`#${el.id}`).getAttribute('data-original-parent');
+                    if (originalParent) {
+                        const parent = document.getElementById(originalParent);
+                        if (parent && el.parentElement === document.body) {
+                            parent.appendChild(el);
+                        }
+                    }
+                }
+            }, 300);
         }
     });
     
     // تبديل حالة القائمة المنسدلة الحالية
-    if (dropdown.style.display === 'none' || dropdown.style.display === '') {
-        dropdown.style.display = 'block';
+    const isCurrentlyVisible = dropdown.classList.contains('show');
+    
+    if (!isCurrentlyVisible) {
+        // حفظ مرجع للحاوي الأصلي
+        if (!dropdown.getAttribute('data-original-parent')) {
+            dropdown.setAttribute('data-original-parent', dropdown.parentElement.id || 'shops-wrap-' + rowIndex);
+            if (!dropdown.parentElement.id) {
+                dropdown.parentElement.id = 'shops-wrap-' + rowIndex;
+            }
+        }
         
-        // تحديد موضع القائمة المنسدلة
-        const button = dropdown.previousElementSibling;
-        const rect = button.getBoundingClientRect();
-        dropdown.style.position = 'fixed';
-        dropdown.style.top = (rect.bottom + 5) + 'px';
-        dropdown.style.left = rect.left + 'px';
+        // نقل القائمة إلى body لضمان العرض الطافي
+        document.body.appendChild(dropdown);
+        
+        // إظهار القائمة المنسدلة
+        const button = document.querySelector(`button[onclick="toggleShopsDropdown('${rowIndex}')"]`);
+        if (button) {
+            const rect = button.getBoundingClientRect();
+            
+            // تحديد موضع القائمة المنسدلة
+            dropdown.style.position = 'fixed';
+            dropdown.style.top = (rect.bottom + 8) + 'px';
+            
+            // تحديد الموضع الأفقي بذكاء (يمين أو يسار حسب المساحة المتاحة)
+            const viewportWidth = window.innerWidth;
+            const dropdownWidth = 250; // العرض التقديري للقائمة
+            
+            if (rect.left + dropdownWidth > viewportWidth) {
+                // عرض على اليسار إذا لم تكن هناك مساحة كافية على اليمين
+                dropdown.style.left = (rect.right - dropdownWidth) + 'px';
+            } else {
+                // عرض على اليمين
+                dropdown.style.left = rect.left + 'px';
+            }
+            
+            // إظهار القائمة بتأثير سلس
+            dropdown.style.display = 'block';
+            // استخدام requestAnimationFrame لضمان تطبيق العرض قبل إضافة الفئة
+            requestAnimationFrame(() => {
+                dropdown.classList.add('show');
+            });
+        }
     } else {
-        dropdown.style.display = 'none';
+        // إخفاء القائمة المنسدلة
+        dropdown.classList.remove('show');
+        setTimeout(() => {
+            dropdown.style.display = 'none';
+            // إعادة القائمة إلى موضعها الأصلي في DOM
+            const originalParentId = dropdown.getAttribute('data-original-parent');
+            if (originalParentId) {
+                const originalParent = document.getElementById(originalParentId);
+                if (originalParent && dropdown.parentElement === document.body) {
+                    originalParent.appendChild(dropdown);
+                }
+            }
+        }, 300); // انتظار انتهاء الانتقال
     }
 }
 
-// --- المحلات المنسدلة --- (تم إزالة هذه الوظيفة لصالح العرض المباشر)
+// --- إخفاء القوائم المنسدلة عند النقر خارجها ---
 document.addEventListener('click', function(e){
-    if (![...document.querySelectorAll('.shops-dropdown-wrap *')].includes(e.target)) {
-        document.querySelectorAll('.shops-dropdown-list').forEach(el=>el.style.display='none');
+    // التحقق من أن النقر ليس على زر المحلات أو داخل القائمة المنسدلة
+    const isClickOnButton = e.target.closest('.show-shops-btn');
+    const isClickInDropdown = e.target.closest('.shops-dropdown-list');
+    
+    if (!isClickOnButton && !isClickInDropdown) {
+        document.querySelectorAll('.shops-dropdown-list').forEach(el => {
+            if (el.classList.contains('show')) {
+                el.classList.remove('show');
+                setTimeout(() => {
+                    if (!el.classList.contains('show')) {
+                        el.style.display = 'none';
+                        // إعادة القائمة إلى موضعها الأصلي في DOM
+                        const originalParentId = el.getAttribute('data-original-parent');
+                        if (originalParentId) {
+                            const originalParent = document.getElementById(originalParentId);
+                            if (originalParent && el.parentElement === document.body) {
+                                originalParent.appendChild(el);
+                            }
+                        }
+                    }
+                }, 300);
+            }
+        });
     }
 });
 

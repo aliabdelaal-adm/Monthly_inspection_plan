@@ -484,12 +484,12 @@
         .excel-btn:hover {background:#146c43;}
         .print-btn {background:#6c757d;color:#fff;}
         .print-btn:hover {background:#545b62;}
-        .plan-table-container {width:100%;margin:18px 0;overflow-x:auto;}
+        .plan-table-container {width:100%;margin:18px 0;overflow-x:auto;overflow-y:visible;}
         .plan-table {
             width:100%;
             border-collapse:collapse;
             border-radius:13px;
-            overflow:hidden;
+            overflow:visible;
             box-shadow:0 4px 20px rgba(35, 64, 133, 0.15);
             border:1px solid #e1e8ff;
             font-family: 'Cairo', Arial, sans-serif;
@@ -520,6 +520,7 @@
             font-size:0.95em;
             vertical-align:middle;
             transition:background-color 0.2s ease;
+            height: auto;
         }
         .plan-table tr:hover {
             background:linear-gradient(90deg, #f0f4ff 0%, #fafbff 100%);
@@ -536,8 +537,8 @@
         
         /* Desktop column widths - optimized for content */
         .plan-table th:nth-child(1), .plan-table td:nth-child(1) { /* المفتش */
-            width: 18%;
-            min-width: 140px;
+            width: 20%;
+            min-width: 160px;
             white-space: nowrap;
         }
         .plan-table th:nth-child(2), .plan-table td:nth-child(2) { /* التاريخ */
@@ -551,13 +552,15 @@
             white-space: nowrap;
         }
         .plan-table th:nth-child(4), .plan-table td:nth-child(4) { /* المنطقة */
-            width: 15%;
-            min-width: 120px;
+            width: 18%;
+            min-width: 140px;
             white-space: nowrap;
         }
         .plan-table th:nth-child(5), .plan-table td:nth-child(5) { /* المحلات */
-            width: 45%;
+            width: 40%;
             min-width: 200px;
+            overflow: visible;
+            position: relative;
         }
         
         /* Dropdown shops styles removed - now using inline display */
@@ -565,17 +568,19 @@
         /* Simple dropdown styles for shops list */
         .shops-dropdown-list {
             display:none;
-            position:relative;
+            position:fixed;
             background:#90EE90;
             border:2px solid #234085;
             border-radius:8px;
             margin-top:5px;
-            min-width:180px;
+            min-width:220px;
+            max-width:400px;
             max-height:250px;
             box-shadow:0 4px 16px rgba(0,0,0,0.2);
-            z-index:1000;
+            z-index:9999;
             text-align:right;
             overflow-y:auto;
+            white-space:normal;
         }
         .shops-dropdown-list ul {
             list-style: none;
@@ -584,8 +589,11 @@
         .shops-dropdown-list ul li {
             padding:8px 12px;
             border-bottom:1px solid #e0e0e0;
-            font-size:0.97em;
+            font-size:0.95em;
             transition: background-color 0.2s;
+            word-wrap: break-word;
+            white-space: normal;
+            line-height: 1.3;
         }
         .shops-dropdown-list ul li:hover {
             background-color:#f0f8ff;
@@ -2266,8 +2274,9 @@ function deletePlan(idx) {
 function toggleShopsDropdown(rowIndex) {
     const dropdownId = `shops-dropdown-${rowIndex}`;
     const dropdown = document.getElementById(dropdownId);
+    const button = document.querySelector(`button[onclick="toggleShopsDropdown('${rowIndex}')"]`);
     
-    if (!dropdown) return;
+    if (!dropdown || !button) return;
     
     // إخفاء جميع القوائم المنسدلة الأخرى
     document.querySelectorAll('.shops-dropdown-list').forEach(el => {
@@ -2278,6 +2287,12 @@ function toggleShopsDropdown(rowIndex) {
     
     // تبديل حالة القائمة المنسدلة الحالية
     if (dropdown.style.display === 'none' || dropdown.style.display === '') {
+        // احصل على موقع الزر لوضع القائمة المنسدلة
+        const buttonRect = button.getBoundingClientRect();
+        dropdown.style.position = 'fixed';
+        dropdown.style.top = `${buttonRect.bottom + 5}px`;
+        dropdown.style.left = `${buttonRect.left}px`;
+        dropdown.style.zIndex = '9999';
         dropdown.style.display = 'block';
     } else {
         dropdown.style.display = 'none';

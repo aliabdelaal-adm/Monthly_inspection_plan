@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>خطة التفتيش الشهرية</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, minimum-scale=1.0, maximum-scale=5.0">
     
     <!-- SEO Optimization Meta Tags -->
     <meta name="robots" content="index, follow">
@@ -71,7 +71,19 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        body { font-family: 'Cairo', Arial, sans-serif; background: #f7f9fc; margin:0;}
+        body { 
+            font-family: 'Cairo', Arial, sans-serif; 
+            background: #f7f9fc; 
+            margin:0;
+            /* Better mobile font rendering */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            /* Prevent zoom on input focus on iOS */
+            -webkit-text-size-adjust: 100%;
+            /* Better mobile scrolling */
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+        }
         .main-container {
             background: #fff;
             border-radius: 18px;
@@ -716,6 +728,57 @@
         .dev-section {background:#e9ecef;border-radius:8px;padding:16px 11px;margin:14px 0 14px 0;}
         .dev-section .close-btn {background:#d32f2f;color:#fff;border:none;border-radius:5px;padding:0 13px;font-size:1.1em;cursor:pointer;float:left;}
         #devPasswordForm {margin-bottom:6px;}
+        /* Mobile-specific improvements */
+        @media (hover: none) and (pointer: coarse) {
+            /* This targets touch devices specifically */
+            button:hover {
+                transform: none; /* Disable hover transforms on touch devices */
+            }
+            .action-group:hover {
+                transform: none;
+            }
+            /* Better tap feedback */
+            button:active {
+                transform: scale(0.98);
+                transition: transform 0.1s;
+            }
+            .plan-table button:active {
+                background-color: rgba(35, 64, 133, 0.8);
+            }
+        }
+        
+        /* Additional mobile polish */
+        @media (max-width: 600px) {
+            /* Smooth scrolling improvements */
+            html {
+                scroll-behavior: smooth;
+            }
+            
+            /* Better focus states for accessibility */
+            button:focus, 
+            select:focus, 
+            input:focus {
+                outline: 2px solid #234085;
+                outline-offset: 2px;
+            }
+            
+            /* Loading state improvements */
+            .loading-spinner {
+                display: inline-block;
+                width: 20px;
+                height: 20px;
+                border: 2px solid #f3f3f3;
+                border-top: 2px solid #234085;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+            }
+            
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        }
+        
         @media (max-width:600px) {
             .main-container {
                 padding:10px 2vw 7px 2vw;
@@ -740,12 +803,29 @@
                 margin-bottom: 4px;
             }
             select, input[type="text"], input[type="date"], input[type="password"] {
-                padding: 8px 12px;
-                font-size: 0.95em;
+                padding: 12px 14px; /* Increased padding for better touch targets */
+                font-size: 16px; /* Prevent zoom on iOS */
                 min-width: 200px;
                 max-width: 280px;
                 width: 100%;
                 box-sizing: border-box;
+                border-radius: 8px;
+                /* Better mobile styling */
+                -webkit-appearance: none;
+                appearance: none;
+                background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+                background-repeat: no-repeat;
+                background-position: left 12px center;
+                background-size: 16px;
+                padding-left: 40px;
+            }
+            /* Improve button touch targets */
+            button {
+                min-height: 44px; /* Apple's recommended minimum touch target */
+                min-width: 44px;
+                border-radius: 8px;
+                cursor: pointer;
+                touch-action: manipulation; /* Prevent double-tap zoom */
             }
             .actions-row {
                 margin: 15px 0;
@@ -759,28 +839,41 @@
                 min-width: unset;
                 width: 100%;
                 max-width: none;
-                padding: 14px 10px;
+                padding: 16px 12px; /* Increased padding */
             }
             .action-group-title {
                 font-size: 0.9em;
+                margin-bottom: 8px;
             }
             .action-group button {
                 min-width: 120px;
-                padding: 10px 14px;
+                padding: 12px 16px; /* Better touch targets */
                 font-size: 0.85em;
+                margin: 4px 0; /* Add spacing between buttons */
             }
             .plan-table-container {
                 overflow-x:auto;
                 -webkit-overflow-scrolling:touch;
+                /* Better scrolling on mobile */
+                scrollbar-width: thin;
+                border-radius: 8px;
+                box-shadow: inset 0 0 6px rgba(0,0,0,0.1);
             }
             .plan-table {
                 width:100%;
                 table-layout:fixed; /* Force table to respect column widths */
             }
             .plan-table th, .plan-table td {
-                padding:8px 5px;
+                padding:12px 8px; /* Increased padding */
                 font-size:0.85em;
                 min-width:60px;
+            }
+            /* Better mobile table styling */
+            .plan-table th {
+                position: sticky;
+                top: 0;
+                background: #234085;
+                z-index: 10;
             }
             /* Optimized column widths for mobile - total ~100% */
             .plan-table th:nth-child(1), .plan-table td:nth-child(1) { /* المفتش */
@@ -816,29 +909,39 @@
                 min-width: 30%;
                 font-size: 0.8em;
             }
+            /* Better mobile button styling */
+            .plan-table button {
+                padding: 8px 12px;
+                font-size: 0.75em;
+                border-radius: 6px;
+                min-height: 36px;
+                white-space: nowrap;
+            }
             /* Dropdown mobile styles removed */
             .modal-content {
                 padding:15px 3vw;
                 min-width:unset;
                 max-width:95vw;
                 margin: 20px auto;
+                border-radius: 12px;
             }
             .stats-table th, .stats-table td {
-                padding:6px 3px;
+                padding:8px 4px;
                 font-size: 0.85em;
             }
             .edit-btn, .delete-btn {
-                padding: 4px 8px;
-                margin: 1px;
+                padding: 6px 10px;
+                margin: 2px;
                 font-size: 0.8em;
+                min-height: 36px;
             }
             .bell-3d {
-                width: 42px;
-                height: 42px;
+                width: 44px; /* Better touch target */
+                height: 44px;
             }
             .bell-body {
-                width: 35px;
-                height: 30px;
+                width: 36px;
+                height: 32px;
             }
             .last-update-row {
                 font-size: 0.85em;
@@ -846,11 +949,39 @@
             }
             .search-filters-grid {
                 grid-template-columns:1fr;
-                gap:10px;
+                gap:12px;
             }
             .footer {
                 font-size: 0.8em;
                 margin-top: 16px;
+                padding: 12px;
+            }
+        }
+        
+        /* New medium mobile breakpoint for better responsive experience */
+        @media (max-width:480px) {
+            .main-container {
+                padding: 8px 1.5vw 6px 1.5vw;
+                margin: 15px auto 0 auto;
+            }
+            .main-title-box {
+                font-size: 1.35em;
+                padding: 20px 10px;
+            }
+            .actions-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            .action-group {
+                padding: 14px 10px;
+            }
+            .action-group button {
+                font-size: 0.8em;
+                padding: 10px 12px;
+            }
+            select, input[type="text"], input[type="date"], input[type="password"] {
+                min-width: 160px;
+                max-width: 260px;
             }
         }
         @media (max-width:400px) {
@@ -862,16 +993,17 @@
             .main-title-box {
                 font-size: 1.3em;
                 font-weight: 600;
-                padding: 18px 10px;
+                padding: 20px 12px;
                 margin-bottom: 12px;
+                line-height: 1.3;
             }
             .bell-3d {
-                width: 38px;
-                height: 38px;
+                width: 44px; /* Maintain good touch target */
+                height: 44px;
             }
             .bell-body {
-                width: 32px;
-                height: 28px;
+                width: 36px;
+                height: 32px;
             }
             .bell-bubble {
                 width: 95%;
@@ -879,36 +1011,50 @@
                 border-radius: 15px;
             }
             .bell-action-btn {
-                padding: 10px 20px;
+                padding: 12px 20px;
                 font-size: 0.9em;
-                min-width: 90px;
+                min-width: 100px;
+                min-height: 44px;
             }
             .login-section, .inspector-select-section {
                 margin: 10px 0;
             }
             select, input[type="text"], input[type="date"], input[type="password"] {
-                padding: 6px 10px;
-                font-size: 0.9em;
+                padding: 12px 14px;
+                font-size: 16px; /* Prevent zoom on iOS */
                 min-width: 180px;
                 max-width: 100%;
+                border-radius: 8px;
             }
             .actions-grid {
                 grid-template-columns: 1fr;
-                gap: 12px;
+                gap: 14px;
             }
             .action-group {
                 max-width: 320px;
                 margin: 0 auto;
+                padding: 16px 12px;
             }
             .action-group button {
-                padding: 8px 12px;
+                padding: 10px 14px;
                 font-size: 0.8em;
                 min-width: 110px;
+                min-height: 44px;
+                margin: 2px 0;
             }
             .plan-table th, .plan-table td {
-                padding: 6px 3px;
+                padding: 8px 4px;
                 font-size: 0.8em;
                 min-width:50px;
+            }
+            /* Better mobile table headers */
+            .plan-table th {
+                position: sticky;
+                top: 0;
+                background: #234085;
+                z-index: 10;
+                font-size: 0.75em;
+                font-weight: 600;
             }
             /* Optimized column widths for very small mobile - total ~100% */
             .plan-table th:nth-child(1), .plan-table td:nth-child(1) { /* المفتش */
@@ -944,14 +1090,35 @@
                 min-width: 24%;
                 font-size: 0.75em;
             }
+            /* Better mobile button styling for table */
+            .plan-table button {
+                padding: 6px 8px;
+                font-size: 0.7em;
+                border-radius: 4px;
+                min-height: 32px;
+                white-space: nowrap;
+            }
             /* Dropdown mobile styles removed */
             .modal-content {
                 padding: 12px 2vw;
                 max-width: 98vw;
+                border-radius: 10px;
             }
             .edit-btn, .delete-btn {
-                padding: 3px 6px;
+                padding: 4px 8px;
                 font-size: 0.75em;
+                min-height: 32px;
+                margin: 2px;
+            }
+            /* Improve search and filter controls */
+            .search-filters-grid {
+                gap: 8px;
+            }
+            /* Better footer spacing */
+            .footer {
+                font-size: 0.75em;
+                padding: 10px;
+                text-align: center;
             }
         }
     </style>

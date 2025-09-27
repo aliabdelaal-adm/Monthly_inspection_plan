@@ -2113,13 +2113,25 @@ window.toggleShopsDropdown = function(event, idx) {
     let rect = btn.getBoundingClientRect();
     let list = document.getElementById('shopsDropdownList'+idx);
     list.style.display = 'block';
+    
+    // Calculate vertical position
     let top = rect.bottom + window.scrollY + 2;
-    let left = rect.right - list.offsetWidth + window.scrollX;
     if ((top + list.offsetHeight) > (window.innerHeight + window.scrollY)) {
         top = rect.top + window.scrollY - list.offsetHeight - 2;
     }
+    
+    // Calculate horizontal position - center dropdown relative to button
+    let left = rect.left + (rect.width / 2) - (list.offsetWidth / 2) + window.scrollX;
+    
+    // Ensure dropdown stays within viewport
+    if (left < window.scrollX) {
+        left = window.scrollX + 5; // 5px margin from left edge
+    } else if ((left + list.offsetWidth) > (window.innerWidth + window.scrollX)) {
+        left = window.innerWidth + window.scrollX - list.offsetWidth - 5; // 5px margin from right edge
+    }
+    
     list.style.top = top+"px";
-    list.style.left = (rect.left + window.scrollX) + "px";
+    list.style.left = left + "px";
 };
 document.addEventListener('click', function(e){
     if (![...document.querySelectorAll('.shops-dropdown-wrap *')].includes(e.target)) {

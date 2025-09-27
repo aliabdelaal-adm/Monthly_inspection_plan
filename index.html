@@ -61,6 +61,11 @@
     }
     </script>
     
+    <!-- خط Cairo من Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    
     <!-- مكتبات التصدير -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -384,17 +389,19 @@
         .main-title-box {
             background:#234085;
             color:#fff;
-            padding:28px 0 28px 0;
+            padding:32px 20px 32px 20px;
             border-radius:14px;
             width: 96%;
             max-width: 600px;
             min-height: 56px;
-            font-size:2.12em;
+            font-size:2.4em;
+            font-family: 'Cairo', Arial, sans-serif;
             text-align:center;
-            font-weight: bold;
-            letter-spacing: 1px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
             margin:0 auto;
             box-shadow:0 2px 14px #e0e2f5;
+            line-height: 1.2;
         }
         .login-section, .inspector-select-section {margin: 10px 0 18px 0; width: 100%; display:flex;justify-content:center;align-items:center;gap:10px;}
         select, input[type="text"], input[type="date"], input[type="password"] {padding:7px 16px;font-size:1em;border-radius:6px;border:1px solid #b6b6b6;min-width:130px;max-width:210px;}
@@ -496,10 +503,17 @@
             color:#fff;
             border:none;
             border-radius:6px;
-            padding:6px 18px;
+            padding:8px 20px;
             cursor:pointer;
-            font-size:0.98em;
-            min-width:90px;
+            font-size:0.9em;
+            min-width:110px;
+            transition: all 0.2s ease;
+            font-family: 'Cairo', Arial, sans-serif;
+        }
+        .dropdown-shops-btn:hover {
+            background:#1a2d6b;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
         }
         .shops-dropdown-list {
             display:none;
@@ -657,8 +671,9 @@
                 min-width: unset;
             }
             .main-title-box {
-                font-size:1.2em;
-                padding:18px 8px;
+                font-size:1.4em;
+                font-weight: 600;
+                padding:22px 12px;
                 margin-bottom: 16px;
             }
             .login-section, .inspector-select-section {
@@ -752,8 +767,9 @@
                 border-radius: 8px;
             }
             .main-title-box {
-                font-size: 1.1em;
-                padding: 14px 6px;
+                font-size: 1.3em;
+                font-weight: 600;
+                padding: 18px 10px;
                 margin-bottom: 12px;
             }
             .bell-3d {
@@ -2054,11 +2070,15 @@ function renderPlanTable() {
                 <td>${row.area}</td>
                 <td>
                     <div class="shops-inline-display" id="shopsInlineDisplay${idx}">
-                        <div class="shops-inline-content" style="background:#f8f9fa;border:1px solid #ddd;border-radius:4px;padding:8px;margin-bottom:5px;font-size:0.9em;line-height:1.4;display:none;">
-                            <strong style="color:#234085;display:block;margin-bottom:4px;">المحلات (${row.shops ? row.shops.length : 0}):</strong>
-                            <span style="color:#333;">${row.shops ? row.shops.join(' • ') : 'لا توجد محلات'}</span>
+                        <div class="shops-inline-content" style="background:#90EE90;border:2px solid #234085;border-radius:8px;padding:12px;margin-bottom:5px;font-size:0.95em;line-height:1.4;display:none;box-shadow:0 4px 12px rgba(0,0,0,0.15);max-width:300px;">
+                            <strong style="color:#234085;display:block;margin-bottom:8px;font-size:1em;">المحلات (${row.shops ? row.shops.length : 0}):</strong>
+                            <div style="max-height:200px;overflow-y:auto;">
+                                <ul style="list-style:none;margin:0;padding:0;">
+                                    ${row.shops ? row.shops.map(shop => `<li style="padding:6px 8px;border-bottom:1px solid #e0e0e0;color:#333;font-size:0.92em;transition:background-color 0.2s;" onmouseover="this.style.backgroundColor='#f0f8ff'" onmouseout="this.style.backgroundColor='transparent'">${shop}</li>`).join('') : '<li style="padding:6px 8px;color:#666;">لا توجد محلات</li>'}
+                                </ul>
+                            </div>
                         </div>
-                        <button class="dropdown-shops-btn" onclick="toggleShopsVisibility(${idx})" style="font-size:0.8em;padding:4px 12px;">
+                        <button class="dropdown-shops-btn" onclick="toggleShopsVisibility(${idx})">
                             <span id="toggleText${idx}">عرض المحلات (${row.shops ? row.shops.length : 0})</span>
                         </button>
                     </div>

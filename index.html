@@ -2087,9 +2087,15 @@ function renderPlanTable() {
     rows.forEach((row, idx) => {
         let realIdx = inspectionData.indexOf(row);
         let shopsDisplay = row.shops && row.shops.length > 0 ? 
-            `<div style="text-align:right;line-height:1.4;">
-                <strong style="color:#234085;display:block;margin-bottom:4px;">${row.shops.length} محل:</strong>
-                ${row.shops.map(shop => `<span style="display:inline-block;background:#f0f4ff;padding:2px 6px;margin:1px;border-radius:4px;font-size:0.9em;border:1px solid #e1e8ff;">${shop}</span>`).join(' ')}
+            `<div class="shops-dropdown-wrap">
+                <button class="show-shops-btn" onclick="toggleShopsDropdown('${realIdx}')" style="background:#007bff;color:#fff;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:0.9em;">
+                    عرض المحلات (${row.shops.length})
+                </button>
+                <div class="shops-dropdown-list" id="shops-dropdown-${realIdx}">
+                    <ul>
+                        ${row.shops.slice().sort().map(shop => `<li>${shop}</li>`).join('')}
+                    </ul>
+                </div>
             </div>` : 
             '<span style="color:#666;font-style:italic;">لا توجد محلات</span>';
         
@@ -2162,6 +2168,35 @@ function deletePlan(idx) {
     inspectionData.splice(idx,1);
     saveInspectionData();
     renderPlanTable();
+}
+
+// --- وظيفة إظهار/إخفاء قائمة المحلات المنسدلة ---
+function toggleShopsDropdown(rowIndex) {
+    const dropdownId = `shops-dropdown-${rowIndex}`;
+    const dropdown = document.getElementById(dropdownId);
+    
+    if (!dropdown) return;
+    
+    // إخفاء جميع القوائم المنسدلة الأخرى
+    document.querySelectorAll('.shops-dropdown-list').forEach(el => {
+        if (el.id !== dropdownId) {
+            el.style.display = 'none';
+        }
+    });
+    
+    // تبديل حالة القائمة المنسدلة الحالية
+    if (dropdown.style.display === 'none' || dropdown.style.display === '') {
+        dropdown.style.display = 'block';
+        
+        // تحديد موضع القائمة المنسدلة
+        const button = dropdown.previousElementSibling;
+        const rect = button.getBoundingClientRect();
+        dropdown.style.position = 'fixed';
+        dropdown.style.top = (rect.bottom + 5) + 'px';
+        dropdown.style.left = rect.left + 'px';
+    } else {
+        dropdown.style.display = 'none';
+    }
 }
 
 // --- المحلات المنسدلة --- (تم إزالة هذه الوظيفة لصالح العرض المباشر)

@@ -550,6 +550,10 @@
             background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
             color: #fff;
         }
+        .print-btn:hover {
+            background: linear-gradient(135deg, #5a6268 0%, #6c757d 100%);
+        }
+        
         /* Tooltip Styles */
         .tooltip {
             position: relative;
@@ -1547,15 +1551,32 @@
         <div class="stats-title">📋 جدول المناوبات الشهري لجميع المفتشين</div>
         
         <!-- أزرار إدارة الملفات -->
-        <div class="modal-actions" style="margin-bottom: 20px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+        <div class="modal-actions" style="margin-bottom: 20px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; align-items: center;">
             <input type="file" id="scheduleFileInput" accept=".json,.xlsx,.pdf" style="display: none;" onchange="handleScheduleFileUpload(event)">
-            <button id="scheduleUploadBtn" class="icon-btn" onclick="handleScheduleUploadRequest()" style="background: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; display: none;">
-                📤 رفع ملف
+            
+            <button id="scheduleUploadBtn" class="icon-btn tooltip" onclick="handleScheduleUploadRequest()" data-tooltip="رفع ملف جدول المناوبات" style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; display: none;">
+                <span class="icon">📤</span>
+                <span class="label">رفع ملف</span>
             </button>
-            <button class="pdf-btn" onclick="confirmExportScheduleToPDF()">📄 تحميل PDF</button>
-            <button class="excel-btn" onclick="confirmExportScheduleToExcel()">📊 تحميل Excel</button>
-            <button class="icon-btn" onclick="downloadScheduleAsJSON()" style="background: #6c757d; color: white; padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer;">
-                💾 تحميل JSON
+            
+            <button class="icon-btn pdf-btn tooltip" onclick="confirmExportScheduleToPDF()" data-tooltip="تحميل جدول المناوبات كملف PDF">
+                <span class="icon">📄</span>
+                <span class="label">تحميل PDF</span>
+            </button>
+            
+            <button class="icon-btn excel-btn tooltip" onclick="confirmExportScheduleToExcel()" data-tooltip="تحميل جدول المناوبات كملف Excel">
+                <span class="icon">📊</span>
+                <span class="label">تحميل Excel</span>
+            </button>
+            
+            <button id="scheduleJsonBtn" class="icon-btn tooltip" onclick="downloadScheduleAsJSON()" data-tooltip="تحميل جدول المناوبات كملف JSON (للمطور فقط)" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%); color: white; display: none;">
+                <span class="icon">💾</span>
+                <span class="label">تحميل JSON</span>
+            </button>
+            
+            <button class="icon-btn print-btn tooltip" onclick="printScheduleTable()" data-tooltip="طباعة جدول المناوبات">
+                <span class="icon">🖨️</span>
+                <span class="label">طباعة</span>
             </button>
         </div>
         
@@ -4963,12 +4984,16 @@ function showMonthlyScheduleModal() {
     // عرض الجدول الكامل
     displayFullScheduleTable();
     
-    // إظهار أو إخفاء زر الرفع حسب صلاحيات المطور
+    // إظهار أو إخفاء الأزرار المخصصة للمطور فقط
     const uploadBtn = document.getElementById('scheduleUploadBtn');
+    const jsonBtn = document.getElementById('scheduleJsonBtn');
+    
     if (isDev || window.isDev) {
-        uploadBtn.style.display = 'inline-block';
+        uploadBtn.style.display = 'flex';
+        jsonBtn.style.display = 'flex';
     } else {
         uploadBtn.style.display = 'none';
+        jsonBtn.style.display = 'none';
     }
     
     // عرض المودال
@@ -5325,6 +5350,169 @@ function downloadScheduleAsJSON() {
     
     // تنظيف
     URL.revokeObjectURL(link.href);
+}
+
+function printScheduleTable() {
+    // احفظ عنوان الصفحة الأصلي
+    const originalTitle = document.title;
+    
+    // غيّر عنوان الصفحة مؤقتاً للطباعة
+    document.title = 'جدول المناوبات الشهري';
+    
+    // احصل على محتوى جدول المناوبات
+    const scheduleTable = document.getElementById('scheduleTableBody')?.parentElement || document.querySelector('#monthlyScheduleModal table');
+    const scheduleTitle = document.querySelector('#monthlyScheduleModal .stats-title');
+    
+    if (!scheduleTable) {
+        alert('⚠️ لا يمكن العثور على جدول المناوبات للطباعة');
+        return;
+    }
+    
+    // إنشاء نافذة جديدة للطباعة
+    const printWindow = window.open('', '_blank');
+    
+    const printContent = `
+    <!DOCTYPE html>
+    <html lang="ar" dir="rtl">
+    <head>
+        <meta charset="UTF-8">
+        <title>جدول المناوبات الشهري</title>
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+            
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            
+            body {
+                font-family: 'Cairo', Arial, sans-serif;
+                font-size: 12px;
+                line-height: 1.4;
+                color: #333;
+                background: white;
+                padding: 20px;
+            }
+            
+            .print-header {
+                text-align: center;
+                margin-bottom: 30px;
+                border-bottom: 3px solid #007bff;
+                padding-bottom: 15px;
+            }
+            
+            .print-title {
+                font-size: 24px;
+                font-weight: bold;
+                color: #007bff;
+                margin-bottom: 10px;
+            }
+            
+            .print-date {
+                font-size: 14px;
+                color: #666;
+                margin-bottom: 5px;  
+            }
+            
+            .schedule-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 20px;
+                font-size: 11px;
+            }
+            
+            .schedule-table th,
+            .schedule-table td {
+                border: 1px solid #ddd;
+                padding: 8px 6px;
+                text-align: center;
+                vertical-align: middle;
+            }
+            
+            .schedule-table th {
+                background-color: #f8f9fa;
+                font-weight: bold;
+                color: #333;
+                font-size: 12px;
+            }
+            
+            .schedule-table tbody tr:nth-child(even) {
+                background-color: #f9f9f9;
+            }
+            
+            .schedule-table tbody tr:hover {
+                background-color: #e3f2fd;
+            }
+            
+            .print-footer {
+                margin-top: 30px;
+                text-align: center;
+                font-size: 10px;
+                color: #666;
+                border-top: 1px solid #ddd;
+                padding-top: 15px;
+            }
+            
+            @media print {
+                body {
+                    padding: 0;
+                    font-size: 10px;
+                }
+                
+                .print-header {
+                    margin-bottom: 20px;
+                }
+                
+                .print-title {
+                    font-size: 20px;
+                }
+                
+                .schedule-table {
+                    font-size: 9px;
+                }
+                
+                .schedule-table th,
+                .schedule-table td {
+                    padding: 4px 3px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="print-header">
+            <div class="print-title">📋 جدول المناوبات الشهري لجميع المفتشين</div>
+            <div class="print-date">تاريخ الطباعة: ${new Date().toLocaleDateString('ar-SA', {
+                year: 'numeric',
+                month: 'long', 
+                day: 'numeric',
+                weekday: 'long'
+            })}</div>
+            <div class="print-date">الوقت: ${new Date().toLocaleTimeString('ar-SA')}</div>
+        </div>
+        
+        ${scheduleTable.outerHTML}
+        
+        <div class="print-footer">
+            <p>تم إنشاء هذا التقرير من نظام خطة التفتيش الشهرية</p>
+            <p>© ${new Date().getFullYear()} - جميع الحقوق محفوظة</p>
+        </div>
+    </body>
+    </html>`;
+    
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    
+    // انتظر حتى يتم تحميل المحتوى ثم اطبع
+    printWindow.onload = function() {
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 500);
+    };
+    
+    // استعد العنوان الأصلي
+    document.title = originalTitle;
 }
 
 function addNewInspector() {

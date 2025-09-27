@@ -484,19 +484,53 @@
         .excel-btn:hover {background:#146c43;}
         .print-btn {background:#6c757d;color:#fff;}
         .print-btn:hover {background:#545b62;}
-        .plan-table-container {width:100%;margin:18px 0;}
-        .plan-table {width:100%;border-collapse:collapse;border-radius:13px;overflow:hidden;box-shadow:0 2px 14px #eee;}
-        .plan-table th,.plan-table td {padding:10px 8px;text-align:center;}
-        .plan-table th {
-            background:#234085;
-            color:#fff;
-            font-weight:bold;
-            font-size:1.12em;
+        .plan-table-container {width:100%;margin:18px 0;overflow-x:auto;}
+        .plan-table {
+            width:100%;
+            border-collapse:collapse;
+            border-radius:13px;
+            overflow:hidden;
+            box-shadow:0 4px 20px rgba(35, 64, 133, 0.15);
+            border:1px solid #e1e8ff;
+            font-family: 'Cairo', Arial, sans-serif;
         }
-        .plan-table tr:nth-child(even) {background:#f5f7fb;}
+        .plan-table th {
+            background:linear-gradient(135deg, #234085 0%, #2d4d99 100%);
+            color:#fff;
+            font-weight:600;
+            font-size:1.05em;
+            padding:15px 12px;
+            text-align:center;
+            border-bottom:2px solid #1a2f5f;
+            position:relative;
+            text-shadow:0 1px 2px rgba(0,0,0,0.2);
+        }
+        .plan-table th:not(:last-child):after {
+            content:'';
+            position:absolute;
+            right:0;
+            top:25%;
+            height:50%;
+            width:1px;
+            background:rgba(255,255,255,0.2);
+        }
         .plan-table td {
-            border-bottom:1px solid #d7dcef;
-            font-size:1em;
+            padding:12px 8px;
+            border-bottom:1px solid #e6ecf5;
+            font-size:0.95em;
+            vertical-align:middle;
+            transition:background-color 0.2s ease;
+        }
+        .plan-table tr:hover {
+            background:linear-gradient(90deg, #f0f4ff 0%, #fafbff 100%);
+            transform:translateY(-1px);
+            box-shadow:0 2px 8px rgba(35, 64, 133, 0.1);
+        }
+        .plan-table tbody tr:nth-child(even) {
+            background:#fafbff;
+        }
+        .plan-table tbody tr:nth-child(odd) {
+            background:#ffffff;
         }
         /* Dropdown shops styles removed - now using inline display */
         .shops-dropdown-list {
@@ -699,9 +733,18 @@
                 padding: 10px 14px;
                 font-size: 0.85em;
             }
+            .plan-table-container {
+                overflow-x:auto;
+                -webkit-overflow-scrolling:touch;
+            }
             .plan-table th, .plan-table td {
-                padding:6px 4px;
+                padding:8px 5px;
                 font-size:0.85em;
+                min-width:80px;
+            }
+            .plan-table th:nth-child(5), .plan-table td:nth-child(5) {
+                min-width:200px;
+                max-width:250px;
             }
             /* Dropdown mobile styles removed */
             .modal-content {
@@ -793,8 +836,13 @@
                 min-width: 110px;
             }
             .plan-table th, .plan-table td {
-                padding: 4px 2px;
+                padding: 6px 3px;
                 font-size: 0.8em;
+                min-width:60px;
+            }
+            .plan-table th:nth-child(5), .plan-table td:nth-child(5) {
+                min-width:150px;
+                max-width:200px;
             }
             /* Dropdown mobile styles removed */
             .modal-content {
@@ -2026,33 +2074,40 @@ function renderPlanTable() {
     <table class="plan-table" id="inspectorPlanTable">
         <thead>
             <tr>
-                <th style="cursor:pointer;" onclick="toggleInspectorSort()">تفاصيل التفتيش ${window.sortByInspector === true ? '↑' : window.sortByInspector === false ? '↓' : ''}</th>
+                <th style="cursor:pointer;" onclick="toggleInspectorSort()">المفتش ${window.sortByInspector === true ? '↑' : window.sortByInspector === false ? '↓' : ''}</th>
+                <th>التاريخ</th>
+                <th>المناوبة</th>
+                <th>المنطقة</th>
+                <th style="min-width:200px;">المحلات</th>
                 ${isDev?'<th>تعديل/حذف</th>':''}
             </tr>
         </thead>
         <tbody>
     `;
     rows.forEach((row, idx) => {
-        let shopsStr = row.shops.map(shop=>`<li>${shop}</li>`).join('');
         let realIdx = inspectionData.indexOf(row);
+        let shopsDisplay = row.shops && row.shops.length > 0 ? 
+            `<div style="text-align:right;line-height:1.4;">
+                <strong style="color:#234085;display:block;margin-bottom:4px;">${row.shops.length} محل:</strong>
+                ${row.shops.map(shop => `<span style="display:inline-block;background:#f0f4ff;padding:2px 6px;margin:1px;border-radius:4px;font-size:0.9em;border:1px solid #e1e8ff;">${shop}</span>`).join(' ')}
+            </div>` : 
+            '<span style="color:#666;font-style:italic;">لا توجد محلات</span>';
+        
         html += `
-            <tr>
-                <td style="padding:12px;line-height:1.6;font-size:1em;">
-                    <div style="margin-bottom:8px;">
-                        <strong style="color:#234085;">المفتش:</strong> ${row.inspector} | 
-                        <strong style="color:#234085;">التاريخ:</strong> ${row.day} | 
-                        <strong style="color:#234085;">المناوبة:</strong> ${row.shift} | 
-                        <strong style="color:#234085;">المنطقة:</strong> ${row.area}
-                    </div>
-                    <div style="margin-top:8px;">
-                        <strong style="color:#234085;">المحلات (${row.shops ? row.shops.length : 0}):</strong> 
-                        ${row.shops && row.shops.length > 0 ? row.shops.join(' • ') : 'لا توجد محلات'}
-                    </div>
+            <tr style="border-bottom:1px solid #e0e6f0;">
+                <td style="padding:12px 8px;font-weight:600;color:#234085;background:#f8faff;">${row.inspector}</td>
+                <td style="padding:12px 8px;text-align:center;font-family:monospace;background:#fff;">${row.day}</td>
+                <td style="padding:12px 8px;text-align:center;background:#f8faff;">
+                    <span style="background:${row.shift === 'صباحية' ? '#e8f5e8' : '#fff3e0'};color:${row.shift === 'صباحية' ? '#2e7d32' : '#ef6c00'};padding:4px 8px;border-radius:12px;font-size:0.9em;border:1px solid ${row.shift === 'صباحية' ? '#c8e6c9' : '#ffcc02'};">
+                        ${row.shift}
+                    </span>
                 </td>
+                <td style="padding:12px 8px;font-weight:500;color:#1976d2;background:#fff;">${row.area}</td>
+                <td style="padding:12px 8px;background:#f8faff;max-width:300px;">${shopsDisplay}</td>
                 ${isDev?`
-                <td>
-                    <button class="edit-btn" onclick="editPlan(${realIdx})">تعديل</button>
-                    <button class="delete-btn" onclick="deletePlan(${realIdx})">حذف</button>
+                <td style="padding:8px;text-align:center;background:#fff;">
+                    <button class="edit-btn" onclick="editPlan(${realIdx})" style="margin:2px;">تعديل</button>
+                    <button class="delete-btn" onclick="deletePlan(${realIdx})" style="margin:2px;">حذف</button>
                 </td>
                 `:``}
             </tr>

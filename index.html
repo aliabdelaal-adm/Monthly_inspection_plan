@@ -664,14 +664,14 @@
             font-size: 0.82em;
         }
         .plan-table th:nth-child(4), .plan-table td:nth-child(4) { /* المنطقة */
-            width: 16%;
-            min-width: 120px;
+            width: 20%;
+            min-width: 140px;
             white-space: nowrap;
             font-size: 0.82em;
         }
         .plan-table th:nth-child(5), .plan-table td:nth-child(5) { /* المحلات */
-            width: 36%;
-            min-width: 150px;
+            width: 32%;
+            min-width: 130px;
             overflow: visible;
             position: relative;
             font-size: 0.82em;
@@ -687,9 +687,9 @@
             border:2px solid #234085;
             border-radius:12px;
             margin-top:5px;
-            min-width:280px;
-            max-width:450px;
-            max-height:300px;
+            min-width:250px;
+            max-width:380px;
+            max-height:280px;
             box-shadow:0 8px 25px rgba(35, 64, 133, 0.15);
             z-index:9999;
             text-align:right;
@@ -760,6 +760,14 @@
             margin-right: 8px;
         }
         .shops-dropdown-wrap {position:relative; display:inline-block;}
+        .show-shops-btn {
+            touch-action: manipulation; /* تحسين اللمس على الهواتف */
+            user-select: none; /* منع تحديد النص */
+        }
+        .show-shops-btn:active {
+            transform: scale(0.95); /* تغذية راجعة بصرية عند النقر */
+            transition: transform 0.1s ease;
+        }
         .inspector-report-div {margin:16px 0 0 0;background:#f7f9fc;border-radius:10px;padding:18px 12px;width:100%;color:#234085;font-size:1.1em;box-shadow:0 1px 5px #e2e2e2;}
         /* تنسيق قسم البحث */
         .search-filters-section {
@@ -1010,16 +1018,16 @@
                 white-space: nowrap;
             }
             .plan-table th:nth-child(4), .plan-table td:nth-child(4) { /* المنطقة */
-                width: 19%;
-                min-width: 19%;
+                width: 22%;
+                min-width: 22%;
                 font-size: 0.75em;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
             }
             .plan-table th:nth-child(5), .plan-table td:nth-child(5) { /* المحلات */
-                width: 27%;
-                min-width: 27%;
+                width: 25%;
+                min-width: 25%;
                 font-size: 0.75em;
             }
 
@@ -1141,16 +1149,16 @@
                 white-space: nowrap;
             }
             .plan-table th:nth-child(4), .plan-table td:nth-child(4) { /* المنطقة */
-                width: 19%;
-                min-width: 19%;
+                width: 22%;
+                min-width: 22%;
                 font-size: 0.7em;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
             }
             .plan-table th:nth-child(5), .plan-table td:nth-child(5) { /* المحلات */
-                width: 21%;
-                min-width: 21%;
+                width: 18%;
+                min-width: 18%;
                 font-size: 0.7em;
             }
 
@@ -2561,15 +2569,32 @@ function toggleShopsDropdown(rowIndex) {
     
     if (!dropdown || !button) return;
     
-    // إخفاء جميع القوائم المنسدلة الأخرى
+    // إخفاء جميع القوائم المنسدلة الأخرى وإعادتها لمكانها الأصلي
     document.querySelectorAll('.shops-dropdown-list').forEach(el => {
         if (el.id !== dropdownId) {
             el.style.display = 'none';
+            el.removeAttribute('data-open');
+            // إعادة العنصر لمكانه الأصلي إذا كان منقولاً
+            const originalParent = el.getAttribute('data-original-parent');
+            if (originalParent) {
+                const parent = document.querySelector(`[data-dropdown-parent="${el.id}"]`);
+                if (parent) {
+                    parent.appendChild(el);
+                    el.removeAttribute('data-original-parent');
+                }
+            }
         }
     });
     
     // تبديل حالة القائمة المنسدلة الحالية
     if (dropdown.style.display === 'none' || dropdown.style.display === '') {
+        // نقل القائمة المنسدلة إلى body لضمان عرضها كoverlay
+        if (!dropdown.getAttribute('data-original-parent')) {
+            dropdown.setAttribute('data-original-parent', 'true');
+            dropdown.parentElement.setAttribute('data-dropdown-parent', dropdownId);
+            document.body.appendChild(dropdown);
+        }
+        
         // احصل على موقع الزر لوضع القائمة المنسدلة
         const buttonRect = button.getBoundingClientRect();
         dropdown.style.position = 'fixed';
@@ -2578,7 +2603,7 @@ function toggleShopsDropdown(rowIndex) {
         
         // حساب موقع القائمة المنسدلة - نعرضها دائماً أسفل الزر
         const viewportHeight = window.innerHeight;
-        const dropdownMaxHeight = 250; // من CSS max-height
+        const dropdownMaxHeight = 280; // من CSS max-height المحدث
         const spaceBelow = viewportHeight - buttonRect.bottom;
         
         // موقع القائمة أسفل الزر مباشرة
@@ -2598,7 +2623,7 @@ function toggleShopsDropdown(rowIndex) {
         
         // تحديد الموقع الأفقي مع التأكد من عدم الخروج من الشاشة
         const viewportWidth = window.innerWidth;
-        const dropdownWidth = 400; // من CSS max-width
+        const dropdownWidth = 350; // تحديث العرض المتوقع
         let leftPosition = buttonRect.left;
         
         // التحقق من عدم خروج القائمة من الجانب الأيمن
@@ -2612,8 +2637,25 @@ function toggleShopsDropdown(rowIndex) {
         }
         
         dropdown.style.left = `${leftPosition}px`;
+        
+        // إضافة تأخير قصير لضمان عدم الإغلاق المباشر
+        setTimeout(() => {
+            dropdown.setAttribute('data-open', 'true');
+        }, 10);
     } else {
         dropdown.style.display = 'none';
+        dropdown.removeAttribute('data-open');
+        
+        // إعادة العنصر لمكانه الأصلي
+        const originalParent = dropdown.getAttribute('data-original-parent');
+        if (originalParent) {
+            const parent = document.querySelector(`[data-dropdown-parent="${dropdownId}"]`);
+            if (parent) {
+                parent.appendChild(dropdown);
+                dropdown.removeAttribute('data-original-parent');
+                parent.removeAttribute('data-dropdown-parent');
+            }
+        }
     }
 }
 
@@ -2622,11 +2664,27 @@ document.addEventListener('click', function(e){
     // التحقق من أن النقر ليس داخل أي من عناصر المحلات
     const isClickInsideShopsDropdown = e.target.closest('.shops-dropdown-wrap');
     const isClickOnShopsButton = e.target.classList.contains('show-shops-btn') || e.target.closest('.show-shops-btn');
+    const isClickInsideDropdownList = e.target.closest('.shops-dropdown-list');
     
-    // إذا لم يكن النقر داخل منطقة المحلات، أخفِ جميع القوائم
-    if (!isClickInsideShopsDropdown) {
+    // إذا لم يكن النقر داخل منطقة المحلات أو على الزر أو داخل القائمة، أخفِ جميع القوائم
+    if (!isClickInsideShopsDropdown && !isClickOnShopsButton && !isClickInsideDropdownList) {
         document.querySelectorAll('.shops-dropdown-list').forEach(el => {
-            el.style.display = 'none';
+            // تحقق من أن القائمة مفتوحة قبل إغلاقها
+            if (el.getAttribute('data-open') === 'true') {
+                el.style.display = 'none';
+                el.removeAttribute('data-open');
+                
+                // إعادة العنصر لمكانه الأصلي
+                const originalParent = el.getAttribute('data-original-parent');
+                if (originalParent) {
+                    const parent = document.querySelector(`[data-dropdown-parent="${el.id}"]`);
+                    if (parent) {
+                        parent.appendChild(el);
+                        el.removeAttribute('data-original-parent');
+                        parent.removeAttribute('data-dropdown-parent');
+                    }
+                }
+            }
         });
     }
     

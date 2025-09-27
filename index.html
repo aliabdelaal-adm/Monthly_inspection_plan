@@ -588,6 +588,137 @@
         .stats-table tr:nth-child(even) {background:#f3f5fa;}
         .stats-table tr:hover {background:#e8f0fe;}
         
+        /* Monthly Report Table Enhancements */
+        #monthlyStatsTable {
+            font-size: 0.85em;
+        }
+        
+        #monthlyStatsTable .sticky-inspector {
+            position: sticky;
+            left: 0;
+            z-index: 10;
+            background: inherit;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+        
+        #monthlyStatsTable .performance-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 4px;
+        }
+        
+        #monthlyStatsTable .cell-tooltip {
+            position: relative;
+            cursor: pointer;
+        }
+        
+        #monthlyStatsTable .cell-tooltip:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            white-space: nowrap;
+            z-index: 1000;
+        }
+        
+        /* Enhanced Performance Analysis Section */
+        .performance-analysis {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin: 20px 0;
+            padding: 20px;
+        }
+        
+        .performance-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .metric-card {
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .shift-analysis {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .recommendations {
+            background: linear-gradient(135deg, #4caf50 0%, #81c784 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+        
+        /* Responsive Design for Monthly Report */
+        @media (max-width: 1200px) {
+            #monthlyStatsTable {
+                font-size: 0.75em;
+            }
+            
+            .performance-metrics {
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                gap: 10px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            #monthlyStatsTable {
+                font-size: 0.7em;
+            }
+            
+            #monthlyStatsTable th,
+            #monthlyStatsTable td {
+                padding: 6px 4px;
+            }
+            
+            .performance-metrics {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .shift-analysis {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            #monthlyStatsTable {
+                font-size: 0.65em;
+            }
+            
+            .modal-content {
+                width: 95vw;
+                height: 95vh;
+                margin: 2.5vh auto;
+                padding: 10px;
+            }
+            
+            .performance-analysis {
+                padding: 15px;
+            }
+        }
+        
         /* Inspector Report Specific Styling */
         .inspector-report-div {
             background: #fff;
@@ -3007,48 +3138,97 @@ function showMonthlyReport() {
         </div>
     </div>`;
     
-    html += `<table class="stats-table" id="monthlyStatsTable">
-        <thead>
-            <tr>
-                <th style="min-width: 120px;">المفتش</th>`;
+    html += `
+    <div style="margin-top: 20px; margin-bottom: 20px;">
+        <h4 style="color: #234085; margin-bottom: 15px; text-align: center;">📋 جدول التفتيشات التفصيلي</h4>
+        <div style="overflow-x: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <table class="stats-table" id="monthlyStatsTable" style="min-width: 100%; white-space: nowrap;">
+                <thead>
+                    <tr style="background: linear-gradient(135deg, #234085 0%, #4a69bd 100%);">
+                        <th style="position: sticky; left: 0; background: #234085; min-width: 140px; max-width: 140px; z-index: 10; box-shadow: 2px 0 5px rgba(0,0,0,0.1);">
+                            <div style="padding: 8px 4px;">👤 المفتش</div>
+                        </th>`;
     
-    allDays.forEach(day => {
+    allDays.forEach((day, index) => {
         const dayName = new Date(day).toLocaleDateString('ar', { weekday: 'short' });
-        html += `<th style="min-width: 80px;">${day}<br><small style="font-size: 0.7em;">${dayName}</small></th>`;
+        const isWeekend = [5,6,0].includes(new Date(day).getDay());
+        html += `<th style="min-width: 85px; ${isWeekend ? 'background: #f44336;' : ''} position: relative;">
+                    <div style="padding: 4px; line-height: 1.2;">
+                        <div style="font-size: 0.8em; font-weight: bold;">${day}</div>
+                        <div style="font-size: 0.7em; opacity: 0.9;">${dayName}</div>
+                        ${isWeekend ? '<div style="font-size: 0.6em; color: #ffcdd2;">عطلة</div>' : ''}
+                    </div>
+                 </th>`;
     });
     
-    html += `<th style="background: #2196f3;">الإجمالي</th>
-             <th style="background: #4caf50;">الصباحية</th>
-             <th style="background: #ff9800;">المسائية</th>
-             <th style="background: #e91e63;">العطلة</th>
-             <th style="background: #9c27b0;">المناطق</th>
-             <th style="background: #607d8b;">الكفاءة</th>
+    html += `<th style="background: #2196f3; color: white; min-width: 80px; font-weight: bold;">
+                <div style="padding: 8px 4px;">📊 الإجمالي</div>
+             </th>
+             <th style="background: #4caf50; color: white; min-width: 80px;">
+                <div style="padding: 8px 4px;">🌅 الصباحية</div>
+             </th>
+             <th style="background: #ff9800; color: white; min-width: 80px;">
+                <div style="padding: 8px 4px;">🌆 المسائية</div>
+             </th>
+             <th style="background: #e91e63; color: white; min-width: 80px;">
+                <div style="padding: 8px 4px;">🏖️ العطلة</div>
+             </th>
+             <th style="background: #9c27b0; color: white; min-width: 80px;">
+                <div style="padding: 8px 4px;">🗺️ المناطق</div>
+             </th>
+             <th style="background: #607d8b; color: white; min-width: 80px;">
+                <div style="padding: 8px 4px;">⚡ الكفاءة</div>
+             </th>
              </tr>
         </thead>
         <tbody>`;
     
-    inspectors.forEach(inspector => {
+    inspectors.forEach((inspector, inspectorIndex) => {
         const rows = inspectionData.filter(item => item.inspector === inspector);
         const inspectorAreas = new Set(rows.map(r => r.area));
         
-        html += `<tr><td style="font-weight: bold; text-align: right;">${inspector}</td>`;
+        html += `<tr style="${inspectorIndex % 2 === 0 ? 'background: #f8f9fa;' : 'background: #ffffff;'} border-bottom: 1px solid #e0e0e0;">
+                    <td style="position: sticky; left: 0; background: ${inspectorIndex % 2 === 0 ? '#f8f9fa' : '#ffffff'}; font-weight: bold; text-align: right; padding: 12px 8px; box-shadow: 2px 0 5px rgba(0,0,0,0.05); z-index: 5; border-right: 2px solid #234085;">
+                        <div style="font-size: 0.9em; color: #234085;">${inspector}</div>
+                    </td>`;
         
         // Daily columns
         allDays.forEach((day, i) => {
             let dayRows = rows.filter(r => r.day === day);
             let shopsCount = 0;
+            let areas = new Set();
             dayRows.forEach(row => {
                 shopsCount += row.shops ? row.shops.length : 0;
+                areas.add(row.area);
             });
             
-            let cellStyle = '';
+            let cellStyle = 'padding: 8px; text-align: center; position: relative;';
+            let badgeContent = '';
+            
             if (shopsCount > 0) {
-                if (shopsCount >= 7) cellStyle = 'background: #c8e6c9; font-weight: bold;';
-                else if (shopsCount >= 5) cellStyle = 'background: #fff9c4;';
-                else cellStyle = 'background: #ffcdd2;';
+                if (shopsCount >= 7) {
+                    cellStyle += 'background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%); color: #1b5e20; font-weight: bold; border: 2px solid #4caf50;';
+                    badgeContent = '<div style="position: absolute; top: 2px; right: 2px; background: #4caf50; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; display: flex; align-items: center; justify-content: center;">🏆</div>';
+                } else if (shopsCount >= 5) {
+                    cellStyle += 'background: linear-gradient(135deg, #fff9c4 0%, #fff176 100%); color: #f57f17; font-weight: bold; border: 1px solid #ffeb3b;';
+                    badgeContent = '<div style="position: absolute; top: 2px; right: 2px; background: #ff9800; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; display: flex; align-items: center; justify-content: center;">⭐</div>';
+                } else if (shopsCount >= 3) {
+                    cellStyle += 'background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 100%); color: #0277bd; border: 1px solid #03a9f4;';
+                } else {
+                    cellStyle += 'background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%); color: #c62828; border: 1px solid #f44336;';
+                }
+                
+                // Add hover effect
+                cellStyle += 'cursor: pointer; transition: all 0.3s ease;';
+            } else {
+                cellStyle += 'background: #fafafa; color: #bdbdbd;';
             }
             
-            html += `<td style="${cellStyle}">${shopsCount || ''}</td>`;
+            html += `<td style="${cellStyle}" title="${shopsCount > 0 ? `${shopsCount} تفتيش في ${areas.size} منطقة` : 'لا توجد تفتيشات'}">
+                        ${badgeContent}
+                        <div style="font-size: 1em; font-weight: bold;">${shopsCount || '-'}</div>
+                        ${areas.size > 1 ? `<div style="font-size: 0.7em; opacity: 0.8;">${areas.size} مناطق</div>` : ''}
+                     </td>`;
             totals.days[i] += shopsCount;
         });
         
@@ -3077,13 +3257,32 @@ function showMonthlyReport() {
         // Calculate efficiency (shops per working day)
         const workingDays = rows.length;
         const efficiency = workingDays > 0 ? (totalShops / workingDays).toFixed(1) : '0';
+        const efficiencyRating = efficiency >= 5 ? '🏆' : efficiency >= 3 ? '⭐' : '📊';
         
-        html += `<td style="font-weight: bold; background: #e3f2fd;">${totalShops}</td>
-                 <td style="color: #4caf50;">${morningShops}</td>
-                 <td style="color: #ff9800;">${eveningShops}</td>
-                 <td style="color: #e91e63;">${weekendShops}</td>
-                 <td style="color: #9c27b0;">${inspectorAreas.size}</td>
-                 <td style="color: #607d8b; font-weight: bold;">${efficiency}</td>
+        html += `<td style="font-weight: bold; background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); color: #0d47a1; text-align: center; padding: 12px 8px; border: 2px solid #2196f3;">
+                    <div style="font-size: 1.1em;">${totalShops}</div>
+                    <div style="font-size: 0.7em; opacity: 0.8;">تفتيش</div>
+                 </td>
+                 <td style="background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%); color: #2e7d32; text-align: center; padding: 8px;">
+                    <div style="font-size: 1em; font-weight: bold;">${morningShops}</div>
+                    <div style="font-size: 0.7em;">🌅</div>
+                 </td>
+                 <td style="background: linear-gradient(135deg, #fff3e0 0%, #ffcc02 100%); color: #e65100; text-align: center; padding: 8px;">
+                    <div style="font-size: 1em; font-weight: bold;">${eveningShops}</div>
+                    <div style="font-size: 0.7em;">🌆</div>
+                 </td>
+                 <td style="background: linear-gradient(135deg, #fce4ec 0%, #f8bbd9 100%); color: #880e4f; text-align: center; padding: 8px;">
+                    <div style="font-size: 1em; font-weight: bold;">${weekendShops}</div>
+                    <div style="font-size: 0.7em;">🏖️</div>
+                 </td>
+                 <td style="background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%); color: #4a148c; text-align: center; padding: 8px;">
+                    <div style="font-size: 1em; font-weight: bold;">${inspectorAreas.size}</div>
+                    <div style="font-size: 0.7em;">🗺️</div>
+                 </td>
+                 <td style="background: linear-gradient(135deg, #eceff1 0%, #cfd8dc 100%); color: #263238; text-align: center; padding: 8px; font-weight: bold;">
+                    <div style="font-size: 1em;">${efficiency}</div>
+                    <div style="font-size: 0.7em;">${efficiencyRating}</div>
+                 </td>
                  </tr>`;
         
         totals.total += totalShops;
@@ -3092,44 +3291,149 @@ function showMonthlyReport() {
         totals.weekend += weekendShops;
     });
     
-    // Add totals row
-    html += `<tr class="red-total" style="background: #ffeb3b; font-weight: bold;">
-        <td style="font-weight: bold;">الإجمالي</td>`;
+    // Add enhanced totals row
+    html += `<tr style="background: linear-gradient(135deg, #ffd600 0%, #ffab00 100%); font-weight: bold; border-top: 3px solid #ff8f00; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <td style="position: sticky; left: 0; background: linear-gradient(135deg, #ffd600 0%, #ffab00 100%); font-weight: bold; text-align: center; padding: 12px 8px; color: #e65100; box-shadow: 2px 0 5px rgba(0,0,0,0.1); z-index: 5; border-right: 2px solid #ff8f00;">
+            <div style="font-size: 1em;">📊 الإجمالي</div>
+        </td>`;
     
-    totals.days.forEach(sum => html += `<td>${sum}</td>`);
+    totals.days.forEach((sum, index) => {
+        const isWeekend = [5,6,0].includes(new Date(allDays[index]).getDay());
+        html += `<td style="text-align: center; padding: 10px 8px; color: #e65100; ${isWeekend ? 'background: rgba(244, 67, 54, 0.2);' : ''}">
+                    <div style="font-size: 1.1em; font-weight: bold;">${sum}</div>
+                    ${sum > 0 ? '<div style="font-size: 0.7em; opacity: 0.8;">تفتيش</div>' : ''}
+                 </td>`;
+    });
     
     const overallEfficiency = inspectors.length > 0 ? (totals.total / inspectors.length).toFixed(1) : '0';
     
-    html += `<td style="background: #2196f3; color: white;">${totals.total}</td>
-             <td style="background: #4caf50; color: white;">${totals.morning}</td>
-             <td style="background: #ff9800; color: white;">${totals.evening}</td>
-             <td style="background: #e91e63; color: white;">${totals.weekend}</td>
-             <td style="background: #9c27b0; color: white;">${totals.areas.size}</td>
-             <td style="background: #607d8b; color: white;">${overallEfficiency}</td>
+    html += `<td style="background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); color: white; text-align: center; font-weight: bold; padding: 12px 8px; border: 2px solid #1565c0;">
+                <div style="font-size: 1.2em;">${totals.total}</div>
+                <div style="font-size: 0.7em; opacity: 0.9;">المجموع</div>
+             </td>
+             <td style="background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); color: white; text-align: center; font-weight: bold; padding: 8px;">
+                <div style="font-size: 1.1em;">${totals.morning}</div>
+                <div style="font-size: 0.7em;">🌅</div>
+             </td>
+             <td style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: white; text-align: center; font-weight: bold; padding: 8px;">
+                <div style="font-size: 1.1em;">${totals.evening}</div>
+                <div style="font-size: 0.7em;">🌆</div>
+             </td>
+             <td style="background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%); color: white; text-align: center; font-weight: bold; padding: 8px;">
+                <div style="font-size: 1.1em;">${totals.weekend}</div>
+                <div style="font-size: 0.7em;">🏖️</div>
+             </td>
+             <td style="background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%); color: white; text-align: center; font-weight: bold; padding: 8px;">
+                <div style="font-size: 1.1em;">${totals.areas.size}</div>
+                <div style="font-size: 0.7em;">🗺️</div>
+             </td>
+             <td style="background: linear-gradient(135deg, #607d8b 0%, #455a64 100%); color: white; text-align: center; font-weight: bold; padding: 8px;">
+                <div style="font-size: 1.1em;">${overallEfficiency}</div>
+                <div style="font-size: 0.7em;">⭐ معدل</div>
+             </td>
              </tr>`;
     
-    html += `</tbody></table>`;
+    html += `</tbody></table></div></div>`;
     
-    // Add performance analysis
+    // Enhanced performance analysis with more intelligence
+    const avgDaily = totals.days.length > 0 ? (totals.days.reduce((a, b) => a + b, 0) / totals.days.length).toFixed(1) : 0;
+    const maxDaily = totals.days.length > 0 ? Math.max(...totals.days) : 0;
+    const minDaily = totals.days.length > 0 ? Math.min(...totals.days.filter(d => d > 0)) : 0;
+    const avgShopsPerInspector = inspectors.length > 0 ? (totals.total / inspectors.length).toFixed(1) : 0;
+    const coverage = totals.uniqueShops.size > 0 ? ((totals.total / totals.uniqueShops.size) * 100).toFixed(1) : 0;
+    
+    // Area analysis
+    const areaAnalysis = {};
+    inspectors.forEach(inspector => {
+        const rows = inspectionData.filter(item => item.inspector === inspector);
+        rows.forEach(row => {
+            if (!areaAnalysis[row.area]) {
+                areaAnalysis[row.area] = { inspectors: new Set(), total: 0 };
+            }
+            areaAnalysis[row.area].inspectors.add(inspector);
+            areaAnalysis[row.area].total += row.shops ? row.shops.length : 0;
+        });
+    });
+    
+    const bestArea = Object.keys(areaAnalysis).reduce((best, area) => 
+        areaAnalysis[area].total > (areaAnalysis[best] ? areaAnalysis[best].total : 0) ? area : best, '');
+    const mostCoveredArea = Object.keys(areaAnalysis).reduce((best, area) => 
+        areaAnalysis[area].inspectors.size > (areaAnalysis[best] ? areaAnalysis[best].inspectors.size : 0) ? area : best, '');
+    
     html += `
-    <div style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 8px;">
-        <h4 style="color: #234085; margin-bottom: 10px;">تحليل الأداء</h4>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; font-size: 0.9em;">
-            <div>
-                <strong>أعلى أداء يومي:</strong><br>
-                ${Math.max(...totals.days)} تفتيش في ${allDays[totals.days.indexOf(Math.max(...totals.days))]}
+    <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <h4 style="color: #234085; margin-bottom: 15px; text-align: center; font-size: 1.3em; text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">📊 تحليل الأداء الذكي</h4>
+        
+        <!-- Performance Metrics Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px;">
+            <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 4px solid #2196f3;">
+                <strong style="color: #1976d2;">📈 أعلى أداء يومي:</strong><br>
+                <span style="font-size: 1.1em; color: #0d47a1;">${maxDaily} تفتيش في ${totals.days.length > 0 ? allDays[totals.days.indexOf(maxDaily)] : 'غير محدد'}</span>
             </div>
-            <div>
-                <strong>متوسط التفتيش اليومي:</strong><br>
-                ${(totals.days.reduce((a, b) => a + b, 0) / totals.days.length).toFixed(1)} تفتيش/يوم
+            <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; border-left: 4px solid #4caf50;">
+                <strong style="color: #388e3c;">📊 متوسط التفتيش اليومي:</strong><br>
+                <span style="font-size: 1.1em; color: #1b5e20;">${avgDaily} تفتيش/يوم</span>
             </div>
-            <div>
-                <strong>نسبة التفتيش الصباحي:</strong><br>
-                ${totals.total > 0 ? ((totals.morning / totals.total) * 100).toFixed(1) : 0}%
+            <div style="background: #fff3e0; padding: 15px; border-radius: 8px; border-left: 4px solid #ff9800;">
+                <strong style="color: #f57c00;">⚡ كفاءة التغطية:</strong><br>
+                <span style="font-size: 1.1em; color: #e65100;">${coverage}% من المحلات</span>
             </div>
-            <div>
-                <strong>نسبة تفتيش العطلة:</strong><br>
-                ${totals.total > 0 ? ((totals.weekend / totals.total) * 100).toFixed(1) : 0}%
+            <div style="background: #fce4ec; padding: 15px; border-radius: 8px; border-left: 4px solid #e91e63;">
+                <strong style="color: #c2185b;">👥 متوسط الأداء الفردي:</strong><br>
+                <span style="font-size: 1.1em; color: #880e4f;">${avgShopsPerInspector} تفتيش/مفتش</span>
+            </div>
+        </div>
+        
+        <!-- Shift Analysis -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+            <div style="background: #e1f5fe; padding: 12px; border-radius: 6px; text-align: center;">
+                <strong style="color: #0277bd;">🌅 التفتيش الصباحي:</strong><br>
+                <span style="font-size: 1.2em; color: #01579b;">${totals.total > 0 ? ((totals.morning / totals.total) * 100).toFixed(1) : 0}%</span><br>
+                <small style="color: #0288d1;">(${totals.morning} تفتيش)</small>
+            </div>
+            <div style="background: #fff8e1; padding: 12px; border-radius: 6px; text-align: center;">
+                <strong style="color: #f57c00;">🌆 التفتيش المسائي:</strong><br>
+                <span style="font-size: 1.2em; color: #ef6c00;">${totals.total > 0 ? ((totals.evening / totals.total) * 100).toFixed(1) : 0}%</span><br>
+                <small style="color: #f9a825;">(${totals.evening} تفتيش)</small>
+            </div>
+            <div style="background: #f3e5f5; padding: 12px; border-radius: 6px; text-align: center;">
+                <strong style="color: #7b1fa2;">🏖️ تفتيش العطلة:</strong><br>
+                <span style="font-size: 1.2em; color: #4a148c;">${totals.total > 0 ? ((totals.weekend / totals.total) * 100).toFixed(1) : 0}%</span><br>
+                <small style="color: #8e24aa;">(${totals.weekend} تفتيش)</small>
+            </div>
+        </div>
+        
+        <!-- Intelligent Insights -->
+        <div style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0; margin-bottom: 15px;">
+            <h5 style="color: #1976d2; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                🧠 تحليلات ذكية
+            </h5>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 0.9em;">
+                <div>
+                    <strong style="color: #4caf50;">🏆 أفضل منطقة تغطية:</strong><br>
+                    <span style="color: #2e7d32;">${bestArea} (${areaAnalysis[bestArea] ? areaAnalysis[bestArea].total : 0} تفتيش)</span>
+                </div>
+                <div>
+                    <strong style="color: #ff9800;">👥 أكثر المناطق تنوعاً:</strong><br>
+                    <span style="color: #f57c00;">${mostCoveredArea} (${areaAnalysis[mostCoveredArea] ? areaAnalysis[mostCoveredArea].inspectors.size : 0} مفتش)</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Performance Recommendations -->
+        <div style="background: linear-gradient(135deg, #4caf50 0%, #81c784 100%); color: white; padding: 15px; border-radius: 8px;">
+            <h5 style="margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                💡 توصيات التحسين
+            </h5>
+            <div style="font-size: 0.9em; line-height: 1.6;">
+                ${maxDaily > avgDaily * 1.5 ? 
+                    '• يُنصح بتوزيع الحمولة بشكل أكثر توازناً بين الأيام<br>' : ''}
+                ${totals.morning / totals.total > 0.8 ? 
+                    '• النظر في زيادة التفتيشات المسائية لتحسين التوازن<br>' : ''}
+                ${totals.weekend / totals.total < 0.1 ? 
+                    '• زيادة التفتيشات في أيام العطلة لضمان التغطية الشاملة<br>' : ''}
+                ${Object.keys(areaAnalysis).length > 5 && Object.values(areaAnalysis).some(a => a.inspectors.size === 1) ? 
+                    '• تنويع تغطية المفتشين للمناطق لضمان الخبرة المتنوعة' : 'الأداء ممتاز - استمروا على هذا المنوال! 👏'}
             </div>
         </div>
     </div>`;

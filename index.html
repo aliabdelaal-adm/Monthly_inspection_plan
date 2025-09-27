@@ -2053,13 +2053,14 @@ function renderPlanTable() {
                 <td>${row.shift}</td>
                 <td>${row.area}</td>
                 <td>
-                    <div class="shops-dropdown-wrap" id="shopsDropdownWrap${idx}">
-                        <button class="dropdown-shops-btn" onclick="toggleShopsDropdown(event, ${idx})">عرض المحلات</button>
-                        <div class="shops-dropdown-list" id="shopsDropdownList${idx}">
-                            <ul>
-                                ${shopsStr}
-                            </ul>
+                    <div class="shops-inline-display" id="shopsInlineDisplay${idx}">
+                        <div class="shops-inline-content" style="background:#f8f9fa;border:1px solid #ddd;border-radius:4px;padding:8px;margin-bottom:5px;font-size:0.9em;line-height:1.4;">
+                            <strong style="color:#234085;display:block;margin-bottom:4px;">المحلات (${row.shops ? row.shops.length : 0}):</strong>
+                            <span style="color:#333;">${row.shops ? row.shops.join(' • ') : 'لا توجد محلات'}</span>
                         </div>
+                        <button class="dropdown-shops-btn" onclick="toggleShopsVisibility(${idx})" style="font-size:0.8em;padding:4px 12px;">
+                            <span id="toggleText${idx}">إخفاء المحلات</span>
+                        </button>
                     </div>
                 </td>
                 ${isDev?`
@@ -2123,34 +2124,17 @@ function deletePlan(idx) {
 }
 
 // --- المحلات المنسدلة ---
-window.toggleShopsDropdown = function(event, idx) {
-    event.stopPropagation();
-    document.querySelectorAll('.shops-dropdown-list').forEach((el,i)=>{
-        if(i!==idx) el.style.display='none';
-    });
-    let btn = event.target;
-    let rect = btn.getBoundingClientRect();
-    let list = document.getElementById('shopsDropdownList'+idx);
-    list.style.display = 'block';
+window.toggleShopsVisibility = function(idx) {
+    let content = document.querySelector(`#shopsInlineDisplay${idx} .shops-inline-content`);
+    let toggleText = document.getElementById(`toggleText${idx}`);
     
-    // Calculate vertical position
-    let top = rect.bottom + window.scrollY + 2;
-    if ((top + list.offsetHeight) > (window.innerHeight + window.scrollY)) {
-        top = rect.top + window.scrollY - list.offsetHeight - 2;
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        toggleText.textContent = 'إخفاء المحلات';
+    } else {
+        content.style.display = 'none';
+        toggleText.textContent = 'عرض المحلات';
     }
-    
-    // Calculate horizontal position - center dropdown relative to button
-    let left = rect.left + (rect.width / 2) - (list.offsetWidth / 2) + window.scrollX;
-    
-    // Ensure dropdown stays within viewport
-    if (left < window.scrollX) {
-        left = window.scrollX + 5; // 5px margin from left edge
-    } else if ((left + list.offsetWidth) > (window.innerWidth + window.scrollX)) {
-        left = window.innerWidth + window.scrollX - list.offsetWidth - 5; // 5px margin from right edge
-    }
-    
-    list.style.top = top+"px";
-    list.style.left = left + "px";
 };
 document.addEventListener('click', function(e){
     if (![...document.querySelectorAll('.shops-dropdown-wrap *')].includes(e.target)) {

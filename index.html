@@ -2290,10 +2290,49 @@ function toggleShopsDropdown(rowIndex) {
         // احصل على موقع الزر لوضع القائمة المنسدلة
         const buttonRect = button.getBoundingClientRect();
         dropdown.style.position = 'fixed';
-        dropdown.style.top = `${buttonRect.bottom + 5}px`;
-        dropdown.style.left = `${buttonRect.left}px`;
         dropdown.style.zIndex = '9999';
         dropdown.style.display = 'block';
+        
+        // حساب الارتفاع المتاح للقائمة المنسدلة
+        const viewportHeight = window.innerHeight;
+        const dropdownMaxHeight = 250; // من CSS max-height
+        const spaceBelow = viewportHeight - buttonRect.bottom;
+        const spaceAbove = buttonRect.top;
+        
+        // تحديد موقع القائمة (أسفل أو أعلى الزر)
+        if (spaceBelow >= dropdownMaxHeight + 10) {
+            // عرض القائمة أسفل الزر
+            dropdown.style.top = `${buttonRect.bottom + 5}px`;
+        } else if (spaceAbove >= dropdownMaxHeight + 10) {
+            // عرض القائمة أعلى الزر
+            dropdown.style.top = `${buttonRect.top - dropdownMaxHeight - 5}px`;
+        } else {
+            // عرض القائمة في أفضل موقع متاح
+            if (spaceBelow > spaceAbove) {
+                dropdown.style.top = `${buttonRect.bottom + 5}px`;
+                dropdown.style.maxHeight = `${spaceBelow - 10}px`;
+            } else {
+                dropdown.style.top = `${Math.max(5, buttonRect.top - Math.min(dropdownMaxHeight, spaceAbove - 10))}px`;
+                dropdown.style.maxHeight = `${spaceAbove - 10}px`;
+            }
+        }
+        
+        // تحديد الموقع الأفقي مع التأكد من عدم الخروج من الشاشة
+        const viewportWidth = window.innerWidth;
+        const dropdownWidth = 400; // من CSS max-width
+        let leftPosition = buttonRect.left;
+        
+        // التحقق من عدم خروج القائمة من الجانب الأيمن
+        if (leftPosition + dropdownWidth > viewportWidth) {
+            leftPosition = viewportWidth - dropdownWidth - 10;
+        }
+        
+        // التحقق من عدم خروج القائمة من الجانب الأيسر
+        if (leftPosition < 10) {
+            leftPosition = 10;
+        }
+        
+        dropdown.style.left = `${leftPosition}px`;
     } else {
         dropdown.style.display = 'none';
     }

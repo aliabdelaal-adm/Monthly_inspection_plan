@@ -498,23 +498,7 @@
             border-bottom:1px solid #d7dcef;
             font-size:1em;
         }
-        .dropdown-shops-btn {
-            background:#234085;
-            color:#fff;
-            border:none;
-            border-radius:6px;
-            padding:8px 20px;
-            cursor:pointer;
-            font-size:0.9em;
-            min-width:110px;
-            transition: all 0.2s ease;
-            font-family: 'Cairo', Arial, sans-serif;
-        }
-        .dropdown-shops-btn:hover {
-            background:#1a2d6b;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-        }
+        /* Dropdown shops styles removed - now using inline display */
         .shops-dropdown-list {
             display:none;
             position:fixed;
@@ -719,11 +703,7 @@
                 padding:6px 4px;
                 font-size:0.85em;
             }
-            .dropdown-shops-btn {
-                padding:6px 10px;
-                font-size:0.85em;
-                min-width: 80px;
-            }
+            /* Dropdown mobile styles removed */
             .modal-content {
                 padding:15px 3vw;
                 min-width:unset;
@@ -816,10 +796,7 @@
                 padding: 4px 2px;
                 font-size: 0.8em;
             }
-            .dropdown-shops-btn {
-                padding: 4px 8px;
-                font-size: 0.8em;
-            }
+            /* Dropdown mobile styles removed */
             .modal-content {
                 padding: 12px 2vw;
                 max-width: 98vw;
@@ -2049,11 +2026,7 @@ function renderPlanTable() {
     <table class="plan-table" id="inspectorPlanTable">
         <thead>
             <tr>
-                <th style="cursor:pointer;" onclick="toggleInspectorSort()">اسم المفتش ${window.sortByInspector === true ? '↑' : window.sortByInspector === false ? '↓' : ''}</th>
-                <th>اليوم</th>
-                <th>وقت المناوبة</th>
-                <th>المنطقة</th>
-                <th>المحلات</th>
+                <th style="cursor:pointer;" onclick="toggleInspectorSort()">تفاصيل التفتيش ${window.sortByInspector === true ? '↑' : window.sortByInspector === false ? '↓' : ''}</th>
                 ${isDev?'<th>تعديل/حذف</th>':''}
             </tr>
         </thead>
@@ -2064,23 +2037,16 @@ function renderPlanTable() {
         let realIdx = inspectionData.indexOf(row);
         html += `
             <tr>
-                <td><span style="background:#234085;color:#fff;border:none;border-radius:6px;padding:6px 18px;font-size:0.98em;font-weight:bold;display:inline-block;">${row.inspector}</span></td>
-                <td>${row.day}</td>
-                <td>${row.shift}</td>
-                <td>${row.area}</td>
-                <td>
-                    <div class="shops-inline-display" id="shopsInlineDisplay${idx}">
-                        <div class="shops-inline-content" style="background:#90EE90;border:2px solid #234085;border-radius:8px;padding:12px;margin-bottom:5px;font-size:0.95em;line-height:1.4;display:none;box-shadow:0 4px 12px rgba(0,0,0,0.15);max-width:300px;">
-                            <strong style="color:#234085;display:block;margin-bottom:8px;font-size:1em;">المحلات (${row.shops ? row.shops.length : 0}):</strong>
-                            <div style="max-height:200px;overflow-y:auto;">
-                                <ul style="list-style:none;margin:0;padding:0;">
-                                    ${row.shops ? row.shops.map(shop => `<li style="padding:6px 8px;border-bottom:1px solid #e0e0e0;color:#333;font-size:0.92em;transition:background-color 0.2s;" onmouseover="this.style.backgroundColor='#f0f8ff'" onmouseout="this.style.backgroundColor='transparent'">${shop}</li>`).join('') : '<li style="padding:6px 8px;color:#666;">لا توجد محلات</li>'}
-                                </ul>
-                            </div>
-                        </div>
-                        <button class="dropdown-shops-btn" onclick="toggleShopsVisibility(${idx})">
-                            <span id="toggleText${idx}">عرض المحلات (${row.shops ? row.shops.length : 0})</span>
-                        </button>
+                <td style="padding:12px;line-height:1.6;font-size:1em;">
+                    <div style="margin-bottom:8px;">
+                        <strong style="color:#234085;">المفتش:</strong> ${row.inspector} | 
+                        <strong style="color:#234085;">التاريخ:</strong> ${row.day} | 
+                        <strong style="color:#234085;">المناوبة:</strong> ${row.shift} | 
+                        <strong style="color:#234085;">المنطقة:</strong> ${row.area}
+                    </div>
+                    <div style="margin-top:8px;">
+                        <strong style="color:#234085;">المحلات (${row.shops ? row.shops.length : 0}):</strong> 
+                        ${row.shops && row.shops.length > 0 ? row.shops.join(' • ') : 'لا توجد محلات'}
                     </div>
                 </td>
                 ${isDev?`
@@ -2143,22 +2109,7 @@ function deletePlan(idx) {
     renderPlanTable();
 }
 
-// --- المحلات المنسدلة ---
-window.toggleShopsVisibility = function(idx) {
-    let content = document.querySelector(`#shopsInlineDisplay${idx} .shops-inline-content`);
-    let toggleText = document.getElementById(`toggleText${idx}`);
-    
-    if (content.style.display === 'none') {
-        content.style.display = 'block';
-        toggleText.textContent = 'إخفاء المحلات';
-    } else {
-        content.style.display = 'none';
-        // Get the shops count from the content to display in the button
-        let shopsCountMatch = content.querySelector('strong').textContent.match(/\((\d+)\)/);
-        let shopsCount = shopsCountMatch ? shopsCountMatch[1] : '0';
-        toggleText.textContent = `عرض المحلات (${shopsCount})`;
-    }
-};
+// --- المحلات المنسدلة --- (تم إزالة هذه الوظيفة لصالح العرض المباشر)
 document.addEventListener('click', function(e){
     if (![...document.querySelectorAll('.shops-dropdown-wrap *')].includes(e.target)) {
         document.querySelectorAll('.shops-dropdown-list').forEach(el=>el.style.display='none');

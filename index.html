@@ -1504,15 +1504,36 @@
             <div id="bellInfoText" style="cursor: pointer;">توجيهات وإشعارات للمفتشين - يتم حفظها مركزياً لجميع المفتشين</div>
             <input type="text" id="bellInfoEdit" style="display: none; width: 100%; border: none; background: transparent; font: inherit; color: inherit; text-align: center;" value="توجيهات وإشعارات للمفتشين - يتم حفظها مركزياً لجميع المفتشين">
         </div>
+        
+        <!-- Add new notification section -->
+        <div class="add-notification-section" style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+            <h4 style="margin: 0 0 10px 0; color: #495057;">إضافة إشعار جديد:</h4>
+            <textarea 
+                id="newNotificationInput" 
+                placeholder="اكتب الإشعار الجديد هنا..."
+                style="width: 100%; min-height: 60px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical; font-family: inherit;"
+                dir="rtl"
+            ></textarea>
+            <button onclick="addNewNotification()" style="background: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-top: 8px;">➕ إضافة إشعار</button>
+        </div>
+        
+        <!-- Notifications list -->
+        <div class="notifications-list" id="notificationsList">
+            <!-- Individual notifications will be displayed here -->
+        </div>
+        
+        <!-- Legacy textarea for backward compatibility -->
         <textarea 
             class="bell-notes-textarea" 
             id="bellNotesTextarea" 
-            placeholder="اكتب توجيهاتك وإشعاراتك هنا..."
+            placeholder="أو استخدم المساحة الكبيرة هنا لكتابة عدة إشعارات..."
             dir="rtl"
+            style="margin-top: 15px;"
         ></textarea>
+        
         <div class="bell-bubble-actions">
-            <button class="bell-action-btn bell-save-btn" id="bellSaveBtn">💾 حفظ</button>
-            <button class="bell-action-btn bell-clear-btn" id="bellClearBtn">🗑️ مسح</button>
+            <button class="bell-action-btn bell-save-btn" id="bellSaveBtn">💾 حفظ جميع التغييرات</button>
+            <button class="bell-action-btn bell-clear-btn" id="bellClearBtn">🗑️ مسح الكل</button>
             <button class="bell-action-btn bell-export-btn" id="bellExportBtn" style="background:#dc3545;display:none;">📤 حفظ نهائي</button>
             <button class="bell-action-btn bell-close-btn" id="bellCloseBtn">✖️ إغلاق</button>
         </div>
@@ -1626,7 +1647,11 @@ let defaultInspectionData = [
     { inspector: "د.آمنه بن صرم", day: "2025-09-21", shift: "مسائية", area: "المنطقة ج", shops: ["محل 11"] },
 ];
 let inspectionData = defaultInspectionData.slice();
-let bellNotesData = { infoText: "توجيهات وإشعارات للمفتشين - يتم حفظها مركزياً لجميع المفتشين", notes: "" };
+let bellNotesData = { 
+    infoText: "توجيهات وإشعارات للمفتشين - يتم حفظها مركزياً لجميع المفتشين", 
+    notes: "", // Legacy single text area
+    notifications: [] // New array for individual notifications
+};
 let lastUpdateTime = null;
 
 // Auto-refresh functionality
@@ -1717,9 +1742,13 @@ async function loadInspectionData() {
                 if (data.shops && Array.isArray(data.shops)) {
                     shopsData = data.shops;
                 }
-                // Load bell notes data if available
+                // Load bell notes data if available - support both old and new format
                 if (data.bellNotes) {
                     bellNotesData = data.bellNotes;
+                    // Ensure notifications array exists
+                    if (!bellNotesData.notifications) {
+                        bellNotesData.notifications = [];
+                    }
                 }
                 // Display last update date/time for all users
                 displayLastUpdateFromData(data.lastUpdate);
@@ -2771,65 +2800,202 @@ function showBellModal() {
     bellInfoText.textContent = savedBellInfo;
     bellInfoEdit.value = savedBellInfo;
     
-    // Check if user is developer to enable/disable editing
-    // Use window.isDev to ensure we get the global variable
-    const isDevUser = window.isDev || isDev || false;
-    if (isDevUser) {
-        textarea.disabled = false;
-        textarea.placeholder = 'اكتب توجيهاتك وإشعاراتك هنا... (وضع المطور)';
-        textarea.style.backgroundColor = '#fff';
-        textarea.style.cursor = 'text';
-        // Show save, clear, and export buttons for developer
-        document.getElementById('bellSaveBtn').style.display = 'inline-block';
-        document.getElementById('bellClearBtn').style.display = 'inline-block';
-        document.getElementById('bellExportBtn').style.display = 'inline-block';
-        
-        // Make bell info text editable for developer
-        bellInfoText.style.cursor = 'pointer';
-        bellInfoText.onclick = function() {
-            bellInfoText.style.display = 'none';
-            bellInfoEdit.style.display = 'block';
-            bellInfoEdit.focus();
-        };
-        
-        bellInfoEdit.onblur = function() {
-            const newText = bellInfoEdit.value.trim() || 'توجيهات وإشعارات للمفتشين - يتم حفظها مركزياً لجميع المفتشين';
-            bellInfoText.textContent = newText;
-            bellNotesData.infoText = newText;
-            // Save to central file
-            saveDataToJSON();
-            bellInfoText.style.display = 'block';
-            bellInfoEdit.style.display = 'none';
-        };
-        
-        bellInfoEdit.onkeypress = function(e) {
-            if (e.key === 'Enter') {
-                bellInfoEdit.blur();
-            }
-        };
-    } else {
-        textarea.disabled = true;
-        textarea.placeholder = 'عرض التوجيهات والإشعارات فقط - يمكن للمطور فقط التعديل';
-        textarea.style.backgroundColor = '#f5f5f5';
-        textarea.style.cursor = 'not-allowed';
-        // Hide save, clear, and export buttons for non-developers
-        document.getElementById('bellSaveBtn').style.display = 'none';
-        document.getElementById('bellClearBtn').style.display = 'none';
-        document.getElementById('bellExportBtn').style.display = 'none';
-        
-        // Make bell info text non-editable for non-developers
-        bellInfoText.style.cursor = 'default';
-        bellInfoText.onclick = null;
+    // Initialize notifications if not exists
+    if (!bellNotesData.notifications) {
+        bellNotesData.notifications = [];
     }
+    
+    // Display individual notifications
+    displayNotificationsList();
+    
+    // Allow all users to edit bell notifications (removed developer-only restriction)
+    textarea.disabled = false;
+    textarea.placeholder = 'اكتب توجيهاتك وإشعاراتك هنا... (متاح لجميع المفتشين)';
+    textarea.style.backgroundColor = '#fff';
+    textarea.style.cursor = 'text';
+    
+    // Show all action buttons for all users
+    document.getElementById('bellSaveBtn').style.display = 'inline-block';
+    document.getElementById('bellClearBtn').style.display = 'inline-block';
+    document.getElementById('bellExportBtn').style.display = 'none'; // Keep export hidden as it's for technical users
+    
+    // Make bell info text editable for all users
+    bellInfoText.style.cursor = 'pointer';
+    bellInfoText.onclick = function() {
+        bellInfoText.style.display = 'none';
+        bellInfoEdit.style.display = 'block';
+        bellInfoEdit.focus();
+    };
+    
+    bellInfoEdit.onblur = function() {
+        const newText = bellInfoEdit.value.trim() || 'توجيهات وإشعارات للمفتشين - يتم حفظها مركزياً لجميع المفتشين';
+        bellInfoText.textContent = newText;
+        bellNotesData.infoText = newText;
+        // Save to central file
+        saveDataToJSON();
+        bellInfoText.style.display = 'block';
+        bellInfoEdit.style.display = 'none';
+    };
+    
+    bellInfoEdit.onkeypress = function(e) {
+        if (e.key === 'Enter') {
+            bellInfoEdit.blur();
+        }
+    };
     
     modal.classList.add('show');
     
-    // Focus on textarea only if developer
-    if (isDevUser) {
-        setTimeout(function() {
-            textarea.focus();
-        }, 100);
+    // Focus on textarea for all users
+    setTimeout(function() {
+        textarea.focus();
+    }, 100);
+}
+
+function displayNotificationsList() {
+    const notificationsList = document.getElementById('notificationsList');
+    if (!notificationsList) return;
+    
+    notificationsList.innerHTML = '';
+    
+    if (!bellNotesData.notifications || bellNotesData.notifications.length === 0) {
+        notificationsList.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">لا توجد إشعارات حالياً</p>';
+        return;
     }
+    
+    bellNotesData.notifications.forEach((notification, index) => {
+        const notificationDiv = document.createElement('div');
+        notificationDiv.className = 'notification-item';
+        notificationDiv.style.cssText = `
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        `;
+        
+        notificationDiv.innerHTML = `
+            <div class="notification-content" style="margin-bottom: 10px;">
+                <div class="notification-text" id="notificationText_${index}" style="display: block; cursor: pointer; padding: 5px; border-radius: 4px;" onclick="editNotification(${index})">${notification.text}</div>
+                <textarea class="notification-edit" id="notificationEdit_${index}" style="display: none; width: 100%; min-height: 60px; border: 1px solid #ccc; border-radius: 4px; padding: 5px; resize: vertical;" dir="rtl">${notification.text}</textarea>
+            </div>
+            <div class="notification-meta" style="font-size: 0.85em; color: #666; margin-bottom: 10px;">
+                <span>📅 ${formatDate(notification.timestamp)}</span>
+                ${notification.author ? `<span style="margin-right: 15px;">👤 ${notification.author}</span>` : ''}
+            </div>
+            <div class="notification-actions">
+                <button onclick="saveNotificationEdit(${index})" id="saveBtn_${index}" style="display: none; background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; margin-left: 5px;">✅ حفظ</button>
+                <button onclick="cancelNotificationEdit(${index})" id="cancelBtn_${index}" style="display: none; background: #6c757d; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; margin-left: 5px;">❌ إلغاء</button>
+                <button onclick="deleteNotification(${index})" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">🗑️ حذف</button>
+            </div>
+        `;
+        
+        notificationsList.appendChild(notificationDiv);
+    });
+}
+
+function addNewNotification() {
+    const input = document.getElementById('newNotificationInput');
+    const text = input.value.trim();
+    
+    if (!text) {
+        alert('يرجى كتابة نص الإشعار');
+        return;
+    }
+    
+    const newNotification = {
+        id: Date.now().toString(),
+        text: text,
+        timestamp: new Date().toISOString(),
+        author: selectedInspector || 'مجهول'
+    };
+    
+    if (!bellNotesData.notifications) {
+        bellNotesData.notifications = [];
+    }
+    
+    bellNotesData.notifications.unshift(newNotification); // Add to beginning
+    input.value = '';
+    
+    displayNotificationsList();
+    saveDataToJSON();
+    
+    // Show success message
+    showBellSaveMessage('تم إضافة الإشعار بنجاح! ✅');
+}
+
+function editNotification(index) {
+    const textDiv = document.getElementById(`notificationText_${index}`);
+    const editTextarea = document.getElementById(`notificationEdit_${index}`);
+    const saveBtn = document.getElementById(`saveBtn_${index}`);
+    const cancelBtn = document.getElementById(`cancelBtn_${index}`);
+    
+    textDiv.style.display = 'none';
+    editTextarea.style.display = 'block';
+    saveBtn.style.display = 'inline-block';
+    cancelBtn.style.display = 'inline-block';
+    
+    editTextarea.focus();
+}
+
+function saveNotificationEdit(index) {
+    const textDiv = document.getElementById(`notificationText_${index}`);
+    const editTextarea = document.getElementById(`notificationEdit_${index}`);
+    const saveBtn = document.getElementById(`saveBtn_${index}`);
+    const cancelBtn = document.getElementById(`cancelBtn_${index}`);
+    
+    const newText = editTextarea.value.trim();
+    if (!newText) {
+        alert('لا يمكن أن يكون الإشعار فارغاً');
+        return;
+    }
+    
+    bellNotesData.notifications[index].text = newText;
+    bellNotesData.notifications[index].lastModified = new Date().toISOString();
+    
+    textDiv.textContent = newText;
+    textDiv.style.display = 'block';
+    editTextarea.style.display = 'none';
+    saveBtn.style.display = 'none';
+    cancelBtn.style.display = 'none';
+    
+    saveDataToJSON();
+    showBellSaveMessage('تم تحديث الإشعار بنجاح! ✅');
+}
+
+function cancelNotificationEdit(index) {
+    const textDiv = document.getElementById(`notificationText_${index}`);
+    const editTextarea = document.getElementById(`notificationEdit_${index}`);
+    const saveBtn = document.getElementById(`saveBtn_${index}`);
+    const cancelBtn = document.getElementById(`cancelBtn_${index}`);
+    
+    // Reset textarea to original value
+    editTextarea.value = bellNotesData.notifications[index].text;
+    
+    textDiv.style.display = 'block';
+    editTextarea.style.display = 'none';
+    saveBtn.style.display = 'none';
+    cancelBtn.style.display = 'none';
+}
+
+function deleteNotification(index) {
+    if (confirm('هل أنت متأكد من حذف هذا الإشعار؟')) {
+        bellNotesData.notifications.splice(index, 1);
+        displayNotificationsList();
+        saveDataToJSON();
+        showBellSaveMessage('تم حذف الإشعار بنجاح! ✅');
+    }
+}
+
+function formatDate(isoString) {
+    const date = new Date(isoString);
+    return date.toLocaleDateString('ar-EG', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
 }
 
 function hideBellModal() {
@@ -2841,18 +3007,49 @@ function saveBellNotes() {
     const textarea = document.getElementById('bellNotesTextarea');
     const notes = textarea.value.trim();
     
-    // Save to central storage instead of localStorage
+    // Save legacy notes to central storage
     bellNotesData.notes = notes;
+    
+    // If user typed in the main textarea and it's not empty, convert it to a notification
+    if (notes && notes.length > 0) {
+        const existingNotificationFromTextarea = bellNotesData.notifications.find(n => n.source === 'textarea');
+        if (existingNotificationFromTextarea) {
+            // Update existing textarea-based notification  
+            existingNotificationFromTextarea.text = notes;
+            existingNotificationFromTextarea.lastModified = new Date().toISOString();
+        } else {
+            // Create new notification from textarea content
+            const newNotification = {
+                id: 'textarea_' + Date.now().toString(),
+                text: notes,
+                timestamp: new Date().toISOString(),
+                author: selectedInspector || 'مجهول',
+                source: 'textarea'
+            };
+            if (!bellNotesData.notifications) {
+                bellNotesData.notifications = [];
+            }
+            bellNotesData.notifications.unshift(newNotification);
+        }
+        
+        // Clear the textarea after converting to notification
+        textarea.value = '';
+        bellNotesData.notes = '';
+        
+        // Refresh the notifications display  
+        displayNotificationsList();
+    }
+    
     saveDataToJSON();
     
     // Show success feedback with clearer messaging
     const saveBtn = document.getElementById('bellSaveBtn');
     const originalText = saveBtn.innerHTML;
-    saveBtn.innerHTML = '✅ تم الحفظ مؤقتاً';
+    saveBtn.innerHTML = '✅ تم الحفظ';
     saveBtn.style.background = '#28a745';
     
-    // Show more prominent message about permanent saving
-    showBellSaveMessage('تم حفظ التوجيهات مؤقتاً! لحفظها نهائياً، اضغط على زر "تصدير البيانات" أسفل الصفحة.');
+    // Show more prominent message about saving
+    showBellSaveMessage('تم حفظ جميع التوجيهات والإشعارات بنجاح! 🎉 سيتم مزامنتها تلقائياً مع جميع المفتشين.');
     
     setTimeout(function() {
         saveBtn.innerHTML = originalText;
@@ -2921,17 +3118,25 @@ function hideBellSaveMessage() {
 }
 
 function clearBellNotes() {
-    if (confirm('هل أنت متأكد من مسح جميع التوجيهات والإشعارات؟')) {
+    if (confirm('هل أنت متأكد من مسح جميع التوجيهات والإشعارات؟ (سيتم حذف كل الإشعارات الفردية أيضاً)')) {
         const textarea = document.getElementById('bellNotesTextarea');
         textarea.value = '';
-        // Clear from central storage instead of localStorage
+        
+        // Clear both legacy notes and new notifications from central storage
         bellNotesData.notes = '';
+        bellNotesData.notifications = [];
+        
+        // Refresh display
+        displayNotificationsList();
+        
         saveDataToJSON();
         
         // Show clear feedback
         const clearBtn = document.getElementById('bellClearBtn');
         const originalText = clearBtn.innerHTML;
         clearBtn.innerHTML = '✅ تم المسح';
+        
+        showBellSaveMessage('تم مسح جميع التوجيهات والإشعارات بنجاح! 🗑️');
         
         setTimeout(function() {
             clearBtn.innerHTML = originalText;

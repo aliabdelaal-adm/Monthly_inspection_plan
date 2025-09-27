@@ -2426,7 +2426,7 @@ function deletePlan(idx) {
     renderPlanTable();
 }
 
-// --- وظيفة إظهار/إخفاء قائمة المحلات المنسدلة ---
+// --- وظيفة إظهار/إخفاء قائمة المحلات المنسدلة - محدثة ---
 function toggleShopsDropdown(rowIndex) {
     const dropdownId = `shops-dropdown-${rowIndex}`;
     const dropdown = document.getElementById(dropdownId);
@@ -2449,29 +2449,25 @@ function toggleShopsDropdown(rowIndex) {
         dropdown.style.zIndex = '9999';
         dropdown.style.display = 'block';
         
-        // حساب الارتفاع المتاح للقائمة المنسدلة
+        // حساب موقع القائمة المنسدلة - نعرضها دائماً أسفل الزر
         const viewportHeight = window.innerHeight;
         const dropdownMaxHeight = 250; // من CSS max-height
         const spaceBelow = viewportHeight - buttonRect.bottom;
-        const spaceAbove = buttonRect.top;
         
-        // تحديد موقع القائمة (أسفل أو أعلى الزر)
-        if (spaceBelow >= dropdownMaxHeight + 10) {
-            // عرض القائمة أسفل الزر
-            dropdown.style.top = `${buttonRect.bottom + 5}px`;
-        } else if (spaceAbove >= dropdownMaxHeight + 10) {
-            // عرض القائمة أعلى الزر
-            dropdown.style.top = `${buttonRect.top - dropdownMaxHeight - 5}px`;
-        } else {
-            // عرض القائمة في أفضل موقع متاح
-            if (spaceBelow > spaceAbove) {
-                dropdown.style.top = `${buttonRect.bottom + 5}px`;
-                dropdown.style.maxHeight = `${spaceBelow - 10}px`;
-            } else {
-                dropdown.style.top = `${Math.max(5, buttonRect.top - Math.min(dropdownMaxHeight, spaceAbove - 10))}px`;
-                dropdown.style.maxHeight = `${spaceAbove - 10}px`;
-            }
+        // موقع القائمة أسفل الزر مباشرة
+        let topPosition = buttonRect.bottom + 5;
+        
+        // التأكد من أن القائمة لن تتجاوز حدود الشاشة
+        if (topPosition + dropdownMaxHeight > viewportHeight) {
+            // إذا كانت القائمة ستتجاوز الشاشة، نضعها أعلى الزر
+            topPosition = Math.max(10, buttonRect.top - dropdownMaxHeight - 5);
         }
+        
+        dropdown.style.top = `${topPosition}px`;
+        
+        // تحديد أقصى ارتفاع للقائمة حسب المساحة المتاحة
+        const availableHeight = Math.min(dropdownMaxHeight, viewportHeight - topPosition - 20);
+        dropdown.style.maxHeight = `${availableHeight}px`;
         
         // تحديد الموقع الأفقي مع التأكد من عدم الخروج من الشاشة
         const viewportWidth = window.innerWidth;

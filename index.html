@@ -980,6 +980,7 @@
         <div class="bell-bubble-actions">
             <button class="bell-action-btn bell-save-btn" id="bellSaveBtn">💾 حفظ</button>
             <button class="bell-action-btn bell-clear-btn" id="bellClearBtn">🗑️ مسح</button>
+            <button class="bell-action-btn bell-export-btn" id="bellExportBtn" style="background:#dc3545;display:none;">📤 حفظ نهائي</button>
             <button class="bell-action-btn bell-close-btn" id="bellCloseBtn">✖️ إغلاق</button>
         </div>
     </div>
@@ -2048,9 +2049,10 @@ function showBellModal() {
         textarea.placeholder = 'اكتب توجيهاتك وإشعاراتك هنا... (وضع المطور)';
         textarea.style.backgroundColor = '#fff';
         textarea.style.cursor = 'text';
-        // Show save and clear buttons for developer
+        // Show save, clear, and export buttons for developer
         document.getElementById('bellSaveBtn').style.display = 'inline-block';
         document.getElementById('bellClearBtn').style.display = 'inline-block';
+        document.getElementById('bellExportBtn').style.display = 'inline-block';
         
         // Make bell info text editable for developer
         bellInfoText.style.cursor = 'pointer';
@@ -2080,9 +2082,10 @@ function showBellModal() {
         textarea.placeholder = 'عرض التوجيهات والإشعارات فقط - يمكن للمطور فقط التعديل';
         textarea.style.backgroundColor = '#f5f5f5';
         textarea.style.cursor = 'not-allowed';
-        // Hide save and clear buttons for non-developers
+        // Hide save, clear, and export buttons for non-developers
         document.getElementById('bellSaveBtn').style.display = 'none';
         document.getElementById('bellClearBtn').style.display = 'none';
+        document.getElementById('bellExportBtn').style.display = 'none';
         
         // Make bell info text non-editable for non-developers
         bellInfoText.style.cursor = 'default';
@@ -2112,16 +2115,79 @@ function saveBellNotes() {
     bellNotesData.notes = notes;
     saveDataToJSON();
     
-    // Show success feedback
+    // Show success feedback with clearer messaging
     const saveBtn = document.getElementById('bellSaveBtn');
     const originalText = saveBtn.innerHTML;
-    saveBtn.innerHTML = '✅ تم الحفظ';
+    saveBtn.innerHTML = '✅ تم الحفظ مؤقتاً';
     saveBtn.style.background = '#28a745';
+    
+    // Show more prominent message about permanent saving
+    showBellSaveMessage('تم حفظ التوجيهات مؤقتاً! لحفظها نهائياً، اضغط على زر "تصدير البيانات" أسفل الصفحة.');
     
     setTimeout(function() {
         saveBtn.innerHTML = originalText;
         saveBtn.style.background = '#28a745';
-    }, 2000);
+    }, 3000);
+}
+
+function showBellSaveMessage(message) {
+    // Create or update the message div
+    let messageDiv = document.getElementById('bellSaveMessage');
+    if (!messageDiv) {
+        messageDiv = document.createElement('div');
+        messageDiv.id = 'bellSaveMessage';
+        messageDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #2196F3;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 10000;
+            max-width: 400px;
+            font-size: 14px;
+            line-height: 1.4;
+            text-align: right;
+            direction: rtl;
+        `;
+        document.body.appendChild(messageDiv);
+    }
+    
+    messageDiv.innerHTML = `
+        <div style="margin-bottom: 10px;">
+            📝 ${message}
+        </div>
+        <button onclick="hideBellSaveMessage()" style="
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        ">إغلاق</button>
+    `;
+    
+    // Auto-hide after 8 seconds
+    setTimeout(function() {
+        hideBellSaveMessage();
+    }, 8000);
+}
+
+function hideBellSaveMessage() {
+    const messageDiv = document.getElementById('bellSaveMessage');
+    if (messageDiv) {
+        messageDiv.style.opacity = '0';
+        messageDiv.style.transform = 'translateY(-10px)';
+        messageDiv.style.transition = 'all 0.3s ease';
+        setTimeout(function() {
+            if (messageDiv.parentNode) {
+                messageDiv.parentNode.removeChild(messageDiv);
+            }
+        }, 300);
+    }
 }
 
 function clearBellNotes() {
@@ -2173,6 +2239,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Bell modal event listeners
     document.getElementById('bellSaveBtn').addEventListener('click', saveBellNotes);
     document.getElementById('bellClearBtn').addEventListener('click', clearBellNotes);
+    document.getElementById('bellExportBtn').addEventListener('click', function() {
+        // First save the current data, then export
+        saveBellNotes();
+        // Wait a bit for the save to complete, then export
+        setTimeout(function() {
+            saveToExternalFile();
+        }, 500);
+    });
     document.getElementById('bellCloseBtn').addEventListener('click', hideBellModal);
     
     // Close modal when clicking outside

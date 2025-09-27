@@ -1859,6 +1859,87 @@ function saveInspectionData() {
     // This prevents excessive downloads on every developer action
 }
 
+// Function to save data to external JSON file automatically (for synchronization)
+async function saveToExternalFileAutomatic(planData) {
+    try {
+        const dataStr = JSON.stringify(planData, null, 2);
+        
+        // Method 1: Direct file write using fetch (works in local file:// protocol or development server)
+        try {
+            const response = await fetch('./plan-data.json', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: dataStr
+            });
+            
+            if (response.ok) {
+                console.log('✅ Data automatically saved to plan-data.json for synchronization');
+                return true;
+            } else {
+                console.log('❌ Could not save via fetch, response not ok:', response.status);
+            }
+        } catch (fetchError) {
+            console.log('Direct file write not available (expected in browser environment):', fetchError.message);
+        }
+        
+        // Method 2: Try File System Access API if available (Chrome/Edge) - silent save
+        if ('showSaveFilePicker' in window && window.FileSystemHandle) {
+            try {
+                // Check if we have an existing file handle (for subsequent saves)
+                if (window.bellDataFileHandle) {
+                    const writable = await window.bellDataFileHandle.createWritable();
+                    await writable.write(dataStr);
+                    await writable.close();
+                    console.log('✅ Data automatically saved using existing file handle');
+                    return true;
+                }
+            } catch (err) {
+                console.log('File System Access API error (existing handle):', err);
+            }
+        }
+        
+        // Method 3: Create a backup plan - save to a downloadable file automatically
+        // This will create a download for the user to manually place in the correct location
+        try {
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'plan-data.json';
+            
+            // Only auto-download if not done recently to avoid spam
+            const lastAutoDownload = localStorage.getItem('lastAutoDownload');
+            const now = Date.now();
+            const timeSinceLastDownload = now - (lastAutoDownload || 0);
+            
+            if (!lastAutoDownload || timeSinceLastDownload > 30000) { // 30 seconds minimum between auto-downloads
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                localStorage.setItem('lastAutoDownload', now.toString());
+                console.log('📥 Auto-downloaded plan-data.json for manual synchronization');
+                
+                // Show user message about manual sync needed
+                showUpdateMessage('تم تنزيل ملف plan-data.json تلقائياً - يرجى استبدال الملف الأصلي لمزامنة التغييرات مع المفتشين الآخرين');
+            } else {
+                console.log('Skipping auto-download - too recent');
+            }
+            
+            URL.revokeObjectURL(url);
+            return true;
+        } catch (err) {
+            console.error('Failed to create download:', err);
+        }
+        
+        return false;
+    } catch (error) {
+        console.error('Error in automatic file save:', error);
+        return false;
+    }
+}
+
 // Function to save data to external JSON file (for developer mode)
 async function saveToExternalFile() {
     try {
@@ -1902,11 +1983,15 @@ async function saveToExternalFile() {
                         accept: {'application/json': ['.json']},
                     }],
                 });
+                
+                // Store file handle for future automatic saves
+                window.bellDataFileHandle = fileHandle;
+                
                 const writable = await fileHandle.createWritable();
                 await writable.write(dataStr);
                 await writable.close();
-                showUpdateMessage('✅ تم حفظ ملف plan-data.json بنجاح!');
-                console.log('✅ Data saved using File System Access API:', planData);
+                showUpdateMessage('✅ تم حفظ ملف plan-data.json بنجاح! سيتم الحفظ تلقائياً في المستقبل.');
+                console.log('✅ Data saved using File System Access API and handle stored for future saves:', planData);
                 return;
             } catch (err) {
                 if (err.name === 'AbortError') {
@@ -5787,14 +5872,11 @@ function saveDataToJSON() {
     };
     localStorage.setItem('allPlanData', JSON.stringify(allData));
     
-    // In developer mode, also trigger external file save
-    if (isDev) {
-        // Show a notification that data needs to be saved externally
-        showUpdateMessage('تم الحفظ محلياً - استخدم زر "تصدير البيانات" لحفظ التغييرات نهائياً');
-        console.log('Data saved to localStorage - developer should export for permanent save');
-    } else {
-        console.log('Data saved to localStorage');
-    }
+    // Always try to save to external file for bell notifications synchronization
+    // This ensures that bell notifications are shared across all users via Git
+    saveToExternalFileAutomatic(allData);
+    
+    console.log('Data saved to localStorage and attempting external file save for synchronization');
 }
 
 // Call loadInspectionData when the DOM is ready  

@@ -1572,7 +1572,7 @@
         </div>
         
         <!-- Add new notification section -->
-        <div class="add-notification-section" style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+        <div class="add-notification-section" id="addNotificationSection" style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">
             <h4 style="margin: 0 0 10px 0; color: #495057;">إضافة إشعار جديد:</h4>
             <textarea 
                 id="newNotificationInput" 
@@ -2976,31 +2976,57 @@ function showBellModal() {
     // Display individual notifications
     displayNotificationsList();
     
-    // Allow all users to edit bell notifications (removed developer-only restriction)
-    textarea.disabled = false;
-    textarea.placeholder = 'اكتب توجيهاتك وإشعاراتك هنا... (متاح لجميع المفتشين)';
-    textarea.style.backgroundColor = '#fff';
-    textarea.style.cursor = 'text';
-    
-    // Show all action buttons for all users
-    document.getElementById('bellSaveBtn').style.display = 'inline-block';
-    document.getElementById('bellClearBtn').style.display = 'inline-block';
-    document.getElementById('bellExportBtn').style.display = 'none'; // Keep export hidden as it's for technical users
-    
-    // Make bell info text editable for all users
-    bellInfoText.style.cursor = 'pointer';
-    bellInfoText.onclick = function() {
-        bellInfoText.style.display = 'none';
-        bellInfoEdit.style.display = 'block';
-        bellInfoEdit.focus();
-    };
+    // Check if user is developer before allowing bell notifications editing
+    if (isDev || window.isDev) {
+        // Allow developer to edit bell notifications
+        textarea.disabled = false;
+        textarea.placeholder = 'اكتب توجيهاتك وإشعاراتك هنا... (متاح للمطور فقط)';
+        textarea.style.backgroundColor = '#fff';
+        textarea.style.cursor = 'text';
+        
+        // Show action buttons for developer only
+        document.getElementById('bellSaveBtn').style.display = 'inline-block';
+        document.getElementById('bellClearBtn').style.display = 'inline-block';
+        document.getElementById('bellExportBtn').style.display = 'none';
+        
+        // Show add notification section for developer
+        document.getElementById('addNotificationSection').style.display = 'block';
+        
+        // Make bell info text editable for developer only
+        bellInfoText.style.cursor = 'pointer';
+        bellInfoText.onclick = function() {
+            bellInfoText.style.display = 'none';
+            bellInfoEdit.style.display = 'block';
+            bellInfoEdit.focus();
+        };
+    } else {
+        // Restrict access for non-developers
+        textarea.disabled = true;
+        textarea.placeholder = 'عرض فقط - التوجيهات والإشعارات من اختصاص المطور د. علي عبدالعال';
+        textarea.style.backgroundColor = '#f8f9fa';
+        textarea.style.cursor = 'not-allowed';
+        
+        // Hide action buttons for non-developers
+        document.getElementById('bellSaveBtn').style.display = 'none';
+        document.getElementById('bellClearBtn').style.display = 'none';
+        document.getElementById('bellExportBtn').style.display = 'none';
+        
+        // Hide add notification section for non-developers
+        document.getElementById('addNotificationSection').style.display = 'none';
+        
+        // Make bell info text non-editable for non-developers
+        bellInfoText.style.cursor = 'default';
+        bellInfoText.onclick = null;
+    }
     
     bellInfoEdit.onblur = function() {
-        const newText = bellInfoEdit.value.trim() || 'توجيهات وإشعارات للمفتشين - يتم حفظها مركزياً لجميع المفتشين';
-        bellInfoText.textContent = newText;
-        bellNotesData.infoText = newText;
-        // Save to central file
-        saveDataToJSON();
+        if (isDev || window.isDev) {
+            const newText = bellInfoEdit.value.trim() || 'توجيهات وإشعارات للمفتشين - يتم حفظها مركزياً لجميع المفتشين';
+            bellInfoText.textContent = newText;
+            bellNotesData.infoText = newText;
+            // Save to central file
+            saveDataToJSON();
+        }
         bellInfoText.style.display = 'block';
         bellInfoEdit.style.display = 'none';
     };
@@ -3042,20 +3068,30 @@ function displayNotificationsList() {
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         `;
         
+        // Check if user is developer to determine if text should be clickable
+        const isDeveloper = isDev || window.isDev;
+        const textClickable = isDeveloper ? `onclick="editNotification(${index})"` : '';
+        const textCursor = isDeveloper ? 'pointer' : 'default';
+        
+        // Show action buttons only for developers
+        const actionButtons = isDeveloper ? `
+            <div class="notification-actions">
+                <button onclick="saveNotificationEdit(${index})" id="saveBtn_${index}" style="display: none; background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; margin-left: 5px;">✅ حفظ</button>
+                <button onclick="cancelNotificationEdit(${index})" id="cancelBtn_${index}" style="display: none; background: #6c757d; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; margin-left: 5px;">❌ إلغاء</button>
+                <button onclick="deleteNotification(${index})" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">🗑️ حذف</button>
+            </div>
+        ` : '';
+        
         notificationDiv.innerHTML = `
             <div class="notification-content" style="margin-bottom: 10px;">
-                <div class="notification-text" id="notificationText_${index}" style="display: block; cursor: pointer; padding: 5px; border-radius: 4px;" onclick="editNotification(${index})">${notification.text}</div>
+                <div class="notification-text" id="notificationText_${index}" style="display: block; cursor: ${textCursor}; padding: 5px; border-radius: 4px;" ${textClickable}>${notification.text}</div>
                 <textarea class="notification-edit" id="notificationEdit_${index}" style="display: none; width: 100%; min-height: 60px; border: 1px solid #ccc; border-radius: 4px; padding: 5px; resize: vertical;" dir="rtl">${notification.text}</textarea>
             </div>
             <div class="notification-meta" style="font-size: 0.85em; color: #666; margin-bottom: 10px;">
                 <span>📅 ${formatDate(notification.timestamp)}</span>
                 ${notification.author ? `<span style="margin-right: 15px;">👤 ${notification.author}</span>` : ''}
             </div>
-            <div class="notification-actions">
-                <button onclick="saveNotificationEdit(${index})" id="saveBtn_${index}" style="display: none; background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; margin-left: 5px;">✅ حفظ</button>
-                <button onclick="cancelNotificationEdit(${index})" id="cancelBtn_${index}" style="display: none; background: #6c757d; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; margin-left: 5px;">❌ إلغاء</button>
-                <button onclick="deleteNotification(${index})" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">🗑️ حذف</button>
-            </div>
+            ${actionButtons}
         `;
         
         notificationsList.appendChild(notificationDiv);
@@ -3063,6 +3099,12 @@ function displayNotificationsList() {
 }
 
 function addNewNotification() {
+    // Check if user is developer
+    if (!isDev && !window.isDev) {
+        alert('⚠️ هذه الوظيفة متاحة للمطور فقط - د. علي عبدالعال');
+        return;
+    }
+    
     const input = document.getElementById('newNotificationInput');
     const text = input.value.trim();
     
@@ -3075,7 +3117,7 @@ function addNewNotification() {
         id: Date.now().toString(),
         text: text,
         timestamp: new Date().toISOString(),
-        author: selectedInspector || 'مجهول'
+        author: 'د. علي عبدالعال'
     };
     
     if (!bellNotesData.notifications) {
@@ -3093,6 +3135,12 @@ function addNewNotification() {
 }
 
 function editNotification(index) {
+    // Check if user is developer
+    if (!isDev && !window.isDev) {
+        alert('⚠️ هذه الوظيفة متاحة للمطور فقط - د. علي عبدالعال');
+        return;
+    }
+    
     const textDiv = document.getElementById(`notificationText_${index}`);
     const editTextarea = document.getElementById(`notificationEdit_${index}`);
     const saveBtn = document.getElementById(`saveBtn_${index}`);
@@ -3107,6 +3155,12 @@ function editNotification(index) {
 }
 
 function saveNotificationEdit(index) {
+    // Check if user is developer
+    if (!isDev && !window.isDev) {
+        alert('⚠️ هذه الوظيفة متاحة للمطور فقط - د. علي عبدالعال');
+        return;
+    }
+    
     const textDiv = document.getElementById(`notificationText_${index}`);
     const editTextarea = document.getElementById(`notificationEdit_${index}`);
     const saveBtn = document.getElementById(`saveBtn_${index}`);
@@ -3120,6 +3174,7 @@ function saveNotificationEdit(index) {
     
     bellNotesData.notifications[index].text = newText;
     bellNotesData.notifications[index].lastModified = new Date().toISOString();
+    bellNotesData.notifications[index].author = 'د. علي عبدالعال'; // Ensure author is always Dr. Ali Abdelaal
     
     textDiv.textContent = newText;
     textDiv.style.display = 'block';
@@ -3147,6 +3202,12 @@ function cancelNotificationEdit(index) {
 }
 
 function deleteNotification(index) {
+    // Check if user is developer
+    if (!isDev && !window.isDev) {
+        alert('⚠️ هذه الوظيفة متاحة للمطور فقط - د. علي عبدالعال');
+        return;
+    }
+    
     if (confirm('هل أنت متأكد من حذف هذا الإشعار؟')) {
         bellNotesData.notifications.splice(index, 1);
         displayNotificationsList();
@@ -3172,6 +3233,12 @@ function hideBellModal() {
 }
 
 function saveBellNotes() {
+    // Check if user is developer
+    if (!isDev && !window.isDev) {
+        alert('⚠️ هذه الوظيفة متاحة للمطور فقط - د. علي عبدالعال');
+        return;
+    }
+    
     const textarea = document.getElementById('bellNotesTextarea');
     const notes = textarea.value.trim();
     
@@ -3185,13 +3252,14 @@ function saveBellNotes() {
             // Update existing textarea-based notification  
             existingNotificationFromTextarea.text = notes;
             existingNotificationFromTextarea.lastModified = new Date().toISOString();
+            existingNotificationFromTextarea.author = 'د. علي عبدالعال'; // Ensure author is Dr. Ali Abdelaal
         } else {
             // Create new notification from textarea content
             const newNotification = {
                 id: 'textarea_' + Date.now().toString(),
                 text: notes,
                 timestamp: new Date().toISOString(),
-                author: selectedInspector || 'مجهول',
+                author: 'د. علي عبدالعال',
                 source: 'textarea'
             };
             if (!bellNotesData.notifications) {
@@ -3286,6 +3354,12 @@ function hideBellSaveMessage() {
 }
 
 function clearBellNotes() {
+    // Check if user is developer
+    if (!isDev && !window.isDev) {
+        alert('⚠️ هذه الوظيفة متاحة للمطور فقط - د. علي عبدالعال');
+        return;
+    }
+    
     if (confirm('هل أنت متأكد من مسح جميع التوجيهات والإشعارات؟ (سيتم حذف كل الإشعارات الفردية أيضاً)')) {
         const textarea = document.getElementById('bellNotesTextarea');
         textarea.value = '';

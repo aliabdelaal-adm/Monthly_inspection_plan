@@ -419,33 +419,172 @@
             flex-wrap: wrap;
             justify-content: center;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
             width: 100%;
             max-width: 900px;
         }
-        .actions-line button {
-            padding: 10px 20px;
-            border-radius: 6px;
+        
+        /* Smart Icon Button Design */
+        .icon-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 90px;
+            height: 90px;
             border: none;
+            border-radius: 16px;
             cursor: pointer;
-            font-size: 1em;
-            font-weight: 500;
-            min-width: 140px;
+            font-size: 0.75em;
+            font-weight: 600;
+            text-align: center;
+            line-height: 1.2;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            position: relative;
+            overflow: hidden;
         }
-        .refresh-btn {background:#28a745;color:#fff;}
-        .refresh-btn:hover {background:#218838;}
-        .inspector-report-btn {background:#234085;color:#fff;}
-        .inspector-report-btn:hover {background:#1a2f5f;}
-        .monthly-report-btn {background:#ff9800;color:#fff;}
-        .monthly-report-btn:hover {background:#e68900;}
-        .enhanced-report-btn {background:#17a2b8;color:#fff;}
-        .enhanced-report-btn:hover {background:#138496;}
-        .pdf-btn {background:#d63384;color:#fff;}
-        .pdf-btn:hover {background:#b02a5b;}
-        .excel-btn {background:#198754;color:#fff;}
-        .excel-btn:hover {background:#146c43;}
-        .print-btn {background:#6c757d;color:#fff;}
-        .print-btn:hover {background:#545b62;}
+        
+        .icon-btn:before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+            transform: rotate(45deg);
+            transition: all 0.6s;
+            opacity: 0;
+        }
+        
+        .icon-btn:hover:before {
+            animation: shimmer 0.6s ease-in-out;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); opacity: 0; }
+        }
+        
+        .icon-btn:hover {
+            transform: translateY(-8px) scale(1.05);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.25);
+        }
+        
+        .icon-btn:active {
+            transform: translateY(-4px) scale(1.02);
+            transition: all 0.1s;
+        }
+        
+        .icon-btn .icon {
+            font-size: 2.2em;
+            margin-bottom: 6px;
+            display: block;
+        }
+        
+        .icon-btn .label {
+            font-size: 0.85em;
+            font-weight: 600;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        /* Individual Icon Button Colors */
+        .refresh-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: #fff;
+        }
+        .refresh-btn:hover {
+            background: linear-gradient(135deg, #218838 0%, #1ba085 100%);
+        }
+        
+        .inspector-report-btn {
+            background: linear-gradient(135deg, #234085 0%, #3b82f6 100%);
+            color: #fff;
+        }
+        .inspector-report-btn:hover {
+            background: linear-gradient(135deg, #1a2f5f 0%, #2563eb 100%);
+        }
+        
+        .monthly-report-btn {
+            background: linear-gradient(135deg, #ff9800 0%, #ffb74d 100%);
+            color: #fff;
+        }
+        .monthly-report-btn:hover {
+            background: linear-gradient(135deg, #e68900 0%, #ff9800 100%);
+        }
+        
+        .enhanced-report-btn {
+            background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+            color: #fff;
+        }
+        .enhanced-report-btn:hover {
+            background: linear-gradient(135deg, #138496 0%, #1ba085 100%);
+        }
+        
+        .pdf-btn {
+            background: linear-gradient(135deg, #d63384 0%, #e91e63 100%);
+            color: #fff;
+        }
+        .pdf-btn:hover {
+            background: linear-gradient(135deg, #b02a5b 0%, #c2185b 100%);
+        }
+        
+        .excel-btn {
+            background: linear-gradient(135deg, #198754 0%, #28a745 100%);
+            color: #fff;
+        }
+        .excel-btn:hover {
+            background: linear-gradient(135deg, #146c43 0%, #218838 100%);
+        }
+        
+        .print-btn {
+            background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
+            color: #fff;
+        }
+        /* Tooltip Styles */
+        .tooltip {
+            position: relative;
+        }
+        
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.8em;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+            z-index: 1000;
+            pointer-events: none;
+        }
+        
+        .tooltip::before {
+            content: '';
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-bottom-color: rgba(0, 0, 0, 0.9);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        
+        .tooltip:hover::after,
+        .tooltip:hover::before {
+            opacity: 1;
+            visibility: visible;
+        }
         .plan-table-container {width:100%;margin:18px 0;overflow-x:auto;overflow-y:visible;}
         .plan-table {
             width:100%;
@@ -762,14 +901,19 @@
                 margin: 15px 0;
             }
             .actions-line {
-                flex-direction: column;
-                gap: 10px;
+                gap: 12px;
             }
-            .actions-line button {
-                min-width: 160px;
-                padding: 12px 16px;
-                font-size: 0.85em;
-                margin: 4px 0;
+            .icon-btn {
+                width: 75px;
+                height: 75px;
+                font-size: 0.7em;
+            }
+            .icon-btn .icon {
+                font-size: 1.8em;
+                margin-bottom: 4px;
+            }
+            .icon-btn .label {
+                font-size: 0.75em;
             }
             .plan-table-container {
                 overflow-x:auto;
@@ -1097,36 +1241,44 @@
     </div>
     <div id="planTableContainer" class="plan-table-container"></div>
     <div class="actions-row">
-        <!-- First row: Data Management -->
+        <!-- Smart Action Icons Row 1: Data & Reports -->
         <div class="actions-line">
-            <button class="refresh-btn" onclick="loadInspectionData()">
-                تحديث البيانات
+            <button class="icon-btn refresh-btn tooltip" onclick="loadInspectionData()" data-tooltip="تحديث البيانات من الخادم">
+                <span class="icon">🔄</span>
+                <span class="label">تحديث البيانات</span>
+            </button>
+            
+            <button class="icon-btn inspector-report-btn tooltip" onclick="showInspectorReport()" data-tooltip="عرض تقرير مفصل للمفتش">
+                <span class="icon">👤</span>
+                <span class="label">تقرير المفتش</span>
+            </button>
+            
+            <button class="icon-btn monthly-report-btn tooltip" onclick="showMonthlyReport()" data-tooltip="عرض التقرير الشهري الإجمالي">
+                <span class="icon">📅</span>
+                <span class="label">التقرير الشهري</span>
+            </button>
+            
+            <button class="icon-btn enhanced-report-btn tooltip" onclick="showEnhancedReportsModal()" data-tooltip="تقارير متقدمة وتحليلات ذكية">
+                <span class="icon">📊</span>
+                <span class="label">التقارير المتقدمة</span>
             </button>
         </div>
         
-        <!-- Second row: Reports -->
+        <!-- Smart Action Icons Row 2: Export & Print -->
         <div class="actions-line">
-            <button class="inspector-report-btn" onclick="showInspectorReport()">
-                تقرير المفتش
+            <button class="icon-btn pdf-btn tooltip" onclick="exportTableToPDF()" data-tooltip="تصدير الجدول كملف PDF">
+                <span class="icon">📄</span>
+                <span class="label">حفظ كـ PDF</span>
             </button>
-            <button class="monthly-report-btn" onclick="showMonthlyReport()">
-                التقرير الشهري
+            
+            <button class="icon-btn excel-btn tooltip" onclick="exportTableToExcel()" data-tooltip="تصدير الجدول كملف Excel">
+                <span class="icon">📈</span>
+                <span class="label">حفظ كـ Excel</span>
             </button>
-            <button class="enhanced-report-btn" onclick="showEnhancedReportsModal()">
-                التقارير المتقدمة
-            </button>
-        </div>
-        
-        <!-- Third row: Export & Print -->
-        <div class="actions-line">
-            <button class="pdf-btn" onclick="exportTableToPDF()">
-                حفظ كـ PDF
-            </button>
-            <button class="excel-btn" onclick="exportTableToExcel()">
-                حفظ كـ Excel
-            </button>
-            <button class="print-btn" onclick="printTable()">
-                طباعة
+            
+            <button class="icon-btn print-btn tooltip" onclick="printTable()" data-tooltip="طباعة الجدول مباشرة">
+                <span class="icon">🖨️</span>
+                <span class="label">طباعة</span>
             </button>
         </div>
     </div>

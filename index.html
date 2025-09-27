@@ -638,8 +638,8 @@
         
         /* Desktop column widths - optimized for content */
         .plan-table th:nth-child(1), .plan-table td:nth-child(1) { /* المفتش */
-            width: 18%;
-            min-width: 140px;
+            width: 28%;
+            min-width: 180px;
             white-space: nowrap;
             font-size: 0.82em;
         }
@@ -662,8 +662,8 @@
             font-size: 0.82em;
         }
         .plan-table th:nth-child(5), .plan-table td:nth-child(5) { /* المحلات */
-            width: 46%;
-            min-width: 180px;
+            width: 36%;
+            min-width: 150px;
             overflow: visible;
             position: relative;
             font-size: 0.82em;
@@ -671,40 +671,86 @@
         
         /* Dropdown shops styles removed - now using inline display */
 
-        /* Simple dropdown styles for shops list */
+        /* Simple dropdown styles for shops list - Enhanced for smart display */
         .shops-dropdown-list {
             display:none;
             position:fixed;
-            background:#90EE90;
+            background:#ffffff;
             border:2px solid #234085;
-            border-radius:8px;
+            border-radius:12px;
             margin-top:5px;
-            min-width:220px;
-            max-width:400px;
-            max-height:250px;
-            box-shadow:0 4px 16px rgba(0,0,0,0.2);
+            min-width:280px;
+            max-width:450px;
+            max-height:300px;
+            box-shadow:0 8px 25px rgba(35, 64, 133, 0.15);
             z-index:9999;
             text-align:right;
             overflow-y:auto;
             white-space:normal;
+            font-family: 'Cairo', Arial, sans-serif;
+        }
+        .shops-dropdown-list::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 20px;
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-bottom: 8px solid #234085;
+        }
+        .shops-dropdown-header {
+            background: linear-gradient(135deg, #234085 0%, #2e5bb8 100%);
+            color: white;
+            padding: 12px 15px;
+            margin: 0;
+            border-radius: 10px 10px 0 0;
+            font-weight: 600;
+            font-size: 0.95em;
+            text-align: center;
+            border-bottom: 1px solid #e0e0e0;
         }
         .shops-dropdown-list ul {
             list-style: none;
-            margin:0; padding:7px 5px;
+            margin:0; 
+            padding:10px 8px;
         }
         .shops-dropdown-list ul li {
-            padding:8px 12px;
-            border-bottom:1px solid #e0e0e0;
-            font-size:0.95em;
-            transition: background-color 0.2s;
+            padding:10px 15px;
+            border-bottom:1px solid #f0f0f0;
+            font-size:0.92em;
+            transition: all 0.3s ease;
             word-wrap: break-word;
             white-space: normal;
-            line-height: 1.3;
+            line-height: 1.4;
+            border-radius: 6px;
+            margin-bottom: 4px;
+            position: relative;
         }
         .shops-dropdown-list ul li:hover {
-            background-color:#f0f8ff;
+            background-color:#f8faff;
+            transform: translateX(-3px);
+            box-shadow: 3px 0 8px rgba(35, 64, 133, 0.1);
         }
-        .shops-dropdown-list ul li:last-child {border-bottom:none;}
+        .shops-dropdown-list ul li:last-child {
+            border-bottom:none;
+            margin-bottom: 0;
+        }
+        .shops-dropdown-list ul li::before {
+            content: '🏪';
+            margin-left: 8px;
+            font-size: 0.9em;
+        }
+        .shops-count-badge {
+            background: #28a745;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-right: 8px;
+        }
         .shops-dropdown-wrap {position:relative; display:inline-block;}
         .inspector-report-div {margin:16px 0 0 0;background:#f7f9fc;border-radius:10px;padding:18px 12px;width:100%;color:#234085;font-size:1.1em;box-shadow:0 1px 5px #e2e2e2;}
         /* تنسيق قسم البحث */
@@ -936,8 +982,8 @@
 
             /* Optimized column widths for mobile - total ~100% */
             .plan-table th:nth-child(1), .plan-table td:nth-child(1) { /* المفتش */
-                width: 21%;
-                min-width: 21%;
+                width: 28%;
+                min-width: 28%;
                 font-size: 0.75em;
                 white-space: nowrap;
                 overflow: hidden;
@@ -964,8 +1010,8 @@
                 text-overflow: ellipsis;
             }
             .plan-table th:nth-child(5), .plan-table td:nth-child(5) { /* المحلات */
-                width: 34%;
-                min-width: 34%;
+                width: 27%;
+                min-width: 27%;
                 font-size: 0.75em;
             }
 
@@ -1067,8 +1113,8 @@
 
             /* Optimized column widths for very small mobile - total ~100% */
             .plan-table th:nth-child(1), .plan-table td:nth-child(1) { /* المفتش */
-                width: 23%;
-                min-width: 23%;
+                width: 30%;
+                min-width: 30%;
                 font-size: 0.7em;
                 white-space: nowrap;
                 overflow: hidden;
@@ -1095,8 +1141,8 @@
                 text-overflow: ellipsis;
             }
             .plan-table th:nth-child(5), .plan-table td:nth-child(5) { /* المحلات */
-                width: 28%;
-                min-width: 28%;
+                width: 21%;
+                min-width: 21%;
                 font-size: 0.7em;
             }
 
@@ -2353,8 +2399,12 @@ function renderPlanTable() {
                     عرض المحلات (${row.shops.length})
                 </button>
                 <div class="shops-dropdown-list" id="shops-dropdown-${realIdx}">
+                    <div class="shops-dropdown-header">
+                        <span class="shops-count-badge">${row.shops.length}</span>
+                        قائمة المحلات المطلوب تفتيشها
+                    </div>
                     <ul>
-                        ${row.shops.slice().sort().map(shop => `<li>${shop}</li>`).join('')}
+                        ${row.shops.slice().sort().map((shop, index) => `<li title="محل رقم ${index + 1}">${shop}</li>`).join('')}
                     </ul>
                 </div>
             </div>` : 
@@ -2495,10 +2545,22 @@ function toggleShopsDropdown(rowIndex) {
     }
 }
 
-// --- إخفاء القوائم المنسدلة عند النقر خارجها ---
+// --- إخفاء القوائم المنسدلة عند النقر خارجها - محدثة ---
 document.addEventListener('click', function(e){
-    if (![...document.querySelectorAll('.shops-dropdown-wrap *')].includes(e.target)) {
-        document.querySelectorAll('.shops-dropdown-list').forEach(el=>el.style.display='none');
+    // التحقق من أن النقر ليس داخل أي من عناصر المحلات
+    const isClickInsideShopsDropdown = e.target.closest('.shops-dropdown-wrap');
+    const isClickOnShopsButton = e.target.classList.contains('show-shops-btn') || e.target.closest('.show-shops-btn');
+    
+    // إذا لم يكن النقر داخل منطقة المحلات، أخفِ جميع القوائم
+    if (!isClickInsideShopsDropdown) {
+        document.querySelectorAll('.shops-dropdown-list').forEach(el => {
+            el.style.display = 'none';
+        });
+    }
+    
+    // منع النقر على القائمة المنسدلة نفسها من إغلاقها
+    if (e.target.closest('.shops-dropdown-list') && !isClickOnShopsButton) {
+        e.stopPropagation();
     }
 });
 
@@ -2841,6 +2903,32 @@ function exportTableToPDF() {
         td.style.wordBreak = 'break-word';
     });
     
+    // Replace shops buttons with actual shop names for PDF export
+    const shopsDropdowns = tableClone.querySelectorAll('.shops-dropdown-wrap');
+    shopsDropdowns.forEach(dropdown => {
+        const shopsList = dropdown.querySelector('.shops-dropdown-list ul');
+        const shopsButton = dropdown.querySelector('.show-shops-btn');
+        
+        if (shopsList && shopsButton) {
+            // Extract shop names from the list
+            const shopItems = shopsList.querySelectorAll('li');
+            const shopNames = Array.from(shopItems).map(item => {
+                // Remove the shop icon emoji from the text
+                return item.textContent.replace('🏪', '').trim();
+            });
+            
+            // Create a formatted shops display for PDF
+            const shopsText = document.createElement('div');
+            shopsText.style.fontSize = '7px';
+            shopsText.style.lineHeight = '1.3';
+            shopsText.style.textAlign = 'right';
+            shopsText.innerHTML = shopNames.join('<br>');
+            
+            // Replace the entire dropdown with the shops text
+            dropdown.parentNode.replaceChild(shopsText, dropdown);
+        }
+    });
+    
     wrap.appendChild(tableClone);
     document.body.appendChild(wrap);
     
@@ -2891,12 +2979,35 @@ function exportTableToPDF() {
 function exportTableToExcel() {
     let table = document.getElementById('inspectorPlanTable');
     if (!table) { alert("لا يوجد جدول للتصدير"); return; }
+    
     let ws_data = [];
+    
+    // Process each row
     for(let r of table.rows) {
         let row = [];
-        for(let c of r.cells) row.push(c.textContent);
+        for(let c of r.cells) {
+            // Check if this cell contains shops dropdown
+            const shopsDropdown = c.querySelector('.shops-dropdown-wrap');
+            if (shopsDropdown) {
+                const shopsList = shopsDropdown.querySelector('.shops-dropdown-list ul');
+                if (shopsList) {
+                    // Extract shop names from the list
+                    const shopItems = shopsList.querySelectorAll('li');
+                    const shopNames = Array.from(shopItems).map(item => {
+                        // Remove the shop icon emoji from the text
+                        return item.textContent.replace('🏪', '').trim();
+                    });
+                    row.push(shopNames.join(', '));
+                } else {
+                    row.push(c.textContent);
+                }
+            } else {
+                row.push(c.textContent);
+            }
+        }
         ws_data.push(row);
     }
+    
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(ws_data);
     XLSX.utils.book_append_sheet(wb, ws, "الخطة");
@@ -2909,6 +3020,32 @@ function printTable() {
     // Create a new window for printing
     const printWindow = window.open('', '_blank');
     const tableClone = table.cloneNode(true);
+    
+    // Replace shops buttons with actual shop names for printing
+    const shopsDropdowns = tableClone.querySelectorAll('.shops-dropdown-wrap');
+    shopsDropdowns.forEach(dropdown => {
+        const shopsList = dropdown.querySelector('.shops-dropdown-list ul');
+        const shopsButton = dropdown.querySelector('.show-shops-btn');
+        
+        if (shopsList && shopsButton) {
+            // Extract shop names from the list
+            const shopItems = shopsList.querySelectorAll('li');
+            const shopNames = Array.from(shopItems).map(item => {
+                // Remove the shop icon emoji from the text
+                return item.textContent.replace('🏪', '').trim();
+            });
+            
+            // Create a formatted shops display for printing
+            const shopsText = document.createElement('div');
+            shopsText.style.fontSize = '0.8em';
+            shopsText.style.lineHeight = '1.2';
+            shopsText.style.textAlign = 'right';
+            shopsText.innerHTML = shopNames.join('<br>');
+            
+            // Replace the entire dropdown with the shops text
+            dropdown.parentNode.replaceChild(shopsText, dropdown);
+        }
+    });
     
     // Create the print document
     printWindow.document.write(`

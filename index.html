@@ -552,10 +552,65 @@
             gap:10px;
         }
         .stats-title {color:#134093;font-size:1.18em;text-align:center;margin-bottom:15px;}
-        .stats-table {width:100%;border-collapse:collapse;margin-bottom:0;font-size:1.04em;}
-        .stats-table th, .stats-table td {border:1px solid #234093;padding:10px 6px;text-align:center;}
-        .stats-table th {background:#234093;color:#fff;}
+        .stats-table {
+            width:100%;
+            border-collapse:collapse;
+            margin-bottom:0;
+            font-size:1.04em;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .stats-table th, .stats-table td {
+            border:1px solid #234093;
+            padding:12px 8px;
+            text-align:center;
+            vertical-align: middle;
+        }
+        .stats-table th {
+            background:#234093;
+            color:#fff;
+            font-weight: bold;
+            font-size: 1.05em;
+        }
         .stats-table tr:nth-child(even) {background:#f3f5fa;}
+        .stats-table tr:hover {background:#e8f0fe;}
+        
+        /* Inspector Report Specific Styling */
+        .inspector-report-div {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #e0e6ed;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .save-box {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        
+        .save-box button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            min-width: 140px;
+        }
+        
+        .save-box button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+        }
         .footer {text-align:center;margin-top:22px;color:#234085;font-size:0.85em;}
         .red-total {
             color: #d32f2f !important;
@@ -2353,29 +2408,86 @@ document.addEventListener('DOMContentLoaded', function() {
 function exportTableToPDF() {
     let table = document.getElementById('inspectorPlanTable');
     if (!table) { alert("لا يوجد جدول للتصدير"); return; }
+    
     let wrap = document.createElement('div');
     wrap.style.background = '#fff';
-    wrap.style.padding = '18px';
-    wrap.style.width = table.offsetWidth + 'px';
+    wrap.style.padding = '20px';
+    wrap.style.fontFamily = 'Cairo, Arial, sans-serif';
+    wrap.style.width = 'auto';
+    wrap.style.minWidth = '800px';
+    
     let titleBox = document.createElement('div');
     titleBox.className = "pdf-title-arabic";
     titleBox.innerText = "خطة التفتيش الشهرية";
+    titleBox.style.fontSize = '1.3em';
+    titleBox.style.marginBottom = '15px';
     wrap.appendChild(titleBox);
+    
     let tableClone = table.cloneNode(true);
     tableClone.style.marginTop = '10px';
+    tableClone.style.width = '100%';
+    tableClone.style.fontSize = '11px';
+    
+    // Style table for better PDF rendering
+    const thElements = tableClone.querySelectorAll('th');
+    thElements.forEach(th => {
+        th.style.padding = '8px 6px';
+        th.style.fontSize = '10px';
+        th.style.fontWeight = 'bold';
+    });
+    
+    const tdElements = tableClone.querySelectorAll('td');
+    tdElements.forEach(td => {
+        td.style.padding = '6px 4px';
+        td.style.fontSize = '9px';
+        td.style.wordBreak = 'break-word';
+    });
+    
     wrap.appendChild(tableClone);
     document.body.appendChild(wrap);
-    html2canvas(wrap, {backgroundColor:'#fff', scale:2}).then(function(canvas) {
+    
+    html2canvas(wrap, {
+        backgroundColor: '#fff', 
+        scale: 1.5,
+        useCORS: true,
+        allowTaint: true,
+        width: wrap.scrollWidth,
+        height: wrap.scrollHeight
+    }).then(function(canvas) {
         const imgData = canvas.toDataURL('image/png');
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({orientation:"landscape",unit:"pt",format:"a4"});
-        let pageWidth = doc.internal.pageSize.getWidth();
-        let imgProps = doc.getImageProperties(imgData);
-        let pdfWidth = pageWidth - 80;
-        let pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        doc.addImage(imgData, 'PNG', 40, 35, pdfWidth, pdfHeight);
-        doc.save(`خطة_التفتيش.pdf`);
+        const doc = new jsPDF({orientation: "landscape", unit: "pt", format: "a4"});
+        
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const imgProps = doc.getImageProperties(imgData);
+        
+        const pdfWidth = pageWidth - 40;
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        
+        // If content is too tall, split into multiple pages
+        if (pdfHeight > pageHeight - 60) {
+            const ratio = (pageHeight - 60) / pdfHeight;
+            const finalWidth = pdfWidth * ratio;
+            const finalHeight = pageHeight - 60;
+            
+            doc.addImage(imgData, 'PNG', 20, 30, finalWidth, finalHeight);
+            
+            // Add additional pages if needed
+            if (pdfHeight > pageHeight - 60) {
+                // For very large tables, we might need to implement table splitting logic
+                // For now, we'll scale to fit one page
+            }
+        } else {
+            doc.addImage(imgData, 'PNG', 20, 30, pdfWidth, pdfHeight);
+        }
+        
+        doc.save(`خطة_التفتيش_${new Date().toISOString().split('T')[0]}.pdf`);
         document.body.removeChild(wrap);
+    }).catch(function(error) {
+        console.error('PDF generation error:', error);
+        document.body.removeChild(wrap);
+        alert('حدث خطأ في تصدير ملف PDF');
     });
 }
 function exportTableToExcel() {
@@ -2440,15 +2552,32 @@ function showInspectorReport() {
     const div = document.getElementById('inspectorReportDiv');
     const rows = inspectionData.filter(item => item.inspector === inspectorName);
     
-    // Count total shops assigned to this inspector
+    // Calculate comprehensive statistics
     let totalShops = 0;
     let morningShops = 0;
     let eveningShops = 0;
     let weekendShops = 0;
+    let totalDays = 0;
+    let areasVisited = new Set();
+    let shopsList = new Set();
+    let dailyStats = {};
     
     rows.forEach(r => {
         const shopsCount = r.shops ? r.shops.length : 0;
         totalShops += shopsCount;
+        totalDays++;
+        areasVisited.add(r.area);
+        
+        // Add shops to set for unique count
+        if (r.shops) {
+            r.shops.forEach(shop => shopsList.add(shop));
+        }
+        
+        // Daily statistics
+        if (!dailyStats[r.day]) {
+            dailyStats[r.day] = { shops: 0, shift: r.shift, area: r.area };
+        }
+        dailyStats[r.day].shops += shopsCount;
         
         if (r.shift === "صباحية") {
             morningShops += shopsCount;
@@ -2456,104 +2585,439 @@ function showInspectorReport() {
             eveningShops += shopsCount;
         }
         
-        // Check if it's a weekend day
+        // Check if it's a weekend day (Friday, Saturday, Sunday)
         const dayOfWeek = new Date(r.day).getDay();
         if ([5,6,0].includes(dayOfWeek)) {
             weekendShops += shopsCount;
         }
     });
     
+    const averageShopsPerDay = totalDays > 0 ? (totalShops / totalDays).toFixed(1) : 0;
+    const uniqueShopsCount = shopsList.size;
+    
     let table = `
     <div class="pdf-title-arabic" id="inspectorReportTitle">تقرير المفتش: ${inspectorName}</div>
-    <div class="save-box" style="margin-bottom:8px;">
-        <button class="pdf-btn" onclick="exportInspectorReportToPDF()">حفظ التقرير كـ PDF</button>
-        <button class="excel-btn" onclick="exportInspectorReportToExcel()">حفظ التقرير كـ Excel</button>
+    <div class="save-box" style="margin-bottom:15px;">
+        <button class="pdf-btn" onclick="exportInspectorReportToPDF()">📄 حفظ كـ PDF</button>
+        <button class="excel-btn" onclick="exportInspectorReportToExcel()">📊 حفظ كـ Excel</button>
     </div>
+    
+    <!-- Summary Statistics -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+        <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; text-align: center; border-left: 4px solid #2196f3;">
+            <h4 style="margin: 0; color: #1976d2;">إجمالي التفتيشات</h4>
+            <span style="font-size: 1.5em; font-weight: bold; color: #1976d2;">${totalShops}</span>
+        </div>
+        <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; text-align: center; border-left: 4px solid #4caf50;">
+            <h4 style="margin: 0; color: #388e3c;">المحلات الفريدة</h4>
+            <span style="font-size: 1.5em; font-weight: bold; color: #388e3c;">${uniqueShopsCount}</span>
+        </div>
+        <div style="background: #fff3e0; padding: 15px; border-radius: 8px; text-align: center; border-left: 4px solid #ff9800;">
+            <h4 style="margin: 0; color: #f57c00;">المناطق المغطاة</h4>
+            <span style="font-size: 1.5em; font-weight: bold; color: #f57c00;">${areasVisited.size}</span>
+        </div>
+        <div style="background: #fce4ec; padding: 15px; border-radius: 8px; text-align: center; border-left: 4px solid #e91e63;">
+            <h4 style="margin: 0; color: #c2185b;">متوسط يومي</h4>
+            <span style="font-size: 1.5em; font-weight: bold; color: #c2185b;">${averageShopsPerDay}</span>
+        </div>
+    </div>
+    
+    <!-- Main Statistics Table -->
     <table class="stats-table" id="inspectorStatsTable">
         <thead>
             <tr>
-                <th>عدد التفتيشات</th>
-                <th>الصباحية</th>
-                <th>المسائية</th>
-                <th>العطلة</th>
+                <th>إجمالي التفتيشات</th>
+                <th>التفتيشات الصباحية</th>
+                <th>التفتيشات المسائية</th>
+                <th>تفتيشات العطلة</th>
+                <th>أيام العمل</th>
+                <th>المناطق المغطاة</th>
             </tr>
         </thead>
         <tbody>
             <tr>
-                <td>${totalShops}</td>
-                <td>${morningShops}</td>
-                <td>${eveningShops}</td>
-                <td>${weekendShops}</td>
+                <td style="font-weight: bold; color: #2196f3;">${totalShops}</td>
+                <td style="color: #4caf50;">${morningShops}</td>
+                <td style="color: #ff9800;">${eveningShops}</td>
+                <td style="color: #e91e63;">${weekendShops}</td>
+                <td>${totalDays}</td>
+                <td>${areasVisited.size}</td>
             </tr>
         </tbody>
     </table>
-    `;
+    
+    <!-- Daily Breakdown Table -->
+    <h3 style="color: #234085; margin-top: 25px; margin-bottom: 15px;">التفصيل اليومي</h3>
+    <table class="stats-table" id="inspectorDailyTable">
+        <thead>
+            <tr>
+                <th>التاريخ</th>
+                <th>المنطقة</th>
+                <th>وقت المناوبة</th>
+                <th>عدد المحلات</th>
+                <th>النسبة من الإجمالي</th>
+            </tr>
+        </thead>
+        <tbody>`;
+    
+    // Add daily breakdown
+    Object.keys(dailyStats).sort().forEach(day => {
+        const dayData = dailyStats[day];
+        const percentage = totalShops > 0 ? ((dayData.shops / totalShops) * 100).toFixed(1) : 0;
+        const dayOfWeek = new Date(day).toLocaleDateString('ar', { weekday: 'long' });
+        
+        table += `
+            <tr>
+                <td>${day}<br><small style="color: #666;">${dayOfWeek}</small></td>
+                <td>${dayData.area}</td>
+                <td>
+                    <span style="background: ${dayData.shift === 'صباحية' ? '#4caf50' : '#ff9800'}; 
+                                 color: white; padding: 3px 8px; border-radius: 12px; font-size: 0.85em;">
+                        ${dayData.shift}
+                    </span>
+                </td>
+                <td style="font-weight: bold;">${dayData.shops}</td>
+                <td>
+                    <div style="display: flex; align-items: center; justify-content: center;">
+                        <div style="background: #e0e0e0; width: 50px; height: 8px; border-radius: 4px; margin-right: 8px;">
+                            <div style="background: #2196f3; width: ${percentage}%; height: 100%; border-radius: 4px;"></div>
+                        </div>
+                        ${percentage}%
+                    </div>
+                </td>
+            </tr>`;
+    });
+    
+    table += `
+        </tbody>
+    </table>
+    
+    <!-- Areas Coverage -->
+    <h3 style="color: #234085; margin-top: 25px; margin-bottom: 15px;">تغطية المناطق</h3>
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">`;
+    
+    areasVisited.forEach(area => {
+        const areaInspections = rows.filter(r => r.area === area).reduce((sum, r) => sum + (r.shops ? r.shops.length : 0), 0);
+        const areaPercentage = totalShops > 0 ? ((areaInspections / totalShops) * 100).toFixed(1) : 0;
+        
+        table += `
+            <div style="background: #f5f5f5; padding: 10px 15px; border-radius: 20px; border: 1px solid #ddd;">
+                <strong>${area}</strong><br>
+                <small>${areaInspections} تفتيش (${areaPercentage}%)</small>
+            </div>`;
+    });
+    
+    table += `</div>`;
+    
     div.innerHTML = table;
     div.style.display = "block";
 }
 function exportInspectorReportToPDF() {
     let titleBox = document.getElementById('inspectorReportTitle');
-    let table = document.getElementById('inspectorStatsTable');
-    if (!table || !titleBox) return;
+    let reportDiv = document.getElementById('inspectorReportDiv');
+    if (!reportDiv || !titleBox) return;
+    
     let wrap = document.createElement('div');
     wrap.style.background = '#fff';
-    wrap.style.padding = '18px';
-    wrap.style.width = table.offsetWidth + 'px';
-    let titleClone = titleBox.cloneNode(true);
-    let tableClone = table.cloneNode(true);
-    tableClone.style.marginTop = '10px';
-    wrap.appendChild(titleClone);
-    wrap.appendChild(tableClone);
+    wrap.style.padding = '20px';
+    wrap.style.fontFamily = 'Cairo, Arial, sans-serif';
+    wrap.style.width = 'auto';
+    wrap.style.minWidth = '800px';
+    wrap.style.maxWidth = '1000px';
+    
+    // Clone the entire report content
+    let contentClone = reportDiv.cloneNode(true);
+    
+    // Remove buttons from the cloned content
+    const buttons = contentClone.querySelectorAll('button, .save-box');
+    buttons.forEach(btn => btn.remove());
+    
+    // Style tables for better PDF rendering
+    const tables = contentClone.querySelectorAll('table');
+    tables.forEach(table => {
+        table.style.fontSize = '10px';
+        table.style.marginBottom = '15px';
+        
+        const ths = table.querySelectorAll('th');
+        ths.forEach(th => {
+            th.style.padding = '8px 6px';
+            th.style.fontSize = '9px';
+            th.style.fontWeight = 'bold';
+        });
+        
+        const tds = table.querySelectorAll('td');
+        tds.forEach(td => {
+            td.style.padding = '6px 4px';
+            td.style.fontSize = '8px';
+            td.style.wordBreak = 'break-word';
+        });
+    });
+    
+    // Style other elements
+    const h3Elements = contentClone.querySelectorAll('h3');
+    h3Elements.forEach(h3 => {
+        h3.style.fontSize = '12px';
+        h3.style.marginTop = '15px';
+        h3.style.marginBottom = '8px';
+    });
+    
+    const smallElements = contentClone.querySelectorAll('small');
+    smallElements.forEach(small => {
+        small.style.fontSize = '7px';
+    });
+    
+    wrap.appendChild(contentClone);
     document.body.appendChild(wrap);
-    html2canvas(wrap, {backgroundColor:'#fff', scale:2}).then(function(canvas){
+    
+    html2canvas(wrap, {
+        backgroundColor: '#fff', 
+        scale: 1.2,
+        useCORS: true,
+        allowTaint: true,
+        width: wrap.scrollWidth,
+        height: wrap.scrollHeight
+    }).then(function(canvas) {
         const imgData = canvas.toDataURL('image/png');
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({orientation:"p",unit:"pt",format:"a4"});
-        let pageWidth = doc.internal.pageSize.getWidth();
-        let imgProps = doc.getImageProperties(imgData);
-        let pdfWidth = pageWidth - 80;
+        const doc = new jsPDF({orientation: "portrait", unit: "pt", format: "a4"});
+        
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const imgProps = doc.getImageProperties(imgData);
+        
+        let pdfWidth = pageWidth - 40;
         let pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        doc.addImage(imgData, 'PNG', 40, 35, pdfWidth, pdfHeight);
-        doc.save(`تقرير_${selectedInspector}.pdf`);
+        
+        // Handle multiple pages if content is too tall
+        let yPosition = 20;
+        let remainingHeight = pdfHeight;
+        let sourceY = 0;
+        
+        while (remainingHeight > 0) {
+            const pageContentHeight = Math.min(remainingHeight, pageHeight - 40);
+            const sourceHeight = (pageContentHeight * imgProps.height) / pdfHeight;
+            
+            if (sourceY > 0) {
+                doc.addPage();
+            }
+            
+            // Create a cropped image for this page
+            const pageCanvas = document.createElement('canvas');
+            pageCanvas.width = imgProps.width;
+            pageCanvas.height = sourceHeight;
+            const pageCtx = pageCanvas.getContext('2d');
+            
+            const img = new Image();
+            img.onload = function() {
+                pageCtx.drawImage(img, 0, sourceY, imgProps.width, sourceHeight, 0, 0, imgProps.width, sourceHeight);
+                const pageImgData = pageCanvas.toDataURL('image/png');
+                doc.addImage(pageImgData, 'PNG', 20, 20, pdfWidth, pageContentHeight);
+                
+                sourceY += sourceHeight;
+                remainingHeight -= pageContentHeight;
+                
+                if (remainingHeight <= 0) {
+                    doc.save(`تقرير_${selectedInspector}_${new Date().toISOString().split('T')[0]}.pdf`);
+                    document.body.removeChild(wrap);
+                }
+            };
+            img.src = imgData;
+            
+            if (remainingHeight <= pageHeight - 40) {
+                break;
+            }
+        }
+        
+        // Fallback: if the multi-page logic fails, just fit to one page
+        if (remainingHeight > 0) {
+            if (pdfHeight > pageHeight - 40) {
+                const ratio = (pageHeight - 40) / pdfHeight;
+                pdfWidth = pdfWidth * ratio;
+                pdfHeight = pageHeight - 40;
+            }
+            doc.addImage(imgData, 'PNG', 20, 20, pdfWidth, pdfHeight);
+            doc.save(`تقرير_${selectedInspector}_${new Date().toISOString().split('T')[0]}.pdf`);
+            document.body.removeChild(wrap);
+        }
+        
+    }).catch(function(error) {
+        console.error('PDF generation error:', error);
         document.body.removeChild(wrap);
+        alert('حدث خطأ في تصدير ملف PDF');
     });
 }
 function exportInspectorReportToExcel() {
-    let table = document.getElementById("inspectorStatsTable");
-    if (!table) return;
+    if (!selectedInspector) return;
+    
+    const rows = inspectionData.filter(item => item.inspector === selectedInspector);
     let ws_data = [];
-    for(let r of table.rows) {
-        let row = [];
-        for(let c of r.cells) row.push(c.textContent);
-        ws_data.push(row);
-    }
+    
+    // Add title
+    ws_data.push([`تقرير المفتش: ${selectedInspector}`]);
+    ws_data.push([]);
+    
+    // Calculate statistics
+    let totalShops = 0;
+    let morningShops = 0;
+    let eveningShops = 0;
+    let weekendShops = 0;
+    let areasVisited = new Set();
+    let shopsList = new Set();
+    
+    rows.forEach(r => {
+        const shopsCount = r.shops ? r.shops.length : 0;
+        totalShops += shopsCount;
+        areasVisited.add(r.area);
+        
+        if (r.shops) {
+            r.shops.forEach(shop => shopsList.add(shop));
+        }
+        
+        if (r.shift === "صباحية") {
+            morningShops += shopsCount;
+        } else if (r.shift === "مسائية") {
+            eveningShops += shopsCount;
+        }
+        
+        const dayOfWeek = new Date(r.day).getDay();
+        if ([5,6,0].includes(dayOfWeek)) {
+            weekendShops += shopsCount;
+        }
+    });
+    
+    // Add summary statistics
+    ws_data.push(['الإحصائيات العامة']);
+    ws_data.push(['إجمالي التفتيشات', totalShops]);
+    ws_data.push(['المحلات الفريدة', shopsList.size]);
+    ws_data.push(['المناطق المغطاة', areasVisited.size]);
+    ws_data.push(['التفتيشات الصباحية', morningShops]);
+    ws_data.push(['التفتيشات المسائية', eveningShops]);
+    ws_data.push(['تفتيشات العطلة', weekendShops]);
+    ws_data.push(['أيام العمل', rows.length]);
+    ws_data.push([]);
+    
+    // Add detailed breakdown header
+    ws_data.push(['التفصيل اليومي']);
+    ws_data.push(['التاريخ', 'المنطقة', 'وقت المناوبة', 'عدد المحلات', 'أسماء المحلات']);
+    
+    // Add daily details
+    rows.forEach(r => {
+        const shopsCount = r.shops ? r.shops.length : 0;
+        const shopNames = r.shops ? r.shops.join(', ') : '';
+        ws_data.push([r.day, r.area, r.shift, shopsCount, shopNames]);
+    });
+    
+    ws_data.push([]);
+    ws_data.push(['المناطق المغطاة']);
+    areasVisited.forEach(area => {
+        const areaInspections = rows.filter(r => r.area === area).reduce((sum, r) => sum + (r.shops ? r.shops.length : 0), 0);
+        ws_data.push([area, areaInspections]);
+    });
+    
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(ws_data);
+    
+    // Set column widths
+    ws['!cols'] = [
+        {wch: 15}, {wch: 20}, {wch: 15}, {wch: 15}, {wch: 50}
+    ];
+    
     XLSX.utils.book_append_sheet(wb, ws, "تقرير المفتش");
-    XLSX.writeFile(wb, `تقرير_${selectedInspector}.xlsx`);
+    XLSX.writeFile(wb, `تقرير_${selectedInspector}_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 function showMonthlyReport() {
     let allDays = Array.from(new Set(inspectionData.map(r => r.day))).sort();
+    
+    // Calculate totals
+    let totals = { 
+        total: 0, 
+        morning: 0, 
+        evening: 0, 
+        weekend: 0, 
+        days: Array(allDays.length).fill(0),
+        inspectors: inspectorsData.length,
+        areas: new Set(),
+        uniqueShops: new Set()
+    };
+    
     let html = `<div class="pdf-title-arabic" id="monthlyReportTitle">التقرير الشهري</div>`;
-    html += `<table class="stats-table" id="monthlyStatsTable"><thead><tr>
-        <th>المفتش</th>`;
-    allDays.forEach(day => html += `<th>${day}</th>`);
-    html += `<th>الإجمالي</th><th>الصباحية</th><th>المسائية</th><th>العطلة</th></tr></thead><tbody>`;
-    let totals = { total:0, morning:0, evening:0, weekend:0, days: Array(allDays.length).fill(0) };
+    
+    // Add summary statistics
+    html += `<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px;">`;
+    
+    // Calculate overall statistics
+    inspectionData.forEach(item => {
+        totals.areas.add(item.area);
+        if (item.shops) {
+            item.shops.forEach(shop => totals.uniqueShops.add(shop));
+        }
+    });
+    
+    html += `
+        <div style="background: #e3f2fd; padding: 12px; border-radius: 8px; text-align: center;">
+            <strong style="color: #1976d2; font-size: 1.1em;">${inspectionData.length}</strong>
+            <div style="font-size: 0.8em; color: #666;">إجمالي الزيارات</div>
+        </div>
+        <div style="background: #e8f5e8; padding: 12px; border-radius: 8px; text-align: center;">
+            <strong style="color: #388e3c; font-size: 1.1em;">${totals.uniqueShops.size}</strong>
+            <div style="font-size: 0.8em; color: #666;">محل فريد</div>
+        </div>
+        <div style="background: #fff3e0; padding: 12px; border-radius: 8px; text-align: center;">
+            <strong style="color: #f57c00; font-size: 1.1em;">${totals.areas.size}</strong>
+            <div style="font-size: 0.8em; color: #666;">منطقة مغطاة</div>
+        </div>
+        <div style="background: #fce4ec; padding: 12px; border-radius: 8px; text-align: center;">
+            <strong style="color: #c2185b; font-size: 1.1em;">${totals.inspectors}</strong>
+            <div style="font-size: 0.8em; color: #666;">مفتش نشط</div>
+        </div>
+    </div>`;
+    
+    html += `<table class="stats-table" id="monthlyStatsTable">
+        <thead>
+            <tr>
+                <th style="min-width: 120px;">المفتش</th>`;
+    
+    allDays.forEach(day => {
+        const dayName = new Date(day).toLocaleDateString('ar', { weekday: 'short' });
+        html += `<th style="min-width: 80px;">${day}<br><small style="font-size: 0.7em;">${dayName}</small></th>`;
+    });
+    
+    html += `<th style="background: #2196f3;">الإجمالي</th>
+             <th style="background: #4caf50;">الصباحية</th>
+             <th style="background: #ff9800;">المسائية</th>
+             <th style="background: #e91e63;">العطلة</th>
+             <th style="background: #9c27b0;">المناطق</th>
+             <th style="background: #607d8b;">الكفاءة</th>
+             </tr>
+        </thead>
+        <tbody>`;
+    
     inspectors.forEach(inspector => {
         const rows = inspectionData.filter(item => item.inspector === inspector);
-        html += `<tr><td>${inspector}</td>`;
-        allDays.forEach((day,i) => {
-            let dayRows = rows.filter(r=>r.day===day);
+        const inspectorAreas = new Set(rows.map(r => r.area));
+        
+        html += `<tr><td style="font-weight: bold; text-align: right;">${inspector}</td>`;
+        
+        // Daily columns
+        allDays.forEach((day, i) => {
+            let dayRows = rows.filter(r => r.day === day);
             let shopsCount = 0;
             dayRows.forEach(row => {
                 shopsCount += row.shops ? row.shops.length : 0;
             });
-            html += `<td>${shopsCount||''}</td>`;
+            
+            let cellStyle = '';
+            if (shopsCount > 0) {
+                if (shopsCount >= 7) cellStyle = 'background: #c8e6c9; font-weight: bold;';
+                else if (shopsCount >= 5) cellStyle = 'background: #fff9c4;';
+                else cellStyle = 'background: #ffcdd2;';
+            }
+            
+            html += `<td style="${cellStyle}">${shopsCount || ''}</td>`;
             totals.days[i] += shopsCount;
         });
         
-        // Calculate totals based on shops, not days
+        // Calculate totals for this inspector
         let totalShops = 0;
         let morningShops = 0;
         let eveningShops = 0;
@@ -2569,21 +3033,72 @@ function showMonthlyReport() {
                 eveningShops += shopsCount;
             }
             
-            // Check if it's a weekend day
             const dow = new Date(r.day).getDay();
             if ([5,6,0].includes(dow)) {
                 weekendShops += shopsCount;
             }
         });
         
-        html += `<td>${totalShops}</td><td>${morningShops}</td><td>${eveningShops}</td><td>${weekendShops}</td></tr>`;
-        totals.total += totalShops; totals.morning += morningShops; totals.evening += eveningShops; totals.weekend += weekendShops;
+        // Calculate efficiency (shops per working day)
+        const workingDays = rows.length;
+        const efficiency = workingDays > 0 ? (totalShops / workingDays).toFixed(1) : '0';
+        
+        html += `<td style="font-weight: bold; background: #e3f2fd;">${totalShops}</td>
+                 <td style="color: #4caf50;">${morningShops}</td>
+                 <td style="color: #ff9800;">${eveningShops}</td>
+                 <td style="color: #e91e63;">${weekendShops}</td>
+                 <td style="color: #9c27b0;">${inspectorAreas.size}</td>
+                 <td style="color: #607d8b; font-weight: bold;">${efficiency}</td>
+                 </tr>`;
+        
+        totals.total += totalShops;
+        totals.morning += morningShops;
+        totals.evening += eveningShops;
+        totals.weekend += weekendShops;
     });
-    html += `<tr class="red-total">
-        <td>الإجمالي</td>`;
-    totals.days.forEach(sum=>html+=`<td>${sum}</td>`);
-    html += `<td>${totals.total}</td><td>${totals.morning}</td><td>${totals.evening}</td><td>${totals.weekend}</td></tr>`;
+    
+    // Add totals row
+    html += `<tr class="red-total" style="background: #ffeb3b; font-weight: bold;">
+        <td style="font-weight: bold;">الإجمالي</td>`;
+    
+    totals.days.forEach(sum => html += `<td>${sum}</td>`);
+    
+    const overallEfficiency = inspectors.length > 0 ? (totals.total / inspectors.length).toFixed(1) : '0';
+    
+    html += `<td style="background: #2196f3; color: white;">${totals.total}</td>
+             <td style="background: #4caf50; color: white;">${totals.morning}</td>
+             <td style="background: #ff9800; color: white;">${totals.evening}</td>
+             <td style="background: #e91e63; color: white;">${totals.weekend}</td>
+             <td style="background: #9c27b0; color: white;">${totals.areas.size}</td>
+             <td style="background: #607d8b; color: white;">${overallEfficiency}</td>
+             </tr>`;
+    
     html += `</tbody></table>`;
+    
+    // Add performance analysis
+    html += `
+    <div style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 8px;">
+        <h4 style="color: #234085; margin-bottom: 10px;">تحليل الأداء</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; font-size: 0.9em;">
+            <div>
+                <strong>أعلى أداء يومي:</strong><br>
+                ${Math.max(...totals.days)} تفتيش في ${allDays[totals.days.indexOf(Math.max(...totals.days))]}
+            </div>
+            <div>
+                <strong>متوسط التفتيش اليومي:</strong><br>
+                ${(totals.days.reduce((a, b) => a + b, 0) / totals.days.length).toFixed(1)} تفتيش/يوم
+            </div>
+            <div>
+                <strong>نسبة التفتيش الصباحي:</strong><br>
+                ${totals.total > 0 ? ((totals.morning / totals.total) * 100).toFixed(1) : 0}%
+            </div>
+            <div>
+                <strong>نسبة تفتيش العطلة:</strong><br>
+                ${totals.total > 0 ? ((totals.weekend / totals.total) * 100).toFixed(1) : 0}%
+            </div>
+        </div>
+    </div>`;
+    
     document.getElementById('monthlyReportContent').innerHTML = html;
     document.getElementById('monthlyReportModal').style.display = 'flex';
 }
@@ -2591,45 +3106,269 @@ function closeMonthlyReportModal() {
     document.getElementById('monthlyReportModal').style.display = 'none';
 }
 function exportMonthlyReportToPDF() {
-    let titleBox = document.getElementById('monthlyReportTitle');
-    let table = document.getElementById("monthlyStatsTable");
-    if (!table || !titleBox) return;
+    let reportContent = document.getElementById('monthlyReportContent');
+    if (!reportContent) return;
+    
     let wrap = document.createElement('div');
     wrap.style.background = '#fff';
-    wrap.style.padding = '18px';
-    wrap.style.width = table.offsetWidth + 'px';
-    let titleClone = titleBox.cloneNode(true);
-    let tableClone = table.cloneNode(true);
-    tableClone.style.marginTop = '10px';
-    wrap.appendChild(titleClone);
-    wrap.appendChild(tableClone);
+    wrap.style.padding = '20px';
+    wrap.style.fontFamily = 'Cairo, Arial, sans-serif';
+    wrap.style.width = 'auto';
+    wrap.style.minWidth = '1000px';
+    wrap.style.maxWidth = '1200px';
+    
+    let contentClone = reportContent.cloneNode(true);
+    
+    // Style elements for better PDF rendering
+    const tables = contentClone.querySelectorAll('table');
+    tables.forEach(table => {
+        table.style.fontSize = '8px';
+        table.style.marginBottom = '15px';
+        
+        const ths = table.querySelectorAll('th');
+        ths.forEach(th => {
+            th.style.padding = '6px 4px';
+            th.style.fontSize = '8px';
+            th.style.fontWeight = 'bold';
+        });
+        
+        const tds = table.querySelectorAll('td');
+        tds.forEach(td => {
+            td.style.padding = '5px 3px';
+            td.style.fontSize = '7px';
+            td.style.wordBreak = 'break-word';
+        });
+    });
+    
+    // Style summary cards
+    const summaryDivs = contentClone.querySelectorAll('[style*="grid-template-columns"]');
+    summaryDivs.forEach(div => {
+        div.style.fontSize = '9px';
+        const children = div.querySelectorAll('div');
+        children.forEach(child => {
+            child.style.padding = '8px';
+            child.style.fontSize = '8px';
+        });
+    });
+    
+    // Style analysis section
+    const h4Elements = contentClone.querySelectorAll('h4');
+    h4Elements.forEach(h4 => {
+        h4.style.fontSize = '11px';
+        h4.style.marginBottom = '8px';
+    });
+    
+    const smallElements = contentClone.querySelectorAll('small');
+    smallElements.forEach(small => {
+        small.style.fontSize = '6px';
+    });
+    
+    wrap.appendChild(contentClone);
     document.body.appendChild(wrap);
-    html2canvas(wrap, {backgroundColor:'#fff', scale:2}).then(function(canvas){
+    
+    html2canvas(wrap, {
+        backgroundColor: '#fff', 
+        scale: 1.0,
+        useCORS: true,
+        allowTaint: true,
+        width: wrap.scrollWidth,
+        height: wrap.scrollHeight
+    }).then(function(canvas) {
         const imgData = canvas.toDataURL('image/png');
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({orientation:"landscape",unit:"pt",format:"a4"});
-        let pageWidth = doc.internal.pageSize.getWidth();
-        let imgProps = doc.getImageProperties(imgData);
-        let pdfWidth = pageWidth - 80;
+        const doc = new jsPDF({orientation: "landscape", unit: "pt", format: "a4"});
+        
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const imgProps = doc.getImageProperties(imgData);
+        
+        let pdfWidth = pageWidth - 40;
         let pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        doc.addImage(imgData, 'PNG', 40, 35, pdfWidth, pdfHeight);
-        doc.save(`التقرير_الشهري.pdf`);
+        
+        // Handle multiple pages if content is too tall
+        if (pdfHeight > pageHeight - 40) {
+            // Scale to fit page width, then handle multiple pages
+            const pages = Math.ceil(pdfHeight / (pageHeight - 40));
+            const pageContentHeight = (pageHeight - 40);
+            
+            for (let i = 0; i < pages; i++) {
+                if (i > 0) {
+                    doc.addPage();
+                }
+                
+                const sourceY = (i * pageContentHeight * imgProps.height) / pdfHeight;
+                const sourceHeight = Math.min(
+                    (pageContentHeight * imgProps.height) / pdfHeight,
+                    imgProps.height - sourceY
+                );
+                
+                // Create page canvas
+                const pageCanvas = document.createElement('canvas');
+                pageCanvas.width = imgProps.width;
+                pageCanvas.height = sourceHeight;
+                const pageCtx = pageCanvas.getContext('2d');
+                
+                const img = new Image();
+                img.onload = function() {
+                    pageCtx.drawImage(canvas, 0, sourceY, imgProps.width, sourceHeight, 0, 0, imgProps.width, sourceHeight);
+                    const pageImgData = pageCanvas.toDataURL('image/png');
+                    const pageImgHeight = (sourceHeight * pdfWidth) / imgProps.width;
+                    doc.addImage(pageImgData, 'PNG', 20, 20, pdfWidth, pageImgHeight);
+                    
+                    if (i === pages - 1) {
+                        doc.save(`التقرير_الشهري_${new Date().toISOString().split('T')[0]}.pdf`);
+                        document.body.removeChild(wrap);
+                    }
+                };
+                img.src = canvas.toDataURL('image/png');
+            }
+        } else {
+            doc.addImage(imgData, 'PNG', 20, 20, pdfWidth, pdfHeight);
+            doc.save(`التقرير_الشهري_${new Date().toISOString().split('T')[0]}.pdf`);
+            document.body.removeChild(wrap);
+        }
+        
+    }).catch(function(error) {
+        console.error('PDF generation error:', error);
         document.body.removeChild(wrap);
+        alert('حدث خطأ في تصدير ملف PDF');
     });
 }
 function exportMonthlyReportToExcel() {
-    let table = document.getElementById("monthlyStatsTable");
-    if (!table) return;
+    let allDays = Array.from(new Set(inspectionData.map(r => r.day))).sort();
     let ws_data = [];
-    for(let r of table.rows) {
-        let row = [];
-        for(let c of r.cells) row.push(c.textContent);
-        ws_data.push(row);
-    }
+    
+    // Add title and summary
+    ws_data.push(['التقرير الشهري']);
+    ws_data.push([]);
+    
+    // Calculate overall statistics 
+    let totals = { 
+        total: 0, 
+        morning: 0, 
+        evening: 0, 
+        weekend: 0, 
+        areas: new Set(),
+        uniqueShops: new Set()
+    };
+    
+    inspectionData.forEach(item => {
+        totals.areas.add(item.area);
+        if (item.shops) {
+            item.shops.forEach(shop => totals.uniqueShops.add(shop));
+        }
+    });
+    
+    // Add summary statistics
+    ws_data.push(['الإحصائيات العامة']);
+    ws_data.push(['إجمالي الزيارات', inspectionData.length]);
+    ws_data.push(['المحلات الفريدة', totals.uniqueShops.size]);
+    ws_data.push(['المناطق المغطاة', totals.areas.size]);
+    ws_data.push(['المفتشين النشطين', inspectorsData.length]);
+    ws_data.push([]);
+    
+    // Create main table header
+    let headerRow = ['المفتش'];
+    allDays.forEach(day => {
+        const dayName = new Date(day).toLocaleDateString('ar', { weekday: 'short' });
+        headerRow.push(`${day} (${dayName})`);
+    });
+    headerRow.push('الإجمالي', 'الصباحية', 'المسائية', 'العطلة', 'المناطق', 'الكفاءة');
+    ws_data.push(['التفصيل اليومي']);
+    ws_data.push(headerRow);
+    
+    let dailyTotals = Array(allDays.length).fill(0);
+    
+    // Add inspector data
+    inspectors.forEach(inspector => {
+        const rows = inspectionData.filter(item => item.inspector === inspector);
+        const inspectorAreas = new Set(rows.map(r => r.area));
+        
+        let inspectorRow = [inspector];
+        
+        // Daily columns
+        allDays.forEach((day, i) => {
+            let dayRows = rows.filter(r => r.day === day);
+            let shopsCount = 0;
+            dayRows.forEach(row => {
+                shopsCount += row.shops ? row.shops.length : 0;
+            });
+            inspectorRow.push(shopsCount || '');
+            dailyTotals[i] += shopsCount;
+        });
+        
+        // Calculate totals for this inspector
+        let totalShops = 0;
+        let morningShops = 0;
+        let eveningShops = 0;
+        let weekendShops = 0;
+        
+        rows.forEach(r => {
+            const shopsCount = r.shops ? r.shops.length : 0;
+            totalShops += shopsCount;
+            
+            if (r.shift === "صباحية") {
+                morningShops += shopsCount;
+            } else if (r.shift === "مسائية") {
+                eveningShops += shopsCount;
+            }
+            
+            const dow = new Date(r.day).getDay();
+            if ([5,6,0].includes(dow)) {
+                weekendShops += shopsCount;
+            }
+        });
+        
+        const workingDays = rows.length;
+        const efficiency = workingDays > 0 ? (totalShops / workingDays).toFixed(1) : '0';
+        
+        inspectorRow.push(totalShops, morningShops, eveningShops, weekendShops, inspectorAreas.size, efficiency);
+        ws_data.push(inspectorRow);
+        
+        totals.total += totalShops;
+        totals.morning += morningShops;
+        totals.evening += eveningShops;
+        totals.weekend += weekendShops;
+    });
+    
+    // Add totals row
+    let totalsRow = ['الإجمالي'];
+    dailyTotals.forEach(sum => totalsRow.push(sum));
+    const overallEfficiency = inspectors.length > 0 ? (totals.total / inspectors.length).toFixed(1) : '0';
+    totalsRow.push(totals.total, totals.morning, totals.evening, totals.weekend, totals.areas.size, overallEfficiency);
+    ws_data.push(totalsRow);
+    
+    ws_data.push([]);
+    
+    // Add performance analysis
+    ws_data.push(['تحليل الأداء']);
+    ws_data.push(['أعلى أداء يومي', Math.max(...dailyTotals) + ' تفتيش']);
+    ws_data.push(['متوسط التفتيش اليومي', (dailyTotals.reduce((a, b) => a + b, 0) / dailyTotals.length).toFixed(1) + ' تفتيش/يوم']);
+    ws_data.push(['نسبة التفتيش الصباحي', totals.total > 0 ? ((totals.morning / totals.total) * 100).toFixed(1) + '%' : '0%']);
+    ws_data.push(['نسبة تفتيش العطلة', totals.total > 0 ? ((totals.weekend / totals.total) * 100).toFixed(1) + '%' : '0%']);
+    
+    ws_data.push([]);
+    
+    // Add areas breakdown
+    ws_data.push(['تفصيل المناطق']);
+    ws_data.push(['المنطقة', 'عدد التفتيشات', 'عدد المفتشين']);
+    totals.areas.forEach(area => {
+        const areaInspections = inspectionData.filter(r => r.area === area).reduce((sum, r) => sum + (r.shops ? r.shops.length : 0), 0);
+        const areaInspectors = new Set(inspectionData.filter(r => r.area === area).map(r => r.inspector)).size;
+        ws_data.push([area, areaInspections, areaInspectors]);
+    });
+    
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(ws_data);
+    
+    // Set column widths
+    const colWidths = [{ wch: 20 }]; // Inspector name column
+    allDays.forEach(() => colWidths.push({ wch: 12 })); // Daily columns
+    colWidths.push({ wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }); // Summary columns
+    ws['!cols'] = colWidths;
+    
     XLSX.utils.book_append_sheet(wb, ws, "التقرير الشهري");
-    XLSX.writeFile(wb, `التقرير_الشهري.xlsx`);
+    XLSX.writeFile(wb, `التقرير_الشهري_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
 // --- Enhanced Reporting Functions ---

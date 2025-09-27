@@ -2021,11 +2021,18 @@ function renderPlanTable() {
         }
         return;
     }
+    // Sort by inspector name if requested
+    if (window.sortByInspector === true) {
+        rows = rows.sort((a, b) => a.inspector.localeCompare(b.inspector));
+    } else if (window.sortByInspector === false) {
+        rows = rows.sort((a, b) => b.inspector.localeCompare(a.inspector));
+    }
+    
     let html = `
     <table class="plan-table" id="inspectorPlanTable">
         <thead>
             <tr>
-                <th>اسم المفتش</th>
+                <th style="cursor:pointer;" onclick="toggleInspectorSort()">اسم المفتش ${window.sortByInspector === true ? '↑' : window.sortByInspector === false ? '↓' : ''}</th>
                 <th>اليوم</th>
                 <th>وقت المناوبة</th>
                 <th>المنطقة</th>
@@ -2040,7 +2047,7 @@ function renderPlanTable() {
         let realIdx = inspectionData.indexOf(row);
         html += `
             <tr>
-                <td>${row.inspector}</td>
+                <td style="background:#234085;color:#fff;border:none;border-radius:6px;padding:6px 18px;font-size:0.98em;font-weight:bold;">${row.inspector}</td>
                 <td>${row.day}</td>
                 <td>${row.shift}</td>
                 <td>${row.area}</td>
@@ -2065,6 +2072,17 @@ function renderPlanTable() {
     });
     html += `</tbody></table>`;
     container.innerHTML = html;
+}
+
+function toggleInspectorSort() {
+    if (window.sortByInspector === undefined || window.sortByInspector === false) {
+        window.sortByInspector = true; // Ascending
+    } else if (window.sortByInspector === true) {
+        window.sortByInspector = false; // Descending
+    } else {
+        window.sortByInspector = undefined; // No sort
+    }
+    renderPlanTable(); // Re-render the table with new sorting
 }
 
 function editPlan(idx) {

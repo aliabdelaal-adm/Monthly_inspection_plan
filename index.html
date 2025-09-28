@@ -6648,58 +6648,7 @@ function deleteShop(index) {
     }
 }
 
-function editShop(index) {
-    const shop = shopsData[index];
-    const area = areasData.find(a => a.id === shop.areaId);
-    
-    const newName = prompt('تعديل اسم المحل:', shop.name);
-    if (newName === null) return; // User cancelled
-    
-    const newNameTrimmed = newName.trim();
-    if (!newNameTrimmed) {
-        alert('يرجى إدخال اسم صحيح للمحل');
-        return;
-    }
-    
-    // Check if name already exists (but not for the same shop)
-    const existingShop = shopsData.find((s, i) => s.name === newNameTrimmed && i !== index);
-    if (existingShop) {
-        alert('هذا المحل موجود بالفعل');
-        return;
-    }
-    
-    // Get new area
-    const areaNames = areasData.map(a => a.name);
-    const currentAreaName = area ? area.name : 'غير محدد';
-    let selectedAreaName = currentAreaName;
-    
-    // Simple area selection using confirm dialogs (basic approach)
-    let areaChoice = confirm(`المنطقة الحالية: ${currentAreaName}\nهل تريد تغيير المنطقة؟`);
-    if (areaChoice) {
-        let areaOptions = areaNames.join('\n');
-        let newAreaName = prompt(`اختر المنطقة الجديدة:\n${areaOptions}`, currentAreaName);
-        if (newAreaName !== null) {
-            const newArea = areasData.find(a => a.name === newAreaName.trim());
-            if (newArea) {
-                selectedAreaName = newArea.name;
-            } else {
-                alert('المنطقة غير موجودة');
-                return;
-            }
-        }
-    }
-    
-    // Update shop data
-    shop.name = newNameTrimmed;
-    const selectedArea = areasData.find(a => a.name === selectedAreaName);
-    if (selectedArea) {
-        shop.areaId = selectedArea.id;
-    }
-    
-    fillShopsDropdowns();
-    displayShopsList();
-    saveDataToJSON();
-}
+
 
 function saveDataToJSON() {
     // Save all data to localStorage as backup

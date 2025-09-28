@@ -4008,9 +4008,10 @@ function renderShopDetails() {
 
 // --- التحقق من صلاحيات المطور ---
 function checkDevAccess() {
-    // نفس منطق التحقق المستخدم في admin.html
+    // التحقق من تسجيل دخول المطور أو وجود التوكن
     const token = localStorage.getItem("devToken");
-    return token && token.trim().length > 0;
+    const isDevLoggedIn = isDev || window.isDev;
+    return isDevLoggedIn || (token && token.trim().length > 0);
 }
 
 // --- تبديل وضع التحرير ---

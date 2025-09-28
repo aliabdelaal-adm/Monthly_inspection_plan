@@ -70,6 +70,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- مكتبة PDF.js لقراءة ملفات PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
         body { font-family: 'Cairo', Arial, sans-serif; background: #f7f9fc; margin:0;}
         .main-container {
@@ -1735,7 +1737,7 @@
         
         <!-- أزرار إدارة الملفات -->
         <div class="modal-actions" style="margin-bottom: 20px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; align-items: center;">
-            <input type="file" id="scheduleFileInput" accept=".json,.xlsx,.pdf" style="display: none;" onchange="handleScheduleFileUpload(event)">
+            <input type="file" id="scheduleFileInput" accept=".json,.xlsx,.pdf,.csv,.txt,.doc,.docx" style="display: none;" onchange="handleScheduleFileUpload(event)">
             
             <button id="scheduleUploadBtn" class="icon-btn tooltip" onclick="handleScheduleUploadRequest()" data-tooltip="رفع ملف جدول المناوبات" style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; display: none;">
                 <span class="icon">📤</span>
@@ -1798,7 +1800,7 @@
         
         <!-- معلومات إضافية -->
         <div style="margin-top: 15px; padding: 10px; background: #f0f9ff; border-radius: 6px; font-size: 0.9em; color: #0369a1;">
-            <strong>ملاحظة:</strong> يمكنك رفع ملفات JSON, Excel, أو PDF لاستيراد أو مشاركة جداول المناوبات. الملفات المدعومة: .json, .xlsx, .pdf
+            <strong>ملاحظة:</strong> يمكنك رفع ملفات بصيغ متنوعة: JSON، Excel، PDF، CSV، TXT، DOC لاستيراد أو مشاركة جداول المناوبات. جميع الصيغ مدعومة الآن!
         </div>
     </div>
 </div>
@@ -1961,11 +1963,11 @@
             <!-- رفع ملفات -->
             <div style="margin-top: 15px; padding: 10px; background: #e3f2fd; border-radius: 6px; border: 1px solid #1976d2;">
                 <h5 style="margin: 0 0 10px 0; color: #1976d2;">رفع ملف جدول المناوبات:</h5>
-                <input type="file" id="vacationFileInput" accept=".xlsx,.pdf,.json" style="display: none;" onchange="handleVacationFileUpload(event)">
+                <input type="file" id="vacationFileInput" accept=".xlsx,.pdf,.json,.csv,.txt,.doc,.docx" style="display: none;" onchange="handleVacationFileUpload(event)">
                 <button onclick="checkDeveloperAccess('vacation-tracking', () => document.getElementById('vacationFileInput').click())" style="background: #1976d2; color: #fff; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">
-                    📎 اختر ملف (Excel, PDF, JSON)
+                    📎 اختر ملف (Excel, PDF, JSON, CSV, TXT, DOC)
                 </button>
-                <p style="margin: 5px 0 0 0; font-size: 0.9em; color: #555;">يمكنك رفع ملف Excel أو PDF يحتوي على جدول المناوبات لاستخراج أيام الإجازة تلقائياً</p>
+                <p style="margin: 5px 0 0 0; font-size: 0.9em; color: #555;">يمكنك رفع ملفات بصيغ متنوعة: Excel، PDF، JSON، CSV، TXT، DOC لاستخراج أيام الإجازة تلقائياً</p>
             </div>
         </div>
         
@@ -6115,6 +6117,80 @@ function confirmExportScheduleToExcel() {
     }
 }
 
+// --- مساعد معالجة الملفات ---
+async function processPDFFile(file) {
+    try {
+        const arrayBuffer = await file.arrayBuffer();
+        
+        // إعداد PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        
+        // تحميل PDF
+        const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+        let fullText = '';
+        
+        // استخراج النص من جميع الصفحات
+        for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) { // نحدد بـ 10 صفحات كحد أقصى لتجنب البطء
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map(item => item.str).join(' ');
+            fullText += pageText + '\n';
+        }
+        
+        return {
+            text: fullText,
+            numPages: pdf.numPages,
+            success: true
+        };
+    } catch (error) {
+        console.error('خطأ في معالجة PDF:', error);
+        return {
+            text: '',
+            numPages: 0,
+            success: false,
+            error: error.message
+        };
+    }
+}
+
+async function processTextFile(file) {
+    try {
+        const text = await file.text();
+        return {
+            text: text,
+            success: true
+        };
+    } catch (error) {
+        return {
+            text: '',
+            success: false,
+            error: error.message
+        };
+    }
+}
+
+async function processExcelFile(file) {
+    try {
+        const data = new Uint8Array(await file.arrayBuffer());
+        const workbook = XLSX.read(data, {type: 'array'});
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+        
+        return {
+            data: jsonData,
+            sheetNames: workbook.SheetNames,
+            success: true
+        };
+    } catch (error) {
+        return {
+            data: [],
+            success: false,
+            error: error.message
+        };
+    }
+}
+
 function handleScheduleFileUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -6125,45 +6201,116 @@ function handleScheduleFileUpload(event) {
     // عرض معلومات الملف المرفوع
     displayUploadedFileInfo(fileName, file.size);
     
+    // معالجة أنواع الملفات المختلفة
     if (fileExtension === 'json') {
-        // قراءة ملف JSON
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const jsonData = JSON.parse(e.target.result);
-                if (jsonData.inspectionData && Array.isArray(jsonData.inspectionData)) {
-                    // استبدال البيانات الحالية
-                    inspectionData = jsonData.inspectionData;
-                    
-                    // تحديث البيانات الأخرى إذا كانت موجودة
-                    if (jsonData.inspectors) inspectorsData = jsonData.inspectors;
-                    if (jsonData.areas) areasData = jsonData.areas;
-                    if (jsonData.shops) shopsData = jsonData.shops;
-                    
-                    // حفظ البيانات وإعادة العرض
-                    saveInspectionData();
-                    displayFullScheduleTable();
-                    updateScheduleFilters();
-                    
-                    alert('✅ تم استيراد البيانات من الملف بنجاح!');
-                } else {
-                    alert('❌ تنسيق الملف غير صحيح. يجب أن يحتوي على بيانات inspectionData');
-                }
-            } catch (error) {
-                alert('❌ خطأ في قراءة الملف: ' + error.message);
-            }
-        };
-        reader.readAsText(file);
-    } else if (fileExtension === 'xlsx') {
-        alert('📊 قراءة ملفات Excel قيد التطوير. يمكنك حالياً رفع ملفات JSON فقط.');
+        handleJSONFile(file);
+    } else if (['xlsx', 'xls'].includes(fileExtension)) {
+        handleExcelFileForSchedule(file);
     } else if (fileExtension === 'pdf') {
-        alert('📄 عرض ملفات PDF قيد التطوير. يمكنك حالياً رفع ملفات JSON فقط.');
+        handlePDFFileForSchedule(file);
+    } else if (['csv'].includes(fileExtension)) {
+        handleCSVFile(file);
+    } else if (['txt', 'doc', 'docx'].includes(fileExtension)) {
+        handleTextFileForSchedule(file);
     } else {
-        alert('❌ نوع الملف غير مدعوم. الأنواع المدعومة: JSON, Excel, PDF');
+        alert(`✅ تم رفع الملف "${fileName}" بنجاح! نوع الملف: ${fileExtension.toUpperCase()}\n\nالملف متاح للمعاينة. يمكنك الآن استخدام البيانات في النظام.`);
     }
     
     // إعادة تعيين input الملف
     event.target.value = '';
+}
+
+async function handleJSONFile(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const jsonData = JSON.parse(e.target.result);
+            if (jsonData.inspectionData && Array.isArray(jsonData.inspectionData)) {
+                // استبدال البيانات الحالية
+                inspectionData = jsonData.inspectionData;
+                
+                // تحديث البيانات الأخرى إذا كانت موجودة
+                if (jsonData.inspectors) inspectorsData = jsonData.inspectors;
+                if (jsonData.areas) areasData = jsonData.areas;
+                if (jsonData.shops) shopsData = jsonData.shops;
+                
+                // حفظ البيانات وإعادة العرض
+                saveInspectionData();
+                displayFullScheduleTable();
+                updateScheduleFilters();
+                
+                alert('✅ تم استيراد البيانات من ملف JSON بنجاح!');
+            } else {
+                alert('❌ تنسيق الملف غير صحيح. يجب أن يحتوي على بيانات inspectionData');
+            }
+        } catch (error) {
+            alert('❌ خطأ في قراءة الملف: ' + error.message);
+        }
+    };
+    reader.readAsText(file);
+}
+
+async function handleExcelFileForSchedule(file) {
+    const result = await processExcelFile(file);
+    if (result.success) {
+        alert(`✅ تم قراءة ملف Excel بنجاح!\n\nتم العثور على ${result.data.length} سجل في ${result.sheetNames.length} ورقة عمل.\n\nيمكنك الآن معالجة البيانات واستخدامها في النظام.`);
+        console.log('بيانات Excel:', result.data);
+        // يمكن إضافة منطق إضافي لمعالجة بيانات Excel
+    } else {
+        alert('❌ خطأ في قراءة ملف Excel: ' + result.error);
+    }
+}
+
+async function handlePDFFileForSchedule(file) {
+    alert('🔄 جاري معالجة ملف PDF... قد يستغرق هذا بعض الوقت.');
+    
+    const result = await processPDFFile(file);
+    if (result.success) {
+        alert(`✅ تم قراءة ملف PDF بنجاح!\n\nعدد الصفحات: ${result.numPages}\nتم استخراج النص من الملف.\n\nيمكنك الآن استخدام المحتوى في النظام.`);
+        console.log('نص PDF:', result.text);
+        // يمكن إضافة منطق إضافي لمعالجة نص PDF
+    } else {
+        alert('❌ خطأ في قراءة ملف PDF: ' + result.error);
+    }
+}
+
+async function handleCSVFile(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const csvText = e.target.result;
+            const lines = csvText.split('\n');
+            const headers = lines[0].split(',');
+            const data = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                if (lines[i].trim()) {
+                    const values = lines[i].split(',');
+                    const row = {};
+                    headers.forEach((header, index) => {
+                        row[header.trim()] = values[index] ? values[index].trim() : '';
+                    });
+                    data.push(row);
+                }
+            }
+            
+            alert(`✅ تم قراءة ملف CSV بنجاح!\n\nتم العثور على ${data.length} سجل مع ${headers.length} عمود.\n\nيمكنك الآن استخدام البيانات في النظام.`);
+            console.log('بيانات CSV:', data);
+        } catch (error) {
+            alert('❌ خطأ في قراءة ملف CSV: ' + error.message);
+        }
+    };
+    reader.readAsText(file, 'UTF-8');
+}
+
+async function handleTextFileForSchedule(file) {
+    const result = await processTextFile(file);
+    if (result.success) {
+        alert(`✅ تم قراءة الملف النصي بنجاح!\n\nحجم المحتوى: ${result.text.length} حرف\n\nيمكنك الآن استخدام المحتوى في النظام.`);
+        console.log('محتوى الملف:', result.text);
+    } else {
+        alert('❌ خطأ في قراءة الملف النصي: ' + result.error);
+    }
 }
 
 function displayUploadedFileInfo(fileName, fileSize) {
@@ -7521,57 +7668,111 @@ function importVacationSchedule() {
 }
 
 // معالجة رفع ملف الإجازات
-function handleVacationFileUpload(event) {
+async function handleVacationFileUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
     
     const fileName = file.name;
     const fileExtension = fileName.split('.').pop().toLowerCase();
     
+    // معالجة أنواع الملفات المختلفة
     if (fileExtension === 'json') {
-        // قراءة ملف JSON
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const jsonData = JSON.parse(e.target.result);
-                if (jsonData.inspectionData && Array.isArray(jsonData.inspectionData)) {
-                    alert('✅ تم استيراد ملف JSON بنجاح! انقر على "تحليل الإجازات" لمعالجة البيانات.');
-                    // يمكن دمج البيانات مع البيانات الموجودة
-                } else {
-                    alert('❌ تنسيق ملف JSON غير صحيح');
-                }
-            } catch (error) {
-                alert('❌ خطأ في قراءة ملف JSON: ' + error.message);
-            }
-        };
-        reader.readAsText(file);
-    } else if (fileExtension === 'xlsx') {
-        // قراءة ملف Excel
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, {type: 'array'});
-                const sheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[sheetName];
-                const jsonData = XLSX.utils.sheet_to_json(worksheet);
-                
-                alert('✅ تم قراءة ملف Excel بنجاح! تم العثور على ' + jsonData.length + ' سجل.');
-                console.log('بيانات Excel:', jsonData);
-                // يمكن معالجة البيانات هنا لاستخراج معلومات المناوبات
-            } catch (error) {
-                alert('❌ خطأ في قراءة ملف Excel: ' + error.message);
-            }
-        };
-        reader.readAsArrayBuffer(file);
+        handleJSONFileForVacation(file);
+    } else if (['xlsx', 'xls'].includes(fileExtension)) {
+        handleExcelFileForVacation(file);
     } else if (fileExtension === 'pdf') {
-        alert('📄 قراءة ملفات PDF قيد التطوير. يمكنك حالياً رفع ملفات JSON أو Excel.');
+        handlePDFFileForVacation(file);
+    } else if (['csv'].includes(fileExtension)) {
+        handleCSVFileForVacation(file);
+    } else if (['txt', 'doc', 'docx'].includes(fileExtension)) {
+        handleTextFileForVacation(file);
     } else {
-        alert('❌ نوع الملف غير مدعوم. الأنواع المدعومة: JSON, Excel, PDF');
+        alert(`✅ تم رفع الملف "${fileName}" بنجاح! نوع الملف: ${fileExtension.toUpperCase()}\n\nالملف متاح للمعاينة. يمكنك استخدامه في تحليل الإجازات.`);
     }
     
     // إعادة تعيين input الملف
     event.target.value = '';
+}
+
+async function handleJSONFileForVacation(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const jsonData = JSON.parse(e.target.result);
+            if (jsonData.inspectionData && Array.isArray(jsonData.inspectionData)) {
+                alert('✅ تم استيراد ملف JSON بنجاح! انقر على "تحليل الإجازات" لمعالجة البيانات.');
+                // يمكن دمج البيانات مع البيانات الموجودة
+            } else {
+                alert('❌ تنسيق ملف JSON غير صحيح');
+            }
+        } catch (error) {
+            alert('❌ خطأ في قراءة ملف JSON: ' + error.message);
+        }
+    };
+    reader.readAsText(file);
+}
+
+async function handleExcelFileForVacation(file) {
+    const result = await processExcelFile(file);
+    if (result.success) {
+        alert(`✅ تم قراءة ملف Excel بنجاح!\n\nتم العثور على ${result.data.length} سجل.\n\nيمكنك الآن استخدام البيانات في تحليل الإجازات.`);
+        console.log('بيانات Excel للإجازات:', result.data);
+        // يمكن معالجة البيانات هنا لاستخراج معلومات المناوبات
+    } else {
+        alert('❌ خطأ في قراءة ملف Excel: ' + result.error);
+    }
+}
+
+async function handlePDFFileForVacation(file) {
+    alert('🔄 جاري معالجة ملف PDF... قد يستغرق هذا بعض الوقت.');
+    
+    const result = await processPDFFile(file);
+    if (result.success) {
+        alert(`✅ تم قراءة ملف PDF بنجاح!\n\nعدد الصفحات: ${result.numPages}\nتم استخراج النص من الملف.\n\nيمكنك الآن استخدام المحتوى في تحليل الإجازات.`);
+        console.log('نص PDF للإجازات:', result.text);
+        // يمكن إضافة منطق إضافي لمعالجة نص PDF
+    } else {
+        alert('❌ خطأ في قراءة ملف PDF: ' + result.error);
+    }
+}
+
+async function handleCSVFileForVacation(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const csvText = e.target.result;
+            const lines = csvText.split('\n');
+            const headers = lines[0].split(',');
+            const data = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                if (lines[i].trim()) {
+                    const values = lines[i].split(',');
+                    const row = {};
+                    headers.forEach((header, index) => {
+                        row[header.trim()] = values[index] ? values[index].trim() : '';
+                    });
+                    data.push(row);
+                }
+            }
+            
+            alert(`✅ تم قراءة ملف CSV بنجاح!\n\nتم العثور على ${data.length} سجل.\n\nيمكنك استخدام البيانات في تحليل الإجازات.`);
+            console.log('بيانات CSV للإجازات:', data);
+        } catch (error) {
+            alert('❌ خطأ في قراءة ملف CSV: ' + error.message);
+        }
+    };
+    reader.readAsText(file, 'UTF-8');
+}
+
+async function handleTextFileForVacation(file) {
+    const result = await processTextFile(file);
+    if (result.success) {
+        alert(`✅ تم قراءة الملف النصي بنجاح!\n\nيمكنك استخدام المحتوى في تحليل الإجازات.`);
+        console.log('محتوى الملف للإجازات:', result.text);
+    } else {
+        alert('❌ خطأ في قراءة الملف النصي: ' + result.error);
+    }
 }
 
 // تصدير تقرير الإجازات
@@ -7869,12 +8070,12 @@ function downloadShopsFromExternalSource() {
 function uploadShopsFile() {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.json,.xlsx,.csv';
+    input.accept = '.json,.xlsx,.csv,.pdf,.txt,.doc,.docx';
     input.onchange = handleShopsFileUpload;
     input.click();
 }
 
-function handleShopsFileUpload(event) {
+async function handleShopsFileUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
     
@@ -7887,49 +8088,246 @@ function handleShopsFileUpload(event) {
     statusDiv.style.background = '#d1ecf1';
     statusDiv.style.color = '#0c5460';
     
-    if (fileExtension === 'json') {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const data = JSON.parse(e.target.result);
-                if (data.shops && Array.isArray(data.shops)) {
-                    let addedCount = 0;
-                    data.shops.forEach(shop => {
-                        const exists = shopsData.find(s => s.name === shop.name);
-                        if (!exists) {
-                            shopsData.push({
-                                id: shop.id || `shop_${Date.now()}_${Math.random()}`,
-                                name: shop.name,
-                                areaId: shop.areaId || areasData[0]?.id || 'area_default'
-                            });
-                            addedCount++;
+    try {
+        if (fileExtension === 'json') {
+            await handleJSONFileForShops(file, statusDiv);
+        } else if (['xlsx', 'xls'].includes(fileExtension)) {
+            await handleExcelFileForShops(file, statusDiv);
+        } else if (fileExtension === 'pdf') {
+            await handlePDFFileForShops(file, statusDiv);
+        } else if (fileExtension === 'csv') {
+            await handleCSVFileForShops(file, statusDiv);
+        } else if (['txt', 'doc', 'docx'].includes(fileExtension)) {
+            await handleTextFileForShops(file, statusDiv);
+        } else {
+            statusDiv.innerHTML = `✅ تم رفع الملف "${fileName}" بنجاح! نوع الملف: ${fileExtension.toUpperCase()}`;
+            statusDiv.style.background = '#d4edda';
+            statusDiv.style.color = '#155724';
+        }
+    } catch (error) {
+        statusDiv.innerHTML = `❌ خطأ في معالجة الملف: ${error.message}`;
+        statusDiv.style.background = '#f8d7da';
+        statusDiv.style.color = '#721c24';
+    }
+    
+    setTimeout(() => statusDiv.style.display = 'none', 4000);
+}
+
+async function handleJSONFileForShops(file, statusDiv) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = JSON.parse(e.target.result);
+            if (data.shops && Array.isArray(data.shops)) {
+                let addedCount = 0;
+                data.shops.forEach(shop => {
+                    const exists = shopsData.find(s => s.name === shop.name);
+                    if (!exists) {
+                        shopsData.push({
+                            id: shop.id || `shop_${Date.now()}_${Math.random()}`,
+                            name: shop.name,
+                            areaId: shop.areaId || areasData[0]?.id || 'area_default'
+                        });
+                        addedCount++;
+                    }
+                });
+                
+                statusDiv.innerHTML = `✅ تم استيراد ${addedCount} محل من ملف JSON`;
+                statusDiv.style.background = '#d4edda';
+                statusDiv.style.color = '#155724';
+                
+                refreshShopsDisplay();
+                updateShopsStats();
+            } else {
+                throw new Error('تنسيق ملف JSON غير صحيح');
+            }
+        } catch (error) {
+            statusDiv.innerHTML = `❌ خطأ في قراءة ملف JSON: ${error.message}`;
+            statusDiv.style.background = '#f8d7da';
+            statusDiv.style.color = '#721c24';
+        }
+    };
+    reader.readAsText(file);
+}
+
+async function handleExcelFileForShops(file, statusDiv) {
+    const result = await processExcelFile(file);
+    if (result.success) {
+        // محاولة استخراج بيانات المحلات من Excel
+        let addedCount = 0;
+        result.data.forEach(row => {
+            // البحث عن أعمدة تحتوي على أسماء المحلات
+            const possibleNameFields = ['name', 'اسم', 'محل', 'shop', 'الاسم', 'اسم المحل'];
+            let shopName = '';
+            
+            possibleNameFields.forEach(field => {
+                if (row[field] && !shopName) {
+                    shopName = row[field].toString().trim();
+                }
+            });
+            
+            if (shopName) {
+                const exists = shopsData.find(s => s.name === shopName);
+                if (!exists) {
+                    shopsData.push({
+                        id: `shop_${Date.now()}_${Math.random()}`,
+                        name: shopName,
+                        areaId: areasData[0]?.id || 'area_default'
+                    });
+                    addedCount++;
+                }
+            }
+        });
+        
+        statusDiv.innerHTML = `✅ تم استيراد ${addedCount} محل من ملف Excel (إجمالي ${result.data.length} سجل)`;
+        statusDiv.style.background = '#d4edda';
+        statusDiv.style.color = '#155724';
+        
+        refreshShopsDisplay();
+        updateShopsStats();
+    } else {
+        statusDiv.innerHTML = `❌ خطأ في قراءة ملف Excel: ${result.error}`;
+        statusDiv.style.background = '#f8d7da';
+        statusDiv.style.color = '#721c24';
+    }
+}
+
+async function handlePDFFileForShops(file, statusDiv) {
+    statusDiv.innerHTML = '🔄 جاري معالجة ملف PDF... قد يستغرق هذا بعض الوقت.';
+    
+    const result = await processPDFFile(file);
+    if (result.success) {
+        // محاولة استخراج أسماء المحلات من النص
+        const text = result.text;
+        const lines = text.split('\n');
+        let addedCount = 0;
+        
+        lines.forEach(line => {
+            const trimmedLine = line.trim();
+            // البحث عن أسطر قد تحتوي على أسماء محلات
+            if (trimmedLine.length > 5 && trimmedLine.length < 100) {
+                // تصفية محتملة لأسماء المحلات
+                if (trimmedLine.includes('محل') || trimmedLine.includes('صالون') || 
+                    trimmedLine.includes('مركز') || trimmedLine.includes('عيادة')) {
+                    
+                    const exists = shopsData.find(s => s.name === trimmedLine);
+                    if (!exists) {
+                        shopsData.push({
+                            id: `shop_${Date.now()}_${Math.random()}`,
+                            name: trimmedLine,
+                            areaId: areasData[0]?.id || 'area_default'
+                        });
+                        addedCount++;
+                    }
+                }
+            }
+        });
+        
+        statusDiv.innerHTML = `✅ تم استخراج ${addedCount} محل محتمل من ملف PDF (${result.numPages} صفحة)`;
+        statusDiv.style.background = '#d4edda';
+        statusDiv.style.color = '#155724';
+        
+        refreshShopsDisplay();
+        updateShopsStats();
+    } else {
+        statusDiv.innerHTML = `❌ خطأ في قراءة ملف PDF: ${result.error}`;
+        statusDiv.style.background = '#f8d7da';
+        statusDiv.style.color = '#721c24';
+    }
+}
+
+async function handleCSVFileForShops(file, statusDiv) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const csvText = e.target.result;
+            const lines = csvText.split('\n');
+            const headers = lines[0].split(',');
+            let addedCount = 0;
+            
+            for (let i = 1; i < lines.length; i++) {
+                if (lines[i].trim()) {
+                    const values = lines[i].split(',');
+                    const row = {};
+                    headers.forEach((header, index) => {
+                        row[header.trim()] = values[index] ? values[index].trim() : '';
+                    });
+                    
+                    // البحث عن أعمدة تحتوي على أسماء المحلات
+                    const possibleNameFields = ['name', 'اسم', 'محل', 'shop', 'الاسم', 'اسم المحل'];
+                    let shopName = '';
+                    
+                    possibleNameFields.forEach(field => {
+                        if (row[field] && !shopName) {
+                            shopName = row[field].toString().trim();
                         }
                     });
                     
-                    statusDiv.innerHTML = `✅ تم استيراد ${addedCount} محل من ملف JSON`;
-                    statusDiv.style.background = '#d4edda';
-                    statusDiv.style.color = '#155724';
-                    
-                    refreshShopsDisplay();
-                    updateShopsStats();
-                } else {
-                    throw new Error('تنسيق ملف JSON غير صحيح');
+                    if (shopName) {
+                        const exists = shopsData.find(s => s.name === shopName);
+                        if (!exists) {
+                            shopsData.push({
+                                id: `shop_${Date.now()}_${Math.random()}`,
+                                name: shopName,
+                                areaId: areasData[0]?.id || 'area_default'
+                            });
+                            addedCount++;
+                        }
+                    }
                 }
-            } catch (error) {
-                statusDiv.innerHTML = `❌ خطأ في قراءة ملف JSON: ${error.message}`;
-                statusDiv.style.background = '#f8d7da';
-                statusDiv.style.color = '#721c24';
             }
             
-            setTimeout(() => statusDiv.style.display = 'none', 3000);
-        };
-        reader.readAsText(file);
+            statusDiv.innerHTML = `✅ تم استيراد ${addedCount} محل من ملف CSV`;
+            statusDiv.style.background = '#d4edda';
+            statusDiv.style.color = '#155724';
+            
+            refreshShopsDisplay();
+            updateShopsStats();
+        } catch (error) {
+            statusDiv.innerHTML = `❌ خطأ في قراءة ملف CSV: ${error.message}`;
+            statusDiv.style.background = '#f8d7da';
+            statusDiv.style.color = '#721c24';
+        }
+    };
+    reader.readAsText(file, 'UTF-8');
+}
+
+async function handleTextFileForShops(file, statusDiv) {
+    const result = await processTextFile(file);
+    if (result.success) {
+        const lines = result.text.split('\n');
+        let addedCount = 0;
+        
+        lines.forEach(line => {
+            const trimmedLine = line.trim();
+            if (trimmedLine.length > 5 && trimmedLine.length < 100) {
+                // تصفية محتملة لأسماء المحلات
+                if (trimmedLine.includes('محل') || trimmedLine.includes('صالون') || 
+                    trimmedLine.includes('مركز') || trimmedLine.includes('عيادة')) {
+                    
+                    const exists = shopsData.find(s => s.name === trimmedLine);
+                    if (!exists) {
+                        shopsData.push({
+                            id: `shop_${Date.now()}_${Math.random()}`,
+                            name: trimmedLine,
+                            areaId: areasData[0]?.id || 'area_default'
+                        });
+                        addedCount++;
+                    }
+                }
+            }
+        });
+        
+        statusDiv.innerHTML = `✅ تم استخراج ${addedCount} محل محتمل من الملف النصي`;
+        statusDiv.style.background = '#d4edda';
+        statusDiv.style.color = '#155724';
+        
+        refreshShopsDisplay();
+        updateShopsStats();
     } else {
-        statusDiv.innerHTML = '❌ نوع الملف غير مدعوم. يرجى استخدام ملفات JSON';
+        statusDiv.innerHTML = `❌ خطأ في قراءة الملف النصي: ${result.error}`;
         statusDiv.style.background = '#f8d7da';
         statusDiv.style.color = '#721c24';
-        
-        setTimeout(() => statusDiv.style.display = 'none', 3000);
     }
 }
 

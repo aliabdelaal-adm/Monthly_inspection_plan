@@ -546,6 +546,14 @@
             background: linear-gradient(135deg, #e6750a 0%, #e55a30 100%);
         }
         
+        .shops-management-btn {
+            background: linear-gradient(135deg, #6f42c1 0%, #9c27b0 100%);
+            color: #fff;
+        }
+        .shops-management-btn:hover {
+            background: linear-gradient(135deg, #5936a3 0%, #8e24aa 100%);
+        }
+        
         .pdf-btn {
             background: linear-gradient(135deg, #d63384 0%, #e91e63 100%);
             color: #fff;
@@ -1426,6 +1434,11 @@
                 <span class="icon">🏖️</span>
                 <span class="label">تتبع الإجازات</span>
             </button>
+            
+            <button class="icon-btn shops-management-btn tooltip" onclick="showShopsManagementModal()" data-tooltip="قائمة المحلات الخاضعة للرقابة والتفتيش - تحديث وتصنيف ذكي للمحلات">
+                <span class="icon">🏪</span>
+                <span class="label">قائمة المحلات</span>
+            </button>
         </div>
         
         <!-- Smart Action Icons Row 2: Export & Print -->
@@ -1917,6 +1930,167 @@
                 </button>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- مودال إدارة المحلات الذكي -->
+<div id="shopsManagementModal" class="modal-overlay" style="display:none;">
+    <div class="modal-content" style="max-width: 95%; width: 1200px;">
+        <button class="close-btn" onclick="closeShopsManagementModal()">×</button>
+        <div class="stats-title">🏪 قائمة المحلات الخاضعة للرقابة والتفتيش</div>
+        
+        <!-- شريط أدوات إدارة المحلات -->
+        <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #dee2e6;">
+            <div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; align-items: center;">
+                
+                <!-- قسم تحديث البيانات -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                    <h4 style="margin: 0; color: #234085; font-size: 0.9em;">تحديث البيانات</h4>
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="downloadShopsFromExternalSource()" style="background: #28a745; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.85em;">
+                            📥 تحميل من المصدر الخارجي
+                        </button>
+                        <button onclick="uploadShopsFile()" style="background: #17a2b8; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.85em;">
+                            📁 رفع ملف المحلات
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- قسم التصنيف الذكي -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                    <h4 style="margin: 0; color: #234085; font-size: 0.9em;">التصنيف الذكي</h4>
+                    <select id="shopsClassificationFilter" onchange="applyShopsClassification()" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #ccc; font-size: 0.85em;">
+                        <option value="">-- اختر التصنيف --</option>
+                        <option value="area">حسب المناطق</option>
+                        <option value="alphabetical">ترتيب أبجدي</option>
+                        <option value="activity">حسب نوع النشاط</option>
+                        <option value="inspection_frequency">حسب معدل التفتيش</option>
+                        <option value="last_inspection">حسب آخر تفتيش</option>
+                    </select>
+                </div>
+                
+                <!-- قسم البحث والفلتر -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                    <h4 style="margin: 0; color: #234085; font-size: 0.9em;">البحث والفلتر</h4>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="shopsSearchInput" placeholder="بحث في المحلات..." onkeyup="filterShopsList()" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #ccc; font-size: 0.85em; width: 150px;">
+                        <button onclick="clearShopsFilters()" style="background: #6c757d; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85em;">
+                            🗑️ مسح
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- قسم التصدير -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                    <h4 style="margin: 0; color: #234085; font-size: 0.9em;">التصدير</h4>
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="exportShopsToExcel()" style="background: #198754; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.85em;">
+                            📊 Excel
+                        </button>
+                        <button onclick="exportShopsToPDF()" style="background: #dc3545; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.85em;">
+                            📄 PDF
+                        </button>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        
+        <!-- إحصائيات سريعة -->
+        <div id="shopsStatsContainer" style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin-bottom: 20px;">
+            <!-- سيتم ملؤها بواسطة JavaScript -->
+        </div>
+        
+        <!-- جدول المحلات -->
+        <div style="max-height: 500px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 8px; background: #fff;">
+            <table style="width: 100%; border-collapse: collapse; font-family: 'Cairo', Arial, sans-serif;">
+                <thead style="background: linear-gradient(135deg, #234085 0%, #2d4d99 100%); color: white; position: sticky; top: 0; z-index: 10;">
+                    <tr>
+                        <th style="padding: 12px 8px; text-align: center; border-right: 1px solid rgba(255,255,255,0.2);">#</th>
+                        <th style="padding: 12px 8px; text-align: center; border-right: 1px solid rgba(255,255,255,0.2);">اسم المحل</th>
+                        <th style="padding: 12px 8px; text-align: center; border-right: 1px solid rgba(255,255,255,0.2);">المنطقة</th>
+                        <th style="padding: 12px 8px; text-align: center; border-right: 1px solid rgba(255,255,255,0.2);">نوع النشاط</th>
+                        <th style="padding: 12px 8px; text-align: center; border-right: 1px solid rgba(255,255,255,0.2);">آخر تفتيش</th>
+                        <th style="padding: 12px 8px; text-align: center; border-right: 1px solid rgba(255,255,255,0.2);">عدد التفتيشات</th>
+                        <th style="padding: 12px 8px; text-align: center;">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="shopsTableBody">
+                    <!-- سيتم ملء المحتوى هنا بواسطة JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- أزرار إدارة المحلات -->
+        <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+            <button onclick="addNewShop()" style="background: #28a745; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
+                ➕ إضافة محل جديد
+            </button>
+            <button onclick="bulkEditShops()" style="background: #ffc107; color: #000; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
+                ✏️ تعديل مجمع
+            </button>
+            <button onclick="refreshShopsData()" style="background: #6f42c1; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
+                🔄 تحديث البيانات
+            </button>
+        </div>
+        
+        <!-- رسالة حالة التحديث -->
+        <div id="shopsUpdateStatus" style="display: none; margin-top: 15px; padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 6px; color: #155724; text-align: center;">
+            جاري تحديث بيانات المحلات...
+        </div>
+        
+    </div>
+</div>
+
+<!-- مودال إضافة/تعديل محل -->
+<div id="editShopModal" class="modal-overlay" style="display:none;">
+    <div class="modal-content" style="max-width: 500px;">
+        <button class="close-btn" onclick="closeEditShopModal()">×</button>
+        <div class="stats-title">✏️ إضافة/تعديل محل</div>
+        
+        <form id="editShopForm" style="padding: 20px;">
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">اسم المحل:</label>
+                <input type="text" id="editShopName" required style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc;">
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">المنطقة:</label>
+                <select id="editShopArea" required style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc;">
+                    <option value="">-- اختر المنطقة --</option>
+                </select>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">نوع النشاط:</label>
+                <select id="editShopActivity" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc;">
+                    <option value="">-- اختر نوع النشاط --</option>
+                    <option value="pet_shop">محل حيوانات أليفة</option>
+                    <option value="veterinary_clinic">عيادة بيطرية</option>
+                    <option value="pet_grooming">صالون حيوانات</option>
+                    <option value="aquarium">محل أسماك</option>
+                    <option value="bird_shop">محل طيور</option>
+                    <option value="pet_supplies">مستلزمات حيوانات</option>
+                    <option value="other">أخرى</option>
+                </select>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">ملاحظات:</label>
+                <textarea id="editShopNotes" rows="3" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; resize: vertical;"></textarea>
+            </div>
+            
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button type="submit" style="background: #28a745; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
+                    💾 حفظ
+                </button>
+                <button type="button" onclick="closeEditShopModal()" style="background: #6c757d; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
+                    ❌ إلغاء
+                </button>
+            </div>
+        </form>
+        
+        <input type="hidden" id="editShopIndex" value="">
     </div>
 </div>
 
@@ -7167,6 +7341,503 @@ function exportVacationReport() {
     
     exportVacationTable();
 }
+
+// ===== وظائف إدارة المحلات الذكية =====
+
+// متغيرات إدارة المحلات
+let filteredShopsData = [];
+let shopsClassificationFilter = '';
+let lastShopsUpdate = null;
+
+// فتح مودال إدارة المحلات
+function showShopsManagementModal() {
+    document.getElementById('shopsManagementModal').style.display = 'flex';
+    refreshShopsDisplay();
+    updateShopsStats();
+}
+
+// إغلاق مودال إدارة المحلات
+function closeShopsManagementModal() {
+    document.getElementById('shopsManagementModal').style.display = 'none';
+    document.getElementById('editShopModal').style.display = 'none';
+}
+
+// تحديث عرض المحلات
+function refreshShopsDisplay() {
+    filteredShopsData = [...shopsData];
+    applyShopsClassification();
+    renderShopsTable();
+}
+
+// تطبيق التصنيف الذكي
+function applyShopsClassification() {
+    const filterValue = document.getElementById('shopsClassificationFilter').value;
+    const searchTerm = document.getElementById('shopsSearchInput').value.toLowerCase().trim();
+    
+    // تطبيق البحث النصي أولاً
+    if (searchTerm) {
+        filteredShopsData = shopsData.filter(shop => 
+            shop.name.toLowerCase().includes(searchTerm) ||
+            (getAreaName(shop.areaId) && getAreaName(shop.areaId).toLowerCase().includes(searchTerm))
+        );
+    } else {
+        filteredShopsData = [...shopsData];
+    }
+    
+    // تطبيق التصنيف
+    switch(filterValue) {
+        case 'area':
+            filteredShopsData.sort((a, b) => {
+                const areaA = getAreaName(a.areaId) || '';
+                const areaB = getAreaName(b.areaId) || '';
+                return areaA.localeCompare(areaB, 'ar');
+            });
+            break;
+        case 'alphabetical':
+            filteredShopsData.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+            break;
+        case 'activity':
+            filteredShopsData.sort((a, b) => {
+                const activityA = getShopActivity(a.name);
+                const activityB = getShopActivity(b.name);
+                return activityA.localeCompare(activityB, 'ar');
+            });
+            break;
+        case 'inspection_frequency':
+            filteredShopsData.sort((a, b) => {
+                const freqA = getShopInspectionCount(a.name);
+                const freqB = getShopInspectionCount(b.name);
+                return freqB - freqA; // الأكثر تفتيشاً أولاً
+            });
+            break;
+        case 'last_inspection':
+            filteredShopsData.sort((a, b) => {
+                const lastA = getLastInspectionDate(a.name);
+                const lastB = getLastInspectionDate(b.name);
+                return new Date(lastB) - new Date(lastA); // الأحدث أولاً
+            });
+            break;
+    }
+    
+    renderShopsTable();
+    updateShopsStats();
+}
+
+// عرض جدول المحلات
+function renderShopsTable() {
+    const tbody = document.getElementById('shopsTableBody');
+    
+    if (filteredShopsData.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 40px; color: #666;">
+                    <div style="font-size: 2em;">🏪</div>
+                    <p>لا توجد محلات تطابق المعايير المحددة</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    let html = '';
+    filteredShopsData.forEach((shop, index) => {
+        const areaName = getAreaName(shop.areaId) || 'غير محدد';
+        const activity = getShopActivity(shop.name);
+        const lastInspection = getLastInspectionDate(shop.name);
+        const inspectionCount = getShopInspectionCount(shop.name);
+        
+        html += `
+            <tr style="border-bottom: 1px solid #e6ecf5; transition: background-color 0.2s ease;">
+                <td style="padding: 10px 8px; text-align: center; font-weight: 600;">${index + 1}</td>
+                <td style="padding: 10px 8px; font-weight: 600; color: #234085;">${shop.name}</td>
+                <td style="padding: 10px 8px; text-align: center;">${areaName}</td>
+                <td style="padding: 10px 8px; text-align: center;">
+                    <span style="background: ${getActivityColor(activity)}; color: white; padding: 3px 8px; border-radius: 12px; font-size: 0.8em;">
+                        ${activity}
+                    </span>
+                </td>
+                <td style="padding: 10px 8px; text-align: center; color: ${lastInspection ? '#28a745' : '#dc3545'};">
+                    ${lastInspection ? formatDate(lastInspection) : 'لم يتم بعد'}
+                </td>
+                <td style="padding: 10px 8px; text-align: center;">
+                    <span style="background: ${inspectionCount > 5 ? '#28a745' : inspectionCount > 2 ? '#ffc107' : '#dc3545'}; color: ${inspectionCount > 2 ? 'white' : 'black'}; padding: 3px 8px; border-radius: 12px; font-size: 0.9em; font-weight: bold;">
+                        ${inspectionCount}
+                    </span>
+                </td>
+                <td style="padding: 10px 8px; text-align: center;">
+                    <button onclick="editShop(${index})" style="background: #6c757d; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; margin: 0 2px;">
+                        ✏️
+                    </button>
+                    <button onclick="deleteShop(${index})" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; margin: 0 2px;">
+                        🗑️
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html;
+}
+
+// تحديث الإحصائيات
+function updateShopsStats() {
+    const container = document.getElementById('shopsStatsContainer');
+    
+    const totalShops = filteredShopsData.length;
+    const areas = [...new Set(filteredShopsData.map(shop => getAreaName(shop.areaId)))].filter(Boolean);
+    const activities = [...new Set(filteredShopsData.map(shop => getShopActivity(shop.name)))];
+    const inspectedShops = filteredShopsData.filter(shop => getShopInspectionCount(shop.name) > 0).length;
+    
+    container.innerHTML = `
+        <div style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 15px; border-radius: 10px; text-align: center; min-width: 120px;">
+            <div style="font-size: 1.8em; font-weight: bold;">${totalShops}</div>
+            <div style="font-size: 0.9em;">إجمالي المحلات</div>
+        </div>
+        <div style="background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%); color: white; padding: 15px; border-radius: 10px; text-align: center; min-width: 120px;">
+            <div style="font-size: 1.8em; font-weight: bold;">${areas.length}</div>
+            <div style="font-size: 0.9em;">المناطق</div>
+        </div>
+        <div style="background: linear-gradient(135deg, #6f42c1 0%, #8e44ad 100%); color: white; padding: 15px; border-radius: 10px; text-align: center; min-width: 120px;">
+            <div style="font-size: 1.8em; font-weight: bold;">${activities.length}</div>
+            <div style="font-size: 0.9em;">أنواع الأنشطة</div>
+        </div>
+        <div style="background: linear-gradient(135deg, #ff8c00 0%, #ff6b35 100%); color: white; padding: 15px; border-radius: 10px; text-align: center; min-width: 120px;">
+            <div style="font-size: 1.8em; font-weight: bold;">${inspectedShops}</div>
+            <div style="font-size: 0.9em;">تم تفتيشها</div>
+        </div>
+    `;
+}
+
+// وظائف مساعدة
+function getAreaName(areaId) {
+    const area = areasData.find(a => a.id === areaId);
+    return area ? area.name : null;
+}
+
+function getShopActivity(shopName) {
+    // تحديد نوع النشاط بناءً على اسم المحل (يمكن تحسينه لاحقاً)
+    if (shopName.includes('عيادة') || shopName.includes('بيطري')) return 'عيادة بيطرية';
+    if (shopName.includes('صالون') || shopName.includes('غرومينغ')) return 'صالون حيوانات';
+    if (shopName.includes('أسماك') || shopName.includes('اكواريوم')) return 'محل أسماك';
+    if (shopName.includes('طيور') || shopName.includes('عصافير')) return 'محل طيور';
+    if (shopName.includes('مستلزمات') || shopName.includes('إكسسوارات')) return 'مستلزمات حيوانات';
+    return 'محل حيوانات أليفة';
+}
+
+function getActivityColor(activity) {
+    const colors = {
+        'عيادة بيطرية': '#dc3545',
+        'صالون حيوانات': '#6f42c1',
+        'محل أسماك': '#17a2b8',
+        'محل طيور': '#ffc107',
+        'مستلزمات حيوانات': '#28a745',
+        'محل حيوانات أليفة': '#234085'
+    };
+    return colors[activity] || '#6c757d';
+}
+
+function getShopInspectionCount(shopName) {
+    return inspectionData.filter(item => 
+        item.shops && item.shops.includes(shopName)
+    ).length;
+}
+
+function getLastInspectionDate(shopName) {
+    const inspections = inspectionData.filter(item => 
+        item.shops && item.shops.includes(shopName)
+    );
+    if (inspections.length === 0) return null;
+    
+    const sortedInspections = inspections.sort((a, b) => new Date(b.day) - new Date(a.day));
+    return sortedInspections[0].day;
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ar-EG');
+}
+
+// فلترة قائمة المحلات
+function filterShopsList() {
+    applyShopsClassification();
+}
+
+// مسح الفلاتر
+function clearShopsFilters() {
+    document.getElementById('shopsClassificationFilter').value = '';
+    document.getElementById('shopsSearchInput').value = '';
+    refreshShopsDisplay();
+}
+
+// تحميل من مصدر خارجي
+function downloadShopsFromExternalSource() {
+    const statusDiv = document.getElementById('shopsUpdateStatus');
+    statusDiv.style.display = 'block';
+    statusDiv.innerHTML = 'جاري تحميل البيانات من دائرة التنمية الاقتصادية...';
+    statusDiv.style.background = '#d1ecf1';
+    statusDiv.style.color = '#0c5460';
+    
+    // محاكاة تحميل البيانات من مصدر خارجي
+    setTimeout(() => {
+        // هنا يمكن إضافة الكود الفعلي للتحميل من API
+        // const externalData = await fetchFromExternalAPI();
+        
+        // للتوضيح، سنقوم بمحاكاة إضافة بعض المحلات الجديدة
+        const mockExternalShops = [
+            {
+                id: `shop_external_${Date.now()}_1`,
+                name: 'محل الإمارات للحيوانات الأليفة',
+                areaId: areasData[0]?.id || 'area_default',
+                source: 'external'
+            },
+            {
+                id: `shop_external_${Date.now()}_2`,
+                name: 'مركز أبوظبي البيطري المتقدم',
+                areaId: areasData[1]?.id || 'area_default',
+                source: 'external'
+            }
+        ];
+        
+        // إضافة المحلات الجديدة (تجنب التكرار)
+        let addedCount = 0;
+        mockExternalShops.forEach(externalShop => {
+            const exists = shopsData.find(shop => shop.name === externalShop.name);
+            if (!exists) {
+                shopsData.push(externalShop);
+                addedCount++;
+            }
+        });
+        
+        statusDiv.innerHTML = `✅ تم تحميل ${addedCount} محل جديد من المصدر الخارجي`;
+        statusDiv.style.background = '#d4edda';
+        statusDiv.style.color = '#155724';
+        
+        // تحديث العرض
+        refreshShopsDisplay();
+        updateShopsStats();
+        
+        setTimeout(() => {
+            statusDiv.style.display = 'none';
+        }, 3000);
+        
+    }, 2000);
+}
+
+// رفع ملف المحلات
+function uploadShopsFile() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,.xlsx,.csv';
+    input.onchange = handleShopsFileUpload;
+    input.click();
+}
+
+function handleShopsFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const fileName = file.name;
+    const fileExtension = fileName.split('.').pop().toLowerCase();
+    
+    const statusDiv = document.getElementById('shopsUpdateStatus');
+    statusDiv.style.display = 'block';
+    statusDiv.innerHTML = 'جاري معالجة الملف...';
+    statusDiv.style.background = '#d1ecf1';
+    statusDiv.style.color = '#0c5460';
+    
+    if (fileExtension === 'json') {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (data.shops && Array.isArray(data.shops)) {
+                    let addedCount = 0;
+                    data.shops.forEach(shop => {
+                        const exists = shopsData.find(s => s.name === shop.name);
+                        if (!exists) {
+                            shopsData.push({
+                                id: shop.id || `shop_${Date.now()}_${Math.random()}`,
+                                name: shop.name,
+                                areaId: shop.areaId || areasData[0]?.id || 'area_default'
+                            });
+                            addedCount++;
+                        }
+                    });
+                    
+                    statusDiv.innerHTML = `✅ تم استيراد ${addedCount} محل من ملف JSON`;
+                    statusDiv.style.background = '#d4edda';
+                    statusDiv.style.color = '#155724';
+                    
+                    refreshShopsDisplay();
+                    updateShopsStats();
+                } else {
+                    throw new Error('تنسيق ملف JSON غير صحيح');
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `❌ خطأ في قراءة ملف JSON: ${error.message}`;
+                statusDiv.style.background = '#f8d7da';
+                statusDiv.style.color = '#721c24';
+            }
+            
+            setTimeout(() => statusDiv.style.display = 'none', 3000);
+        };
+        reader.readAsText(file);
+    } else {
+        statusDiv.innerHTML = '❌ نوع الملف غير مدعوم. يرجى استخدام ملفات JSON';
+        statusDiv.style.background = '#f8d7da';
+        statusDiv.style.color = '#721c24';
+        
+        setTimeout(() => statusDiv.style.display = 'none', 3000);
+    }
+}
+
+// تصدير المحلات إلى Excel
+function exportShopsToExcel() {
+    const data = filteredShopsData.map((shop, index) => ({
+        'الرقم': index + 1,
+        'اسم المحل': shop.name,
+        'المنطقة': getAreaName(shop.areaId) || 'غير محدد',
+        'نوع النشاط': getShopActivity(shop.name),
+        'آخر تفتيش': getLastInspectionDate(shop.name) || 'لم يتم بعد',
+        'عدد التفتيشات': getShopInspectionCount(shop.name)
+    }));
+    
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(data);
+    
+    // تحسين عرض الأعمدة
+    ws['!cols'] = [
+        { width: 8 },   // الرقم
+        { width: 25 },  // اسم المحل
+        { width: 20 },  // المنطقة
+        { width: 18 },  // نوع النشاط
+        { width: 15 },  // آخر تفتيش
+        { width: 12 }   // عدد التفتيشات
+    ];
+    
+    XLSX.utils.book_append_sheet(wb, ws, 'قائمة المحلات');
+    XLSX.writeFile(wb, `قائمة_المحلات_${new Date().toISOString().split('T')[0]}.xlsx`);
+}
+
+// تصدير المحلات إلى PDF
+function exportShopsToPDF() {
+    // استخدام jsPDF لتصدير PDF
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // إعداد الخط العربي
+    doc.setFont('Arial', 'normal');
+    doc.setFontSize(16);
+    doc.text('قائمة المحلات الخاضعة للرقابة والتفتيش', 105, 20, { align: 'center' });
+    
+    // إضافة تاريخ التقرير
+    doc.setFontSize(10);
+    doc.text(`تاريخ التقرير: ${new Date().toLocaleDateString('ar-EG')}`, 20, 35);
+    
+    // إضافة الإحصائيات
+    doc.text(`إجمالي المحلات: ${filteredShopsData.length}`, 20, 45);
+    
+    // حفظ الملف
+    doc.save(`قائمة_المحلات_${new Date().toISOString().split('T')[0]}.pdf`);
+}
+
+// إضافة محل جديد
+function addNewShop() {
+    document.getElementById('editShopModal').style.display = 'flex';
+    document.getElementById('editShopForm').reset();
+    document.getElementById('editShopIndex').value = '';
+    
+    // ملء قائمة المناطق
+    const areaSelect = document.getElementById('editShopArea');
+    areaSelect.innerHTML = '<option value="">-- اختر المنطقة --</option>';
+    areasData.forEach(area => {
+        areaSelect.innerHTML += `<option value="${area.id}">${area.name}</option>`;
+    });
+}
+
+// تعديل محل
+function editShop(index) {
+    const shop = filteredShopsData[index];
+    const originalIndex = shopsData.findIndex(s => s.id === shop.id);
+    
+    document.getElementById('editShopModal').style.display = 'flex';
+    document.getElementById('editShopName').value = shop.name;
+    document.getElementById('editShopArea').value = shop.areaId;
+    document.getElementById('editShopIndex').value = originalIndex;
+    
+    // ملء قائمة المناطق
+    const areaSelect = document.getElementById('editShopArea');
+    areaSelect.innerHTML = '<option value="">-- اختر المنطقة --</option>';
+    areasData.forEach(area => {
+        areaSelect.innerHTML += `<option value="${area.id}" ${area.id === shop.areaId ? 'selected' : ''}>${area.name}</option>`;
+    });
+}
+
+// حذف محل
+function deleteShop(index) {
+    const shop = filteredShopsData[index];
+    if (confirm(`هل تريد حذف محل "${shop.name}"؟`)) {
+        const originalIndex = shopsData.findIndex(s => s.id === shop.id);
+        if (originalIndex !== -1) {
+            shopsData.splice(originalIndex, 1);
+            refreshShopsDisplay();
+            updateShopsStats();
+        }
+    }
+}
+
+// إغلاق مودال تعديل المحل
+function closeEditShopModal() {
+    document.getElementById('editShopModal').style.display = 'none';
+}
+
+// تحديث بيانات المحلات
+function refreshShopsData() {
+    refreshShopsDisplay();
+    updateShopsStats();
+}
+
+// تعديل مجمع للمحلات
+function bulkEditShops() {
+    alert('ميزة التعديل المجمع قيد التطوير');
+}
+
+// معالجة نموذج إضافة/تعديل المحل
+document.addEventListener('DOMContentLoaded', function() {
+    const editShopForm = document.getElementById('editShopForm');
+    if (editShopForm) {
+        editShopForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('editShopName').value.trim();
+            const areaId = document.getElementById('editShopArea').value;
+            const index = document.getElementById('editShopIndex').value;
+            
+            if (!name || !areaId) {
+                alert('يرجى ملء جميع الحقول المطلوبة');
+                return;
+            }
+            
+            if (index === '') {
+                // إضافة محل جديد
+                const newShop = {
+                    id: `shop_${Date.now()}_${Math.random()}`,
+                    name: name,
+                    areaId: areaId
+                };
+                shopsData.push(newShop);
+            } else {
+                // تعديل محل موجود
+                shopsData[parseInt(index)].name = name;
+                shopsData[parseInt(index)].areaId = areaId;
+            }
+            
+            closeEditShopModal();
+            refreshShopsDisplay();
+            updateShopsStats();
+        });
+    }
+});
 
 // ===== وظائف التدوير الذكي للمحلات على المفتشين =====
 

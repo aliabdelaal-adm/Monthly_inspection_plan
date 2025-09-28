@@ -2023,6 +2023,22 @@
         <button class="close-btn" onclick="closeShopsManagementModal()">×</button>
         <div class="stats-title">🏪 قائمة المحلات الخاضعة للرقابة والتفتيش</div>
         
+        <!-- مؤشر حالة التحرير -->
+        <div id="shopsEditingStatus" style="background: linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%); border: 2px solid #2196f3; border-radius: 10px; padding: 15px; margin-bottom: 20px; text-align: center;">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px;">
+                <div style="font-size: 1.5em;">ℹ️</div>
+                <h4 style="margin: 0; color: #1976d2; font-size: 1.1em;">معلومات مهمة حول تحرير المحلات</h4>
+            </div>
+            <div id="editingStatusContent" style="color: #1565c0; font-size: 0.95em; line-height: 1.5;">
+                <div style="margin-bottom: 8px;"><strong>🔍 وضع العرض الحالي:</strong> يمكنك عرض جميع بيانات المحلات والتقارير</div>
+                <div style="margin-bottom: 8px;"><strong>✏️ للتحرير والحذف والإضافة:</strong> يرجى تسجيل الدخول كمطور من أعلى الصفحة</div>
+                <div style="background: #fff; padding: 8px; border-radius: 6px; border: 1px solid #bbdefb; margin-top: 10px;">
+                    <span style="font-weight: 600;">خطوات سريعة:</span>
+                    اختر "المطور" من قائمة تسجيل الدخول → أدخل كلمة السر: <code style="background: #e3f2fd; padding: 2px 6px; border-radius: 3px; font-family: monospace;">1983</code> → انقر "دخول"
+                </div>
+            </div>
+        </div>
+        
         <!-- شريط أدوات إدارة المحلات -->
         <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #dee2e6;">
             <div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; align-items: center;">
@@ -2253,6 +2269,36 @@ function showAccessDeniedMessage(featureName) {
     };
     
     const feature = messages[featureName] || featureName;
+    
+    // Special message for shop management to provide clear instructions
+    if (featureName === 'shop-management') {
+        const message = `
+            🔒 تحرير المحلات يتطلب صلاحيات المطور
+            
+            الميزة: ${feature}
+            
+            📝 خطوات الوصول لتحرير المحلات:
+            
+            1️⃣ في أعلى الصفحة، اختر "المطور" من قائمة "تسجيل الدخول"
+            2️⃣ أدخل كلمة السر: 1983
+            3️⃣ انقر على "دخول"
+            4️⃣ الآن يمكنك تحرير وحذف المحلات ✅
+            
+            💡 بعد تسجيل الدخول كمطور، ستظهر خيارات إضافية:
+            • تحرير بيانات المحلات
+            • حذف المحلات
+            • إضافة محلات جديدة
+            • تصدير البيانات
+            
+            🔍 مسموح للجميع: عرض قوائم المحلات والتقارير
+            ✏️ مقتصر على المطور: التحرير والحذف والإضافة
+            
+            شكراً لتفهمك 🙏
+        `;
+        
+        alert(message);
+        return;
+    }
     
     const message = `
         🔒 عذراً، هذا الإجراء مخصص للمطور فقط
@@ -7797,6 +7843,45 @@ function showShopsManagementModal() {
     document.getElementById('shopsManagementModal').style.display = 'flex';
     refreshShopsDisplay();
     updateShopsStats();
+    updateShopsEditingStatus(); // Update the editing status banner
+}
+
+// تحديث حالة التحرير في مودال المحلات
+function updateShopsEditingStatus() {
+    const statusContent = document.getElementById('editingStatusContent');
+    const statusBanner = document.getElementById('shopsEditingStatus');
+    
+    if (isDev || window.isDev) {
+        // المطور مسجل دخول - إظهار حالة التحرير المفعلة
+        statusBanner.style.background = 'linear-gradient(135deg, #e8f5e8 0%, #f0fff0 100%)';
+        statusBanner.style.borderColor = '#4caf50';
+        statusContent.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px;">
+                <div style="font-size: 1.5em;">✅</div>
+                <h4 style="margin: 0; color: #2e7d32; font-size: 1.1em;">وضع المطور مفعل - يمكنك الآن تحرير المحلات</h4>
+            </div>
+            <div style="color: #388e3c; font-size: 0.95em; line-height: 1.5;">
+                <div style="margin-bottom: 8px;"><strong>✏️ الآن يمكنك:</strong> تحرير أسماء المحلات، تغيير المناطق، حذف المحلات، إضافة محلات جديدة</div>
+                <div style="margin-bottom: 8px;"><strong>📊 متاح أيضاً:</strong> تصدير البيانات، استيراد محلات من ملفات خارجية</div>
+                <div style="background: #fff; padding: 8px; border-radius: 6px; border: 1px solid #a5d6a7; margin-top: 10px;">
+                    <span style="font-weight: 600;">مرحباً د. علي عبدالعال!</span>
+                    جميع أزرار التحرير (✏️) والحذف (🗑️) أصبحت فعالة الآن
+                </div>
+            </div>
+        `;
+    } else {
+        // وضع العرض فقط
+        statusBanner.style.background = 'linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%)';
+        statusBanner.style.borderColor = '#2196f3';
+        statusContent.innerHTML = `
+            <div style="margin-bottom: 8px;"><strong>🔍 وضع العرض الحالي:</strong> يمكنك عرض جميع بيانات المحلات والتقارير</div>
+            <div style="margin-bottom: 8px;"><strong>✏️ للتحرير والحذف والإضافة:</strong> يرجى تسجيل الدخول كمطور من أعلى الصفحة</div>
+            <div style="background: #fff; padding: 8px; border-radius: 6px; border: 1px solid #bbdefb; margin-top: 10px;">
+                <span style="font-weight: 600;">خطوات سريعة:</span>
+                اختر "المطور" من قائمة تسجيل الدخول → أدخل كلمة السر: <code style="background: #e3f2fd; padding: 2px 6px; border-radius: 3px; font-family: monospace;">1983</code> → انقر "دخول"
+            </div>
+        `;
+    }
 }
 
 // إغلاق مودال إدارة المحلات

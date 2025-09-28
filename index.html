@@ -1377,6 +1377,116 @@
 
 
         }
+
+        /* News Ticker Styles */
+        .news-ticker-container {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            border-bottom: 2px solid #ffd700;
+            overflow: hidden;
+            height: 45px;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            display: none; /* Hidden by default, shown when notifications exist */
+        }
+
+        .news-ticker-container.show {
+            display: block;
+        }
+
+        .news-ticker-label {
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: #ffd700;
+            color: #1e3c72;
+            padding: 12px 15px;
+            font-weight: bold;
+            font-size: 14px;
+            z-index: 2;
+            border-radius: 0 8px 8px 0;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+        }
+
+        .news-ticker-content {
+            margin-left: 120px;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .news-ticker-text {
+            white-space: nowrap;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 500;
+            line-height: 45px;
+            padding-right: 50px;
+            display: inline-block;
+            animation: scroll-ticker 60s linear infinite;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .news-ticker-text:hover {
+            animation-play-state: paused;
+        }
+
+        @keyframes scroll-ticker {
+            0% {
+                transform: translateX(100%);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        .news-ticker-separator {
+            color: #ffd700;
+            margin: 0 20px;
+            font-weight: bold;
+        }
+
+        /* Responsive design for news ticker */
+        @media (max-width: 768px) {
+            .news-ticker-container {
+                height: 40px;
+            }
+            
+            .news-ticker-label {
+                padding: 10px 12px;
+                font-size: 12px;
+            }
+            
+            .news-ticker-content {
+                margin-left: 100px;
+            }
+            
+            .news-ticker-text {
+                font-size: 14px;
+                line-height: 40px;
+                animation: scroll-ticker 45s linear infinite;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .news-ticker-container {
+                height: 35px;
+            }
+            
+            .news-ticker-label {
+                padding: 8px 10px;
+                font-size: 11px;
+            }
+            
+            .news-ticker-content {
+                margin-left: 85px;
+            }
+            
+            .news-ticker-text {
+                font-size: 13px;
+                line-height: 35px;
+                animation: scroll-ticker 35s linear infinite;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1392,6 +1502,15 @@
     <!-- Click sound will be generated using Web Audio API -->
     </div>
     <hr class="horizontal-line">
+    
+    <!-- News Ticker for Bell Notifications -->
+    <div class="news-ticker-container" id="newsTicker">
+        <div class="news-ticker-label">🔔 إشعارات</div>
+        <div class="news-ticker-content">
+            <div class="news-ticker-text" id="newsTickerText"></div>
+        </div>
+    </div>
+    
     <div class="title-bar">
         <div class="main-title-box">خطة التفتيش الشهرية</div>
     </div>
@@ -2432,6 +2551,39 @@ let bellNotesData = {
     notes: "", // Legacy single text area
     notifications: [] // New array for individual notifications
 };
+
+// News Ticker Functions
+function updateNewsTicker() {
+    const newsTickerContainer = document.getElementById('newsTicker');
+    const newsTickerText = document.getElementById('newsTickerText');
+    
+    if (!bellNotesData.notifications || bellNotesData.notifications.length === 0) {
+        newsTickerContainer.classList.remove('show');
+        return;
+    }
+    
+    // Combine all notification texts with separators
+    const tickerContent = bellNotesData.notifications
+        .map(notification => {
+            const cleanText = notification.text.replace(/\n/g, ' ').trim();
+            const author = notification.author || 'د. علي عبدالعال';
+            return `${cleanText} [${author}]`;
+        })
+        .join(' ⦿ ');
+    
+    newsTickerText.textContent = tickerContent;
+    newsTickerContainer.classList.add('show');
+}
+
+function restartTickerAnimation() {
+    const newsTickerText = document.getElementById('newsTickerText');
+    if (newsTickerText) {
+        // Reset animation by removing and re-adding the class
+        newsTickerText.style.animation = 'none';
+        newsTickerText.offsetHeight; // Trigger reflow
+        newsTickerText.style.animation = null;
+    }
+}
 let lastUpdateTime = null;
 
 // Auto-refresh functionality
@@ -2529,6 +2681,8 @@ async function loadInspectionData() {
                     if (!bellNotesData.notifications) {
                         bellNotesData.notifications = [];
                     }
+                    // Update news ticker with loaded notifications
+                    updateNewsTicker();
                 }
                 // Display last update date/time for all users
                 displayLastUpdateFromData(data.lastUpdate);
@@ -2554,7 +2708,11 @@ async function loadInspectionData() {
                 }
                 if (allData.areas) areasData = allData.areas;
                 if (allData.shops) shopsData = allData.shops;
-                if (allData.bellNotes) bellNotesData = allData.bellNotes;
+                if (allData.bellNotes) {
+                    bellNotesData = allData.bellNotes;
+                    // Update news ticker with localStorage data
+                    updateNewsTicker();
+                }
                 // Display last update from localStorage backup
                 displayLastUpdateFromData(allData.lastUpdate);
                 console.log('Loaded complete data from localStorage backup');
@@ -4243,6 +4401,7 @@ function addNewNotification() {
     
     displayNotificationsList();
     saveDataToJSON();
+    updateNewsTicker(); // Update news ticker
     
     // Show success message
     showBellSaveMessage('تم إضافة الإشعار بنجاح! ✅');
@@ -4297,6 +4456,7 @@ function saveNotificationEdit(index) {
     cancelBtn.style.display = 'none';
     
     saveDataToJSON();
+    updateNewsTicker(); // Update news ticker
     showBellSaveMessage('تم تحديث الإشعار بنجاح! ✅');
 }
 
@@ -4326,6 +4486,7 @@ function deleteNotification(index) {
         bellNotesData.notifications.splice(index, 1);
         displayNotificationsList();
         saveDataToJSON();
+        updateNewsTicker(); // Update news ticker
         showBellSaveMessage('تم حذف الإشعار بنجاح! ✅');
     }
 }
@@ -4391,6 +4552,7 @@ function saveBellNotes() {
     }
     
     saveDataToJSON();
+    updateNewsTicker(); // Update news ticker
     
     // Show success feedback with clearer messaging
     const saveBtn = document.getElementById('bellSaveBtn');
@@ -4486,6 +4648,7 @@ function clearBellNotes() {
         displayNotificationsList();
         
         saveDataToJSON();
+        updateNewsTicker(); // Update news ticker
         
         // Show clear feedback
         const clearBtn = document.getElementById('bellClearBtn');

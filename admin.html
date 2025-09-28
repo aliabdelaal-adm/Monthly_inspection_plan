@@ -99,10 +99,9 @@
   <div class="token-popup-bg" id="tokenPopup" style="display:none;">
     <div class="token-popup-box">
       <h3>إدخال التوكن السري</h3>
-      <p style="font-size:0.9em;color:#666;margin:10px 0;">يرجى إدخال GitHub Personal Access Token للمستودع</p>
+      <label> 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 </label><br>
       <input id="tokenInput" type="password" placeholder="GitHub Personal Access Token"><br><br>
       <button onclick="saveToken()">حفظ</button>
-      <button onclick="useDefaultToken()" style="background:#666;margin-left:10px;">استخدام التوكن الافتراضي</button>
       <div style="color:#c00;font-size:1em;margin-top:10px;" id="tokenError"></div>
     </div>
   </div>
@@ -148,13 +147,6 @@
       hideTokenPopup();
       loadPlan();
     }
-    function useDefaultToken() {
-      // Use the repository's default token
-      const defaultToken = "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";
-      setToken(defaultToken);
-      hideTokenPopup();
-      loadPlan();
-    }
     function changeToken() {
       removeToken();
       showTokenPopup();
@@ -162,33 +154,12 @@
 
     // ---- Plan Data Logic ----
     async function loadPlan() {
-      const token = getToken();
-      if (!token) { showTokenPopup(); return; }
-      
-      try {
-        document.getElementById("status").textContent = "جاري تحميل البيانات...";
-        const res = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
-          headers: {
-            "Authorization": `token ${token}`,
-            "Content-Type": "application/json"
-          }
-        });
-        
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-        }
-        
-        const file = await res.json();
-        document.getElementById("json").value = decodeURIComponent(escape(atob(file.content)));
-        sha = file.sha;
-        document.getElementById("status").textContent = "تم تحميل البيانات. يمكنك التعديل الآن.";
-      } catch (error) {
-        document.getElementById("status").textContent = "❌ خطأ في تحميل البيانات: " + error.message;
-        if (error.message.includes("401") || error.message.includes("403")) {
-          removeToken();
-          setTimeout(showTokenPopup, 500);
-        }
-      }
+      document.getElementById("status").textContent = "جاري تحميل البيانات...";
+      const res = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`);
+      const file = await res.json();
+      document.getElementById("json").value = decodeURIComponent(escape(atob(file.content)));
+      sha = file.sha;
+      document.getElementById("status").textContent = "تم تحميل البيانات. يمكنك التعديل الآن.";
     }
 
     async function updatePlan() {
@@ -201,40 +172,33 @@
         alert("خطأ في تنسيق JSON! راجع الأقواس والفواصل.");
         return;
       }
-      
-      try {
-        document.getElementById("saveBtn").disabled = true;
-        document.getElementById("status").textContent = "جاري الحفظ...";
-        const content = btoa(unescape(encodeURIComponent(JSON.stringify(jsonData, null, 2))));
-        const res = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
-          method: "PUT",
-          headers: {
-            "Authorization": `token ${token}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            message: "تحديث خطة التفتيش من لوحة المطور",
-            content: content,
-            sha: sha
-          })
-        });
-        
-        if (res.status === 200 || res.status === 201) {
-          document.getElementById("status").textContent = "✅ تم حفظ التعديلات بنجاح!";
-          loadPlan(); // reload sha
-        } else {
-          const err = await res.json().catch(() => ({ message: `HTTP ${res.status}: ${res.statusText}` }));
-          document.getElementById("status").textContent = "❌ حدث خطأ: " + (err.message || "تحقق من التوكن أو الصلاحيات.");
-          if (res.status === 401 || res.status === 403) {
-            removeToken();
-            setTimeout(showTokenPopup, 500);
-          }
+      document.getElementById("saveBtn").disabled = true;
+      document.getElementById("status").textContent = "جاري الحفظ...";
+      const content = btoa(unescape(encodeURIComponent(JSON.stringify(jsonData, null, 2))));
+      const res = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+        method: "PUT",
+        headers: {
+          "Authorization": `token ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          message: "تحديث خطة التفتيش من لوحة المطور",
+          content: content,
+          sha: sha
+        })
+      });
+      if (res.status === 200 || res.status === 201) {
+        document.getElementById("status").textContent = "✅ تم حفظ التعديلات بنجاح!";
+        loadPlan(); // reload sha
+      } else {
+        const err = await res.json();
+        document.getElementById("status").textContent = "❌ حدث خطأ: " + (err.message || "تحقق من التوكن أو الصلاحيات.");
+        if (res.status === 401 || res.status === 403) {
+          removeToken();
+          setTimeout(showTokenPopup, 500);
         }
-      } catch (error) {
-        document.getElementById("status").textContent = "❌ خطأ في الاتصال: " + error.message;
-      } finally {
-        document.getElementById("saveBtn").disabled = false;
       }
+      document.getElementById("saveBtn").disabled = false;
     }
 
     // ---- On Load ----

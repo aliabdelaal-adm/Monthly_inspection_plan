@@ -925,6 +925,42 @@
             font-size: 1.2em;
             margin-left: 5px;
         }
+        
+        /* تنسيق نموذج تحرير تفاصيل المحل */
+        .shop-edit-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1em;
+            font-family: inherit;
+            direction: ltr;
+            text-align: left;
+        }
+        .shop-edit-input.arabic {
+            direction: rtl;
+            text-align: right;
+        }
+        .shop-edit-input:focus {
+            outline: none;
+            border-color: #234085;
+            box-shadow: 0 0 0 2px rgba(35, 64, 133, 0.2);
+        }
+        .shop-save-status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .shop-save-status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .shop-save-status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f1b0b7;
+        }
         .stats-table {
             width:100%;
             border-collapse:collapse;
@@ -1669,11 +1705,31 @@
 
     <!-- مودال تفاصيل المحل المحسن -->
     <div id="shopDetailsModal" class="modal-overlay" style="display:none;">
-      <div class="modal-content" style="max-width: 600px; border-radius: 15px;">
+      <div class="modal-content" style="max-width: 700px; border-radius: 15px;">
         <button class="close-btn" onclick="closeShopDetailsModal()">×</button>
         <div class="stats-title" style="text-align: center; margin-bottom: 20px; color: #234085;">
           🏪 تفاصيل المحل
         </div>
+        
+        <!-- أزرار الإدارة للمطور فقط -->
+        <div id="shopEditControls" style="display: none; text-align: center; margin-bottom: 15px;">
+          <button id="shopEditModeBtn" onclick="toggleShopEditMode()" 
+                  style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin: 0 5px;">
+            ✏️ تعديل
+          </button>
+          <button id="shopSaveBtn" onclick="saveShopDetails()" 
+                  style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin: 0 5px; display: none;">
+            💾 حفظ
+          </button>
+          <button id="shopCancelBtn" onclick="cancelShopEdit()" 
+                  style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin: 0 5px; display: none;">
+            ❌ إلغاء
+          </button>
+        </div>
+        
+        <!-- رسالة حالة الحفظ -->
+        <div id="shopSaveStatus" style="text-align: center; margin-bottom: 10px; display: none;"></div>
+        
         <div id="shopDetailsContent" style="padding: 20px 0;">
           <!-- سيتم ملء المحتوى هنا بالـ JavaScript -->
         </div>
@@ -3538,48 +3594,91 @@ toggleShopsDropdown = function(rowIndex) {
 };
 
 // --- عرض مودال تفاصيل المحلات ---
+let currentShopEditData = null;
+let isShopEditMode = false;
+
 function showShopDetailsModal(rowIndex) {
     const row = inspectionData[rowIndex];
     if (!row || !row.shops || row.shops.length === 0) {
         return;
     }
     
+    // تحقق من صلاحيات المطور
+    const hasDevAccess = checkDevAccess();
+    const editControls = document.getElementById('shopEditControls');
+    editControls.style.display = hasDevAccess ? 'block' : 'none';
+    
     const modal = document.getElementById('shopDetailsModal');
     const content = document.getElementById('shopDetailsContent');
     
+    // حفظ بيانات المحلات للتعديل
+    currentShopEditData = {
+        rowIndex: rowIndex,
+        shops: row.shops.map(shopName => {
+            const shopData = shopsData.find(shop => shop.name === shopName);
+            return shopData ? {...shopData} : {name: shopName, id: null};
+        })
+    };
+    
+    renderShopDetails();
+    modal.style.display = 'flex';
+}
+
+function renderShopDetails() {
+    const content = document.getElementById('shopDetailsContent');
     let html = '';
     
-    row.shops.forEach((shopName, index) => {
-        // البحث عن بيانات المحل في shopsData
-        const shopData = shopsData.find(shop => shop.name === shopName);
+    currentShopEditData.shops.forEach((shopData, index) => {
+        const areaData = areasData.find(area => area.id === shopData.areaId);
+        const areaName = areaData ? areaData.name : 'غير محدد';
         
-        if (shopData) {
-            // العثور على اسم المنطقة
-            const areaData = areasData.find(area => area.id === shopData.areaId);
-            const areaName = areaData ? areaData.name : 'غير محدد';
-            
+        if (shopData.id) {
+            // محل موجود في قاعدة البيانات
             html += `
-                <div class="shop-detail-card">
+                <div class="shop-detail-card" data-shop-index="${index}">
                     <div class="shop-detail-row">
                         <div class="shop-detail-label">
                             <span class="shop-icon">🏪</span>
                             الاسم بالعربية:
                         </div>
-                        <div class="shop-detail-value arabic">${shopData.name}</div>
+                        <div class="shop-detail-value arabic">
+                            ${isShopEditMode ? 
+                                `<input type="text" class="shop-edit-input arabic" 
+                                        data-field="name" data-shop-index="${index}" 
+                                        value="${shopData.name || ''}">` :
+                                shopData.name
+                            }
+                        </div>
                     </div>
                     <div class="shop-detail-row">
                         <div class="shop-detail-label">
                             <span class="shop-icon">🏬</span>
                             الاسم بالإنجليزية:
                         </div>
-                        <div class="shop-detail-value">${shopData.nameEn || 'غير محدد'}</div>
+                        <div class="shop-detail-value">
+                            ${isShopEditMode ? 
+                                `<input type="text" class="shop-edit-input" 
+                                        data-field="nameEn" data-shop-index="${index}" 
+                                        value="${shopData.nameEn || ''}" 
+                                        placeholder="English name">` :
+                                (shopData.nameEn || 'غير محدد')
+                            }
+                        </div>
                     </div>
                     <div class="shop-detail-row">
                         <div class="shop-detail-label">
                             <span class="shop-icon">📋</span>
                             رقم الترخيص:
                         </div>
-                        <div class="shop-detail-value">${shopData.licenseNumber || 'غير محدد'}</div>
+                        <div class="shop-detail-value">
+                            ${isShopEditMode ? 
+                                `<input type="text" class="shop-edit-input" 
+                                        data-field="licenseNumber" data-shop-index="${index}" 
+                                        value="${shopData.licenseNumber || ''}" 
+                                        placeholder="License number">` :
+                                (shopData.licenseNumber || 'غير محدد')
+                            }
+                        </div>
                     </div>
                     <div class="shop-detail-row">
                         <div class="shop-detail-label">
@@ -3594,26 +3693,32 @@ function showShopDetailsModal(rowIndex) {
                             الموقع:
                         </div>
                         <div class="shop-detail-value">
-                            ${shopData.googleMapsUrl ? 
-                                `<a href="${shopData.googleMapsUrl}" target="_blank" class="location-btn">
-                                    📍 عرض الموقع
-                                </a>` : 
-                                'غير متوفر'
+                            ${isShopEditMode ? 
+                                `<input type="url" class="shop-edit-input" 
+                                        data-field="googleMapsUrl" data-shop-index="${index}" 
+                                        value="${shopData.googleMapsUrl || ''}" 
+                                        placeholder="https://maps.google.com/...">` :
+                                (shopData.googleMapsUrl ? 
+                                    `<a href="${shopData.googleMapsUrl}" target="_blank" class="location-btn">
+                                        📍 عرض الموقع
+                                    </a>` : 
+                                    'غير متوفر'
+                                )
                             }
                         </div>
                     </div>
                 </div>
             `;
         } else {
-            // في حالة عدم وجود بيانات مفصلة للمحل
+            // محل غير موجود في قاعدة البيانات
             html += `
-                <div class="shop-detail-card">
+                <div class="shop-detail-card" data-shop-index="${index}">
                     <div class="shop-detail-row">
                         <div class="shop-detail-label">
                             <span class="shop-icon">🏪</span>
                             اسم المحل:
                         </div>
-                        <div class="shop-detail-value arabic">${shopName}</div>
+                        <div class="shop-detail-value arabic">${shopData.name}</div>
                     </div>
                     <div class="shop-detail-row">
                         <div class="shop-detail-label">
@@ -3628,13 +3733,163 @@ function showShopDetailsModal(rowIndex) {
     });
     
     content.innerHTML = html;
-    modal.style.display = 'flex';
+}
+
+// --- التحقق من صلاحيات المطور ---
+function checkDevAccess() {
+    // نفس منطق التحقق المستخدم في admin.html
+    const token = localStorage.getItem("devToken");
+    return token && token.trim().length > 0;
+}
+
+// --- تبديل وضع التحرير ---
+function toggleShopEditMode() {
+    if (!checkDevAccess()) {
+        alert('صلاحيات المطور مطلوبة للتحرير');
+        return;
+    }
+    
+    isShopEditMode = true;
+    
+    document.getElementById('shopEditModeBtn').style.display = 'none';
+    document.getElementById('shopSaveBtn').style.display = 'inline-block';
+    document.getElementById('shopCancelBtn').style.display = 'inline-block';
+    
+    renderShopDetails();
+}
+
+// --- إلغاء التحرير ---
+function cancelShopEdit() {
+    isShopEditMode = false;
+    
+    document.getElementById('shopEditModeBtn').style.display = 'inline-block';
+    document.getElementById('shopSaveBtn').style.display = 'none';
+    document.getElementById('shopCancelBtn').style.display = 'none';
+    document.getElementById('shopSaveStatus').style.display = 'none';
+    
+    renderShopDetails();
+}
+
+// --- حفظ تفاصيل المحل ---
+async function saveShopDetails() {
+    if (!checkDevAccess()) {
+        showShopSaveStatus('صلاحيات المطور مطلوبة للحفظ', 'error');
+        return;
+    }
+    
+    try {
+        showShopSaveStatus('جاري الحفظ...', 'info');
+        
+        // جمع البيانات المحدثة من نماذج الإدخال
+        const inputs = document.querySelectorAll('.shop-edit-input');
+        inputs.forEach(input => {
+            const shopIndex = parseInt(input.dataset.shopIndex);
+            const field = input.dataset.field;
+            const value = input.value.trim();
+            
+            if (currentShopEditData.shops[shopIndex]) {
+                currentShopEditData.shops[shopIndex][field] = value;
+            }
+        });
+        
+        // تحديث shopsData في الذاكرة
+        currentShopEditData.shops.forEach(updatedShop => {
+            if (updatedShop.id) {
+                const existingShopIndex = shopsData.findIndex(shop => shop.id === updatedShop.id);
+                if (existingShopIndex !== -1) {
+                    shopsData[existingShopIndex] = {...shopsData[existingShopIndex], ...updatedShop};
+                }
+            }
+        });
+        
+        // تحديث البيانات في plan-data.json
+        const updatedData = {
+            inspectionData: inspectionData,
+            inspectors: inspectorsData,
+            areas: areasData,
+            shops: shopsData,
+            lastUpdate: new Date().toISOString(),
+            bellNotes: allPlanData.bellNotes || {notifications: []}
+        };
+        
+        // حفظ البيانات على GitHub
+        const success = await saveDataToGitHub(updatedData);
+        
+        if (success) {
+            showShopSaveStatus('✅ تم حفظ التعديلات بنجاح!', 'success');
+            
+            // تحديث البيانات المحلية
+            allPlanData = updatedData;
+            
+            // الخروج من وضع التحرير
+            setTimeout(() => {
+                cancelShopEdit();
+            }, 2000);
+        } else {
+            showShopSaveStatus('❌ فشل في حفظ البيانات. تحقق من الاتصال والصلاحيات.', 'error');
+        }
+        
+    } catch (error) {
+        console.error('خطأ في حفظ البيانات:', error);
+        showShopSaveStatus('❌ حدث خطأ أثناء الحفظ: ' + error.message, 'error');
+    }
+}
+
+// --- عرض رسالة حالة الحفظ ---
+function showShopSaveStatus(message, type) {
+    const statusDiv = document.getElementById('shopSaveStatus');
+    statusDiv.innerHTML = message;
+    statusDiv.className = `shop-save-status ${type}`;
+    statusDiv.style.display = 'block';
+}
+
+// --- حفظ البيانات على GitHub ---
+async function saveDataToGitHub(data) {
+    const token = localStorage.getItem("devToken");
+    if (!token) return false;
+    
+    try {
+        // الحصول على SHA الحالي للملف
+        const getResponse = await fetch('https://api.github.com/repos/aliabdelaal-adm/Monthly_inspection_plan/contents/plan-data.json');
+        const fileData = await getResponse.json();
+        
+        // إنشاء المحتوى المُرمز
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+        
+        // تحديث الملف
+        const updateResponse = await fetch('https://api.github.com/repos/aliabdelaal-adm/Monthly_inspection_plan/contents/plan-data.json', {
+            method: 'PUT',
+            headers: {
+                'Authorization': `token ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message: 'تحديث تفاصيل المحلات',
+                content: content,
+                sha: fileData.sha
+            })
+        });
+        
+        return updateResponse.ok;
+    } catch (error) {
+        console.error('خطأ في حفظ البيانات على GitHub:', error);
+        return false;
+    }
 }
 
 // --- إغلاق مودال تفاصيل المحلات ---
 function closeShopDetailsModal() {
     const modal = document.getElementById('shopDetailsModal');
     modal.style.display = 'none';
+    
+    // إعادة تعيين حالة التحرير
+    isShopEditMode = false;
+    currentShopEditData = null;
+    
+    document.getElementById('shopEditModeBtn').style.display = 'inline-block';
+    document.getElementById('shopSaveBtn').style.display = 'none';
+    document.getElementById('shopCancelBtn').style.display = 'none';
+    document.getElementById('shopSaveStatus').style.display = 'none';
 }
 
 // --- صوت النقر الشامل ---

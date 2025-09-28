@@ -2485,6 +2485,16 @@ let isDev = false;
 let selectedInspector = "";
 const DEV_PASSWORD = "1983";
 
+// Global plan data variable - properly initialize to prevent undefined errors
+let allPlanData = {
+    inspectionData: [],
+    inspectors: [],
+    areas: [],
+    shops: [],
+    bellNotes: { notifications: [] },
+    lastUpdate: null
+};
+
 // =============================================================================
 // وظائف التحكم في الوصول (Access Control Functions)
 // =============================================================================
@@ -2684,6 +2694,16 @@ async function loadInspectionData() {
                     // Update news ticker with loaded notifications
                     updateNewsTicker();
                 }
+                // Update global allPlanData with loaded data
+                allPlanData = {
+                    inspectionData: inspectionData,
+                    inspectors: inspectorsData,
+                    areas: areasData,
+                    shops: shopsData,
+                    bellNotes: bellNotesData || { notifications: [] },
+                    lastUpdate: data.lastUpdate
+                };
+                
                 // Display last update date/time for all users
                 displayLastUpdateFromData(data.lastUpdate);
                 renderPlanTable();
@@ -2713,6 +2733,17 @@ async function loadInspectionData() {
                     // Update news ticker with localStorage data
                     updateNewsTicker();
                 }
+                
+                // Update global allPlanData with loaded fallback data
+                allPlanData = {
+                    inspectionData: inspectionData,
+                    inspectors: inspectorsData,
+                    areas: areasData,
+                    shops: shopsData,
+                    bellNotes: bellNotesData || { notifications: [] },
+                    lastUpdate: allData.lastUpdate
+                };
+                
                 // Display last update from localStorage backup
                 displayLastUpdateFromData(allData.lastUpdate);
                 console.log('Loaded complete data from localStorage backup');
@@ -4052,23 +4083,51 @@ async function saveShopDetails() {
     try {
         showShopSaveStatus('جاري الحفظ...', 'info');
         
-        // جمع البيانات المحدثة من نماذج الإدخال
+        // التحقق من أن البيانات العامة متوفرة، وإذا لم تكن كذلك، إنشاؤها
+        if (!allPlanData || typeof allPlanData !== 'object') {
+            allPlanData = {
+                inspectionData: inspectionData || [],
+                inspectors: inspectorsData || [],
+                areas: areasData || [],
+                shops: shopsData || [],
+                bellNotes: bellNotesData || { notifications: [] },
+                lastUpdate: new Date().toISOString()
+            };
+        }
+        
+        // جمع البيانات المحدثة من نماذج الإدخال (مرن - لا يتطلب جميع الحقول)
         const inputs = document.querySelectorAll('.shop-edit-input');
+        let hasChanges = false;
+        
         inputs.forEach(input => {
             const shopIndex = parseInt(input.dataset.shopIndex);
             const field = input.dataset.field;
             const value = input.value.trim();
             
             if (currentShopEditData.shops[shopIndex]) {
-                currentShopEditData.shops[shopIndex][field] = value;
+                // حفظ القيمة حتى لو كانت فارغة (مرونة في التحرير)
+                if (currentShopEditData.shops[shopIndex][field] !== value) {
+                    currentShopEditData.shops[shopIndex][field] = value;
+                    hasChanges = true;
+                }
             }
         });
+        
+        // إذا لم تكن هناك تغييرات، إعلام المستخدم أنه لا توجد تغييرات للحفظ
+        if (!hasChanges) {
+            showShopSaveStatus('✅ لا توجد تغييرات للحفظ', 'success');
+            setTimeout(() => {
+                cancelShopEdit();
+            }, 1500);
+            return;
+        }
         
         // تحديث shopsData في الذاكرة
         currentShopEditData.shops.forEach(updatedShop => {
             if (updatedShop.id) {
                 const existingShopIndex = shopsData.findIndex(shop => shop.id === updatedShop.id);
                 if (existingShopIndex !== -1) {
+                    // دمج البيانات المحدثة مع البيانات الموجودة (مرونة في الحفظ)
                     shopsData[existingShopIndex] = {...shopsData[existingShopIndex], ...updatedShop};
                 }
             }
@@ -4081,7 +4140,7 @@ async function saveShopDetails() {
             areas: areasData,
             shops: shopsData,
             lastUpdate: new Date().toISOString(),
-            bellNotes: allPlanData.bellNotes || {notifications: []}
+            bellNotes: allPlanData.bellNotes || bellNotesData || {notifications: []}
         };
         
         // حفظ البيانات على GitHub

@@ -1473,11 +1473,13 @@
                 max-height: 85vh;
             }
             .modal-content button.close-btn {
-                width: 36px;
-                height: 36px;
-                font-size: 1.3em;
+                width: 44px;
+                height: 44px;
+                font-size: 1.5em;
                 left: 8px;
                 top: 8px;
+                border: 2px solid #fff;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
             }
         }
 
@@ -1643,11 +1645,15 @@
                 margin: 10px auto;
             }
             .modal-content button.close-btn {
-                width: 32px;
-                height: 32px;
-                font-size: 1.2em;
+                width: 40px;
+                height: 40px;
+                font-size: 1.4em;
                 left: 6px;
                 top: 6px;
+                border: 2px solid #fff;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                min-width: 40px;
+                min-height: 40px;
             }
 
 
@@ -9341,6 +9347,15 @@ let currentRotationAnalysis = null;
 
 // فتح مودال التدوير الذكي
 function showSmartRotationModal() {
+    // التحقق من صلاحيات المطور قبل السماح بفتح المودال
+    return checkDeveloperAccess('smart-rotation', function() {
+        // إذا كان المطور مسجل دخول، قم بفتح المودال
+        openSmartRotationModal();
+    });
+}
+
+// فتح مودال التدوير الذكي (دالة مساعدة)
+function openSmartRotationModal() {
     // تعيين التاريخ الافتراضي لليوم
     const today = new Date();
     document.getElementById('rotationStartDate').value = today.toISOString().split('T')[0];

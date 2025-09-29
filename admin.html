@@ -114,6 +114,37 @@
     <button onclick="updatePlan()" id="saveBtn">حفظ التعديلات</button>
     <div class="status" id="status"></div>
   </div>
+
+  <div class="box">
+    <h2 style="text-align:center; color:#2336a0;">نظام إدارة الملفات</h2>
+    <div style="margin-bottom: 20px;">
+      <label style="display: block; margin-bottom: 10px;">رفع ملف جديد:</label>
+      <input type="file" id="fileUpload" accept=".pdf,.xlsx,.xls,.docx,.doc,.pptx,.ppt,.csv,.txt,.jpg,.jpeg,.png,.gif" style="margin-bottom: 10px;">
+      <br>
+      <label style="display: block; margin-bottom: 5px;">اختر التصنيف:</label>
+      <select id="fileCategory" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc; margin-bottom: 10px;">
+        <option value="documents">الوثائق - Documents</option>
+        <option value="reports">التقارير - Reports</option>
+        <option value="schedules">الجداول - Schedules</option>
+        <option value="resources">الموارد - Resources</option>
+      </select>
+      <br>
+      <label style="display: block; margin-bottom: 5px;">وصف الملف (اختياري):</label>
+      <input type="text" id="fileDescription" placeholder="وصف مختصر للملف" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; margin-bottom: 10px; box-sizing: border-box;">
+      <br>
+      <button onclick="uploadFile()" id="uploadBtn" style="background: #28a745;">رفع الملف</button>
+    </div>
+    
+    <div style="border-top: 1px solid #ddd; padding-top: 20px;">
+      <h3 style="color: #2336a0;">الملفات المرفوعة:</h3>
+      <button onclick="loadFilesList()" style="background: #17a2b8; margin-bottom: 10px;">تحديث قائمة الملفات</button>
+      <div id="filesList" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 6px; background: #f9f9f9;">
+        <p style="text-align: center; color: #666;">انقر على "تحديث قائمة الملفات" لعرض الملفات المرفوعة</p>
+      </div>
+    </div>
+    
+    <div class="status" id="fileStatus" style="margin-top: 10px;"></div>
+  </div>
   <script>
     const repo = "aliabdelaal-adm/Monthly_inspection_plan";
     const path = "plan-data.json";
@@ -234,6 +265,374 @@
         document.getElementById("status").textContent = "❌ خطأ في الاتصال: " + error.message;
       } finally {
         document.getElementById("saveBtn").disabled = false;
+      }
+    }
+
+    // ---- File Management Functions ----
+    let filesSha = "";
+    
+    async function uploadFile() {
+      const token = getToken();
+      if (!token) { showTokenPopup(); return; }
+      
+      const fileInput = document.getElementById("fileUpload");
+      const categorySelect = document.getElementById("fileCategory");
+      const descriptionInput = document.getElementById("fileDescription");
+      
+      if (!fileInput.files[0]) {
+        document.getElementById("fileStatus").textContent = "❌ يرجى اختيار ملف أولاً";
+        return;
+      }
+      
+      const file = fileInput.files[0];
+      const category = categorySelect.value;
+      const description = descriptionInput.value || file.name;
+      
+      // التحقق من حجم الملف (الحد الأقصى 25 MB للـ GitHub)
+      const maxSize = 25 * 1024 * 1024; // 25 MB
+      if (file.size > maxSize) {
+        document.getElementById("fileStatus").textContent = "❌ حجم الملف كبير جداً! يجب أن يكون أقل من 25 MB";
+        return;
+      }
+      
+      try {
+        document.getElementById("uploadBtn").disabled = true;
+        document.getElementById("fileStatus").textContent = "⏳ جاري رفع الملف...";
+        
+        // قراءة الملف كـ base64
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+          const content = e.target.result.split(',')[1]; // إزالة data:type/format;base64,
+          const fileName = file.name;
+          const filePath = `files/${category}/${fileName}`;
+          
+          try {
+            // رفع الملف إلى GitHub
+            const uploadRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+              method: "PUT",
+              headers: {
+                "Authorization": `token ${token}`,
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                message: `رفع ملف جديد: ${fileName}`,
+                content: content
+              })
+            });
+            
+            if (uploadRes.status === 201) {
+              // تحديث ملف files.json
+              await updateFilesRegistry(fileName, filePath, category, file.size, description, token);
+              document.getElementById("fileStatus").textContent = "✅ تم رفع الملف بنجاح!";
+              // إعادة تعيين النموذج
+              fileInput.value = '';
+              descriptionInput.value = '';
+              // تحديث قائمة الملفات
+              loadFilesList();
+            } else {
+              const err = await uploadRes.json().catch(() => ({ message: `HTTP ${uploadRes.status}: ${uploadRes.statusText}` }));
+              document.getElementById("fileStatus").textContent = "❌ خطأ في رفع الملف: " + (err.message || "تحقق من التوكن أو الصلاحيات.");
+            }
+          } catch (error) {
+            document.getElementById("fileStatus").textContent = "❌ خطأ في رفع الملف: " + error.message;
+          } finally {
+            document.getElementById("uploadBtn").disabled = false;
+          }
+        };
+        
+        reader.readAsDataURL(file);
+        
+      } catch (error) {
+        document.getElementById("fileStatus").textContent = "❌ خطأ في قراءة الملف: " + error.message;
+        document.getElementById("uploadBtn").disabled = false;
+      }
+    }
+    
+    async function updateFilesRegistry(fileName, filePath, category, fileSize, description, token) {
+      try {
+        // تحميل ملف files.json الحالي
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/files.json`, {
+          headers: {
+            "Authorization": `token ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+        
+        let filesData = { files: [], categories: [], lastUpdate: new Date().toISOString() };
+        let currentSha = "";
+        
+        if (res.ok) {
+          const file = await res.json();
+          filesData = JSON.parse(decodeURIComponent(escape(atob(file.content))));
+          currentSha = file.sha;
+        }
+        
+        // إضافة الملف الجديد
+        const newFile = {
+          id: Date.now().toString(),
+          name: fileName,
+          path: filePath,
+          category: category,
+          type: fileName.split('.').pop().toLowerCase(),
+          size: fileSize,
+          uploadDate: new Date().toISOString(),
+          description: description,
+          uploader: "د. علي عبدالعال",
+          visible: true
+        };
+        
+        filesData.files.push(newFile);
+        filesData.lastUpdate = new Date().toISOString();
+        
+        // حفظ ملف files.json المحدث
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(filesData, null, 2))));
+        const updateRes = await fetch(`https://api.github.com/repos/${repo}/contents/files.json`, {
+          method: "PUT",
+          headers: {
+            "Authorization": `token ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: `تحديث سجل الملفات - إضافة ${fileName}`,
+            content: content,
+            sha: currentSha
+          })
+        });
+        
+        if (!updateRes.ok) {
+          console.error("خطأ في تحديث سجل الملفات");
+        }
+        
+      } catch (error) {
+        console.error("خطأ في تحديث سجل الملفات:", error);
+      }
+    }
+    
+    async function loadFilesList() {
+      const token = getToken();
+      if (!token) { showTokenPopup(); return; }
+      
+      try {
+        document.getElementById("fileStatus").textContent = "⏳ جاري تحميل قائمة الملفات...";
+        
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/files.json`, {
+          headers: {
+            "Authorization": `token ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+        
+        if (res.ok) {
+          const file = await res.json();
+          const filesData = JSON.parse(decodeURIComponent(escape(atob(file.content))));
+          displayFilesList(filesData.files);
+          document.getElementById("fileStatus").textContent = "✅ تم تحميل قائمة الملفات";
+        } else {
+          document.getElementById("fileStatus").textContent = "❌ خطأ في تحميل قائمة الملفات";
+        }
+      } catch (error) {
+        document.getElementById("fileStatus").textContent = "❌ خطأ في تحميل قائمة الملفات: " + error.message;
+      }
+    }
+    
+    function displayFilesList(files) {
+      const container = document.getElementById("filesList");
+      
+      if (!files || files.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #666;">لا توجد ملفات مرفوعة</p>';
+        return;
+      }
+      
+      const visibleFiles = files.filter(f => f.visible !== false);
+      
+      if (visibleFiles.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #666;">لا توجد ملفات مرئية</p>';
+        return;
+      }
+      
+      let html = '';
+      const categories = {
+        documents: 'الوثائق',
+        reports: 'التقارير', 
+        schedules: 'الجداول',
+        resources: 'الموارد'
+      };
+      
+      // تجميع الملفات حسب التصنيف
+      const filesByCategory = {};
+      visibleFiles.forEach(file => {
+        if (!filesByCategory[file.category]) {
+          filesByCategory[file.category] = [];
+        }
+        filesByCategory[file.category].push(file);
+      });
+      
+      // عرض الملفات حسب التصنيف
+      Object.keys(filesByCategory).forEach(category => {
+        html += `<div style="margin-bottom: 15px;">`;
+        html += `<h4 style="color: #2336a0; margin-bottom: 8px;">${categories[category] || category}</h4>`;
+        
+        filesByCategory[category].forEach(file => {
+          const fileSize = formatFileSize(file.size);
+          const uploadDate = new Date(file.uploadDate).toLocaleDateString('ar-EG');
+          
+          html += `
+            <div style="padding: 8px; margin-bottom: 8px; border: 1px solid #ddd; border-radius: 4px; background: white;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <strong>${file.name}</strong>
+                  <br>
+                  <small style="color: #666;">${file.description}</small>
+                  <br>
+                  <small style="color: #999;">الحجم: ${fileSize} | التاريخ: ${uploadDate}</small>
+                </div>
+                <div>
+                  <button onclick="downloadFile('${file.path}')" style="background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-left: 5px;">تحميل</button>
+                  <button onclick="deleteFile('${file.id}', '${file.path}', '${file.name}')" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">حذف</button>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        
+        html += `</div>`;
+      });
+      
+      container.innerHTML = html;
+    }
+    
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    async function downloadFile(filePath) {
+      const token = getToken();
+      if (!token) { showTokenPopup(); return; }
+      
+      try {
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+          headers: {
+            "Authorization": `token ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+        
+        if (res.ok) {
+          const file = await res.json();
+          const content = atob(file.content);
+          const blob = new Blob([content], { type: 'application/octet-stream' });
+          const url = URL.createObjectURL(blob);
+          
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = file.name;
+          a.style.display = 'none';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          
+          document.getElementById("fileStatus").textContent = "✅ تم تحميل الملف";
+        } else {
+          document.getElementById("fileStatus").textContent = "❌ خطأ في تحميل الملف";
+        }
+      } catch (error) {
+        document.getElementById("fileStatus").textContent = "❌ خطأ في تحميل الملف: " + error.message;
+      }
+    }
+    
+    async function deleteFile(fileId, filePath, fileName) {
+      if (!confirm(`هل أنت متأكد من حذف الملف "${fileName}"؟`)) {
+        return;
+      }
+      
+      const token = getToken();
+      if (!token) { showTokenPopup(); return; }
+      
+      try {
+        document.getElementById("fileStatus").textContent = "⏳ جاري حذف الملف...";
+        
+        // حذف الملف من GitHub
+        const fileRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+          headers: {
+            "Authorization": `token ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+        
+        if (fileRes.ok) {
+          const file = await fileRes.json();
+          const deleteRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+            method: "DELETE",
+            headers: {
+              "Authorization": `token ${token}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              message: `حذف الملف: ${fileName}`,
+              sha: file.sha
+            })
+          });
+          
+          if (deleteRes.ok) {
+            // تحديث ملف files.json
+            await removeFromFilesRegistry(fileId, token);
+            document.getElementById("fileStatus").textContent = "✅ تم حذف الملف بنجاح";
+            loadFilesList();
+          } else {
+            document.getElementById("fileStatus").textContent = "❌ خطأ في حذف الملف";
+          }
+        } else {
+          document.getElementById("fileStatus").textContent = "❌ الملف غير موجود";
+        }
+      } catch (error) {
+        document.getElementById("fileStatus").textContent = "❌ خطأ في حذف الملف: " + error.message;
+      }
+    }
+    
+    async function removeFromFilesRegistry(fileId, token) {
+      try {
+        // تحميل ملف files.json الحالي
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/files.json`, {
+          headers: {
+            "Authorization": `token ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+        
+        if (res.ok) {
+          const file = await res.json();
+          const filesData = JSON.parse(decodeURIComponent(escape(atob(file.content))));
+          
+          // إزالة الملف من القائمة
+          filesData.files = filesData.files.filter(f => f.id !== fileId);
+          filesData.lastUpdate = new Date().toISOString();
+          
+          // حفظ ملف files.json المحدث
+          const content = btoa(unescape(encodeURIComponent(JSON.stringify(filesData, null, 2))));
+          const updateRes = await fetch(`https://api.github.com/repos/${repo}/contents/files.json`, {
+            method: "PUT",
+            headers: {
+              "Authorization": `token ${token}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              message: `تحديث سجل الملفات - حذف ملف`,
+              content: content,
+              sha: file.sha
+            })
+          });
+          
+          if (!updateRes.ok) {
+            console.error("خطأ في تحديث سجل الملفات");
+          }
+        }
+      } catch (error) {
+        console.error("خطأ في تحديث سجل الملفات:", error);
       }
     }
 

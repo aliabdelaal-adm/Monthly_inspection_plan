@@ -70,8 +70,8 @@ DEFAULT_COMMIT_MESSAGE = "Auto-update: تم تحديث الملفات تلقائ
 # فترة التأخير قبل القيام بـ push (بالثواني) لتجنب commits متعددة سريعة
 PUSH_DELAY = 5
 
-# اسم الفرع للـ push
-BRANCH_NAME = "main"
+# اسم الفرع للـ push - سيتم تحديده تلقائياً من الفرع الحالي
+BRANCH_NAME = None  # Will be set dynamically
 
 # =============================================================================
 # إعداد نظام السجلات (Logging Setup)
@@ -267,15 +267,47 @@ def check_files():
     
     return len(existing_files) > 0
 
+def get_current_branch():
+    """الحصول على اسم الفرع الحالي"""
+    try:
+        result = subprocess.run(
+            ["git", "branch", "--show-current"],
+            capture_output=True,
+            text=True,
+            encoding='utf-8'
+        )
+        
+        if result.returncode == 0:
+            branch_name = result.stdout.strip()
+            if branch_name:
+                logger.info(f"🌿 الفرع الحالي: {branch_name}")
+                logger.info(f"🌿 Current branch: {branch_name}")
+                return branch_name
+        
+        # Fallback to main if no branch detected
+        logger.warning("⚠️  لم يتم العثور على فرع حالي، سيتم استخدام 'main' كافتراضي")
+        logger.warning("⚠️  No current branch found, using 'main' as default")
+        return "main"
+        
+    except Exception as e:
+        logger.error(f"❌ خطأ في الحصول على الفرع الحالي: {str(e)}")
+        logger.error(f"❌ Error getting current branch: {str(e)}")
+        return "main"
+
 # =============================================================================
 # الدالة الرئيسية (Main Function)
 # =============================================================================
 
 def main():
     """الدالة الرئيسية لتشغيل مراقب الملفات"""
+    global BRANCH_NAME
+    
     print("=" * 60)
     print("🤖 Auto Push on Change - مراقب التغييرات التلقائي")
     print("=" * 60)
+    
+    # تحديد الفرع الحالي
+    BRANCH_NAME = get_current_branch()
     
     # التحقق من إعداد Git
     if not check_git_setup():

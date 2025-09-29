@@ -108,6 +108,10 @@ For auto-synchronization to work:
 2. Git repository should be properly configured
 3. `watchdog` Python package should be installed: `pip install watchdog`
 
+**✅ FIXED**: The GitHub sync issue has been resolved! Run `./setup_bell_notifications.sh` for automatic setup.
+
+**تم الإصلاح**: تم حل مشكلة المزامنة مع GitHub! شغّل `./setup_bell_notifications.sh` للإعداد التلقائي.
+
 ## User Experience
 
 - **Developer Login Required**: Notification management requires developer authentication

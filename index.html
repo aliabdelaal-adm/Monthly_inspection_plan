@@ -3769,8 +3769,8 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById("devLoginBtn").style.display = "none";
             document.getElementById("devLogoutBtn").style.display = "none";
             document.getElementById("devSection").style.display = "none";
-            // Hide system services for non-developer roles
-            document.getElementById("systemServicesContainer").style.display = "none";
+            // Show system services for inspectors but with read-only access
+            document.getElementById("systemServicesContainer").style.display = "block";
             isDev = false;
             renderPlanTable();
         }
@@ -3802,8 +3802,8 @@ document.getElementById("devLogoutBtn").onclick = function() {
     document.getElementById("devLoginBtn").style.display = "none";
     document.getElementById("loginRole").value = "";
     document.getElementById("devError").innerText = "";
-    // Hide system services for non-developer
-    document.getElementById("systemServicesContainer").style.display = "none";
+    // Keep system services visible for inspectors (read-only mode)
+    document.getElementById("systemServicesContainer").style.display = "block";
     renderPlanTable();
 };
 
@@ -9363,11 +9363,8 @@ let currentRotationAnalysis = null;
 
 // فتح مودال التدوير الذكي
 function showSmartRotationModal() {
-    // التحقق من صلاحيات المطور قبل السماح بفتح المودال
-    return checkDeveloperAccess('smart-rotation', function() {
-        // إذا كان المطور مسجل دخول، قم بفتح المودال
-        openSmartRotationModal();
-    });
+    // Allow all users to open the modal (inspectors can view but not modify)
+    openSmartRotationModal();
 }
 
 // فتح مودال التدوير الذكي (دالة مساعدة)
@@ -9379,13 +9376,69 @@ function openSmartRotationModal() {
     // ملء قائمة المفتشين
     populateInspectorSelection();
     
+    // Ensure inspector selection is populated (fallback approach)
+    setTimeout(() => {
+        const selectionDiv = document.getElementById('inspectorSelection');
+        if (selectionDiv && selectionDiv.innerHTML.includes('سيتم ملء المفتشين هنا')) {
+            // Use hardcoded fallback if data loading failed
+            const inspectors = [
+                { id: 'insp_1', name: 'د. آمنه بن صرم' },
+                { id: 'insp_2', name: 'د. آيه سلامة' },
+                { id: 'insp_3', name: 'د. حسينة العامري' },
+                { id: 'insp_4', name: 'د. حصة العلي' },
+                { id: 'insp_5', name: 'د. علي عبدالعال' },
+                { id: 'insp_6', name: 'د. فايز المسالمة' },
+                { id: 'insp_7', name: 'د. محمد إسماعيل' },
+                { id: 'insp_8', name: 'د. محمد سعيد' },
+                { id: 'insp_9', name: 'د. هاجر الغافري' }
+            ];
+            
+            let html = "";
+            inspectors.forEach(inspector => {
+                html += `
+                    <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer;">
+                        <input type="checkbox" name="selectedInspectors" value="${inspector.id}" checked 
+                               style="margin: 0;">
+                        <span style="font-size: 0.9em;">${inspector.name}</span>
+                    </label>
+                `;
+            });
+            
+            html += `
+                <div style="margin-top: 10px; display: flex; gap: 8px; justify-content: center;">
+                    <button type="button" onclick="selectAllInspectors()" 
+                            style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; cursor: pointer;">
+                        تحديد الكل
+                    </button>
+                    <button type="button" onclick="deselectAllInspectors()" 
+                            style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; cursor: pointer;">
+                        إلغاء التحديد
+                    </button>
+                </div>
+            `;
+            
+            selectionDiv.innerHTML = html;
+        }
+    }, 100);
+    
     // عرض المودال
     document.getElementById('smartRotationModal').style.display = 'flex';
     
-    // تحليل التوزيع الحالي تلقائياً
+    // تحليل التوزيع الحالي تلقائياً (read-only for inspectors)
     setTimeout(() => {
         analyzeCurrentDistribution();
     }, 500);
+    
+    // Disable action buttons for inspectors
+    if (!isDev && !window.isDev) {
+        const actionButtons = document.querySelectorAll('#smartRotationModal button[onclick*="checkDeveloperAccess"]');
+        actionButtons.forEach(btn => {
+            btn.style.opacity = '0.6';
+            btn.style.cursor = 'not-allowed';
+            const originalText = btn.textContent;
+            btn.title = 'عذراً، هذا الإجراء مخصص للمطور فقط - ' + originalText;
+        });
+    }
 }
 
 // إغلاق مودال التدوير الذكي
@@ -9504,15 +9557,63 @@ function populateInspectorSelection() {
         return;
     }
     
-    console.log('Populating inspector selection, inspectorsData:', inspectorsData);
+    // Use multiple sources to get inspector data
+    let availableInspectors = inspectorsData || window.inspectorsData || [];
+    
+    // Try to get from localStorage
+    if (!availableInspectors || availableInspectors.length === 0) {
+        try {
+            const planData = JSON.parse(localStorage.getItem('allPlanData') || '{}');
+            availableInspectors = planData.inspectors || [];
+        } catch (e) {
+            console.log('Error parsing localStorage:', e);
+        }
+    }
+    
+    // Try to extract from the inspector dropdown if still no data
+    if (!availableInspectors || availableInspectors.length === 0) {
+        const inspectorSelect = document.querySelector('select option[value]:not([value=""])');
+        if (inspectorSelect) {
+            const selectElement = inspectorSelect.parentElement;
+            const options = Array.from(selectElement.options).filter(opt => opt.value && opt.value !== '-- اختر المفتش --');
+            availableInspectors = options.map((opt, index) => ({
+                id: `inspector_${index + 1}`,
+                name: opt.textContent.trim()
+            }));
+        }
+    }
+    
+    // Fallback to hardcoded list based on what we see in the dropdown
+    if (!availableInspectors || availableInspectors.length === 0) {
+        availableInspectors = [
+            { id: 'insp_1', name: 'د. آمنه بن صرم' },
+            { id: 'insp_2', name: 'د. آيه سلامة' },
+            { id: 'insp_3', name: 'د. حسينة العامري' },
+            { id: 'insp_4', name: 'د. حصة العلي' },
+            { id: 'insp_5', name: 'د. علي عبدالعال' },
+            { id: 'insp_6', name: 'د. فايز المسالمة' },
+            { id: 'insp_7', name: 'د. محمد إسماعيل' },
+            { id: 'insp_8', name: 'د. محمد سعيد' },
+            { id: 'insp_9', name: 'د. هاجر الغافري' }
+        ];
+    }
+    
+    console.log('Populating inspector selection, availableInspectors:', availableInspectors);
+    
+    if (availableInspectors.length === 0) {
+        selectionDiv.innerHTML = '<p style="color: #666; text-align: center;">لا توجد بيانات المفتشين متاحة</p>';
+        return;
+    }
     
     let html = "";
-    inspectorsData.forEach(inspector => {
+    availableInspectors.forEach(inspector => {
+        const inspectorId = inspector.id || inspector.name; // fallback to name if no id
+        const inspectorName = inspector.name || inspector;
         html += `
             <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer;">
-                <input type="checkbox" name="selectedInspectors" value="${inspector.id}" checked 
+                <input type="checkbox" name="selectedInspectors" value="${inspectorId}" checked 
                        style="margin: 0;">
-                <span style="font-size: 0.9em;">${inspector.name}</span>
+                <span style="font-size: 0.9em;">${inspectorName}</span>
             </label>
         `;
     });

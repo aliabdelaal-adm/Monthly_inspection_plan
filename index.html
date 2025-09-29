@@ -1935,7 +1935,7 @@
     </div>
 
     <!-- System Services Management -->
-    <div class="system-services-container">
+    <div class="system-services-container" id="systemServicesContainer" style="display:none;">
         <div class="system-services-header" onclick="toggleSystemServices()">
             <span class="system-services-icon" id="systemServicesIcon">⚙️</span>
             <span>إدارة خدمات النظام</span>
@@ -3755,12 +3755,16 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById("devLoginBtn").style.display = "inline-block";
             document.getElementById("devLogoutBtn").style.display = "none";
             document.getElementById("devSection").style.display = "none";
+            // Hide system services until login
+            document.getElementById("systemServicesContainer").style.display = "none";
             isDev = false;
         } else {
             document.getElementById("devPassword").style.display = "none";
             document.getElementById("devLoginBtn").style.display = "none";
             document.getElementById("devLogoutBtn").style.display = "none";
             document.getElementById("devSection").style.display = "none";
+            // Hide system services for non-developer roles
+            document.getElementById("systemServicesContainer").style.display = "none";
             isDev = false;
             renderPlanTable();
         }
@@ -3776,6 +3780,8 @@ document.getElementById("devLoginBtn").onclick = function() {
         document.getElementById("devPassword").style.display = "none";
         document.getElementById("devLoginBtn").style.display = "none";
         document.getElementById("devError").innerText = "";
+        // Show system services for developer
+        document.getElementById("systemServicesContainer").style.display = "block";
         fillInspectorsDropdowns();
         renderPlanTable();
     } else {
@@ -3790,6 +3796,8 @@ document.getElementById("devLogoutBtn").onclick = function() {
     document.getElementById("devLoginBtn").style.display = "none";
     document.getElementById("loginRole").value = "";
     document.getElementById("devError").innerText = "";
+    // Hide system services for non-developer
+    document.getElementById("systemServicesContainer").style.display = "none";
     renderPlanTable();
 };
 
@@ -7996,12 +8004,16 @@ function saveDataToJSON() {
                     document.getElementById('devLoginBtn').style.display = 'inline-block';
                     document.getElementById('devLogoutBtn').style.display = 'none';
                     document.getElementById('devSection').style.display = 'none';
+                    // Hide system services until login
+                    document.getElementById('systemServicesContainer').style.display = 'none';
                     window.isDev = false;
                 } else {
                     document.getElementById('devPassword').style.display = 'none';
                     document.getElementById('devLoginBtn').style.display = 'none';
                     document.getElementById('devLogoutBtn').style.display = 'none';
                     document.getElementById('devSection').style.display = 'none';
+                    // Hide system services for non-developer roles
+                    document.getElementById('systemServicesContainer').style.display = 'none';
                     window.isDev = false;
                 }
             });
@@ -8022,6 +8034,8 @@ function saveDataToJSON() {
                     document.getElementById('devPassword').style.display = 'none';
                     document.getElementById('devLoginBtn').style.display = 'none';
                     document.getElementById('devError').innerText = '';
+                    // Show system services for developer
+                    document.getElementById('systemServicesContainer').style.display = 'block';
                 } else {
                     document.getElementById('devError').innerText = 'كلمة السر غير صحيحة!';
                 }
@@ -8040,6 +8054,8 @@ function saveDataToJSON() {
                 document.getElementById('devLoginBtn').style.display = 'none';
                 document.getElementById('loginRole').value = '';
                 document.getElementById('devError').innerText = '';
+                // Hide system services for non-developer
+                document.getElementById('systemServicesContainer').style.display = 'none';
             };
         }
     }

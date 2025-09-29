@@ -2395,13 +2395,13 @@
         
         <!-- أزرار العمل -->
         <div style="margin-bottom: 20px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-            <button onclick="checkDeveloperAccess('smart-rotation', generateSmartRotation)" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: #fff; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.1em;">
+            <button onclick="checkDeveloperAccess('smart-rotation', function() { generateSmartRotation(); })" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: #fff; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.1em;">
                 🧠 توليد التدوير الذكي
             </button>
-            <button onclick="checkDeveloperAccess('smart-rotation', previewRotation)" style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: #fff; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold;">
+            <button onclick="checkDeveloperAccess('smart-rotation', function() { previewRotation(); })" style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: #fff; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold;">
                 👁️ معاينة الخطة
             </button>
-            <button onclick="checkDeveloperAccess('smart-rotation', analyzeCurrentDistribution)" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); color: #fff; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold;">
+            <button onclick="checkDeveloperAccess('smart-rotation', function() { analyzeCurrentDistribution(); })" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); color: #fff; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold;">
                 📊 تحليل التوزيع الحالي
             </button>
         </div>
@@ -3806,6 +3806,7 @@ function checkDeveloperAccess(featureName, successCallback) {
         'shop-management': 'إدارة المحلات',
         'vacation-tracking': 'تتبع الإجازات',
         'schedule-management': 'إدارة جدول المناوبات',
+        'smart-rotation': 'التوزيع الذكي',
         'data-export': 'تصدير البيانات',
         'file-upload': 'رفع الملفات'
     };
@@ -9466,7 +9467,12 @@ function analyzeCurrentDistribution() {
 // ملء قائمة المفتشين في واجهة الاختيار
 function populateInspectorSelection() {
     const selectionDiv = document.getElementById('inspectorSelection');
-    if (!selectionDiv) return;
+    if (!selectionDiv) {
+        console.log('Inspector selection div not found');
+        return;
+    }
+    
+    console.log('Populating inspector selection, inspectorsData:', inspectorsData);
     
     let html = "";
     inspectorsData.forEach(inspector => {
@@ -9493,6 +9499,7 @@ function populateInspectorSelection() {
         </div>
     `;
     
+    console.log('Setting inspector selection HTML:', html);
     selectionDiv.innerHTML = html;
 }
 

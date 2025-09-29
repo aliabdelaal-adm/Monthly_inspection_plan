@@ -1781,7 +1781,11 @@
     <div class="header-top-bar">
         <div class="bell-container">
             <button class="bell-btn" id="bellBtn" title="الجرس - اضغط للكتابة">
-                🔔
+                <div class="bell-3d">
+                    <div class="bell-body">
+                        <div class="bell-shine"></div>
+                    </div>
+                </div>
             </button>
         </div>
         <div class="last-update-row" id="lastUpdateRow"></div>
@@ -1947,7 +1951,7 @@
     </div>
 
     <!-- System Services Management -->
-    <div class="system-services-container" id="systemServicesContainer" style="display:none;">
+    <div class="system-services-container" id="systemServicesContainer">
         <div class="system-services-header" onclick="toggleSystemServices()">
             <span class="system-services-icon" id="systemServicesIcon">⚙️</span>
             <span>إدارة خدمات النظام</span>
@@ -4730,7 +4734,8 @@ function playBellSound() {
     playClickSound();
     
     // Add visual bell animation
-    const bell3d = document.getElementById('bell3d');
+    const bellBtn = document.getElementById('bellBtn');
+    const bell3d = bellBtn?.querySelector('.bell-3d');
     if (bell3d) {
         bell3d.classList.add('bell-ringing');
         setTimeout(function() {
@@ -8028,8 +8033,8 @@ function saveDataToJSON() {
                     document.getElementById('devLoginBtn').style.display = 'none';
                     document.getElementById('devLogoutBtn').style.display = 'none';
                     document.getElementById('devSection').style.display = 'none';
-                    // Hide system services for non-developer roles
-                    document.getElementById('systemServicesContainer').style.display = 'none';
+                    // Show system services for inspectors with read-only access
+                    document.getElementById('systemServicesContainer').style.display = 'block';
                     window.isDev = false;
                 }
             });

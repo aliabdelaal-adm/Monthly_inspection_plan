@@ -989,12 +989,18 @@
         .modal-overlay {
             display:none; 
             position:fixed;
-            z-index:9999;
+            z-index:99999;
             right:0;left:0;top:0;bottom:0; 
-            background:rgba(0,0,0,0.25);
+            background:rgba(0,0,0,0.35);
             align-items:center;
             justify-content:center;
-            backdrop-filter: blur(2px);
+            backdrop-filter: blur(3px);
+        }
+        
+        /* Higher z-index for nested modals */
+        .modal-overlay.nested-modal {
+            z-index:999999;
+            background:rgba(0,0,0,0.45);
         }
         .modal-content {
             background:#fff; 
@@ -7009,12 +7015,16 @@ function showMonthlyScheduleModal() {
         jsonBtn.style.display = 'none';
     }
     
-    // عرض المودال
-    document.getElementById('monthlyScheduleModal').style.display = 'flex';
+    // عرض المودال مع التعامل مع النوافذ المتداخلة
+    const modalElement = document.getElementById('monthlyScheduleModal');
+    modalElement.style.display = 'flex';
+    modalElement.classList.add('nested-modal');
 }
 
 function closeMonthlyScheduleModal() {
-    document.getElementById('monthlyScheduleModal').style.display = 'none';
+    const modalElement = document.getElementById('monthlyScheduleModal');
+    modalElement.style.display = 'none';
+    modalElement.classList.remove('nested-modal');
 }
 
 function updateScheduleFilters() {
@@ -8100,8 +8110,10 @@ function showVacationTrackerModal() {
     document.getElementById('vacationStartDate').value = firstDay.toISOString().split('T')[0];
     document.getElementById('vacationEndDate').value = lastDay.toISOString().split('T')[0];
     
-    // عرض المودال
-    document.getElementById('vacationTrackerModal').style.display = 'flex';
+    // عرض المودال مع التعامل مع النوافذ المتداخلة
+    const modalElement = document.getElementById('vacationTrackerModal');
+    modalElement.style.display = 'flex';
+    modalElement.classList.add('nested-modal');
     
     // إظهار أو إخفاء الفترة المخصصة حسب الاختيار
     document.getElementById('vacationAnalysisPeriod').addEventListener('change', function() {
@@ -8116,7 +8128,9 @@ function showVacationTrackerModal() {
 
 // إغلاق مودال تتبع الإجازات
 function closeVacationTrackerModal() {
-    document.getElementById('vacationTrackerModal').style.display = 'none';
+    const modalElement = document.getElementById('vacationTrackerModal');
+    modalElement.style.display = 'none';
+    modalElement.classList.remove('nested-modal');
     document.getElementById('vacationManagementTable').style.display = 'none';
 }
 
@@ -8628,7 +8642,9 @@ let lastShopsUpdate = null;
 
 // فتح مودال إدارة المحلات
 function showShopsManagementModal() {
-    document.getElementById('shopsManagementModal').style.display = 'flex';
+    const modalElement = document.getElementById('shopsManagementModal');
+    modalElement.style.display = 'flex';
+    modalElement.classList.add('nested-modal');
     refreshShopsDisplay();
     updateShopsStats();
     updateShopsEditingStatus(); // Update the editing status banner
@@ -8674,7 +8690,9 @@ function updateShopsEditingStatus() {
 
 // إغلاق مودال إدارة المحلات
 function closeShopsManagementModal() {
-    document.getElementById('shopsManagementModal').style.display = 'none';
+    const modalElement = document.getElementById('shopsManagementModal');
+    modalElement.style.display = 'none';
+    modalElement.classList.remove('nested-modal');
     document.getElementById('editShopModal').style.display = 'none';
 }
 
@@ -8889,16 +8907,109 @@ function clearShopsFilters() {
 function downloadShopsFromExternalSource() {
     const statusDiv = document.getElementById('shopsUpdateStatus');
     statusDiv.style.display = 'block';
-    statusDiv.innerHTML = 'جاري تحميل البيانات من دائرة التنمية الاقتصادية...';
+    statusDiv.innerHTML = 'جاري تحميل البيانات من المصدر الخارجي...';
     statusDiv.style.background = '#d1ecf1';
     statusDiv.style.color = '#0c5460';
     
+    // محاولة تحميل ملف CSV المحلات من المستودع
+    fetch('./جدول_توزيع_المحلات.csv')
+        .then(response => {
+            if (!response.ok) {
+                // جرب مسار آخر
+                return fetch('./files/جدول_توزيع_المحلات.csv');
+            }
+            return response;
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('لا يمكن العثور على ملف المحلات');
+            }
+            return response.text();
+        })
+        .then(csvText => {
+            parseAndUpdateShopsFromCSV(csvText, statusDiv);
+        })
+        .catch(error => {
+            console.error('خطأ في تحميل الملف الخارجي:', error);
+            
+            // إذا فشل تحميل الملف الخارجي، استخدم البيانات المحاكاة
+            fallbackToMockExternalData(statusDiv);
+        });
+}
+
+// معالجة وتحليل ملف CSV للمحلات
+function parseAndUpdateShopsFromCSV(csvText, statusDiv) {
+    try {
+        const lines = csvText.split('\n').filter(line => line.trim() !== '');
+        const newShops = [];
+        
+        // تخطي السطر الأول إذا كان يحتوي على عناوين
+        const dataLines = lines[0].includes('محل') || lines[0].includes('منطقة') ? lines.slice(1) : lines;
+        
+        dataLines.forEach((line, index) => {
+            const columns = line.split(',').map(col => col.trim().replace(/"/g, ''));
+            
+            if (columns.length >= 2 && columns[0] && columns[1]) {
+                const shopName = columns[0];
+                const areaName = columns[1];
+                
+                // تجنب إضافة المحلات المكررة
+                const existingShop = shopsData.find(shop => shop.name === shopName);
+                if (existingShop) return;
+                
+                // البحث عن المنطقة في البيانات الموجودة
+                let areaId = areasData.find(area => area.name === areaName)?.id;
+                
+                // إذا لم توجد المنطقة، أنشئ منطقة جديدة
+                if (!areaId) {
+                    areaId = `area_${Date.now()}_${Math.random()}`;
+                    areasData.push({
+                        id: areaId,
+                        name: areaName
+                    });
+                }
+                
+                // إضافة المحل الجديد
+                newShops.push({
+                    id: `shop_${Date.now()}_${index}_${Math.random()}`,
+                    name: shopName,
+                    areaId: areaId,
+                    source: 'external_csv'
+                });
+            }
+        });
+        
+        if (newShops.length > 0) {
+            // إضافة المحلات الجديدة إلى البيانات الموجودة
+            shopsData.push(...newShops);
+            
+            statusDiv.innerHTML = `✅ تم تحميل ${newShops.length} محل جديد من المصدر الخارجي`;
+            statusDiv.style.background = '#d4edda';
+            statusDiv.style.color = '#155724';
+            
+            // تحديث العرض
+            refreshShopsDisplay();
+            updateShopsStats();
+        } else {
+            statusDiv.innerHTML = '⚠️ لم يتم العثور على محلات جديدة في المصدر الخارجي';
+            statusDiv.style.background = '#fff3cd';
+            statusDiv.style.color = '#856404';
+        }
+        
+        setTimeout(() => {
+            statusDiv.style.display = 'none';
+        }, 4000);
+        
+    } catch (error) {
+        console.error('خطأ في معالجة ملف CSV:', error);
+        fallbackToMockExternalData(statusDiv);
+    }
+}
+
+// البيانات الاحتياطية في حالة فشل تحميل الملف الخارجي
+function fallbackToMockExternalData(statusDiv) {
     // محاكاة تحميل البيانات من مصدر خارجي
     setTimeout(() => {
-        // هنا يمكن إضافة الكود الفعلي للتحميل من API
-        // const externalData = await fetchFromExternalAPI();
-        
-        // للتوضيح، سنقوم بمحاكاة إضافة بعض المحلات الجديدة
         const mockExternalShops = [
             {
                 id: `shop_external_${Date.now()}_1`,
@@ -8910,6 +9021,12 @@ function downloadShopsFromExternalSource() {
                 id: `shop_external_${Date.now()}_2`,
                 name: 'مركز أبوظبي البيطري المتقدم',
                 areaId: areasData[1]?.id || 'area_default',
+                source: 'external'
+            },
+            {
+                id: `shop_external_${Date.now()}_3`,
+                name: 'عيادة الحيوانات الشاملة',
+                areaId: areasData[2]?.id || 'area_default',
                 source: 'external'
             }
         ];
@@ -8924,7 +9041,7 @@ function downloadShopsFromExternalSource() {
             }
         });
         
-        statusDiv.innerHTML = `✅ تم تحميل ${addedCount} محل جديد من المصدر الخارجي`;
+        statusDiv.innerHTML = `✅ تم تحميل ${addedCount} محل جديد من المصدر الخارجي (بيانات تجريبية)`;
         statusDiv.style.background = '#d4edda';
         statusDiv.style.color = '#155724';
         
@@ -8934,9 +9051,9 @@ function downloadShopsFromExternalSource() {
         
         setTimeout(() => {
             statusDiv.style.display = 'none';
-        }, 3000);
+        }, 4000);
         
-    }, 2000);
+    }, 1000);
 }
 
 // رفع ملف المحلات
@@ -9421,8 +9538,10 @@ function openSmartRotationModal() {
         }
     }, 100);
     
-    // عرض المودال
-    document.getElementById('smartRotationModal').style.display = 'flex';
+    // عرض المودال مع إعطاءه z-index أعلى للنوافذ المتداخلة
+    const modalElement = document.getElementById('smartRotationModal');
+    modalElement.style.display = 'flex';
+    modalElement.classList.add('nested-modal');
     
     // تحليل التوزيع الحالي تلقائياً (read-only for inspectors)
     setTimeout(() => {
@@ -9443,7 +9562,9 @@ function openSmartRotationModal() {
 
 // إغلاق مودال التدوير الذكي
 function closeSmartRotationModal() {
-    document.getElementById('smartRotationModal').style.display = 'none';
+    const modalElement = document.getElementById('smartRotationModal');
+    modalElement.style.display = 'none';
+    modalElement.classList.remove('nested-modal');
     document.getElementById('rotationPreview').style.display = 'none';
     generatedRotationPlan = [];
 }
@@ -9950,11 +10071,15 @@ let currentPageNumber = 1;
 let totalPages = 1;
 
 function showFilePreviewModal() {
-    document.getElementById('filePreviewModal').style.display = 'flex';
+    const modalElement = document.getElementById('filePreviewModal');
+    modalElement.style.display = 'flex';
+    modalElement.classList.add('nested-modal');
 }
 
 function closeFilePreviewModal() {
-    document.getElementById('filePreviewModal').style.display = 'none';
+    const modalElement = document.getElementById('filePreviewModal');
+    modalElement.style.display = 'none';
+    modalElement.classList.remove('nested-modal');
     clearPreview();
 }
 

@@ -2056,6 +2056,7 @@
                 <div>
                     <label style="display: block; margin-bottom: 5px; font-weight: bold;">الفترة الزمنية:</label>
                     <select id="rotationPeriod" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="day">يوم واحد</option>
                         <option value="week">أسبوع واحد</option>
                         <option value="2weeks">أسبوعين</option>
                         <option value="month" selected>شهر كامل</option>
@@ -2083,6 +2084,31 @@
                         <option value="area_focused">مركز على المناطق</option>
                         <option value="random_fair">عشوائي عادل</option>
                         <option value="experience_based">حسب الخبرة</option>
+                        <option value="custom_inspectors">مفتشين مخصصين</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- خيارات التوليد المتخصص -->
+        <div style="margin-bottom: 20px; padding: 15px; background: #fff8dc; border-radius: 8px; border: 1px solid #deb887;">
+            <h4 style="margin: 0 0 15px 0; color: #8b4513; text-align: center;">🎯 خيارات التوليد المتخصص</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
+                <!-- اختيار المفتشين -->
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">اختيار المفتشين:</label>
+                    <div id="inspectorSelection" style="max-height: 120px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px; background: white;">
+                        <!-- سيتم ملء المفتشين هنا بواسطة JavaScript -->
+                    </div>
+                </div>
+                
+                <!-- تصنيف التفتيش -->
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">تصنيف التفتيش:</label>
+                    <select id="inspectionType" onchange="updateAreasBasedOnType()" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="all">جميع المناطق</option>
+                        <option value="external">خارجي (جميع المناطق الأخرى)</option>
+                        <option value="internal">داخلي (مناطق محددة)</option>
                     </select>
                 </div>
             </div>
@@ -7671,324 +7697,6 @@ function saveDataToJSON() {
 
 // ===== وظائف التدوير الذكي للمحلات على المفتشين =====
 
-// متغيرات التدوير الذكي
-let generatedRotationPlan = [];
-let currentRotationAnalysis = null;
-
-// فتح مودال التدوير الذكي
-function showSmartRotationModal() {
-    // تعيين التاريخ الافتراضي لليوم
-    const today = new Date();
-    document.getElementById('rotationStartDate').value = today.toISOString().split('T')[0];
-    
-    // عرض المودال
-    document.getElementById('smartRotationModal').style.display = 'flex';
-    
-    // تحليل التوزيع الحالي تلقائياً
-    setTimeout(() => {
-        analyzeCurrentDistribution();
-    }, 500);
-}
-
-// إغلاق مودال التدوير الذكي
-function closeSmartRotationModal() {
-    document.getElementById('smartRotationModal').style.display = 'none';
-    document.getElementById('rotationPreview').style.display = 'none';
-    generatedRotationPlan = [];
-}
-
-// تحليل التوزيع الحالي
-function analyzeCurrentDistribution() {
-    const resultsDiv = document.getElementById('rotationResults');
-    
-    // إحصائيات التوزيع الحالي
-    const inspectorShopCount = {};
-    const shopInspectorCount = {};
-    
-    // تهيئة العدادات
-    inspectorsData.forEach(inspector => {
-        inspectorShopCount[inspector.name] = new Set();
-    });
-    
-    shopsData.forEach(shop => {
-        shopInspectorCount[shop.name] = new Set();
-    });
-    
-    // تحليل البيانات الحالية
-    inspectionData.forEach(item => {
-        if (!inspectorShopCount[item.inspector]) {
-            inspectorShopCount[item.inspector] = new Set();
-        }
-        
-        if (item.shops && Array.isArray(item.shops)) {
-            item.shops.forEach(shop => {
-                inspectorShopCount[item.inspector].add(shop);
-                if (!shopInspectorCount[shop]) {
-                    shopInspectorCount[shop] = new Set();
-                }
-                shopInspectorCount[shop].add(item.inspector);
-            });
-        }
-    });
-    
-    // حساب الإحصائيات
-    const inspectorStats = Object.keys(inspectorShopCount).map(inspector => ({
-        name: inspector,
-        shopsCount: inspectorShopCount[inspector].size,
-        shops: Array.from(inspectorShopCount[inspector])
-    })).sort((a, b) => b.shopsCount - a.shopsCount);
-    
-    const shopStats = Object.keys(shopInspectorCount).map(shop => ({
-        name: shop,
-        inspectorsCount: shopInspectorCount[shop].size,
-        inspectors: Array.from(shopInspectorCount[shop])
-    })).sort((a, b) => a.inspectorsCount - b.inspectorsCount);
-    
-    // المحلات التي لم يتم تفتيشها أو تم تفتيشها من مفتش واحد فقط
-    const underInspectedShops = shopStats.filter(shop => shop.inspectorsCount <= 1);
-    
-    // عرض التحليل
-    let analysisHtml = `
-        <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; border: 1px solid #dee2e6;">
-            <h4 style="color: #234085; margin-bottom: 15px; text-align: center;">📊 تحليل التوزيع الحالي</h4>
-            
-            <!-- إحصائيات عامة -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
-                <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 1.5em; font-weight: bold; color: #1976d2;">${inspectorsData.length}</div>
-                    <div style="color: #1976d2;">إجمالي المفتشين</div>
-                </div>
-                <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 1.5em; font-weight: bold; color: #388e3c;">${shopsData.length}</div>
-                    <div style="color: #388e3c;">إجمالي المحلات</div>
-                </div>
-                <div style="background: #fff3e0; padding: 15px; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 1.5em; font-weight: bold; color: #f57c00;">${underInspectedShops.length}</div>
-                    <div style="color: #f57c00;">محلات تحتاج تفتيش</div>
-                </div>
-            </div>
-            
-            <!-- توزيع المفتشين -->
-            <div style="margin-bottom: 20px;">
-                <h5 style="color: #234085; margin-bottom: 10px;">📈 توزيع المحلات على المفتشين</h5>
-                <div style="max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 6px; padding: 10px; background: white;">
-                    ${inspectorStats.map(stat => `
-                        <div style="display: flex; justify-content: space-between; padding: 8px; margin: 4px 0; background: ${stat.shopsCount > 0 ? '#e8f5e8' : '#ffebee'}; border-radius: 4px;">
-                            <span style="font-weight: bold;">${stat.name}</span>
-                            <span style="color: ${stat.shopsCount > 0 ? '#2e7d32' : '#c62828'};">${stat.shopsCount} محل</span>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-            
-            <!-- التوصيات الذكية -->
-            <div style="background: #e3f2fd; border-radius: 8px; padding: 15px; border-left: 4px solid #2196f3;">
-                <h5 style="color: #1976d2; margin-bottom: 10px;">🧠 التوصيات الذكية</h5>
-                <ul style="margin: 0; padding-right: 20px;">
-                    ${underInspectedShops.length > 0 ? `<li style="margin-bottom: 8px;">يُنصح بإعطاء أولوية للمحلات التي لم يتم تفتيشها أو تم تفتيشها من مفتش واحد فقط</li>` : ''}
-                    <li style="margin-bottom: 8px;">توزيع عادل: كل مفتش يجب أن يفتش حوالي ${Math.ceil(shopsData.length / inspectorsData.length)} محل</li>
-                    <li>دوران المفتشين: كل محل يجب أن يُفتش من ${Math.min(3, inspectorsData.length)} مفتشين مختلفين على الأقل</li>
-                </ul>
-            </div>
-        </div>
-    `;
-    
-    resultsDiv.innerHTML = analysisHtml;
-}
-
-// توليد التدوير الذكي (مبسط)
-function generateSmartRotation() {
-    const period = document.getElementById('rotationPeriod').value;
-    const startDate = new Date(document.getElementById('rotationStartDate').value);
-    const shopsPerInspector = parseInt(document.getElementById('shopsPerInspector').value);
-    
-    if (!startDate || isNaN(startDate.getTime())) {
-        alert('يرجى تحديد تاريخ البداية');
-        return;
-    }
-    
-    // حساب عدد الأيام حسب الفترة
-    let days = 7;
-    switch(period) {
-        case 'week': days = 7; break;
-        case '2weeks': days = 14; break;
-        case 'month': days = 30; break;
-        case 'quarter': days = 90; break;
-    }
-    
-    // توليد خطة مبسطة
-    generatedRotationPlan = [];
-    const availableShops = [...shopsData];
-    let shopIndex = 0;
-    
-    for (let dayOffset = 0; dayOffset < days; dayOffset += 2) { // كل يومين
-        const currentDate = new Date(startDate);
-        currentDate.setDate(startDate.getDate() + dayOffset);
-        const dateStr = currentDate.toISOString().split('T')[0];
-        
-        // توزيع المفتشين
-        inspectorsData.forEach((inspector, index) => {
-            if (shopIndex >= availableShops.length) shopIndex = 0; // إعادة البدء
-            
-            const assignedShops = [];
-            for (let i = 0; i < shopsPerInspector && shopIndex < availableShops.length; i++) {
-                assignedShops.push(availableShops[shopIndex].name);
-                shopIndex++;
-            }
-            
-            if (assignedShops.length > 0) {
-                // تحديد المنطقة الأكثر شيوعاً
-                const areas = assignedShops.map(shopName => {
-                    const shop = shopsData.find(s => s.name === shopName);
-                    const area = shop ? areasData.find(a => a.id === shop.areaId) : null;
-                    return area ? area.name : 'غير محدد';
-                });
-                const mainArea = areas[0] || 'غير محدد';
-                
-                generatedRotationPlan.push({
-                    inspector: inspector.name,
-                    day: dateStr,
-                    shift: (index % 2 === 0) ? 'صباحية' : 'مسائية',
-                    area: mainArea,
-                    shops: assignedShops
-                });
-            }
-        });
-    }
-    
-    if (generatedRotationPlan.length === 0) {
-        alert('فشل في توليد الخطة. يرجى المحاولة مرة أخرى.');
-        return;
-    }
-    
-    // عرض معاينة الخطة
-    displayRotationPreview();
-    alert(`تم توليد ${generatedRotationPlan.length} تفتيش بنجاح!`);
-}
-
-// عرض معاينة الخطة المولدة
-function displayRotationPreview() {
-    const previewDiv = document.getElementById('rotationPreview');
-    const contentDiv = document.getElementById('rotationPreviewContent');
-    
-    if (!generatedRotationPlan || generatedRotationPlan.length === 0) {
-        previewDiv.style.display = 'none';
-        return;
-    }
-    
-    let previewHtml = `
-        <div style="margin-bottom: 15px;">
-            <h5 style="color: #234085;">📅 إجمالي الخطة: ${generatedRotationPlan.length} تفتيش</h5>
-        </div>
-        <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
-            <thead>
-                <tr style="background: #f1f3f4;">
-                    <th style="border: 1px solid #ddd; padding: 8px;">التاريخ</th>
-                    <th style="border: 1px solid #ddd; padding: 8px;">المفتش</th>
-                    <th style="border: 1px solid #ddd; padding: 8px;">المناوبة</th>
-                    <th style="border: 1px solid #ddd; padding: 8px;">المنطقة</th>
-                    <th style="border: 1px solid #ddd; padding: 8px;">المحلات</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
-    
-    generatedRotationPlan.forEach((item, index) => {
-        const formattedDate = new Date(item.day).toLocaleDateString('ar-SA');
-        previewHtml += `
-            <tr style="background: ${index % 2 === 0 ? '#f9f9f9' : 'white'};">
-                <td style="border: 1px solid #ddd; padding: 8px;">${formattedDate}</td>
-                <td style="border: 1px solid #ddd; padding: 8px;">${item.inspector}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">
-                    <span style="padding: 3px 8px; border-radius: 12px; font-size: 0.8em; ${item.shift === 'صباحية' ? 'background: #e8f5e8; color: #2e7d32;' : 'background: #fff3e0; color: #f57c00;'}">${item.shift}</span>
-                </td>
-                <td style="border: 1px solid #ddd; padding: 8px;">${item.area}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; font-size: 0.85em;">${item.shops.join(', ')}</td>
-            </tr>
-        `;
-    });
-    
-    previewHtml += `
-            </tbody>
-        </table>
-    `;
-    
-    contentDiv.innerHTML = previewHtml;
-    previewDiv.style.display = 'block';
-}
-
-// معاينة الخطة
-function previewRotation() {
-    if (!generatedRotationPlan || generatedRotationPlan.length === 0) {
-        alert('يرجى توليد الخطة أولاً');
-        return;
-    }
-    displayRotationPreview();
-    document.getElementById('rotationPreview').scrollIntoView({ behavior: 'smooth' });
-}
-
-// تطبيق الخطة المولدة
-function applyGeneratedRotation() {
-    if (!generatedRotationPlan || generatedRotationPlan.length === 0) {
-        alert('لا توجد خطة مولدة للتطبيق');
-        return;
-    }
-    
-    if (!confirm(`هل تريد تطبيق الخطة المولدة؟\n\nسيتم إضافة ${generatedRotationPlan.length} تفتيش جديد إلى النظام.`)) {
-        return;
-    }
-    
-    // إضافة الخطة للبيانات الحالية
-    generatedRotationPlan.forEach(item => {
-        inspectionData.push(item);
-    });
-    
-    // حفظ البيانات
-    saveInspectionData();
-    renderPlanTable();
-    
-    // إغلاق المودال
-    closeSmartRotationModal();
-    
-    alert(`تم تطبيق الخطة بنجاح!\n\nتم إضافة ${generatedRotationPlan.length} تفتيش جديد.`);
-    
-    // إعادة تعيين المتغيرات
-    generatedRotationPlan = [];
-}
-
-// تصدير خطة التدوير
-function exportRotationPlan() {
-    if (!generatedRotationPlan || generatedRotationPlan.length === 0) {
-        alert('لا توجد خطة مولدة للتصدير');
-        return;
-    }
-    
-    const exportData = {
-        generatedAt: new Date().toISOString(),
-        plan: generatedRotationPlan,
-        statistics: {
-            totalInspections: generatedRotationPlan.length,
-            uniqueShops: new Set(generatedRotationPlan.flatMap(item => item.shops)).size,
-            uniqueInspectors: new Set(generatedRotationPlan.map(item => item.inspector)).size
-        }
-    };
-    
-    const dataStr = JSON.stringify(exportData, null, 2);
-    const blob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `خطة_التدوير_الذكي_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    alert('تم تصدير خطة التدوير بنجاح!');
-}
-
-})();
 
 // ===== وظائف تتبع الإجازات والعطل الأسبوعية =====
 
@@ -9270,6 +8978,9 @@ function showSmartRotationModal() {
     const today = new Date();
     document.getElementById('rotationStartDate').value = today.toISOString().split('T')[0];
     
+    // ملء قائمة المفتشين
+    populateInspectorSelection();
+    
     // عرض المودال
     document.getElementById('smartRotationModal').style.display = 'flex';
     
@@ -9385,38 +9096,153 @@ function analyzeCurrentDistribution() {
     resultsDiv.innerHTML = analysisHtml;
 }
 
-// توليد التدوير الذكي (مبسط)
+
+// ملء قائمة المفتشين في واجهة الاختيار
+function populateInspectorSelection() {
+    const selectionDiv = document.getElementById("inspectorSelection");
+    if (!selectionDiv) return;
+    
+    let html = "";
+    inspectorsData.forEach(inspector => {
+        html += `
+            <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer;">
+                <input type="checkbox" name="selectedInspectors" value="${inspector.id}" checked 
+                       style="margin: 0;">
+                <span style="font-size: 0.9em;">${inspector.name}</span>
+            </label>
+        `;
+    });
+    
+    // إضافة أزرار التحكم
+    html += `
+        <div style="margin-top: 10px; display: flex; gap: 8px; justify-content: center;">
+            <button type="button" onclick="selectAllInspectors()" 
+                    style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; cursor: pointer;">
+                تحديد الكل
+            </button>
+            <button type="button" onclick="deselectAllInspectors()" 
+                    style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; cursor: pointer;">
+                إلغاء التحديد
+            </button>
+        </div>
+    `;
+    
+    selectionDiv.innerHTML = html;
+}
+
+// تحديد جميع المفتشين
+function selectAllInspectors() {
+    const checkboxes = document.querySelectorAll("input[name="selectedInspectors"]");
+    checkboxes.forEach(cb => cb.checked = true);
+}
+
+// إلغاء تحديد جميع المفتشين
+function deselectAllInspectors() {
+    const checkboxes = document.querySelectorAll("input[name="selectedInspectors"]");
+    checkboxes.forEach(cb => cb.checked = false);
+}
+
+// تحديث المناطق بناءً على نوع التفتيش
+function updateAreasBasedOnType() {
+    const inspectionType = document.getElementById("inspectionType").value;
+    // المناطق الداخلية المحددة حسب المتطلبات
+    const internalAreas = [
+        "سوق التراث", "سوق الميناء", "الدانة", "آل نهيان", 
+        "الحصن", "الزاهية", "المشرف", "الخالدية", "البطين"
+    ];
+    
+    window.selectedAreasFilter = inspectionType;
+    window.internalAreasFilter = internalAreas;
+}
+
+// الحصول على المفتشين المحددين
+function getSelectedInspectors() {
+    const checkboxes = document.querySelectorAll("input[name="selectedInspectors"]:checked");
+    const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+    return inspectorsData.filter(inspector => selectedIds.includes(inspector.id));
+}
+
+// الحصول على المناطق المفلترة حسب نوع التفتيش
+function getFilteredAreas() {
+    const inspectionType = document.getElementById("inspectionType").value;
+    const internalAreas = [
+        "سوق التراث", "سوق الميناء", "الدانة", "آل نهيان", 
+        "الحصن", "الزاهية", "المشرف", "الخالدية", "البطين"
+    ];
+    
+    switch(inspectionType) {
+        case "internal":
+            return areasData.filter(area => internalAreas.includes(area.name));
+        case "external":
+            return areasData.filter(area => !internalAreas.includes(area.name));
+        default:
+            return areasData;
+    }
+}
+// توليد التدوير الذكي (محسن)
 function generateSmartRotation() {
     const period = document.getElementById('rotationPeriod').value;
     const startDate = new Date(document.getElementById('rotationStartDate').value);
     const shopsPerInspector = parseInt(document.getElementById('shopsPerInspector').value);
+    const distributionStrategy = document.getElementById('distributionStrategy').value;
     
     if (!startDate || isNaN(startDate.getTime())) {
         alert('يرجى تحديد تاريخ البداية');
         return;
     }
     
+    // الحصول على المفتشين المحددين
+    const selectedInspectors = distributionStrategy === 'custom_inspectors' ? getSelectedInspectors() : inspectorsData;
+    
+    if (selectedInspectors.length === 0) {
+        alert('يرجى تحديد مفتش واحد على الأقل');
+        return;
+    }
+    
+    // الحصول على المناطق المفلترة
+    const filteredAreas = getFilteredAreas();
+    const availableShops = shopsData.filter(shop => {
+        const area = areasData.find(a => a.id === shop.areaId);
+        return area && filteredAreas.some(fa => fa.id === area.id);
+    });
+    
+    if (availableShops.length === 0) {
+        alert('لا توجد محلات متاحة للتوزيع حسب المعايير المحددة');
+        return;
+    }
+    
     // حساب عدد الأيام حسب الفترة
     let days = 7;
     switch(period) {
+        case 'day': days = 1; break;
         case 'week': days = 7; break;
         case '2weeks': days = 14; break;
         case 'month': days = 30; break;
         case 'quarter': days = 90; break;
     }
     
-    // توليد خطة مبسطة
+    // توليد خطة محسنة
     generatedRotationPlan = [];
-    const availableShops = [...shopsData];
     let shopIndex = 0;
     
-    for (let dayOffset = 0; dayOffset < days; dayOffset += 2) { // كل يومين
+    // حساب عدد الأيام الفعلية للتوزيع
+    const actualDays = period === 'day' ? 1 : Math.ceil(days / 2); // كل يومين إلا في حالة يوم واحد
+    
+    for (let dayOffset = 0; dayOffset < actualDays; dayOffset++) {
         const currentDate = new Date(startDate);
-        currentDate.setDate(startDate.getDate() + dayOffset);
+        
+        if (period === 'day') {
+            // يوم واحد فقط
+            currentDate.setDate(startDate.getDate());
+        } else {
+            // أيام متعددة
+            currentDate.setDate(startDate.getDate() + (dayOffset * 2));
+        }
+        
         const dateStr = currentDate.toISOString().split('T')[0];
         
-        // توزيع المفتشين
-        inspectorsData.forEach((inspector, index) => {
+        // توزيع المفتشين حسب الاستراتيجية
+        selectedInspectors.forEach((inspector, index) => {
             if (shopIndex >= availableShops.length) shopIndex = 0; // إعادة البدء
             
             const assignedShops = [];
@@ -9428,21 +9254,42 @@ function generateSmartRotation() {
             if (assignedShops.length > 0) {
                 // تحديد المنطقة الأكثر شيوعاً
                 const areas = assignedShops.map(shopName => {
-                    const shop = shopsData.find(s => s.name === shopName);
+                    const shop = availableShops.find(s => s.name === shopName);
                     const area = shop ? areasData.find(a => a.id === shop.areaId) : null;
                     return area ? area.name : 'غير محدد';
                 });
                 const mainArea = areas[0] || 'غير محدد';
                 
+                // تحديد المناوبة بناءً على الاستراتيجية
+                let shift = 'صباحية';
+                switch(distributionStrategy) {
+                    case 'balanced':
+                        shift = (index % 2 === 0) ? 'صباحية' : 'مسائية';
+                        break;
+                    case 'area_focused':
+                        shift = areas.includes('سوق الميناء') || areas.includes('سوق التراث') ? 'صباحية' : 'مسائية';
+                        break;
+                    case 'random_fair':
+                        shift = Math.random() > 0.5 ? 'صباحية' : 'مسائية';
+                        break;
+                    case 'experience_based':
+                    case 'custom_inspectors':
+                        shift = (index % 2 === 0) ? 'صباحية' : 'مسائية';
+                        break;
+                }
+                
                 generatedRotationPlan.push({
                     inspector: inspector.name,
                     day: dateStr,
-                    shift: (index % 2 === 0) ? 'صباحية' : 'مسائية',
+                    shift: shift,
                     area: mainArea,
                     shops: assignedShops
                 });
             }
         });
+        
+        // في حالة يوم واحد، نتوقف بعد الدورة الأولى
+        if (period === 'day') break;
     }
     
     if (generatedRotationPlan.length === 0) {
@@ -9450,9 +9297,13 @@ function generateSmartRotation() {
         return;
     }
     
-    // عرض معaينة الخطة
+    // عرض معاينة الخطة
     displayRotationPreview();
-    alert(`تم توليد ${generatedRotationPlan.length} تفتيش بنجاح!`);
+    
+    const inspectionTypeText = document.getElementById('inspectionType').value === 'internal' ? 'داخلي' : 
+                              document.getElementById('inspectionType').value === 'external' ? 'خارجي' : 'شامل';
+    
+    alert(`تم توليد ${generatedRotationPlan.length} تفتيش بنجاح!\n\nنوع التفتيش: ${inspectionTypeText}\nعدد المفتشين: ${selectedInspectors.length}\nعدد المحلات المتاحة: ${availableShops.length}`);
 }
 
 // عرض معاينة الخطة المولدة
@@ -9483,7 +9334,7 @@ function displayRotationPreview() {
     `;
     
     generatedRotationPlan.forEach((item, index) => {
-        const formattedDate = new Date(item.day).toLocaleDateString('ar-SA');
+        const formattedDate = new Date(item.day).toLocaleDateString('en-GB');
         previewHtml += `
             <tr style="background: ${index % 2 === 0 ? '#f9f9f9' : 'white'};">
                 <td style="border: 1px solid #ddd; padding: 8px;">${formattedDate}</td>

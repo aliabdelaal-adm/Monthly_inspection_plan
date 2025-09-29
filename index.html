@@ -590,6 +590,14 @@
             background: linear-gradient(135deg, #5936a3 0%, #8e24aa 100%);
         }
         
+        .weekly-report-template-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: #fff;
+        }
+        .weekly-report-template-btn:hover {
+            background: linear-gradient(135deg, #218838 0%, #1ba085 100%);
+        }
+        
         .pdf-btn {
             background: linear-gradient(135deg, #d63384 0%, #e91e63 100%);
             color: #fff;
@@ -1720,6 +1728,11 @@
             <button class="icon-btn shops-management-btn tooltip" onclick="showShopsManagementModal()" data-tooltip="قائمة المحلات الخاضعة للرقابة والتفتيش - تحديث وتصنيف ذكي للمحلات">
                 <span class="icon">🏪</span>
                 <span class="label">قائمة المحلات</span>
+            </button>
+            
+            <button class="icon-btn weekly-report-template-btn tooltip" onclick="openWeeklyReportTemplate()" data-tooltip="قالب التقرير الأسبوعي الذكي - نموذج PowerPoint احترافي للتفتيش والرقابة البيطرية">
+                <span class="icon">📋</span>
+                <span class="label">قالب التقرير الأسبوعي</span>
             </button>
         </div>
         
@@ -9900,6 +9913,28 @@ function clearPreview() {
         </div>
     `;
     showPreviewControls(false);
+}
+
+// ===== وظائف قالب التقرير الأسبوعي =====
+
+// فتح قالب التقرير الأسبوعي في نافذة جديدة
+function openWeeklyReportTemplate() {
+    // فتح نافذة جديدة لقالب التقرير الأسبوعي
+    const templateWindow = window.open('./weekly_report_template.html', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+    
+    if (templateWindow) {
+        templateWindow.focus();
+        console.log('✅ تم فتح قالب التقرير الأسبوعي في نافذة جديدة');
+        
+        // إظهار رسالة تأكيد للمستخدم
+        setTimeout(() => {
+            showUpdateMessage('✅ تم فتح قالب التقرير الأسبوعي الذكي في نافذة جديدة');
+        }, 500);
+    } else {
+        // في حالة منع النوافذ المنبثقة
+        alert('يبدو أن متصفحك يمنع النوافذ المنبثقة. يرجى السماح بالنوافذ المنبثقة أو فتح الرابط يدوياً: ./weekly_report_template.html');
+        console.warn('⚠️ النافذة المنبثقة مُحظورة - يرجى تفعيل النوافذ المنبثقة');
+    }
 }
 
 </script> 

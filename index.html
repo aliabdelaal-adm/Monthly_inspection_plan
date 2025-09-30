@@ -576,6 +576,19 @@
             user-select: none;
             font-weight: 600;
             font-size: 1.1em;
+            position: relative;
+        }
+        
+        .system-services-header::after {
+            content: '▼'; /* مؤشر سهم للأسفل */
+            position: absolute;
+            right: 15px;
+            font-size: 0.8em;
+            transition: transform 0.3s ease;
+        }
+        
+        .system-services-header.collapsed::after {
+            transform: rotate(-90deg); /* سهم لليمين عند الإغلاق */
         }
         
         .system-services-header:hover {
@@ -591,7 +604,8 @@
         }
         
         .system-services-content {
-            max-height: 0;
+            max-height: 800px; /* تم توسيع القسم افتراضياً */
+            padding: 20px; /* إضافة الحشو افتراضياً */
             overflow: hidden;
             transition: max-height 0.4s ease-in-out, padding 0.4s ease-in-out;
             background: white;
@@ -676,6 +690,7 @@
             overflow-y:visible;
             display: flex;
             justify-content: center;
+            padding-right: 20px; /* إزاحة الجدول قليلاً ناحية اليمين */
         }
         .plan-table {
             width:98%;
@@ -1277,6 +1292,7 @@
             .plan-table-container {
                 overflow-x:auto;
                 -webkit-overflow-scrolling:touch;
+                padding-right: 10px; /* تقليل الإزاحة على الشاشات الصغيرة */
             }
             .plan-table {
                 width:100%;
@@ -1859,6 +1875,7 @@
         <div class="system-services-header" onclick="toggleSystemServices()">
             <span class="system-services-icon" id="systemServicesIcon">⚙️</span>
             <span>إدارة خدمات النظام</span>
+            <small style="margin-right: 10px; font-size: 0.8em; opacity: 0.9;">انقر للوصول لجميع الأدوات</small>
         </div>
         <div class="system-services-content" id="systemServicesContent">
             <div class="services-grid">
@@ -2740,13 +2757,22 @@
 function toggleSystemServices() {
     const content = document.getElementById('systemServicesContent');
     const icon = document.getElementById('systemServicesIcon');
+    const header = document.querySelector('.system-services-header');
     
     if (content.classList.contains('expanded')) {
         content.classList.remove('expanded');
+        header.classList.add('collapsed');
         icon.style.transform = 'rotate(0deg)';
+        // تحديث المحتوى لحالة الإغلاق
+        content.style.maxHeight = '0';
+        content.style.padding = '0 20px';
     } else {
         content.classList.add('expanded');
+        header.classList.remove('collapsed');
         icon.style.transform = 'rotate(180deg)';
+        // تحديث المحتوى لحالة الفتح
+        content.style.maxHeight = '800px';
+        content.style.padding = '20px';
     }
 }
 
@@ -10655,6 +10681,17 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         loadPublicFiles('all');
     }, 1000);
+    
+    // تهيئة قسم إدارة خدمات النظام كمفتوح افتراضياً
+    setTimeout(() => {
+        const content = document.getElementById('systemServicesContent');
+        const header = document.querySelector('.system-services-header');
+        if (content && header) {
+            content.classList.add('expanded');
+            // إزالة الكلاس collapsed إن وُجد
+            header.classList.remove('collapsed');
+        }
+    }, 500);
 });
 
 // ===== إصلاح مؤقت للأزرار المعطلة =====

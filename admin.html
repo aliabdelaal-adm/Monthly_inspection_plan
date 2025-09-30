@@ -338,6 +338,9 @@
               descriptionInput.value = '';
               // تحديث قائمة الملفات
               loadFilesList();
+            } else if (uploadRes.status === 401 || uploadRes.status === 403) {
+              // خطأ في صلاحيات التوكن
+              document.getElementById("fileStatus").textContent = "❌ خطأ في صلاحيات التوكن. يرجى التحقق من صلاحية التوكن أو تحديثه.";
             } else {
               const err = await uploadRes.json().catch(() => ({ message: `HTTP ${uploadRes.status}: ${uploadRes.statusText}` }));
               document.getElementById("fileStatus").textContent = "❌ خطأ في رفع الملف: " + (err.message || "تحقق من التوكن أو الصلاحيات.");

@@ -2943,6 +2943,32 @@ console.log('Smart distribution functions initialized');
         <p style="color: #666; margin: 0;">الملفات والوثائق المتاحة للاطلاع والتحميل</p>
     </div>
     
+    <!-- قسم رفع الملفات - للمطور فقط -->
+    <div id="developerFileUploadSection" style="display: none; margin-bottom: 25px; padding: 20px; background: #f0f8ff; border: 2px solid #2336a0; border-radius: 8px;">
+        <h3 style="color: #2336a0; margin: 0 0 15px 0;">➕ رفع ملف جديد</h3>
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">اختر الملف:</label>
+            <input type="file" id="mainFileUpload" accept=".pdf,.xlsx,.xls,.docx,.doc,.pptx,.ppt,.csv,.txt,.jpg,.jpeg,.png,.gif" style="padding: 8px; border: 1px solid #ccc; border-radius: 6px; width: 100%; box-sizing: border-box;">
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">التصنيف:</label>
+            <select id="mainFileCategory" style="padding: 8px; border: 1px solid #ccc; border-radius: 6px; width: 100%; box-sizing: border-box;">
+                <option value="documents">الوثائق - Documents</option>
+                <option value="reports">التقارير - Reports</option>
+                <option value="schedules">الجداول - Schedules</option>
+                <option value="resources">الموارد - Resources</option>
+            </select>
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">وصف الملف (اختياري):</label>
+            <input type="text" id="mainFileDescription" placeholder="وصف مختصر للملف" style="padding: 8px; border: 1px solid #ccc; border-radius: 6px; width: 100%; box-sizing: border-box;">
+        </div>
+        <button onclick="uploadFileFromMain()" id="mainUploadBtn" style="background: #28a745; color: #fff; border: none; padding: 10px 24px; border-radius: 6px; cursor: pointer; font-size: 1em; font-weight: bold;">
+            📤 رفع الملف
+        </button>
+        <div id="mainFileUploadStatus" style="margin-top: 10px; font-weight: bold;"></div>
+    </div>
+    
     <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap;">
         <button onclick="loadPublicFiles('all')" id="filesAllBtn" style="background: #2336a0; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
             📁 جميع الملفات
@@ -3097,6 +3123,12 @@ function toggleFileManagement() {
     if (fileSection.style.display === 'none' || fileSection.style.display === '') {
         fileSection.style.display = 'block';
         fileSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        
+        // إظهار قسم رفع الملفات للمطور فقط
+        const uploadSection = document.getElementById('developerFileUploadSection');
+        if (uploadSection && (isDev || window.isDev)) {
+            uploadSection.style.display = 'block';
+        }
         
         // تحميل الملفات تلقائياً إذا لم تكن محملة
         setTimeout(() => {
@@ -10816,6 +10848,17 @@ function generateFileCard(file) {
     const fileSize = formatPublicFileSize(file.size);
     const uploadDate = new Date(file.uploadDate).toLocaleDateString('ar-EG');
     const fileIcon = getFileIcon(file.type);
+    const isDeveloper = isDev || window.isDev;
+    
+    // أزرار المطور - التحرير والحذف
+    const developerButtons = isDeveloper ? `
+        <button onclick="editFileFromMain('${file.id}', '${file.name.replace(/'/g, "\\'")}', '${file.description.replace(/'/g, "\\'")}', '${file.category}')" style="background: #ffc107; color: #333; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em; white-space: nowrap;">
+            ✏️ تحرير
+        </button>
+        <button onclick="deleteFileFromMain('${file.id}', '${file.path}', '${file.name.replace(/'/g, "\\'")}', '${file.category}')" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em; white-space: nowrap;">
+            🗑️ حذف
+        </button>
+    ` : '';
     
     return `
         <div style="padding: 15px; border: 1px solid #ddd; border-radius: 8px; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: transform 0.2s, box-shadow 0.2s;">
@@ -10841,6 +10884,7 @@ function generateFileCard(file) {
                             👁️ معاينة
                         </button>
                     ` : ''}
+                    ${developerButtons}
                 </div>
             </div>
         </div>
@@ -10874,6 +10918,359 @@ function formatPublicFileSize(bytes) {
     const sizes = ['بايت', 'كيلوبايت', 'ميجابايت', 'جيجابايت'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// ===== وظائف إدارة الملفات للمطور =====
+
+async function uploadFileFromMain() {
+    if (!isDev && !window.isDev) {
+        alert('❌ صلاحيات المطور مطلوبة لرفع الملفات');
+        return;
+    }
+    
+    const fileInput = document.getElementById('mainFileUpload');
+    const categorySelect = document.getElementById('mainFileCategory');
+    const descriptionInput = document.getElementById('mainFileDescription');
+    const statusDiv = document.getElementById('mainFileUploadStatus');
+    const uploadBtn = document.getElementById('mainUploadBtn');
+    
+    if (!fileInput.files[0]) {
+        statusDiv.textContent = '❌ يرجى اختيار ملف أولاً';
+        statusDiv.style.color = '#dc3545';
+        return;
+    }
+    
+    const file = fileInput.files[0];
+    const category = categorySelect.value;
+    const description = descriptionInput.value || file.name;
+    
+    // التحقق من حجم الملف (الحد الأقصى 25 MB)
+    const maxSize = 25 * 1024 * 1024;
+    if (file.size > maxSize) {
+        statusDiv.textContent = '❌ حجم الملف كبير جداً! يجب أن يكون أقل من 25 ميجابايت';
+        statusDiv.style.color = '#dc3545';
+        return;
+    }
+    
+    try {
+        uploadBtn.disabled = true;
+        statusDiv.textContent = '⏳ جاري رفع الملف...';
+        statusDiv.style.color = '#666';
+        
+        // قراءة الملف كـ base64
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            const content = e.target.result.split(',')[1];
+            const fileName = file.name;
+            const filePath = `files/${category}/${fileName}`;
+            const repo = 'aliabdelaal-adm/Monthly_inspection_plan';
+            
+            // الحصول على التوكن من localStorage (من نظام المطور)
+            const token = localStorage.getItem('devToken') || localStorage.getItem('githubToken');
+            if (!token) {
+                statusDiv.textContent = '❌ يرجى تسجيل الدخول كمطور أولاً أو استخدام صفحة admin.html لإدخال التوكن';
+                statusDiv.style.color = '#dc3545';
+                uploadBtn.disabled = false;
+                return;
+            }
+            
+            try {
+                // رفع الملف إلى GitHub
+                const uploadRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: `رفع ملف جديد: ${fileName}`,
+                        content: content
+                    })
+                });
+                
+                if (uploadRes.status === 201) {
+                    // تحديث ملف files.json
+                    await updateFilesRegistryFromMain(fileName, filePath, category, file.size, description, token);
+                    statusDiv.textContent = '✅ تم رفع الملف بنجاح!';
+                    statusDiv.style.color = '#28a745';
+                    
+                    // إعادة تعيين النموذج
+                    fileInput.value = '';
+                    descriptionInput.value = '';
+                    
+                    // تحديث قائمة الملفات
+                    setTimeout(() => loadPublicFiles('all'), 1000);
+                } else {
+                    const err = await uploadRes.json().catch(() => ({ message: `HTTP ${uploadRes.status}` }));
+                    statusDiv.textContent = '❌ خطأ في رفع الملف: ' + (err.message || 'تحقق من التوكن أو الصلاحيات');
+                    statusDiv.style.color = '#dc3545';
+                }
+            } catch (error) {
+                statusDiv.textContent = '❌ خطأ في رفع الملف: ' + error.message;
+                statusDiv.style.color = '#dc3545';
+            } finally {
+                uploadBtn.disabled = false;
+            }
+        };
+        
+        reader.readAsDataURL(file);
+        
+    } catch (error) {
+        statusDiv.textContent = '❌ خطأ في قراءة الملف: ' + error.message;
+        statusDiv.style.color = '#dc3545';
+        uploadBtn.disabled = false;
+    }
+}
+
+async function updateFilesRegistryFromMain(fileName, filePath, category, fileSize, description, token) {
+    try {
+        const repo = 'aliabdelaal-adm/Monthly_inspection_plan';
+        
+        // تحميل ملف files.json الحالي
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/files.json`, {
+            headers: {
+                'Authorization': `token ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        let filesData = { files: [], categories: [], lastUpdate: new Date().toISOString() };
+        let currentSha = '';
+        
+        if (res.ok) {
+            const file = await res.json();
+            filesData = JSON.parse(decodeURIComponent(escape(atob(file.content))));
+            currentSha = file.sha;
+        }
+        
+        // إضافة الملف الجديد
+        const newFile = {
+            id: Date.now().toString(),
+            name: fileName,
+            path: filePath,
+            category: category,
+            type: fileName.split('.').pop().toLowerCase(),
+            size: fileSize,
+            uploadDate: new Date().toISOString(),
+            description: description,
+            uploader: 'د. علي عبدالعال',
+            visible: true
+        };
+        
+        filesData.files.push(newFile);
+        filesData.lastUpdate = new Date().toISOString();
+        
+        // حفظ ملف files.json المحدث
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(filesData, null, 2))));
+        const updateRes = await fetch(`https://api.github.com/repos/${repo}/contents/files.json`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `token ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                message: `تحديث سجل الملفات - إضافة ${fileName}`,
+                content: content,
+                sha: currentSha
+            })
+        });
+        
+        if (!updateRes.ok) {
+            console.error('خطأ في تحديث سجل الملفات');
+        }
+        
+    } catch (error) {
+        console.error('خطأ في تحديث سجل الملفات:', error);
+    }
+}
+
+async function editFileFromMain(fileId, fileName, description, category) {
+    if (!isDev && !window.isDev) {
+        alert('❌ صلاحيات المطور مطلوبة لتحرير الملفات');
+        return;
+    }
+    
+    const newDescription = prompt('تحرير وصف الملف:\n\nاسم الملف: ' + fileName, description);
+    
+    if (newDescription === null) {
+        return; // المستخدم ألغى
+    }
+    
+    const token = localStorage.getItem('devToken') || localStorage.getItem('githubToken');
+    if (!token) {
+        alert('❌ يرجى تسجيل الدخول كمطور أولاً');
+        return;
+    }
+    
+    const statusDiv = document.getElementById('filesLoadingStatus');
+    
+    try {
+        statusDiv.textContent = '⏳ جاري تحديث الملف...';
+        statusDiv.style.color = '#666';
+        
+        const repo = 'aliabdelaal-adm/Monthly_inspection_plan';
+        
+        // تحميل ملف files.json الحالي
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/files.json`, {
+            headers: {
+                'Authorization': `token ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (res.ok) {
+            const file = await res.json();
+            const filesData = JSON.parse(decodeURIComponent(escape(atob(file.content))));
+            
+            // تحديث وصف الملف
+            const fileIndex = filesData.files.findIndex(f => f.id === fileId);
+            if (fileIndex !== -1) {
+                filesData.files[fileIndex].description = newDescription;
+                filesData.lastUpdate = new Date().toISOString();
+                
+                // حفظ ملف files.json المحدث
+                const content = btoa(unescape(encodeURIComponent(JSON.stringify(filesData, null, 2))));
+                const updateRes = await fetch(`https://api.github.com/repos/${repo}/contents/files.json`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: `تحديث وصف الملف: ${fileName}`,
+                        content: content,
+                        sha: file.sha
+                    })
+                });
+                
+                if (updateRes.ok) {
+                    statusDiv.textContent = '✅ تم تحديث الملف بنجاح';
+                    statusDiv.style.color = '#28a745';
+                    
+                    // تحديث قائمة الملفات
+                    setTimeout(() => loadPublicFiles(category), 1000);
+                } else {
+                    statusDiv.textContent = '❌ خطأ في تحديث الملف';
+                    statusDiv.style.color = '#dc3545';
+                }
+            }
+        }
+    } catch (error) {
+        statusDiv.textContent = '❌ خطأ: ' + error.message;
+        statusDiv.style.color = '#dc3545';
+    }
+}
+
+async function deleteFileFromMain(fileId, filePath, fileName, category) {
+    if (!isDev && !window.isDev) {
+        alert('❌ صلاحيات المطور مطلوبة لحذف الملفات');
+        return;
+    }
+    
+    if (!confirm(`هل أنت متأكد من حذف الملف "${fileName}"؟\n\nهذا الإجراء لا يمكن التراجع عنه.`)) {
+        return;
+    }
+    
+    const token = localStorage.getItem('devToken') || localStorage.getItem('githubToken');
+    if (!token) {
+        alert('❌ يرجى تسجيل الدخول كمطور أولاً');
+        return;
+    }
+    
+    const statusDiv = document.getElementById('filesLoadingStatus');
+    
+    try {
+        statusDiv.textContent = '⏳ جاري حذف الملف...';
+        statusDiv.style.color = '#666';
+        
+        const repo = 'aliabdelaal-adm/Monthly_inspection_plan';
+        
+        // حذف الملف من GitHub
+        const fileRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+            headers: {
+                'Authorization': `token ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (fileRes.ok) {
+            const file = await fileRes.json();
+            const deleteRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: `حذف الملف: ${fileName}`,
+                    sha: file.sha
+                })
+            });
+            
+            if (deleteRes.ok) {
+                // تحديث ملف files.json
+                await removeFromFilesRegistryFromMain(fileId, token);
+                statusDiv.textContent = '✅ تم حذف الملف بنجاح';
+                statusDiv.style.color = '#28a745';
+                
+                // تحديث قائمة الملفات
+                setTimeout(() => loadPublicFiles(category), 1000);
+            } else {
+                statusDiv.textContent = '❌ خطأ في حذف الملف';
+                statusDiv.style.color = '#dc3545';
+            }
+        } else {
+            statusDiv.textContent = '❌ الملف غير موجود';
+            statusDiv.style.color = '#dc3545';
+        }
+    } catch (error) {
+        statusDiv.textContent = '❌ خطأ: ' + error.message;
+        statusDiv.style.color = '#dc3545';
+    }
+}
+
+async function removeFromFilesRegistryFromMain(fileId, token) {
+    try {
+        const repo = 'aliabdelaal-adm/Monthly_inspection_plan';
+        
+        // تحميل ملف files.json الحالي
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/files.json`, {
+            headers: {
+                'Authorization': `token ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (res.ok) {
+            const file = await res.json();
+            const filesData = JSON.parse(decodeURIComponent(escape(atob(file.content))));
+            
+            // إزالة الملف من القائمة
+            filesData.files = filesData.files.filter(f => f.id !== fileId);
+            filesData.lastUpdate = new Date().toISOString();
+            
+            // حفظ ملف files.json المحدث
+            const content = btoa(unescape(encodeURIComponent(JSON.stringify(filesData, null, 2))));
+            const updateRes = await fetch(`https://api.github.com/repos/${repo}/contents/files.json`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: 'تحديث سجل الملفات - حذف ملف',
+                    content: content,
+                    sha: file.sha
+                })
+            });
+            
+            if (!updateRes.ok) {
+                console.error('خطأ في تحديث سجل الملفات');
+            }
+        }
+    } catch (error) {
+        console.error('خطأ في تحديث سجل الملفات:', error);
+    }
 }
 
 function updateFilesCategoryButtons(activeCategory) {

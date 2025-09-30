@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Merge plan-data (17) (7).json into the main plan-data.json file.
+Merge plan-dataAli1.json into the main plan-data.json file.
 This script safely merges inspection data while avoiding duplicates.
 """
 
@@ -110,13 +110,13 @@ def merge_bell_notes(main_data, source_data):
 
 def main():
     print("=== Plan Data Merge Tool ===")
-    print("Merging plan-data34.json into plan-data.json")
+    print("Merging plan-dataAli1.json into plan-data.json")
     print()
     
     # Load files
     print("📂 Loading files...")
     main_data = load_json_file('plan-data.json')
-    source_data = load_json_file('plan-data34.json')
+    source_data = load_json_file('plan-dataAli1.json')
     
     if not main_data or not source_data:
         print("❌ Failed to load required files!")

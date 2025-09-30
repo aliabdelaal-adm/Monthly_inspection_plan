@@ -9508,21 +9508,44 @@ function analyzeCurrentDistribution() {
     console.log('analyzeCurrentDistribution called');
     const resultsDiv = document.getElementById('rotationResults');
     
+    // Ensure data is available
+    const inspectors = window.inspectorsData || inspectorsData || [];
+    const shops = window.shopsData || shopsData || [];
+    const inspections = window.inspectionData || inspectionData || [];
+    
+    console.log('Data availability check:', {
+        inspectors: inspectors.length,
+        shops: shops.length, 
+        inspections: inspections.length
+    });
+    
+    if (inspectors.length === 0) {
+        resultsDiv.innerHTML = `
+            <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; text-align: center;">
+                <h4 style="color: #856404; margin-bottom: 10px;">⚠️ لا توجد بيانات المفتشين</h4>
+                <p style="color: #856404; margin: 0;">يرجى التأكد من تحميل البيانات أولاً</p>
+            </div>
+        `;
+        return;
+    }
+    
     // إحصائيات التوزيع الحالي
     const inspectorShopCount = {};
     const shopInspectorCount = {};
     
     // تهيئة العدادات
-    inspectorsData.forEach(inspector => {
-        inspectorShopCount[inspector.name] = new Set();
+    inspectors.forEach(inspector => {
+        const inspectorName = inspector.name || inspector;
+        inspectorShopCount[inspectorName] = new Set();
     });
     
-    shopsData.forEach(shop => {
-        shopInspectorCount[shop.name] = new Set();
+    shops.forEach(shop => {
+        const shopName = shop.name || shop;
+        shopInspectorCount[shopName] = new Set();
     });
     
     // تحليل البيانات الحالية
-    inspectionData.forEach(item => {
+    inspections.forEach(item => {
         if (!inspectorShopCount[item.inspector]) {
             inspectorShopCount[item.inspector] = new Set();
         }
@@ -9562,11 +9585,11 @@ function analyzeCurrentDistribution() {
             <!-- إحصائيات عامة -->
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
                 <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 1.5em; font-weight: bold; color: #1976d2;">${inspectorsData.length}</div>
+                    <div style="font-size: 1.5em; font-weight: bold; color: #1976d2;">${inspectors.length}</div>
                     <div style="color: #1976d2;">إجمالي المفتشين</div>
                 </div>
                 <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 1.5em; font-weight: bold; color: #388e3c;">${shopsData.length}</div>
+                    <div style="font-size: 1.5em; font-weight: bold; color: #388e3c;">${shops.length}</div>
                     <div style="color: #388e3c;">إجمالي المحلات</div>
                 </div>
                 <div style="background: #fff3e0; padding: 15px; border-radius: 8px; text-align: center;">
@@ -9593,8 +9616,8 @@ function analyzeCurrentDistribution() {
                 <h5 style="color: #1976d2; margin-bottom: 10px;">🧠 التوصيات الذكية</h5>
                 <ul style="margin: 0; padding-right: 20px;">
                     ${underInspectedShops.length > 0 ? `<li style="margin-bottom: 8px;">يُنصح بإعطاء أولوية للمحلات التي لم يتم تفتيشها أو تم تفتيشها من مفتش واحد فقط</li>` : ''}
-                    <li style="margin-bottom: 8px;">توزيع عادل: كل مفتش يجب أن يفتش حوالي ${Math.ceil(shopsData.length / inspectorsData.length)} محل</li>
-                    <li>دوران المفتشين: كل محل يجب أن يُفتش من ${Math.min(3, inspectorsData.length)} مفتشين مختلفين على الأقل</li>
+                    <li style="margin-bottom: 8px;">توزيع عادل: كل مفتش يجب أن يفتش حوالي ${Math.ceil(shops.length / inspectors.length)} محل</li>
+                    <li>دوران المفتشين: كل محل يجب أن يُفتش من ${Math.min(3, inspectors.length)} مفتشين مختلفين على الأقل</li>
                 </ul>
             </div>
         </div>
@@ -9603,6 +9626,10 @@ function analyzeCurrentDistribution() {
     resultsDiv.innerHTML = analysisHtml;
 }
 
+
+// Make functions globally accessible immediately after definition
+window.analyzeCurrentDistribution = analyzeCurrentDistribution;
+window.populateInspectorSelection = populateInspectorSelection;
 
 // ملء قائمة المفتشين في واجهة الاختيار
 function populateInspectorSelection() {
@@ -9613,7 +9640,7 @@ function populateInspectorSelection() {
     }
     
     // Use multiple sources to get inspector data
-    let availableInspectors = inspectorsData || window.inspectorsData || [];
+    let availableInspectors = window.inspectorsData || inspectorsData || [];
     
     // Try to get from localStorage
     if (!availableInspectors || availableInspectors.length === 0) {
@@ -9627,12 +9654,11 @@ function populateInspectorSelection() {
     
     // Try to extract from the inspector dropdown if still no data
     if (!availableInspectors || availableInspectors.length === 0) {
-        const inspectorSelect = document.querySelector('select option[value]:not([value=""])');
+        const inspectorSelect = document.querySelector('#inspectorSelect, select[id*="inspector"], #addInspectorSelect');
         if (inspectorSelect) {
-            const selectElement = inspectorSelect.parentElement;
-            const options = Array.from(selectElement.options).filter(opt => opt.value && opt.value !== '-- اختر المفتش --');
+            const options = Array.from(inspectorSelect.options).filter(opt => opt.value && opt.value !== '' && !opt.textContent.includes('اختر'));
             availableInspectors = options.map((opt, index) => ({
-                id: `inspector_${index + 1}`,
+                id: opt.value || `inspector_${index + 1}`,
                 name: opt.textContent.trim()
             }));
         }
@@ -9691,8 +9717,7 @@ function populateInspectorSelection() {
     selectionDiv.innerHTML = html;
 }
 
-// Make functions globally accessible
-window.analyzeCurrentDistribution = analyzeCurrentDistribution;
+// Make additional functions globally accessible
 window.generateSmartRotation = generateSmartRotation;
 window.previewRotation = previewRotation;
 

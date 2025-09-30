@@ -51,11 +51,18 @@
 
 ## Data Consolidation (Completed)
 
-✅ **Multiple files merged successfully** - All inspection data from `plan-data.json`, `plan-data20.json`, and `plan-data (17) (1).json` have been consolidated into a single `plan-data.json` file as the validated active main source for screen preview for all inspectors.
+✅ **Multiple files merged successfully** - All inspection data from `plan-data.json`, `plan-data20.json`, `plan-data (17) (1).json`, and `plan-dataAli1.json` have been consolidated into a single `plan-data.json` file as the validated active main source for screen preview for all inspectors.
 
-**Merge Results:**
-- **27 inspection entries** (consolidated from multiple sources)
+**Latest Merge Results (September 30, 2025):**
+- **44 inspection entries** (consolidated from multiple sources including plan-dataAli1.json)
 - **9 inspectors** (no duplicates)
 - **22 areas** (comprehensive coverage)
-- **111 shops** (complete database)
+- **114 shops** (complete database with 2 new shops added from plan-dataAli1.json)
+- **4 bell notifications** (all unique)
 - **Single source of truth** established for all inspection data
+
+**Recent Merge:**
+- ✅ Merged `plan-dataAli1.json` into `plan-data.json` (September 30, 2025)
+  - Added 7 new inspection entries
+  - Added 2 new shops
+  - No duplicate inspectors, areas, or notifications

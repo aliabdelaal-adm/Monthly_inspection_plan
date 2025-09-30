@@ -7568,6 +7568,9 @@ async function uploadFileToGitHub(file, category, description = '') {
             // تحديث ملف files.json
             await updateFilesRegistryAfterUpload(fileName, filePath, category, file.size, description, token);
             return { success: true, fileName, filePath };
+        } else if (uploadRes.status === 401 || uploadRes.status === 403) {
+            // خطأ في صلاحيات التوكن
+            return { success: false, error: 'خطأ في صلاحيات التوكن. يرجى التحقق من صلاحية التوكن أو تحديثه' };
         } else {
             const err = await uploadRes.json().catch(() => ({ message: `HTTP ${uploadRes.status}` }));
             return { success: false, error: err.message || 'خطأ في الرفع' };

@@ -683,6 +683,77 @@
             opacity: 1;
             visibility: visible;
         }
+        
+        /* Separate Page Styles within System Services */
+        .service-page {
+            display: none;
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 2px solid #dee2e6;
+            position: relative;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        .service-page.active {
+            display: block;
+        }
+        
+        .service-page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .service-page-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #234085;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .service-page-close {
+            background: #dc3545;
+            color: white;
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            font-size: 1.5em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            line-height: 1;
+            padding: 0;
+        }
+        
+        .service-page-close:hover {
+            background: #c82333;
+            transform: scale(1.1) rotate(90deg);
+            box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
         .plan-table-container {
             width:100%;
             margin:18px auto;
@@ -1909,12 +1980,12 @@
                             <span class="label">جدول المناوبات</span>
                         </button>
                         
-                        <button class="icon-btn smart-rotation-btn tooltip" onclick="showSmartRotationModal()" data-tooltip="توزيع ذكي للمحلات على المفتشين">
+                        <button class="icon-btn smart-rotation-btn tooltip" onclick="showServicePage('smartDistributionPage', 'showSmartRotationModal')" data-tooltip="توزيع ذكي للمحلات على المفتشين">
                             <span class="icon">🔄</span>
                             <span class="label">التوزيع الذكي</span>
                         </button>
                         
-                        <button class="icon-btn vacation-tracker-btn tooltip" onclick="showVacationTrackerModal()" data-tooltip="تتبع إجازات المفتشين">
+                        <button class="icon-btn vacation-tracker-btn tooltip" onclick="showServicePage('vacationTrackingPage', 'showVacationTrackerModal')" data-tooltip="تتبع إجازات المفتشين">
                             <span class="icon">🏖️</span>
                             <span class="label">تتبع الإجازات</span>
                         </button>
@@ -1925,7 +1996,7 @@
                 <div class="service-category">
                     <div class="service-category-title">🏪 إدارة البيانات</div>
                     <div class="service-icons-grid">
-                        <button class="icon-btn shops-management-btn tooltip" onclick="showShopsManagementModal()" data-tooltip="إدارة قائمة المحلات والمناطق">
+                        <button class="icon-btn shops-management-btn tooltip" onclick="showServicePage('shopsManagementPage', 'showShopsManagementModal')" data-tooltip="إدارة قائمة المحلات والمناطق">
                             <span class="icon">🏪</span>
                             <span class="label">قائمة المحلات</span>
                         </button>
@@ -1936,6 +2007,49 @@
                         </button>
                     </div>
                 </div>
+            </div>
+        </div>
+        
+        <!-- Separate Pages within System Services -->
+        <!-- Smart Distribution Page -->
+        <div id="smartDistributionPage" class="service-page">
+            <div class="service-page-header">
+                <div class="service-page-title">
+                    <span>🔄</span>
+                    <span>التوزيع الذكي للمحلات على المفتشين</span>
+                </div>
+                <button class="service-page-close" onclick="closeServicePage('smartDistributionPage')" title="إغلاق">×</button>
+            </div>
+            <div id="smartDistributionPageContent">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+        
+        <!-- Vacation Tracking Page -->
+        <div id="vacationTrackingPage" class="service-page">
+            <div class="service-page-header">
+                <div class="service-page-title">
+                    <span>🏖️</span>
+                    <span>تتبع الإجازات والعطل الأسبوعية</span>
+                </div>
+                <button class="service-page-close" onclick="closeServicePage('vacationTrackingPage')" title="إغلاق">×</button>
+            </div>
+            <div id="vacationTrackingPageContent">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+        
+        <!-- Shops Management Page -->
+        <div id="shopsManagementPage" class="service-page">
+            <div class="service-page-header">
+                <div class="service-page-title">
+                    <span>🏪</span>
+                    <span>قائمة المحلات الخاضعة للرقابة والتفتيش</span>
+                </div>
+                <button class="service-page-close" onclick="closeServicePage('shopsManagementPage')" title="إغلاق">×</button>
+            </div>
+            <div id="shopsManagementPageContent">
+                <!-- Content will be loaded here -->
             </div>
         </div>
     </div>
@@ -2773,6 +2887,84 @@ function toggleSystemServices() {
         // تحديث المحتوى لحالة الفتح
         content.style.maxHeight = '800px';
         content.style.padding = '20px';
+    }
+}
+
+// عرض صفحة خدمة منفصلة داخل قسم خدمات النظام
+function showServicePage(pageId, modalFunctionName) {
+    // إخفاء جميع الصفحات الأخرى
+    const allPages = document.querySelectorAll('.service-page');
+    allPages.forEach(page => page.classList.remove('active'));
+    
+    // عرض الصفحة المطلوبة
+    const page = document.getElementById(pageId);
+    if (page) {
+        page.classList.add('active');
+        
+        // إذا لم يتم تحميل المحتوى بعد، نستدعي الدالة الأصلية لتحميله
+        const contentDiv = page.querySelector('[id$="PageContent"]');
+        if (contentDiv && contentDiv.children.length === 0) {
+            // تحميل المحتوى من المودال الأصلي
+            loadModalContentToPage(pageId, modalFunctionName);
+        }
+        
+        // التمرير إلى الصفحة
+        page.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+// إغلاق صفحة الخدمة
+function closeServicePage(pageId) {
+    const page = document.getElementById(pageId);
+    if (page) {
+        page.classList.remove('active');
+    }
+}
+
+// تحميل محتوى المودال إلى الصفحة المنفصلة
+function loadModalContentToPage(pageId, modalFunctionName) {
+    let modalId = '';
+    let contentId = '';
+    
+    // تحديد المودال المناسب بناءً على الصفحة
+    if (pageId === 'smartDistributionPage') {
+        modalId = 'smartRotationModal';
+        contentId = 'smartDistributionPageContent';
+    } else if (pageId === 'vacationTrackingPage') {
+        modalId = 'vacationTrackerModal';
+        contentId = 'vacationTrackingPageContent';
+    } else if (pageId === 'shopsManagementPage') {
+        modalId = 'shopsManagementModal';
+        contentId = 'shopsManagementPageContent';
+    }
+    
+    if (modalId && contentId) {
+        const modal = document.getElementById(modalId);
+        const pageContent = document.getElementById(contentId);
+        
+        if (modal && pageContent) {
+            // نسخ محتوى المودال (ما عدا الزر X والخلفية)
+            const modalContent = modal.querySelector('.modal-content');
+            if (modalContent) {
+                // نسخ كل المحتوى ما عدا زر الإغلاق والعنوان
+                const clonedContent = modalContent.cloneNode(true);
+                
+                // إزالة زر الإغلاق القديم
+                const closeBtn = clonedContent.querySelector('.close-btn');
+                if (closeBtn) {
+                    closeBtn.remove();
+                }
+                
+                // إزالة العنوان القديم إذا كان موجوداً
+                const oldTitle = clonedContent.querySelector('.stats-title');
+                if (oldTitle) {
+                    oldTitle.remove();
+                }
+                
+                // نسخ المحتوى إلى الصفحة
+                pageContent.innerHTML = clonedContent.innerHTML;
+            }
+        }
     }
 }
 

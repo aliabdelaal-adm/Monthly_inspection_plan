@@ -176,7 +176,7 @@ files/
 PUT /repos/{owner}/{repo}/contents/{path}
 
 Headers:
-  Authorization: token {GITHUB_TOKEN}
+  Authorization: Bearer {GITHUB_TOKEN}
   Content-Type: application/json
 
 Body:

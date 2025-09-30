@@ -264,7 +264,7 @@ STEP 11: Public Accessibility
 │  api.github.com                  │
 │  ┌──────────────────────────┐   │
 │  │ PUT /repos/.../contents  │   │
-│  │ Authorization: token xxx │   │
+│  │ Authorization: Bearer xxx│   │
 │  └──────────────────────────┘   │
 └──────┬───────────────────────────┘
        │ 3. Store file

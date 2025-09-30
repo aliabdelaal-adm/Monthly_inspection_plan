@@ -2482,6 +2482,108 @@
     </div>
 </div>
 
+<!-- Initialize Smart Distribution Functions Early -->
+<script>
+// Define populateInspectorSelection function early so it's available when modal content is loaded
+window.populateInspectorSelection = function() {
+    const selectionDiv = document.getElementById('inspectorSelection');
+    if (!selectionDiv) {
+        console.log('Inspector selection div not found');
+        return;
+    }
+    
+    // Use multiple sources to get inspector data
+    let availableInspectors = window.inspectorsData || (typeof inspectorsData !== 'undefined' ? inspectorsData : null) || [];
+    
+    // Try to get from localStorage
+    if (!availableInspectors || availableInspectors.length === 0) {
+        try {
+            const planData = JSON.parse(localStorage.getItem('allPlanData') || '{}');
+            availableInspectors = planData.inspectors || [];
+        } catch (e) {
+            console.log('Error parsing localStorage:', e);
+        }
+    }
+    
+    // Try to extract from the inspector dropdown if still no data
+    if (!availableInspectors || availableInspectors.length === 0) {
+        const inspectorSelect = document.querySelector('#inspectorSelect, select[id*="inspector"], #addInspectorSelect');
+        if (inspectorSelect) {
+            const options = Array.from(inspectorSelect.options).filter(opt => opt.value && opt.value !== '' && !opt.textContent.includes('اختر'));
+            availableInspectors = options.map((opt, index) => ({
+                id: opt.value || `inspector_${index + 1}`,
+                name: opt.textContent.trim()
+            }));
+        }
+    }
+    
+    // Fallback to hardcoded list based on actual data
+    if (!availableInspectors || availableInspectors.length === 0) {
+        availableInspectors = [
+            { id: 'insp_1758830974747', name: 'د. آمنه بن صرم' },
+            { id: 'insp_1758830963007', name: 'د. آيه سلامة' },
+            { id: 'insp_1758830999876', name: 'د. حسينة العامري' },
+            { id: 'insp_1758830985608', name: 'د. حصة العلي' },
+            { id: 'insp_1758813880098', name: 'د. علي عبدالعال' },
+            { id: 'insp_1758830950586', name: 'د. فايز المسالمة' },
+            { id: 'insp_1758830925093', name: 'د. محمد إسماعيل' },
+            { id: 'insp_1758830939296', name: 'د. محمد سعيد' },
+            { id: 'insp_1758831014928', name: 'د. هاجر الغافري' }
+        ];
+    }
+    
+    console.log('Populating inspector selection, availableInspectors:', availableInspectors);
+    
+    if (availableInspectors.length === 0) {
+        selectionDiv.innerHTML = '<p style="color: #666; text-align: center;">لا توجد بيانات المفتشين متاحة</p>';
+        return;
+    }
+    
+    let html = "";
+    availableInspectors.forEach(inspector => {
+        const inspectorId = inspector.id || inspector.name;
+        const inspectorName = inspector.name || inspector;
+        html += `
+            <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer;">
+                <input type="checkbox" name="selectedInspectors" value="${inspectorId}" checked 
+                       style="margin: 0;">
+                <span style="font-size: 0.9em;">${inspectorName}</span>
+            </label>
+        `;
+    });
+    
+    // Add control buttons
+    html += `
+        <div style="margin-top: 10px; display: flex; gap: 8px; justify-content: center;">
+            <button type="button" onclick="window.selectAllInspectors()" 
+                    style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; cursor: pointer;">
+                تحديد الكل
+            </button>
+            <button type="button" onclick="window.deselectAllInspectors()" 
+                    style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; cursor: pointer;">
+                إلغاء التحديد
+            </button>
+        </div>
+    `;
+    
+    console.log('Setting inspector selection HTML');
+    selectionDiv.innerHTML = html;
+};
+
+// Also define helper functions early
+window.selectAllInspectors = function() {
+    const checkboxes = document.querySelectorAll('input[name="selectedInspectors"]');
+    checkboxes.forEach(cb => cb.checked = true);
+};
+
+window.deselectAllInspectors = function() {
+    const checkboxes = document.querySelectorAll('input[name="selectedInspectors"]');
+    checkboxes.forEach(cb => cb.checked = false);
+};
+
+console.log('Smart distribution functions initialized');
+</script>
+
 <!-- مودال تتبع الإجازات -->
 <div id="vacationTrackerModal" class="modal-overlay" style="display:none;">
     <div class="modal-content" style="max-width: 95%; width: 1200px;">
@@ -2963,6 +3065,21 @@ function loadModalContentToPage(pageId, modalFunctionName) {
                 
                 // نسخ المحتوى إلى الصفحة
                 pageContent.innerHTML = clonedContent.innerHTML;
+                
+                // استدعاء populateInspectorSelection بعد تحميل المحتوى إذا كانت هذه صفحة التوزيع الذكي
+                if (pageId === 'smartDistributionPage') {
+                    setTimeout(() => {
+                        if (typeof window.populateInspectorSelection === 'function') {
+                            window.populateInspectorSelection();
+                        }
+                        // تعيين التاريخ الافتراضي
+                        const rotationStartDate = document.getElementById('rotationStartDate');
+                        if (rotationStartDate) {
+                            const today = new Date();
+                            rotationStartDate.value = today.toISOString().split('T')[0];
+                        }
+                    }, 100);
+                }
             }
         }
     }
@@ -9824,7 +9941,8 @@ window.analyzeCurrentDistribution = analyzeCurrentDistribution;
 window.populateInspectorSelection = populateInspectorSelection;
 
 // ملء قائمة المفتشين في واجهة الاختيار
-function populateInspectorSelection() {
+// Make populateInspectorSelection function globally accessible
+window.populateInspectorSelection = function() {
     const selectionDiv = document.getElementById('inspectorSelection');
     if (!selectionDiv) {
         console.log('Inspector selection div not found');
@@ -9859,15 +9977,15 @@ function populateInspectorSelection() {
     // Fallback to hardcoded list based on what we see in the dropdown
     if (!availableInspectors || availableInspectors.length === 0) {
         availableInspectors = [
-            { id: 'insp_1', name: 'د. آمنه بن صرم' },
-            { id: 'insp_2', name: 'د. آيه سلامة' },
-            { id: 'insp_3', name: 'د. حسينة العامري' },
-            { id: 'insp_4', name: 'د. حصة العلي' },
-            { id: 'insp_5', name: 'د. علي عبدالعال' },
-            { id: 'insp_6', name: 'د. فايز المسالمة' },
-            { id: 'insp_7', name: 'د. محمد إسماعيل' },
-            { id: 'insp_8', name: 'د. محمد سعيد' },
-            { id: 'insp_9', name: 'د. هاجر الغافري' }
+            { id: 'insp_1758830974747', name: 'د. آمنه بن صرم' },
+            { id: 'insp_1758830963007', name: 'د. آيه سلامة' },
+            { id: 'insp_1758830999876', name: 'د. حسينة العامري' },
+            { id: 'insp_1758830985608', name: 'د. حصة العلي' },
+            { id: 'insp_1758813880098', name: 'د. علي عبدالعال' },
+            { id: 'insp_1758830950586', name: 'د. فايز المسالمة' },
+            { id: 'insp_1758830925093', name: 'د. محمد إسماعيل' },
+            { id: 'insp_1758830939296', name: 'د. محمد سعيد' },
+            { id: 'insp_1758831014928', name: 'د. هاجر الغافري' }
         ];
     }
     
@@ -9907,26 +10025,28 @@ function populateInspectorSelection() {
     
     console.log('Setting inspector selection HTML:', html);
     selectionDiv.innerHTML = html;
-}
+};
+// Make it available without window prefix too
+populateInspectorSelection = window.populateInspectorSelection;
 
 // Make additional functions globally accessible
 window.generateSmartRotation = generateSmartRotation;
 window.previewRotation = previewRotation;
 
-// تحديد جميع المفتشين
-function selectAllInspectors() {
+// تحديد جميع المفتشين - Make globally accessible
+window.selectAllInspectors = function() {
     const checkboxes = document.querySelectorAll('input[name="selectedInspectors"]');
     checkboxes.forEach(cb => cb.checked = true);
-}
+};
 
-// إلغاء تحديد جميع المفتشين
-function deselectAllInspectors() {
+// إلغاء تحديد جميع المفتشين - Make globally accessible
+window.deselectAllInspectors = function() {
     const checkboxes = document.querySelectorAll('input[name="selectedInspectors"]');
     checkboxes.forEach(cb => cb.checked = false);
-}
+};
 
-// تحديث المناطق بناءً على نوع التفتيش
-function updateAreasBasedOnType() {
+// تحديث المناطق بناءً على نوع التفتيش - Make globally accessible
+window.updateAreasBasedOnType = function() {
     const inspectionType = document.getElementById('inspectionType').value;
     // المناطق الداخلية المحددة حسب المتطلبات
     const internalAreas = [
@@ -9936,17 +10056,17 @@ function updateAreasBasedOnType() {
     
     window.selectedAreasFilter = inspectionType;
     window.internalAreasFilter = internalAreas;
-}
+};
 
-// الحصول على المفتشين المحددين
-function getSelectedInspectors() {
+// الحصول على المفتشين المحددين - Make globally accessible
+window.getSelectedInspectors = function() {
     const checkboxes = document.querySelectorAll('input[name="selectedInspectors"]:checked');
     const selectedIds = Array.from(checkboxes).map(cb => cb.value);
     return inspectorsData.filter(inspector => selectedIds.includes(inspector.id));
-}
+};
 
-// الحصول على المناطق المفلترة حسب نوع التفتيش
-function getFilteredAreas() {
+// الحصول على المناطق المفلترة حسب نوع التفتيش - Make globally accessible
+window.getFilteredAreas = function() {
     const inspectionType = document.getElementById('inspectionType').value;
     const internalAreas = [
         'سوق التراث', 'سوق الميناء', 'الدانة', 'آل نهيان', 
@@ -9961,7 +10081,7 @@ function getFilteredAreas() {
         default:
             return areasData;
     }
-}
+};
 // توليد التدوير الذكي (محسن)
 function generateSmartRotation() {
     console.log('generateSmartRotation called');

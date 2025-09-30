@@ -7473,6 +7473,18 @@ async function uploadFileToGitHub(file, category, description = '') {
         return { success: false, error: 'الملف كبير جداً' };
     }
     
+    // إظهار رسالة تحميل
+    const loadingMsg = document.createElement('div');
+    loadingMsg.id = 'uploadLoadingMsg';
+    loadingMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:30px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.3);z-index:99999;text-align:center;min-width:300px;';
+    loadingMsg.innerHTML = `
+        <div style="font-size:3em;margin-bottom:15px;">⏳</div>
+        <div style="font-size:1.2em;color:#234085;font-weight:bold;margin-bottom:10px;">جاري رفع الملف...</div>
+        <div style="font-size:0.9em;color:#666;">${file.name}</div>
+        <div style="margin-top:15px;font-size:0.85em;color:#999;">الرجاء الانتظار...</div>
+    `;
+    document.body.appendChild(loadingMsg);
+    
     try {
         // قراءة الملف كـ base64
         const content = await new Promise((resolve, reject) => {
@@ -7501,6 +7513,9 @@ async function uploadFileToGitHub(file, category, description = '') {
             })
         });
         
+        // إزالة رسالة التحميل
+        document.body.removeChild(loadingMsg);
+        
         if (uploadRes.status === 201) {
             // تحديث ملف files.json
             await updateFilesRegistryAfterUpload(fileName, filePath, category, file.size, description, token);
@@ -7510,6 +7525,11 @@ async function uploadFileToGitHub(file, category, description = '') {
             return { success: false, error: err.message || 'خطأ في الرفع' };
         }
     } catch (error) {
+        // إزالة رسالة التحميل في حالة الخطأ
+        const loadingElement = document.getElementById('uploadLoadingMsg');
+        if (loadingElement) {
+            document.body.removeChild(loadingElement);
+        }
         console.error('خطأ في رفع الملف:', error);
         return { success: false, error: error.message };
     }

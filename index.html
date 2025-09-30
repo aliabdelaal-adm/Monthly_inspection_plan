@@ -2289,7 +2289,7 @@
         <div class="modal-actions" style="margin-bottom: 20px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; align-items: center;">
             <input type="file" id="scheduleFileInput" accept=".json,.xlsx,.pdf,.csv,.txt,.doc,.docx" style="display: none;" onchange="handleScheduleFileUpload(event)">
             
-            <button id="scheduleUploadBtn" class="icon-btn tooltip" onclick="handleScheduleUploadRequest()" data-tooltip="رفع ملف جدول المناوبات" style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; display: none;">
+            <button id="scheduleUploadBtn" class="icon-btn tooltip" onclick="handleScheduleUploadRequest()" data-tooltip="رفع ملف جدول المناوبات" style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white;">
                 <span class="icon">📤</span>
                 <span class="label">رفع ملف</span>
             </button>
@@ -7258,11 +7258,13 @@ function showMonthlyScheduleModal() {
     const uploadBtn = document.getElementById('scheduleUploadBtn');
     const jsonBtn = document.getElementById('scheduleJsonBtn');
     
+    // زر الرفع متاح لجميع المستخدمين
+    uploadBtn.style.display = 'flex';
+    
+    // زر JSON متاح للمطورين فقط
     if (isDev || window.isDev) {
-        uploadBtn.style.display = 'flex';
         jsonBtn.style.display = 'flex';
     } else {
-        uploadBtn.style.display = 'none';
         jsonBtn.style.display = 'none';
     }
     
@@ -7449,11 +7451,7 @@ function filterScheduleTable() {
 
 // معالجة طلب رفع الملف (للمطور فقط)
 function handleScheduleUploadRequest() {
-    if (isDev || window.isDev) {
-        document.getElementById('scheduleFileInput').click();
-    } else {
-        alert('⚠️ هذه الوظيفة متاحة للمطور فقط');
-    }
+    document.getElementById('scheduleFileInput').click();
 }
 
 // تأكيد تحميل PDF مع رسالة مباشرة

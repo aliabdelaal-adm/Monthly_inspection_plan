@@ -3559,7 +3559,7 @@ async function saveToExternalFileAutomatic(planData) {
             console.log('Direct file write not available (expected in browser environment):', fetchError.message);
         }
         
-        // Method 2: Try File System Access API if available (Chrome/Edge) - silent save
+        // Method 2: Try File System Access API if available (Chrome/Edge) - with file picker on first use
         if ('showSaveFilePicker' in window && window.FileSystemHandle) {
             try {
                 // Check if we have an existing file handle (for subsequent saves)
@@ -3567,46 +3567,44 @@ async function saveToExternalFileAutomatic(planData) {
                     const writable = await window.bellDataFileHandle.createWritable();
                     await writable.write(dataStr);
                     await writable.close();
-                    console.log('✅ Data automatically saved using existing file handle');
+                    console.log('✅ Data automatically saved using existing file handle to local repository');
+                    showUpdateMessage('✅ تم حفظ الملف في الموقع المحدد على جهازك');
+                    return true;
+                } else {
+                    // First time - prompt user to select the file location
+                    const fileHandle = await window.showSaveFilePicker({
+                        suggestedName: 'plan-data.json',
+                        types: [{
+                            description: 'JSON files',
+                            accept: {'application/json': ['.json']},
+                        }],
+                    });
+                    
+                    // Store file handle for future automatic saves
+                    window.bellDataFileHandle = fileHandle;
+                    
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(dataStr);
+                    await writable.close();
+                    console.log('✅ Data saved to selected location and handle stored for future automatic saves');
+                    showUpdateMessage('✅ تم حفظ الملف! سيتم الحفظ في نفس الموقع تلقائياً في المستقبل');
                     return true;
                 }
             } catch (err) {
-                console.log('File System Access API error (existing handle):', err);
+                if (err.name === 'AbortError') {
+                    console.log('File save cancelled by user');
+                    showUpdateMessage('تم إلغاء عملية الحفظ - البيانات محفوظة في localStorage فقط');
+                    return false;
+                } else {
+                    console.log('File System Access API error:', err);
+                }
             }
         }
         
-        // Method 3: Create a backup plan - save to a downloadable file automatically
-        // This will create a download for the user to manually place in the correct location
-        try {
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'plan-data.json';
-            
-            // Only auto-download if not done recently to avoid spam
-            const lastAutoDownload = localStorage.getItem('lastAutoDownload');
-            const now = Date.now();
-            const timeSinceLastDownload = now - (lastAutoDownload || 0);
-            
-            if (!lastAutoDownload || timeSinceLastDownload > 30000) { // 30 seconds minimum between auto-downloads
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                localStorage.setItem('lastAutoDownload', now.toString());
-                console.log('📥 Auto-downloaded plan-data.json for manual synchronization');
-                
-                // Show user message about manual sync needed
-                showUpdateMessage('تم تنزيل ملف plan-data.json تلقائياً - يرجى استبدال الملف الأصلي لمزامنة التغييرات مع المفتشين الآخرين');
-            } else {
-                console.log('Skipping auto-download - too recent');
-            }
-            
-            URL.revokeObjectURL(url);
-            return true;
-        } catch (err) {
-            console.error('Failed to create download:', err);
-        }
+        // Method 3: Fallback - only save to localStorage, no auto-download
+        // Auto-download has been removed to prevent unwanted downloads to Downloads/OneDrive folder
+        console.log('⚠️ File System Access API not available - data saved to localStorage only');
+        showUpdateMessage('⚠️ البيانات محفوظة في المتصفح فقط - يرجى استخدام زر "تصدير البيانات" لحفظ الملف');
         
         return false;
     } catch (error) {

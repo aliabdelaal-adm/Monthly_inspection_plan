@@ -7449,6 +7449,133 @@ function filterScheduleTable() {
     }
 }
 
+// ===== وظائف رفع الملفات إلى GitHub =====
+// دالة مشتركة لرفع الملفات إلى GitHub Repository
+async function uploadFileToGitHub(file, category, description = '') {
+    // التحقق من صلاحية المطور
+    if (!isDev && !window.isDev) {
+        alert('❌ عذراً، رفع الملفات متاح للمطور فقط');
+        return { success: false, error: 'لا توجد صلاحية' };
+    }
+    
+    const repo = "aliabdelaal-adm/Monthly_inspection_plan";
+    const token = localStorage.getItem("devToken");
+    
+    if (!token) {
+        alert('❌ يجب تسجيل الدخول كمطور أولاً');
+        return { success: false, error: 'لا يوجد توكن' };
+    }
+    
+    // التحقق من حجم الملف (الحد الأقصى 25 MB للـ GitHub)
+    const maxSize = 25 * 1024 * 1024;
+    if (file.size > maxSize) {
+        alert('❌ حجم الملف كبير جداً! يجب أن يكون أقل من 25 MB');
+        return { success: false, error: 'الملف كبير جداً' };
+    }
+    
+    try {
+        // قراءة الملف كـ base64
+        const content = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const base64 = e.target.result.split(',')[1];
+                resolve(base64);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+        
+        const fileName = file.name;
+        const filePath = `files/${category}/${fileName}`;
+        
+        // رفع الملف إلى GitHub
+        const uploadRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+            method: "PUT",
+            headers: {
+                "Authorization": `token ${token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                message: `رفع ملف جديد: ${fileName}`,
+                content: content
+            })
+        });
+        
+        if (uploadRes.status === 201) {
+            // تحديث ملف files.json
+            await updateFilesRegistryAfterUpload(fileName, filePath, category, file.size, description, token);
+            return { success: true, fileName, filePath };
+        } else {
+            const err = await uploadRes.json().catch(() => ({ message: `HTTP ${uploadRes.status}` }));
+            return { success: false, error: err.message || 'خطأ في الرفع' };
+        }
+    } catch (error) {
+        console.error('خطأ في رفع الملف:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+// تحديث ملف files.json بعد رفع ملف جديد
+async function updateFilesRegistryAfterUpload(fileName, filePath, category, fileSize, description, token) {
+    try {
+        const repo = "aliabdelaal-adm/Monthly_inspection_plan";
+        
+        // تحميل ملف files.json الحالي
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/files.json`, {
+            headers: {
+                "Authorization": `token ${token}`,
+                "Content-Type": "application/json"
+            }
+        });
+        
+        let filesData = { files: [], categories: [], lastUpdate: new Date().toISOString() };
+        let currentSha = "";
+        
+        if (res.ok) {
+            const file = await res.json();
+            filesData = JSON.parse(decodeURIComponent(escape(atob(file.content))));
+            currentSha = file.sha;
+        }
+        
+        // إضافة الملف الجديد
+        const newFile = {
+            id: Date.now().toString(),
+            name: fileName,
+            path: filePath,
+            category: category,
+            type: fileName.split('.').pop().toLowerCase(),
+            size: fileSize,
+            uploadDate: new Date().toISOString(),
+            description: description || fileName,
+            uploader: "د. علي عبدالعال",
+            visible: true
+        };
+        
+        filesData.files.push(newFile);
+        filesData.lastUpdate = new Date().toISOString();
+        
+        // حفظ ملف files.json المحدث
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(filesData, null, 2))));
+        await fetch(`https://api.github.com/repos/${repo}/contents/files.json`, {
+            method: "PUT",
+            headers: {
+                "Authorization": `token ${token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                message: `تحديث سجل الملفات بعد رفع: ${fileName}`,
+                content: content,
+                sha: currentSha
+            })
+        });
+        
+        return true;
+    } catch (error) {
+        console.error('خطأ في تحديث سجل الملفات:', error);
+        return false;
+    }
+}
+
 // معالجة طلب رفع الملف (للمطور فقط)
 function handleScheduleUploadRequest() {
     document.getElementById('scheduleFileInput').click();
@@ -7542,7 +7669,7 @@ async function processExcelFile(file) {
     }
 }
 
-function handleScheduleFileUpload(event) {
+async function handleScheduleFileUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
     
@@ -7552,7 +7679,17 @@ function handleScheduleFileUpload(event) {
     // عرض معلومات الملف المرفوع
     displayUploadedFileInfo(fileName, file.size);
     
-    // معالجة أنواع الملفات المختلفة
+    // رفع الملف إلى GitHub (للمطور فقط)
+    if (isDev || window.isDev) {
+        const uploadResult = await uploadFileToGitHub(file, 'schedules', `جدول المناوبات - ${fileName}`);
+        if (uploadResult.success) {
+            alert(`✅ تم رفع ملف جدول المناوبات بنجاح!\n\nالملف: ${fileName}\nالآن متاح للجميع في مكتبة الملفات`);
+        } else {
+            alert(`⚠️ تم معالجة الملف محلياً، لكن فشل رفعه إلى الموقع: ${uploadResult.error}`);
+        }
+    }
+    
+    // معالجة أنواع الملفات المختلفة محلياً
     if (fileExtension === 'json') {
         handleJSONFile(file);
     } else if (['xlsx', 'xls'].includes(fileExtension)) {
@@ -7564,7 +7701,9 @@ function handleScheduleFileUpload(event) {
     } else if (['txt', 'doc', 'docx'].includes(fileExtension)) {
         handleTextFileForSchedule(file);
     } else {
-        alert(`✅ تم رفع الملف "${fileName}" بنجاح! نوع الملف: ${fileExtension.toUpperCase()}\n\nالملف متاح للمعاينة. يمكنك الآن استخدام البيانات في النظام.`);
+        if (!isDev && !window.isDev) {
+            alert(`✅ تم معالجة الملف "${fileName}" محلياً! نوع الملف: ${fileExtension.toUpperCase()}\n\nالملف متاح للمعاينة. يمكنك الآن استخدام البيانات في النظام.`);
+        }
     }
     
     // إعادة تعيين input الملف
@@ -8773,7 +8912,17 @@ async function handleVacationFileUpload(event) {
     const fileName = file.name;
     const fileExtension = fileName.split('.').pop().toLowerCase();
     
-    // معالجة أنواع الملفات المختلفة
+    // رفع الملف إلى GitHub (للمطور فقط)
+    if (isDev || window.isDev) {
+        const uploadResult = await uploadFileToGitHub(file, 'schedules', `تتبع الإجازات - ${fileName}`);
+        if (uploadResult.success) {
+            alert(`✅ تم رفع ملف الإجازات بنجاح!\n\nالملف: ${fileName}\nالآن متاح للجميع في مكتبة الملفات`);
+        } else {
+            alert(`⚠️ تم معالجة الملف محلياً، لكن فشل رفعه إلى الموقع: ${uploadResult.error}`);
+        }
+    }
+    
+    // معالجة أنواع الملفات المختلفة محلياً
     if (fileExtension === 'json') {
         handleJSONFileForVacation(file);
     } else if (['xlsx', 'xls'].includes(fileExtension)) {
@@ -8785,7 +8934,9 @@ async function handleVacationFileUpload(event) {
     } else if (['txt', 'doc', 'docx'].includes(fileExtension)) {
         handleTextFileForVacation(file);
     } else {
-        alert(`✅ تم رفع الملف "${fileName}" بنجاح! نوع الملف: ${fileExtension.toUpperCase()}\n\nالملف متاح للمعاينة. يمكنك استخدامه في تحليل الإجازات.`);
+        if (!isDev && !window.isDev) {
+            alert(`✅ تم معالجة الملف "${fileName}" محلياً! نوع الملف: ${fileExtension.toUpperCase()}\n\nالملف متاح للمعاينة. يمكنك استخدامه في تحليل الإجازات.`);
+        }
     }
     
     // إعادة تعيين input الملف
@@ -9328,7 +9479,23 @@ async function handleShopsFileUpload(event) {
     statusDiv.style.background = '#d1ecf1';
     statusDiv.style.color = '#0c5460';
     
+    // رفع الملف إلى GitHub (للمطور فقط)
+    if (isDev || window.isDev) {
+        const uploadResult = await uploadFileToGitHub(file, 'documents', `قائمة المحلات - ${fileName}`);
+        if (uploadResult.success) {
+            statusDiv.innerHTML = `✅ تم رفع ملف المحلات بنجاح!\n\nالملف: ${fileName}\nالآن متاح للجميع في مكتبة الملفات`;
+            statusDiv.style.background = '#d4edda';
+            statusDiv.style.color = '#155724';
+            setTimeout(() => statusDiv.style.display = 'none', 5000);
+        } else {
+            statusDiv.innerHTML = `⚠️ فشل رفع الملف: ${uploadResult.error}\n\nسيتم معالجته محلياً فقط`;
+            statusDiv.style.background = '#fff3cd';
+            statusDiv.style.color = '#856404';
+        }
+    }
+    
     try {
+        // معالجة الملف محلياً
         if (fileExtension === 'json') {
             await handleJSONFileForShops(file, statusDiv);
         } else if (['xlsx', 'xls'].includes(fileExtension)) {
@@ -9340,9 +9507,11 @@ async function handleShopsFileUpload(event) {
         } else if (['txt', 'doc', 'docx'].includes(fileExtension)) {
             await handleTextFileForShops(file, statusDiv);
         } else {
-            statusDiv.innerHTML = `✅ تم رفع الملف "${fileName}" بنجاح! نوع الملف: ${fileExtension.toUpperCase()}`;
-            statusDiv.style.background = '#d4edda';
-            statusDiv.style.color = '#155724';
+            if (!isDev && !window.isDev) {
+                statusDiv.innerHTML = `✅ تم معالجة الملف "${fileName}" محلياً! نوع الملف: ${fileExtension.toUpperCase()}`;
+                statusDiv.style.background = '#d4edda';
+                statusDiv.style.color = '#155724';
+            }
         }
     } catch (error) {
         statusDiv.innerHTML = `❌ خطأ في معالجة الملف: ${error.message}`;

@@ -536,6 +536,14 @@
             background: linear-gradient(135deg, #5a37a1 0%, #7b1fa2 100%);
         }
         
+        .educational-content-btn {
+            background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+            color: #fff;
+        }
+        .educational-content-btn:hover {
+            background: linear-gradient(135deg, #1aa179 0%, #138496 100%);
+        }
+        
         .print-btn {
             background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
             color: #fff;
@@ -2006,6 +2014,11 @@
                             <span class="icon">👁️</span>
                             <span class="label">معاينة الملفات</span>
                         </button>
+                        
+                        <button class="icon-btn educational-content-btn tooltip" onclick="showEducationalContentModal()" data-tooltip="موسوعة توعوية عن أسواق الطيور والحيوانات الأليفة - للمطور فقط">
+                            <span class="icon">🦜</span>
+                            <span class="label">موسوعة توعوية</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -2928,6 +2941,82 @@ console.log('Smart distribution functions initialized');
             <button onclick="clearPreview()" style="background: #6c757d; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
                 🗑️ مسح المعاينة
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- مودال الموسوعة التوعوية -->
+<div id="educationalContentModal" class="modal-overlay" style="display:none;">
+    <div class="modal-content" style="max-width: 95%; width: 1200px; max-height: 90vh;">
+        <button class="close-btn" onclick="closeEducationalContentModal()">×</button>
+        <div class="stats-title">🦜 الموسوعة التوعوية - أسواق الطيور والحيوانات الأليفة</div>
+        
+        <!-- رسالة صلاحيات المطور -->
+        <div id="educationalAccessMessage" style="display: none; margin-bottom: 20px; padding: 20px; background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; text-align: center;">
+            <div style="margin-bottom: 15px;">
+                <span style="font-size: 3em;">🔒</span>
+            </div>
+            <h3 style="color: #856404; margin: 0 0 10px 0;">محتوى مقيد - للمطور فقط</h3>
+            <p style="color: #856404; margin: 0 0 15px 0;">هذه الموسوعة التوعوية تحت إشراف وصلاحية المطور د. علي عبدالعال</p>
+            <div style="background: #fff; padding: 15px; border-radius: 6px; text-align: right; margin-top: 15px;">
+                <p style="margin: 5px 0; color: #333;"><strong>📌 للحصول على صلاحيات المشاهدة:</strong></p>
+                <p style="margin: 5px 0; color: #666;">1️⃣ اختر "المطور" من قائمة تسجيل الدخول أعلى الصفحة</p>
+                <p style="margin: 5px 0; color: #666;">2️⃣ أدخل كلمة سر المطور (1940)</p>
+                <p style="margin: 5px 0; color: #666;">3️⃣ انقر "دخول المطور"</p>
+            </div>
+        </div>
+        
+        <!-- المحتوى الرئيسي -->
+        <div id="educationalContentMain" style="display: none;">
+            <!-- وصف الموسوعة -->
+            <div style="margin-bottom: 20px; padding: 20px; background: #e8f5e9; border-radius: 8px; border: 2px solid #4caf50;">
+                <h3 style="color: #2e7d32; margin: 0 0 15px 0; text-align: center;">
+                    🎓 موسوعة توعوية معرفية شاملة
+                </h3>
+                <p style="color: #1b5e20; margin: 10px 0; text-align: center; font-size: 1.1em;">
+                    محتوى تعليمي متخصص عن أسواق الطيور والحيوانات الأليفة وأسماك الزينة
+                </p>
+                <div style="background: #fff; padding: 15px; border-radius: 6px; margin-top: 15px;">
+                    <p style="margin: 5px 0; color: #333;">📺 <strong>المحتوى يشمل:</strong></p>
+                    <ul style="margin: 10px 0 0 30px; color: #666; line-height: 1.8;">
+                        <li>معلومات عن أسواق الطيور والإشراف البيطري</li>
+                        <li>أنواع الطيور والحيوانات الأليفة</li>
+                        <li>رعاية وتربية أسماك الزينة</li>
+                        <li>إرشادات صحية وبيطرية</li>
+                        <li>متطلبات السلامة والجودة في الأسواق</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- قائمة الفيديوهات -->
+            <div style="margin-bottom: 20px;">
+                <h3 style="color: #2336a0; margin: 0 0 15px 0; text-align: center;">
+                    📚 مكتبة الفيديوهات التعليمية
+                </h3>
+                <div id="videosList" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                    <!-- سيتم إضافة الفيديوهات هنا ديناميكياً -->
+                </div>
+            </div>
+            
+            <!-- مشغل الفيديو -->
+            <div id="videoPlayerContainer" style="display: none; margin-top: 20px;">
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <h4 id="videoTitle" style="color: #2336a0; margin: 0 0 10px 0;"></h4>
+                    <p id="videoDescription" style="color: #666; margin: 0;"></p>
+                </div>
+                <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                    <iframe id="youtubePlayer" 
+                            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen>
+                    </iframe>
+                </div>
+                <div style="margin-top: 15px; text-align: center;">
+                    <button onclick="closeVideoPlayer()" style="background: #6c757d; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 1em;">
+                        ⬅️ العودة إلى القائمة
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -10972,6 +11061,149 @@ function clearPreview() {
         </div>
     `;
     showPreviewControls(false);
+}
+
+// ===== وظائف الموسوعة التوعوية =====
+
+// مكتبة الفيديوهات التعليمية
+const educationalVideos = [
+    {
+        id: 1,
+        title: "مقدمة عن أسواق الطيور والرقابة البيطرية",
+        description: "نظرة شاملة على أسواق الطيور ودور الإشراف البيطري في ضمان السلامة والجودة",
+        youtubeId: "dQw4w9WgXcQ", // سيتم استبداله بالفيديو الحقيقي
+        category: "عام"
+    },
+    {
+        id: 2,
+        title: "أنواع الطيور الشائعة في الأسواق",
+        description: "تعرف على أنواع الطيور المختلفة وخصائصها ومتطلبات رعايتها",
+        youtubeId: "dQw4w9WgXcQ", // سيتم استبداله بالفيديو الحقيقي
+        category: "طيور"
+    },
+    {
+        id: 3,
+        title: "رعاية الحيوانات الأليفة",
+        description: "إرشادات مهمة لرعاية وتربية الحيوانات الأليفة بشكل صحي وآمن",
+        youtubeId: "dQw4w9WgXcQ", // سيتم استبداله بالفيديو الحقيقي
+        category: "حيوانات"
+    },
+    {
+        id: 4,
+        title: "أسماك الزينة - الأنواع والعناية",
+        description: "دليل شامل لأنواع أسماك الزينة وطرق العناية بها والحفاظ على صحتها",
+        youtubeId: "dQw4w9WgXcQ", // سيتم استبداله بالفيديو الحقيقي
+        category: "أسماك"
+    },
+    {
+        id: 5,
+        title: "معايير السلامة والجودة في الأسواق",
+        description: "المعايير البيطرية والصحية الواجب توافرها في أسواق الطيور والحيوانات",
+        youtubeId: "dQw4w9WgXcQ", // سيتم استبداله بالفيديو الحقيقي
+        category: "معايير"
+    }
+];
+
+function showEducationalContentModal() {
+    const modalElement = document.getElementById('educationalContentModal');
+    const accessMessage = document.getElementById('educationalAccessMessage');
+    const mainContent = document.getElementById('educationalContentMain');
+    
+    // التحقق من صلاحيات المطور
+    const isDeveloper = isDev || window.isDev;
+    
+    if (!isDeveloper) {
+        // إظهار رسالة القيود
+        accessMessage.style.display = 'block';
+        mainContent.style.display = 'none';
+    } else {
+        // إظهار المحتوى الكامل
+        accessMessage.style.display = 'none';
+        mainContent.style.display = 'block';
+        loadEducationalVideos();
+    }
+    
+    modalElement.style.display = 'flex';
+    modalElement.classList.add('nested-modal');
+}
+
+function closeEducationalContentModal() {
+    const modalElement = document.getElementById('educationalContentModal');
+    modalElement.style.display = 'none';
+    modalElement.classList.remove('nested-modal');
+    
+    // إغلاق مشغل الفيديو إذا كان مفتوحاً
+    closeVideoPlayer();
+}
+
+function loadEducationalVideos() {
+    const videosListContainer = document.getElementById('videosList');
+    
+    let html = '';
+    educationalVideos.forEach(video => {
+        html += `
+            <div style="background: #fff; border: 2px solid #e0e0e0; border-radius: 8px; overflow: hidden; transition: all 0.3s; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" 
+                 onclick="playVideo(${video.id})"
+                 onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 6px 16px rgba(0,0,0,0.15)'; this.style.borderColor='#2336a0';"
+                 onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'; this.style.borderColor='#e0e0e0';">
+                <div style="position: relative; padding-bottom: 56.25%; background: #000;">
+                    <img src="https://img.youtube.com/vi/${video.youtubeId}/mqdefault.jpg" 
+                         style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;"
+                         alt="${video.title}">
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                        <span style="color: #fff; font-size: 2em;">▶️</span>
+                    </div>
+                </div>
+                <div style="padding: 15px;">
+                    <div style="background: #e3f2fd; display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 0.85em; color: #1976d2; margin-bottom: 8px;">
+                        ${video.category}
+                    </div>
+                    <h4 style="margin: 0 0 8px 0; color: #2336a0; font-size: 1.05em;">${video.title}</h4>
+                    <p style="margin: 0; color: #666; font-size: 0.9em; line-height: 1.4;">${video.description}</p>
+                </div>
+            </div>
+        `;
+    });
+    
+    videosListContainer.innerHTML = html;
+}
+
+function playVideo(videoId) {
+    const video = educationalVideos.find(v => v.id === videoId);
+    if (!video) return;
+    
+    const videoPlayer = document.getElementById('youtubePlayer');
+    const videoTitle = document.getElementById('videoTitle');
+    const videoDescription = document.getElementById('videoDescription');
+    const videosList = document.getElementById('videosList');
+    const playerContainer = document.getElementById('videoPlayerContainer');
+    
+    // إخفاء قائمة الفيديوهات وإظهار المشغل
+    videosList.parentElement.style.display = 'none';
+    playerContainer.style.display = 'block';
+    
+    // تحديث معلومات الفيديو
+    videoTitle.textContent = video.title;
+    videoDescription.textContent = video.description;
+    
+    // تحميل الفيديو
+    videoPlayer.src = `https://www.youtube.com/embed/${video.youtubeId}?autoplay=1&rel=0`;
+    
+    // التمرير إلى المشغل
+    playerContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function closeVideoPlayer() {
+    const videoPlayer = document.getElementById('youtubePlayer');
+    const videosList = document.getElementById('videosList');
+    const playerContainer = document.getElementById('videoPlayerContainer');
+    
+    // إيقاف الفيديو
+    videoPlayer.src = '';
+    
+    // إخفاء المشغل وإظهار القائمة
+    playerContainer.style.display = 'none';
+    videosList.parentElement.style.display = 'block';
 }
 
 // ===== وظائف مكتبة الملفات العامة =====

@@ -1770,9 +1770,68 @@
                 animation: scroll-ticker 70s linear infinite;
             }
         }
+        
+        /* Token Popup Styles */
+        .token-popup-bg {
+            position:fixed;top:0;left:0;right:0;bottom:0;
+            background:rgba(0,0,0,0.5);z-index:10000;
+            display:flex;align-items:center;justify-content:center;
+        }
+        .token-popup-box {
+            background:#fff;padding:26px 22px;border-radius:12px;box-shadow:0 0 22px #aaa;
+            min-width:320px;max-width:500px;text-align:center;position:relative;
+        }
+        .token-popup-box h3 {
+            color:#2336a0;margin:0 0 15px 0;
+        }
+        .token-popup-box label {color:#2336a0;}
+        .token-popup-close {
+            position:absolute;right:8px;top:8px;border:none;background:#dc3545;color:#fff;border-radius:50%;
+            font-size:1.3em;width:32px;height:32px;cursor:pointer;box-shadow:0 2px 8px rgba(220,53,69,0.3);
+            transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;font-weight:bold;z-index:10;
+        }
+        .token-popup-close:hover {
+            background:#c82333;transform:scale(1.05);box-shadow:0 4px 12px rgba(220,53,69,0.4);
+        }
+        .token-popup-box input[type="password"] {
+            font-size:1.1em;padding:10px;border-radius:6px;border:1px solid #bbb;
+            width:100%;box-sizing:border-box;margin:10px 0;
+        }
+        .token-popup-box button {
+            background:#2336a0;color:#fff;border:none;border-radius:6px;
+            padding:10px 28px;font-size:1.08em;cursor:pointer;margin:5px;
+        }
+        .token-popup-box button:hover {
+            background:#1a2870;
+        }
     </style>
 </head>
 <body>
+<!-- Token Input Popup -->
+<div class="token-popup-bg" id="tokenPopup" style="display:none;">
+    <div class="token-popup-box">
+        <button class="token-popup-close" onclick="hideTokenPopup()" title="إغلاق">×</button>
+        <h3>إدخال التوكن السري</h3>
+        <p style="font-size:0.9em;color:#666;margin:10px 0;">يرجى إدخال GitHub Personal Access Token للمستودع</p>
+        
+        <!-- Instructions for creating token -->
+        <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 10px; margin: 10px 0; text-align: right; font-size: 0.85em;">
+            <strong>كيفية إنشاء توكن جديد:</strong>
+            <ol style="margin: 8px 0; padding-right: 20px; line-height: 1.5;">
+                <li>اذهب إلى: <a href="https://github.com/settings/tokens" target="_blank" style="color: #0066cc;">GitHub Settings → Tokens</a></li>
+                <li>انقر "Generate new token (classic)"</li>
+                <li>اختر صلاحية <strong>repo</strong></li>
+                <li>انسخ التوكن وألصقه أدناه</li>
+            </ol>
+        </div>
+        
+        <input id="tokenInput" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"><br>
+        <button onclick="saveTokenFromPopup()">حفظ</button>
+        <button onclick="useDefaultToken()" style="background:#666;">استخدام التوكن الافتراضي</button>
+        <div style="color:#c00;font-size:1em;margin-top:10px;" id="tokenError"></div>
+    </div>
+</div>
+
 <div class="main-container">
     <div class="header-top-bar">
         <div class="bell-container">
@@ -7562,6 +7621,38 @@ function filterScheduleTable() {
     }
 }
 
+// ===== وظائف إدارة التوكن =====
+function showTokenPopup() {
+    document.getElementById("tokenPopup").style.display = "flex";
+    document.getElementById("tokenInput").value = "";
+    document.getElementById("tokenInput").focus();
+    document.getElementById("tokenError").textContent = "";
+}
+
+function hideTokenPopup() {
+    document.getElementById("tokenPopup").style.display = "none";
+}
+
+function saveTokenFromPopup() {
+    const token = document.getElementById("tokenInput").value.trim();
+    if (!token) {
+        document.getElementById("tokenError").textContent = "يرجى إدخال التوكن السري!";
+        return;
+    }
+    localStorage.setItem("devToken", token);
+    hideTokenPopup();
+    // إظهار رسالة نجاح
+    alert("✅ تم حفظ التوكن بنجاح!\n\nيمكنك الآن رفع الملفات.");
+}
+
+function useDefaultToken() {
+    // Use the repository's default token
+    const defaultToken = "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";
+    localStorage.setItem("devToken", defaultToken);
+    hideTokenPopup();
+    alert("✅ تم استخدام التوكن الافتراضي!");
+}
+
 // ===== وظائف رفع الملفات إلى GitHub =====
 // دالة مشتركة لرفع الملفات إلى GitHub Repository
 async function uploadFileToGitHub(file, category, description = '') {
@@ -7582,7 +7673,7 @@ async function uploadFileToGitHub(file, category, description = '') {
     }
     
     if (!token) {
-        alert('❌ حدث خطأ: لا يوجد توكن متاح\n\nالحل:\n1. اذهب إلى لوحة المطور (admin.html)\n2. انقر على "تغيير التوكن"\n3. أدخل GitHub Personal Access Token صحيح');
+        showTokenPopup();
         return { success: false, error: 'لا يوجد توكن' };
     }
     
@@ -7619,10 +7710,13 @@ async function uploadFileToGitHub(file, category, description = '') {
             
             if (testRes.status === 401) {
                 localStorage.removeItem("devToken");
-                alert('❌ التوكن غير صالح أو منتهي الصلاحية!\n\nالحل:\n1. اذهب إلى GitHub: Settings → Developer settings → Personal access tokens\n2. أنشئ توكن جديد مع صلاحية "repo"\n3. اذهب إلى لوحة المطور (admin.html)\n4. انقر "تغيير التوكن" وأدخل التوكن الجديد');
+                alert('❌ التوكن غير صالح أو منتهي الصلاحية!\n\nسيتم فتح نافذة لإدخال توكن جديد.');
+                showTokenPopup();
                 return { success: false, error: 'التوكن غير صالح' };
             } else if (testRes.status === 403) {
-                alert('❌ التوكن ليس لديه صلاحيات كافية!\n\nالحل:\n1. اذهب إلى GitHub: Settings → Developer settings → Personal access tokens\n2. تأكد من أن التوكن لديه صلاحية "repo"\n3. إذا لم تكن موجودة، أنشئ توكن جديد وأدخله في لوحة المطور');
+                localStorage.removeItem("devToken");
+                alert('❌ التوكن ليس لديه صلاحيات كافية!\n\nيجب أن يحتوي التوكن على صلاحية "repo".\nسيتم فتح نافذة لإدخال توكن جديد.');
+                showTokenPopup();
                 return { success: false, error: 'صلاحيات غير كافية' };
             }
         }
@@ -7666,7 +7760,8 @@ async function uploadFileToGitHub(file, category, description = '') {
             return { success: false, error: 'ملف موجود مسبقاً' };
         } else if (uploadRes.status === 401 || uploadRes.status === 403) {
             localStorage.removeItem("devToken");
-            alert('❌ خطأ في صلاحيات التوكن!\n\nيرجى:\n1. الذهاب إلى لوحة المطور (admin.html)\n2. تحديث التوكن من "تغيير التوكن"\n3. التأكد من أن التوكن لديه صلاحية "repo"');
+            alert('❌ خطأ في صلاحيات التوكن!\n\nسيتم فتح نافذة لإدخال توكن جديد.');
+            showTokenPopup();
             return { success: false, error: 'خطأ في صلاحيات التوكن' };
         } else {
             const err = await uploadRes.json().catch(() => ({ message: `HTTP ${uploadRes.status}` }));

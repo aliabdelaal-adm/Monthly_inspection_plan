@@ -2249,6 +2249,17 @@
                 style="width: 100%; min-height: 60px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical; font-family: inherit;"
                 dir="rtl"
             ></textarea>
+            <div style="margin-top: 8px;">
+                <label style="display: block; margin-bottom: 4px; color: #495057; font-weight: 500;">👤 اسم المؤلف/المرسل:</label>
+                <input 
+                    type="text" 
+                    id="newNotificationAuthor" 
+                    placeholder="اسم المؤلف (مثال: د. علي عبدالعال)"
+                    value="د. علي عبدالعال"
+                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit;"
+                    dir="rtl"
+                />
+            </div>
             <button onclick="addNewNotification()" style="background: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-top: 8px;">➕ إضافة إشعار</button>
         </div>
         
@@ -5193,7 +5204,17 @@ function displayNotificationsList() {
         notificationDiv.innerHTML = `
             <div class="notification-content" style="margin-bottom: 10px;">
                 <div class="notification-text" id="notificationText_${index}" style="display: block; cursor: ${textCursor}; padding: 5px; border-radius: 4px;" ${textClickable}>${notification.text}</div>
-                <textarea class="notification-edit" id="notificationEdit_${index}" style="display: none; width: 100%; min-height: 60px; border: 1px solid #ccc; border-radius: 4px; padding: 5px; resize: vertical;" dir="rtl">${notification.text}</textarea>
+                <textarea class="notification-edit" id="notificationEdit_${index}" style="display: none; width: 100%; min-height: 60px; border: 1px solid #ccc; border-radius: 4px; padding: 5px; resize: vertical; margin-bottom: 8px;" dir="rtl">${notification.text}</textarea>
+                <div id="authorEditContainer_${index}" style="display: none; margin-top: 8px;">
+                    <label style="display: block; margin-bottom: 4px; color: #495057; font-weight: 500; font-size: 0.9em;">👤 اسم المؤلف/المرسل:</label>
+                    <input 
+                        type="text" 
+                        id="authorEdit_${index}" 
+                        value="${notification.author || 'د. علي عبدالعال'}"
+                        style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit;"
+                        dir="rtl"
+                    />
+                </div>
             </div>
             <div class="notification-meta" style="font-size: 0.85em; color: #666; margin-bottom: 10px;">
                 <span>📅 ${formatDate(notification.timestamp)}</span>
@@ -5214,10 +5235,17 @@ function addNewNotification() {
     }
     
     const input = document.getElementById('newNotificationInput');
+    const authorInput = document.getElementById('newNotificationAuthor');
     const text = input.value.trim();
+    const author = authorInput.value.trim();
     
     if (!text) {
         alert('يرجى كتابة نص الإشعار');
+        return;
+    }
+    
+    if (!author) {
+        alert('يرجى كتابة اسم المؤلف');
         return;
     }
     
@@ -5225,7 +5253,7 @@ function addNewNotification() {
         id: Date.now().toString(),
         text: text,
         timestamp: new Date().toISOString(),
-        author: 'د. علي عبدالعال'
+        author: author
     };
     
     if (!bellNotesData.notifications) {
@@ -5234,6 +5262,7 @@ function addNewNotification() {
     
     bellNotesData.notifications.unshift(newNotification); // Add to beginning
     input.value = '';
+    // Keep the author field as is for convenience when adding multiple notifications
     
     displayNotificationsList();
     saveDataToJSON();
@@ -5252,11 +5281,13 @@ function editNotification(index) {
     
     const textDiv = document.getElementById(`notificationText_${index}`);
     const editTextarea = document.getElementById(`notificationEdit_${index}`);
+    const authorEditContainer = document.getElementById(`authorEditContainer_${index}`);
     const saveBtn = document.getElementById(`saveBtn_${index}`);
     const cancelBtn = document.getElementById(`cancelBtn_${index}`);
     
     textDiv.style.display = 'none';
     editTextarea.style.display = 'block';
+    authorEditContainer.style.display = 'block';
     saveBtn.style.display = 'inline-block';
     cancelBtn.style.display = 'inline-block';
     
@@ -5272,24 +5303,37 @@ function saveNotificationEdit(index) {
     
     const textDiv = document.getElementById(`notificationText_${index}`);
     const editTextarea = document.getElementById(`notificationEdit_${index}`);
+    const authorEditContainer = document.getElementById(`authorEditContainer_${index}`);
+    const authorEdit = document.getElementById(`authorEdit_${index}`);
     const saveBtn = document.getElementById(`saveBtn_${index}`);
     const cancelBtn = document.getElementById(`cancelBtn_${index}`);
     
     const newText = editTextarea.value.trim();
+    const newAuthor = authorEdit.value.trim();
+    
     if (!newText) {
         alert('لا يمكن أن يكون الإشعار فارغاً');
         return;
     }
     
+    if (!newAuthor) {
+        alert('لا يمكن أن يكون اسم المؤلف فارغاً');
+        return;
+    }
+    
     bellNotesData.notifications[index].text = newText;
+    bellNotesData.notifications[index].author = newAuthor;
     bellNotesData.notifications[index].lastModified = new Date().toISOString();
-    bellNotesData.notifications[index].author = 'د. علي عبدالعال'; // Ensure author is always Dr. Ali Abdelaal
     
     textDiv.textContent = newText;
     textDiv.style.display = 'block';
     editTextarea.style.display = 'none';
+    authorEditContainer.style.display = 'none';
     saveBtn.style.display = 'none';
     cancelBtn.style.display = 'none';
+    
+    // Refresh the display to update the author in the metadata section
+    displayNotificationsList();
     
     saveDataToJSON();
     updateNewsTicker(); // Update news ticker
@@ -5299,14 +5343,18 @@ function saveNotificationEdit(index) {
 function cancelNotificationEdit(index) {
     const textDiv = document.getElementById(`notificationText_${index}`);
     const editTextarea = document.getElementById(`notificationEdit_${index}`);
+    const authorEditContainer = document.getElementById(`authorEditContainer_${index}`);
+    const authorEdit = document.getElementById(`authorEdit_${index}`);
     const saveBtn = document.getElementById(`saveBtn_${index}`);
     const cancelBtn = document.getElementById(`cancelBtn_${index}`);
     
-    // Reset textarea to original value
+    // Reset textarea and author to original values
     editTextarea.value = bellNotesData.notifications[index].text;
+    authorEdit.value = bellNotesData.notifications[index].author || 'د. علي عبدالعال';
     
     textDiv.style.display = 'block';
     editTextarea.style.display = 'none';
+    authorEditContainer.style.display = 'none';
     saveBtn.style.display = 'none';
     cancelBtn.style.display = 'none';
 }

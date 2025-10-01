@@ -966,7 +966,42 @@
             transform: scale(0.95); /* تغذية راجعة بصرية عند النقر */
             transition: transform 0.1s ease;
         }
-        .inspector-report-div {margin:16px 0 0 0;background:#f7f9fc;border-radius:10px;padding:18px 12px;width:100%;color:#234085;font-size:1.1em;box-shadow:0 1px 5px #e2e2e2;}
+        .inspector-report-div {
+            margin:16px 0 0 0;
+            background:#f7f9fc;
+            border-radius:10px;
+            padding:18px 12px;
+            width:100%;
+            color:#234085;
+            font-size:1.1em;
+            box-shadow:0 1px 5px #e2e2e2;
+            position: relative;
+        }
+        .inspector-report-div .close-report-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #dc3545;
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            font-size: 1.3em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 2px 6px rgba(220, 53, 69, 0.3);
+            transition: all 0.2s ease;
+            z-index: 5;
+        }
+        .inspector-report-div .close-report-btn:hover {
+            background: #c82333;
+            transform: scale(1.05);
+            box-shadow: 0 4px 10px rgba(220, 53, 69, 0.4);
+        }
         /* تنسيق قسم البحث */
         .search-filters-section {
             background:#f8f9fa;
@@ -990,6 +1025,7 @@
             align-items:center;
             justify-content:center;
             backdrop-filter: blur(3px);
+            padding: 10px;
         }
         
         /* Higher z-index for nested modals */
@@ -1004,17 +1040,20 @@
             padding:32px 18px; 
             margin:20px auto; 
             max-width:95vw; 
-            min-width:70vw; 
+            width: 90vw;
             max-height:88vh; 
             position:relative; 
             text-align:center; 
             overflow-y:auto;
+            overflow-x: hidden;
             border: 1px solid rgba(0,0,0,0.1);
         }
         .modal-content button.close-btn {
-            position:absolute; 
-            right:12px; 
-            top:12px; 
+            position:sticky; 
+            top: 0;
+            right:8px; 
+            float: left;
+            margin-bottom: 10px;
             border:none; 
             background:#dc3545; 
             color:#fff; 
@@ -1044,6 +1083,7 @@
             display:flex;
             justify-content:center;
             gap:10px;
+            flex-wrap: wrap;
         }
         .stats-title {color:#134093;font-size:1.18em;text-align:center;margin-bottom:15px;}
         
@@ -1471,8 +1511,11 @@
             /* Mobile modal improvements */
             .modal-content {
                 padding: 20px 12px;
-                min-width: 90vw;
-                max-height: 85vh;
+                width: 95vw;
+                max-width: 95vw;
+                min-width: unset;
+                max-height: 90vh;
+                border-radius: 12px;
             }
             .modal-content button.close-btn {
                 width: 44px;
@@ -1483,6 +1526,113 @@
                 border: 2px solid #fff;
                 box-shadow: 0 2px 8px rgba(0,0,0,0.3);
                 z-index: 10;
+                position: sticky;
+            }
+            
+            /* Report-specific mobile styles */
+            .inspector-report-div {
+                padding: 15px 10px;
+                font-size: 1em;
+            }
+            
+            .stats-title {
+                font-size: 1.1em;
+                margin-bottom: 12px;
+            }
+            
+            .modal-actions {
+                flex-direction: column;
+                gap: 8px;
+                margin: 12px 0;
+            }
+            
+            .modal-actions button {
+                width: 100%;
+                padding: 10px 12px;
+                font-size: 0.9em;
+            }
+            
+            .save-box {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .save-box button {
+                width: 100%;
+                padding: 10px 12px;
+                font-size: 0.9em;
+            }
+            
+            /* Report tables mobile styles */
+            .stats-table {
+                font-size: 0.75em;
+                width: 100%;
+                overflow-x: auto;
+                display: block;
+            }
+            
+            .stats-table thead,
+            .stats-table tbody,
+            .stats-table tr {
+                display: block;
+            }
+            
+            .stats-table th,
+            .stats-table td {
+                padding: 6px 4px;
+                font-size: 0.85em;
+                min-width: 60px;
+                white-space: nowrap;
+            }
+            
+            /* Enhanced report options mobile */
+            #enhancedReportsModal .modal-content > div {
+                margin-bottom: 15px;
+            }
+            
+            #enhancedReportsModal select,
+            #enhancedReportsModal input {
+                font-size: 0.9em;
+                padding: 8px;
+            }
+            
+            #enhancedReportsModal label {
+                font-size: 0.85em;
+            }
+            
+            /* PDF title for mobile */
+            .pdf-title-arabic {
+                font-size: 1em;
+                padding: 8px;
+            }
+        }
+        
+        /* Tablet-specific styles (601px - 1024px) */
+        @media (min-width: 601px) and (max-width: 1024px) {
+            .modal-content {
+                width: 85vw;
+                max-width: 85vw;
+                padding: 25px 18px;
+            }
+            
+            .stats-table {
+                font-size: 0.85em;
+            }
+            
+            .stats-table th,
+            .stats-table td {
+                padding: 8px 6px;
+                font-size: 0.9em;
+            }
+            
+            .modal-actions button {
+                padding: 10px 16px;
+                font-size: 0.95em;
+            }
+            
+            .inspector-report-div {
+                padding: 18px 14px;
+                font-size: 1.05em;
             }
         }
 
@@ -2146,7 +2296,7 @@
         </div>
         
         <!-- محتوى التقرير -->
-        <div id="enhancedReportContent" style="max-height:400px;overflow-y:auto;"></div>
+        <div id="enhancedReportContent" style="max-height:400px;overflow-y:auto;overflow-x:auto;"></div>
       </div>
     </div>
 
@@ -5823,6 +5973,7 @@ function showInspectorReport() {
     const uniqueShopsCount = shopsList.size;
     
     let table = `
+    <button class="close-report-btn" onclick="document.getElementById('inspectorReportDiv').style.display='none';" title="إغلاق التقرير">×</button>
     <div class="pdf-title-arabic" id="inspectorReportTitle">تقرير المفتش: ${inspectorName}</div>
     <div class="save-box" style="margin-bottom:15px;">
         <button class="pdf-btn" onclick="exportInspectorReportToPDF()">📄 حفظ كـ PDF</button>

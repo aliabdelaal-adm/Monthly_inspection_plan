@@ -509,6 +509,10 @@
       }
     }
     
+    function escapeQuotes(str) {
+      return str.replace(/'/g, "\\'").replace(/"/g, '\\"');
+    }
+    
     function displayFilesList(files) {
       const container = document.getElementById("filesList");
       
@@ -562,7 +566,8 @@
                 </div>
                 <div>
                   <button onclick="downloadFile('${file.path}')" style="background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-left: 5px;">تحميل</button>
-                  <button onclick="deleteFile('${file.id}', '${file.path}', '${file.name}')" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">حذف</button>
+                  <button onclick="editFile('${file.id}', '${escapeQuotes(file.name)}', '${escapeQuotes(file.description)}', '${file.category}')" style="background: #ffc107; color: #333; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-left: 5px;">تعديل</button>
+                  <button onclick="deleteFile('${file.id}', '${file.path}', '${escapeQuotes(file.name)}')" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">حذف</button>
                 </div>
               </div>
             </div>
@@ -665,6 +670,74 @@
         }
       } catch (error) {
         document.getElementById("fileStatus").textContent = "❌ خطأ في حذف الملف: " + error.message;
+      }
+    }
+    
+    async function editFile(fileId, fileName, currentDescription, category) {
+      const newDescription = prompt('تحرير وصف الملف:\n\nاسم الملف: ' + fileName, currentDescription);
+      
+      if (newDescription === null) {
+        return; // المستخدم ألغى
+      }
+      
+      const token = getToken();
+      if (!token) { 
+        document.getElementById("fileStatus").textContent = "❌ يرجى إدخال GitHub Token أولاً";
+        showTokenPopup(); 
+        return; 
+      }
+      
+      try {
+        document.getElementById("fileStatus").textContent = "⏳ جاري تحديث الملف...";
+        
+        // تحميل ملف files.json الحالي
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/files.json`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+        
+        if (res.ok) {
+          const file = await res.json();
+          const filesData = JSON.parse(decodeURIComponent(escape(atob(file.content))));
+          
+          // تحديث وصف الملف
+          const fileIndex = filesData.files.findIndex(f => f.id === fileId);
+          if (fileIndex !== -1) {
+            filesData.files[fileIndex].description = newDescription;
+            filesData.lastUpdate = new Date().toISOString();
+            
+            // حفظ ملف files.json المحدث
+            const content = btoa(unescape(encodeURIComponent(JSON.stringify(filesData, null, 2))));
+            const updateRes = await fetch(`https://api.github.com/repos/${repo}/contents/files.json`, {
+              method: "PUT",
+              headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                message: `تحديث وصف الملف: ${fileName}`,
+                content: content,
+                sha: file.sha
+              })
+            });
+            
+            if (updateRes.ok) {
+              document.getElementById("fileStatus").textContent = "✅ تم تحديث الملف بنجاح";
+              // تحديث قائمة الملفات
+              setTimeout(() => loadFilesList(), 1000);
+            } else {
+              document.getElementById("fileStatus").textContent = "❌ خطأ في تحديث الملف";
+            }
+          } else {
+            document.getElementById("fileStatus").textContent = "❌ الملف غير موجود";
+          }
+        } else {
+          document.getElementById("fileStatus").textContent = "❌ خطأ في تحميل بيانات الملف";
+        }
+      } catch (error) {
+        document.getElementById("fileStatus").textContent = "❌ خطأ في تحديث الملف: " + error.message;
       }
     }
     

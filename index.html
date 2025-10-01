@@ -7489,7 +7489,7 @@ function filterScheduleTable() {
 async function uploadFileToGitHub(file, category, description = '') {
     // التحقق من صلاحية المطور
     if (!isDev && !window.isDev) {
-        alert('❌ عذراً، رفع الملفات متاح للمطور فقط');
+        alert('❌ عذراً، رفع الملفات متاح للمطور فقط\n\nيرجى تسجيل الدخول كمطور أولاً');
         return { success: false, error: 'لا توجد صلاحية' };
     }
     
@@ -7504,14 +7504,14 @@ async function uploadFileToGitHub(file, category, description = '') {
     }
     
     if (!token) {
-        alert('❌ حدث خطأ: لا يوجد توكن متاح. يرجى تسجيل الخروج ثم تسجيل الدخول مرة أخرى');
+        alert('❌ حدث خطأ: لا يوجد توكن متاح\n\nالحل:\n1. اذهب إلى لوحة المطور (admin.html)\n2. انقر على "تغيير التوكن"\n3. أدخل GitHub Personal Access Token صحيح');
         return { success: false, error: 'لا يوجد توكن' };
     }
     
     // التحقق من حجم الملف (الحد الأقصى 25 MB للـ GitHub)
     const maxSize = 25 * 1024 * 1024;
     if (file.size > maxSize) {
-        alert('❌ حجم الملف كبير جداً! يجب أن يكون أقل من 25 MB');
+        alert('❌ حجم الملف كبير جداً!\n\nيجب أن يكون أقل من 25 MB\nحجم الملف الحالي: ' + (file.size / (1024 * 1024)).toFixed(2) + ' MB');
         return { success: false, error: 'الملف كبير جداً' };
     }
     
@@ -7528,6 +7528,27 @@ async function uploadFileToGitHub(file, category, description = '') {
     document.body.appendChild(loadingMsg);
     
     try {
+        // التحقق من صلاحية التوكن أولاً
+        const testRes = await fetch(`https://api.github.com/repos/${repo}`, {
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        });
+        
+        if (!testRes.ok) {
+            document.body.removeChild(loadingMsg);
+            
+            if (testRes.status === 401) {
+                localStorage.removeItem("devToken");
+                alert('❌ التوكن غير صالح أو منتهي الصلاحية!\n\nالحل:\n1. اذهب إلى GitHub: Settings → Developer settings → Personal access tokens\n2. أنشئ توكن جديد مع صلاحية "repo"\n3. اذهب إلى لوحة المطور (admin.html)\n4. انقر "تغيير التوكن" وأدخل التوكن الجديد');
+                return { success: false, error: 'التوكن غير صالح' };
+            } else if (testRes.status === 403) {
+                alert('❌ التوكن ليس لديه صلاحيات كافية!\n\nالحل:\n1. اذهب إلى GitHub: Settings → Developer settings → Personal access tokens\n2. تأكد من أن التوكن لديه صلاحية "repo"\n3. إذا لم تكن موجودة، أنشئ توكن جديد وأدخله في لوحة المطور');
+                return { success: false, error: 'صلاحيات غير كافية' };
+            }
+        }
+        
         // قراءة الملف كـ base64
         const content = await new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -7562,11 +7583,16 @@ async function uploadFileToGitHub(file, category, description = '') {
             // تحديث ملف files.json
             await updateFilesRegistryAfterUpload(fileName, filePath, category, file.size, description, token);
             return { success: true, fileName, filePath };
+        } else if (uploadRes.status === 422) {
+            alert('❌ ملف بنفس الاسم موجود مسبقاً!\n\nالحلول:\n1. أعد تسمية الملف\n2. أو احذف الملف القديم من لوحة المطور أولاً');
+            return { success: false, error: 'ملف موجود مسبقاً' };
         } else if (uploadRes.status === 401 || uploadRes.status === 403) {
-            // خطأ في صلاحيات التوكن
-            return { success: false, error: 'خطأ في صلاحيات التوكن. يرجى التحقق من صلاحية التوكن أو تحديثه' };
+            localStorage.removeItem("devToken");
+            alert('❌ خطأ في صلاحيات التوكن!\n\nيرجى:\n1. الذهاب إلى لوحة المطور (admin.html)\n2. تحديث التوكن من "تغيير التوكن"\n3. التأكد من أن التوكن لديه صلاحية "repo"');
+            return { success: false, error: 'خطأ في صلاحيات التوكن' };
         } else {
             const err = await uploadRes.json().catch(() => ({ message: `HTTP ${uploadRes.status}` }));
+            alert('❌ خطأ في رفع الملف!\n\nالتفاصيل: ' + (err.message || 'خطأ غير معروف') + '\nالرمز: ' + uploadRes.status);
             return { success: false, error: err.message || 'خطأ في الرفع' };
         }
     } catch (error) {
@@ -7575,7 +7601,15 @@ async function uploadFileToGitHub(file, category, description = '') {
         if (loadingElement) {
             document.body.removeChild(loadingElement);
         }
+        
         console.error('خطأ في رفع الملف:', error);
+        
+        if (error.message && (error.message.includes("NetworkError") || error.message.includes("Failed to fetch"))) {
+            alert('❌ خطأ في الاتصال بالإنترنت!\n\nيرجى:\n1. التحقق من اتصال الإنترنت\n2. المحاولة مرة أخرى');
+        } else {
+            alert('❌ حدث خطأ غير متوقع!\n\nالتفاصيل: ' + error.message);
+        }
+        
         return { success: false, error: error.message };
     }
 }

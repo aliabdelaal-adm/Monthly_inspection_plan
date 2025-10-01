@@ -4079,6 +4079,21 @@ document.getElementById("devLoginBtn").onclick = function() {
         renderPlanTable();
         // Force table refresh to show edit/delete buttons
         setTimeout(function() { renderPlanTable(); }, 100);
+        
+        // تحديث مكتبة الملفات إذا كانت مفتوحة لإظهار أزرار التحرير والحذف
+        const fileSection = document.getElementById('fileManagementSection');
+        if (fileSection && fileSection.style.display === 'block') {
+            // إعادة تحميل الملفات مع الحفاظ على التصنيف الحالي
+            const currentCategory = getCurrentFileCategory();
+            setTimeout(function() { 
+                loadPublicFiles(currentCategory);
+                // إظهار قسم رفع الملفات للمطور
+                const uploadSection = document.getElementById('developerFileUploadSection');
+                if (uploadSection) {
+                    uploadSection.style.display = 'block';
+                }
+            }, 150);
+        }
     } else {
         document.getElementById("devError").innerText = "كلمة السر غير صحيحة!";
     }
@@ -4094,6 +4109,21 @@ document.getElementById("devLogoutBtn").onclick = function() {
     // Keep system services visible for inspectors (read-only mode)
     document.getElementById("systemServicesContainer").style.display = "block";
     renderPlanTable();
+    
+    // تحديث مكتبة الملفات إذا كانت مفتوحة لإخفاء أزرار التحرير والحذف
+    const fileSection = document.getElementById('fileManagementSection');
+    if (fileSection && fileSection.style.display === 'block') {
+        // إعادة تحميل الملفات مع الحفاظ على التصنيف الحالي
+        const currentCategory = getCurrentFileCategory();
+        setTimeout(function() { 
+            loadPublicFiles(currentCategory);
+            // إخفاء قسم رفع الملفات
+            const uploadSection = document.getElementById('developerFileUploadSection');
+            if (uploadSection) {
+                uploadSection.style.display = 'none';
+            }
+        }, 150);
+    }
 };
 
 // فحص صلاحيات المطور مع رسائل توضيحية محسنة
@@ -10912,7 +10942,17 @@ function clearPreview() {
 
 // ===== وظائف مكتبة الملفات العامة =====
 
+// متغير لتتبع التصنيف الحالي للملفات
+let currentFilesCategory = 'all';
+
+// دالة للحصول على التصنيف الحالي
+function getCurrentFileCategory() {
+    return currentFilesCategory;
+}
+
 async function loadPublicFiles(category = 'all') {
+    // حفظ التصنيف الحالي
+    currentFilesCategory = category;
     const statusDiv = document.getElementById('filesLoadingStatus');
     const listDiv = document.getElementById('publicFilesList');
     

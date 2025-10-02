@@ -3575,6 +3575,22 @@ async function loadInspectionData() {
     }
 }
 
+// تحميل تفاصيل المحلات من ملف Excel المستخرج
+let shopsDetailsData = {};
+async function loadShopsDetails() {
+    try {
+        const response = await fetch('./shops_details.json');
+        if (response.ok) {
+            shopsDetailsData = await response.json();
+            console.log(`✅ تم تحميل ${Object.keys(shopsDetailsData).length} محل من ملف تفاصيل المحلات`);
+            return true;
+        }
+    } catch (error) {
+        console.warn('⚠️ تعذر تحميل shops_details.json:', error);
+    }
+    return false;
+}
+
 // تحميل البيانات من plan-data.json
 async function loadPlanData() {
     try {
@@ -4774,107 +4790,129 @@ function renderShopDetails() {
     let html = '';
     
     currentShopEditData.shops.forEach((shopData, index) => {
-        const areaData = areasData.find(area => area.id === shopData.areaId);
-        const areaName = areaData ? areaData.name : 'غير محدد';
+        // محاولة الحصول على تفاصيل المحل من ملف Excel المستخرج
+        const shopName = shopData.name;
+        let excelShopData = null;
         
-        if (shopData.id) {
-            // محل موجود في قاعدة البيانات
-            html += `
-                <div class="shop-detail-card" data-shop-index="${index}">
-                    <div class="shop-detail-row">
-                        <div class="shop-detail-label">
-                            <span class="shop-icon">🏪</span>
-                            الاسم بالعربية:
-                        </div>
-                        <div class="shop-detail-value arabic">
-                            ${isShopEditMode ? 
-                                `<input type="text" class="shop-edit-input arabic" 
-                                        data-field="name" data-shop-index="${index}" 
-                                        value="${shopData.name || ''}">` :
-                                shopData.name
-                            }
-                        </div>
-                    </div>
-                    <div class="shop-detail-row">
-                        <div class="shop-detail-label">
-                            <span class="shop-icon">🏬</span>
-                            الاسم بالإنجليزية:
-                        </div>
-                        <div class="shop-detail-value">
-                            ${isShopEditMode ? 
-                                `<input type="text" class="shop-edit-input" 
-                                        data-field="nameEn" data-shop-index="${index}" 
-                                        value="${shopData.nameEn || ''}" 
-                                        placeholder="English name">` :
-                                (shopData.nameEn || 'غير محدد')
-                            }
-                        </div>
-                    </div>
-                    <div class="shop-detail-row">
-                        <div class="shop-detail-label">
-                            <span class="shop-icon">📋</span>
-                            رقم الترخيص:
-                        </div>
-                        <div class="shop-detail-value">
-                            ${isShopEditMode ? 
-                                `<input type="text" class="shop-edit-input" 
-                                        data-field="licenseNumber" data-shop-index="${index}" 
-                                        value="${shopData.licenseNumber || ''}" 
-                                        placeholder="License number">` :
-                                (shopData.licenseNumber || 'غير محدد')
-                            }
-                        </div>
-                    </div>
-                    <div class="shop-detail-row">
-                        <div class="shop-detail-label">
-                            <span class="shop-icon">🗺️</span>
-                            المنطقة:
-                        </div>
-                        <div class="shop-detail-value arabic">${areaName}</div>
-                    </div>
-                    <div class="shop-detail-row">
-                        <div class="shop-detail-label">
-                            <span class="shop-icon">📍</span>
-                            الموقع:
-                        </div>
-                        <div class="shop-detail-value">
-                            ${isShopEditMode ? 
-                                `<input type="url" class="shop-edit-input" 
-                                        data-field="googleMapsUrl" data-shop-index="${index}" 
-                                        value="${shopData.googleMapsUrl || ''}" 
-                                        placeholder="https://maps.google.com/...">` :
-                                (shopData.googleMapsUrl ? 
-                                    `<a href="${shopData.googleMapsUrl}" target="_blank" class="location-btn">
-                                        📍 عرض الموقع
-                                    </a>` : 
-                                    'غير متوفر'
-                                )
-                            }
-                        </div>
-                    </div>
-                </div>
-            `;
+        // البحث عن المحل في البيانات المستخرجة من Excel
+        // البحث بالاسم العربي الدقيق أو تشابه قريب
+        if (shopsDetailsData && shopsDetailsData[shopName]) {
+            excelShopData = shopsDetailsData[shopName];
         } else {
-            // محل غير موجود في قاعدة البيانات
-            html += `
-                <div class="shop-detail-card" data-shop-index="${index}">
-                    <div class="shop-detail-row">
-                        <div class="shop-detail-label">
-                            <span class="shop-icon">🏪</span>
-                            اسم المحل:
-                        </div>
-                        <div class="shop-detail-value arabic">${shopData.name}</div>
+            // محاولة البحث بتشابه جزئي (في حالة اختلاف طفيف في الاسم)
+            for (const [key, value] of Object.entries(shopsDetailsData)) {
+                if (key.includes(shopName) || shopName.includes(key)) {
+                    excelShopData = value;
+                    break;
+                }
+            }
+        }
+        
+        const areaData = areasData.find(area => area.id === shopData.areaId);
+        const areaName = areaData ? areaData.name : (excelShopData ? excelShopData.address : 'غير محدد');
+        
+        // استخدام البيانات من Excel إذا كانت متوفرة، وإلا استخدام البيانات الأصلية
+        const nameAr = shopName;
+        const nameEn = excelShopData ? excelShopData.nameEn : (shopData.nameEn || 'غير محدد');
+        const licenseNo = excelShopData ? excelShopData.licenseNo : (shopData.licenseNumber || 'غير محدد');
+        const locationMap = excelShopData ? excelShopData.locationMap : (shopData.googleMapsUrl || '');
+        const admCode = excelShopData ? excelShopData.admCode : '';
+        const contact = excelShopData ? excelShopData.contact : '';
+        
+        // محل له تفاصيل (إما من Excel أو من قاعدة البيانات)
+        html += `
+            <div class="shop-detail-card" data-shop-index="${index}">
+                <div class="shop-detail-row">
+                    <div class="shop-detail-label">
+                        <span class="shop-icon">🏪</span>
+                        الاسم بالعربية:
                     </div>
-                    <div class="shop-detail-row">
-                        <div class="shop-detail-label">
-                            <span class="shop-icon">ℹ️</span>
-                            ملاحظة:
-                        </div>
-                        <div class="shop-detail-value arabic">تفاصيل المحل غير متوفرة حالياً</div>
+                    <div class="shop-detail-value arabic">
+                        ${isShopEditMode ? 
+                            `<input type="text" class="shop-edit-input arabic" 
+                                    data-field="name" data-shop-index="${index}" 
+                                    value="${nameAr}">` :
+                            nameAr
+                        }
                     </div>
                 </div>
-            `;
-        }
+                <div class="shop-detail-row">
+                    <div class="shop-detail-label">
+                        <span class="shop-icon">🏬</span>
+                        الاسم بالإنجليزية:
+                    </div>
+                    <div class="shop-detail-value">
+                        ${isShopEditMode ? 
+                            `<input type="text" class="shop-edit-input" 
+                                    data-field="nameEn" data-shop-index="${index}" 
+                                    value="${nameEn}" 
+                                    placeholder="English name">` :
+                            nameEn
+                        }
+                    </div>
+                </div>
+                <div class="shop-detail-row">
+                    <div class="shop-detail-label">
+                        <span class="shop-icon">📋</span>
+                        رقم الترخيص:
+                    </div>
+                    <div class="shop-detail-value">
+                        ${isShopEditMode ? 
+                            `<input type="text" class="shop-edit-input" 
+                                    data-field="licenseNumber" data-shop-index="${index}" 
+                                    value="${licenseNo}" 
+                                    placeholder="License number">` :
+                            licenseNo
+                        }
+                    </div>
+                </div>
+                ${admCode ? `
+                <div class="shop-detail-row">
+                    <div class="shop-detail-label">
+                        <span class="shop-icon">🔢</span>
+                        رمز ADM:
+                    </div>
+                    <div class="shop-detail-value">${admCode}</div>
+                </div>
+                ` : ''}
+                <div class="shop-detail-row">
+                    <div class="shop-detail-label">
+                        <span class="shop-icon">🗺️</span>
+                        المنطقة:
+                    </div>
+                    <div class="shop-detail-value arabic">${areaName}</div>
+                </div>
+                ${contact ? `
+                <div class="shop-detail-row">
+                    <div class="shop-detail-label">
+                        <span class="shop-icon">📞</span>
+                        رقم الاتصال:
+                    </div>
+                    <div class="shop-detail-value">${contact}</div>
+                </div>
+                ` : ''}
+                <div class="shop-detail-row">
+                    <div class="shop-detail-label">
+                        <span class="shop-icon">📍</span>
+                        الموقع:
+                    </div>
+                    <div class="shop-detail-value">
+                        ${isShopEditMode ? 
+                            `<input type="url" class="shop-edit-input" 
+                                    data-field="googleMapsUrl" data-shop-index="${index}" 
+                                    value="${locationMap}" 
+                                    placeholder="https://maps.google.com/...">` :
+                            (locationMap ? 
+                                `<a href="${locationMap}" target="_blank" class="location-btn">
+                                    📍 عرض الموقع على الخريطة
+                                </a>` : 
+                                'غير متوفر'
+                            )
+                        }
+                    </div>
+                </div>
+            </div>
+        `;
     });
     
     content.innerHTML = html;
@@ -11852,6 +11890,9 @@ async function previewPublicFile(filePath, fileName, fileType) {
 
 // تحميل الملفات تلقائياً عند تحميل الصفحة
 document.addEventListener('DOMContentLoaded', function() {
+    // تحميل تفاصيل المحلات من ملف Excel المستخرج
+    loadShopsDetails();
+    
     // تأخير تحميل الملفات قليلاً للسماح للصفحة بالتحميل الكامل
     setTimeout(() => {
         loadPublicFiles('all');

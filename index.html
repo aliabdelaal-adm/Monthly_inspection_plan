@@ -4748,8 +4748,8 @@ function showShopDetailsModal(rowIndex) {
         return;
     }
     
-    // تحقق من صلاحيات المطور
-    const hasDevAccess = checkDevAccess();
+    // تحقق من صلاحيات المطور - فقط المطور المسجل دخوله يمكنه رؤية أزرار التحرير
+    const hasDevAccess = isDev || window.isDev;
     const editControls = document.getElementById('shopEditControls');
     editControls.style.display = hasDevAccess ? 'block' : 'none';
     
@@ -4890,7 +4890,7 @@ function checkDevAccess() {
 
 // --- تبديل وضع التحرير ---
 function toggleShopEditMode() {
-    if (!checkDevAccess()) {
+    if (!isDev && !window.isDev) {
         alert('صلاحيات المطور مطلوبة للتحرير');
         return;
     }
@@ -4920,7 +4920,7 @@ function cancelShopEdit() {
 
 // --- حفظ تفاصيل المحل ---
 async function saveShopDetails() {
-    if (!checkDevAccess()) {
+    if (!isDev && !window.isDev) {
         showShopSaveStatus('صلاحيات المطور مطلوبة للحفظ', 'error');
         return;
     }

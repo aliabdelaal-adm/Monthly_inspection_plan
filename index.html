@@ -4785,6 +4785,26 @@ function showShopDetailsModal(rowIndex) {
     modal.style.display = 'flex';
 }
 
+// دالة مساعدة لتطبيع أسماء المحلات للمطابقة الأفضل
+function normalizeShopName(name) {
+    if (!name) return "";
+    let normalized = name;
+    // إزالة البادئات الشائعة
+    normalized = normalized.replace(/^محل\s+/g, '');
+    normalized = normalized.replace(/^صالون\s+/g, '');
+    normalized = normalized.replace(/^عيادة\s+/g, '');
+    normalized = normalized.replace(/^صيدلية\s+/g, '');
+    // تطبيع المسافات
+    normalized = normalized.replace(/\s+/g, ' ');
+    normalized = normalized.trim();
+    // تطبيع بعض الأحرف العربية
+    normalized = normalized.replace(/أ/g, 'ا');
+    normalized = normalized.replace(/إ/g, 'ا');
+    normalized = normalized.replace(/آ/g, 'ا');
+    normalized = normalized.replace(/ة/g, 'ه');
+    return normalized;
+}
+
 function renderShopDetails() {
     const content = document.getElementById('shopDetailsContent');
     let html = '';
@@ -4795,13 +4815,25 @@ function renderShopDetails() {
         let excelShopData = null;
         
         // البحث عن المحل في البيانات المستخرجة من Excel
-        // البحث بالاسم العربي الدقيق أو تشابه قريب
+        // 1. البحث بالاسم الدقيق
         if (shopsDetailsData && shopsDetailsData[shopName]) {
             excelShopData = shopsDetailsData[shopName];
-        } else {
-            // محاولة البحث بتشابه جزئي (في حالة اختلاف طفيف في الاسم)
+        } 
+        // 2. البحث بالاسم المطبّع (بدون محل/صالون/عيادة)
+        else {
+            const normalizedShopName = normalizeShopName(shopName);
+            
             for (const [key, value] of Object.entries(shopsDetailsData)) {
-                if (key.includes(shopName) || shopName.includes(key)) {
+                const normalizedExcelName = normalizeShopName(key);
+                
+                // مطابقة دقيقة بعد التطبيع
+                if (normalizedExcelName === normalizedShopName) {
+                    excelShopData = value;
+                    break;
+                }
+                // مطابقة جزئية (أحدهما يحتوي على الآخر)
+                else if (normalizedExcelName.includes(normalizedShopName) || 
+                         normalizedShopName.includes(normalizedExcelName)) {
                     excelShopData = value;
                     break;
                 }

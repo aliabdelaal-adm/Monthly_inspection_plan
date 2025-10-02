@@ -35,6 +35,47 @@ def create_inspection_key(entry):
     """Create a unique key for an inspection entry."""
     return f"{entry['inspector']}|{entry['day']}|{entry['shift']}|{entry['area']}"
 
+def validate_shop_duplicates(inspection_data):
+    """Validate that no shop is assigned to multiple inspectors on the same day.
+    
+    Returns:
+        tuple: (is_valid, duplicate_info_list)
+        - is_valid: True if no duplicates found, False otherwise
+        - duplicate_info_list: List of dictionaries with duplicate information
+    """
+    # Track shop assignments by day: {day: {shop: [inspector1, inspector2, ...]}}
+    day_shop_inspectors = {}
+    duplicates = []
+    
+    for entry in inspection_data:
+        day = entry.get('day')
+        inspector = entry.get('inspector')
+        shops = entry.get('shops', [])
+        
+        if not day or not inspector or not shops:
+            continue
+            
+        if day not in day_shop_inspectors:
+            day_shop_inspectors[day] = {}
+        
+        for shop in shops:
+            if shop not in day_shop_inspectors[day]:
+                day_shop_inspectors[day][shop] = []
+            day_shop_inspectors[day][shop].append(inspector)
+    
+    # Find duplicates
+    for day, shops_dict in day_shop_inspectors.items():
+        for shop, inspectors in shops_dict.items():
+            if len(inspectors) > 1:
+                duplicates.append({
+                    'day': day,
+                    'shop': shop,
+                    'inspectors': inspectors
+                })
+    
+    is_valid = len(duplicates) == 0
+    return is_valid, duplicates
+
 def merge_inspection_data(main_data, source_data):
     """Merge inspection data from source into main, avoiding duplicates."""
     main_inspections = main_data.get('inspectionData', [])
@@ -140,6 +181,34 @@ def main():
     # Merge inspection data
     merged_inspections, new_inspections = merge_inspection_data(main_data, source_data)
     merged_data['inspectionData'] = merged_inspections
+    
+    # Validate for duplicate shop assignments on the same day
+    print("🔍 Validating inspection data for duplicate shops...")
+    is_valid, duplicates = validate_shop_duplicates(merged_data['inspectionData'])
+    
+    if not is_valid:
+        print()
+        print("❌ خطأ: تم اكتشاف تكرار محلات لعدة مفتشين في نفس اليوم!")
+        print("❌ Error: Duplicate shop assignments detected for multiple inspectors on the same day!")
+        print()
+        print("🔔 تفاصيل التكرارات / Duplicate Details:")
+        print("=" * 80)
+        
+        for dup in duplicates:
+            print(f"\n📅 التاريخ / Date: {dup['day']}")
+            print(f"🏪 المحل / Shop: {dup['shop']}")
+            print(f"👥 المفتشين / Inspectors:")
+            for inspector in dup['inspectors']:
+                print(f"   - {inspector}")
+        
+        print()
+        print("=" * 80)
+        print("⚠️  يرجى تصحيح الخطة واختيار محلات مختلفة للمفتشين في نفس اليوم")
+        print("⚠️  Please correct the plan and choose different shops for inspectors on the same day")
+        print("❌ الدمج ملغى / Merge cancelled")
+        return False
+    
+    print("✅ Validation passed: No duplicate shops found")
     
     # Merge inspectors
     merged_inspectors, new_inspectors = merge_list_data(

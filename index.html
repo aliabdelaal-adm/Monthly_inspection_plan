@@ -3611,6 +3611,93 @@ async function loadPlanData() {
     return false;
 }
 
+/**
+ * Validate that no shop is assigned to multiple inspectors on the same day
+ * Returns: { isValid: boolean, duplicates: array }
+ */
+function validateShopDuplicates(inspectionDataToValidate) {
+    // Track shop assignments by day: {day: {shop: [inspector1, inspector2, ...]}}
+    const dayShopInspectors = {};
+    const duplicates = [];
+    
+    for (const entry of inspectionDataToValidate) {
+        const day = entry.day;
+        const inspector = entry.inspector;
+        const shops = entry.shops || [];
+        
+        if (!day || !inspector || shops.length === 0) {
+            continue;
+        }
+        
+        if (!dayShopInspectors[day]) {
+            dayShopInspectors[day] = {};
+        }
+        
+        for (const shop of shops) {
+            if (!dayShopInspectors[day][shop]) {
+                dayShopInspectors[day][shop] = [];
+            }
+            dayShopInspectors[day][shop].push(inspector);
+        }
+    }
+    
+    // Find duplicates
+    for (const [day, shopsDict] of Object.entries(dayShopInspectors)) {
+        for (const [shop, inspectors] of Object.entries(shopsDict)) {
+            if (inspectors.length > 1) {
+                duplicates.push({
+                    day: day,
+                    shop: shop,
+                    inspectors: inspectors
+                });
+            }
+        }
+    }
+    
+    return {
+        isValid: duplicates.length === 0,
+        duplicates: duplicates
+    };
+}
+
+/**
+ * Display duplicate shop validation error message
+ */
+function showDuplicateShopsError(duplicates) {
+    let errorMessage = '❌ خطأ: تم اكتشاف تكرار محلات لعدة مفتشين في نفس اليوم!\n';
+    errorMessage += '❌ Error: Duplicate shop assignments detected!\n\n';
+    errorMessage += `🔔 عدد التكرارات / Number of duplicates: ${duplicates.length}\n\n`;
+    errorMessage += '📋 تفاصيل التكرارات / Duplicate Details:\n';
+    errorMessage += '═══════════════════════════════════════════════════\n\n';
+    
+    duplicates.forEach((dup, index) => {
+        const formattedDate = new Date(dup.day).toLocaleDateString('ar-EG', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        
+        errorMessage += `${index + 1}. 📅 التاريخ / Date: ${formattedDate} (${dup.day})\n`;
+        errorMessage += `   🏪 المحل / Shop: ${dup.shop}\n`;
+        errorMessage += `   👥 المفتشين / Inspectors (${dup.inspectors.length}):\n`;
+        dup.inspectors.forEach(inspector => {
+            errorMessage += `      - ${inspector}\n`;
+        });
+        errorMessage += '\n';
+    });
+    
+    errorMessage += '═══════════════════════════════════════════════════\n';
+    errorMessage += '⚠️  توصيات / Recommendations:\n';
+    errorMessage += '   1. يرجى مراجعة الخطة وتعديل توزيع المحلات\n';
+    errorMessage += '   1. Please review the plan and modify shop assignments\n';
+    errorMessage += '   2. تأكد من أن كل محل مخصص لمفتش واحد فقط في اليوم الواحد\n';
+    errorMessage += '   2. Ensure each shop is assigned to only one inspector per day\n';
+    errorMessage += '   3. يمكن تخصيص نفس المحل لمفتشين مختلفين في أيام مختلفة\n';
+    errorMessage += '   3. The same shop can be assigned to different inspectors on different days\n';
+    
+    alert(errorMessage);
+}
+
 function saveInspectionData() {
     // Save to localStorage as backup
     localStorage.setItem('inspectionData', JSON.stringify(inspectionData));
@@ -4334,6 +4421,25 @@ document.getElementById("addEditForm").addEventListener("submit", function(e){
     }
     
     let newPlan = {inspector, day, shift, area, shops};
+    
+    // Create a temporary copy of inspectionData to validate
+    let tempInspectionData = [...inspectionData];
+    if(editingIdx==="") {
+        tempInspectionData.push(newPlan);
+    } else {
+        tempInspectionData[editingIdx] = newPlan;
+    }
+    
+    // Validate for duplicate shops on the same day
+    const validation = validateShopDuplicates(tempInspectionData);
+    
+    if (!validation.isValid) {
+        // Show detailed error message with duplicate information
+        showDuplicateShopsError(validation.duplicates);
+        return; // Prevent saving
+    }
+    
+    // If validation passed, save the data
     if(editingIdx==="") {
         inspectionData.push(newPlan);
     } else {
@@ -10812,7 +10918,20 @@ function applyGeneratedRotation() {
         return;
     }
     
-    // إضافة الخطة للبيانات الحالية
+    // Create a temporary copy of inspectionData with the new plan to validate
+    const tempInspectionData = [...inspectionData, ...generatedRotationPlan];
+    
+    // Validate for duplicate shops on the same day
+    const validation = validateShopDuplicates(tempInspectionData);
+    
+    if (!validation.isValid) {
+        // Show detailed error message with duplicate information
+        showDuplicateShopsError(validation.duplicates);
+        alert('❌ لا يمكن تطبيق الخطة بسبب وجود تكرارات!\nيرجى مراجعة الخطة أو حذف البيانات المتعارضة.');
+        return; // Prevent applying the plan
+    }
+    
+    // If validation passed, apply the plan
     generatedRotationPlan.forEach(item => {
         inspectionData.push(item);
     });

@@ -2945,6 +2945,9 @@ console.log('Smart distribution functions initialized');
             <button onclick="checkDeveloperAccess('shop-management', bulkEditShops)" style="background: #ffc107; color: #000; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
                 ✏️ تعديل مجمع
             </button>
+            <button onclick="checkDeveloperAccess('shop-management', saveShopsToGitHub)" style="background: #007bff; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                💾 حفظ التغييرات
+            </button>
             <button onclick="checkDeveloperAccess('shop-management', refreshShopsData)" style="background: #6f42c1; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
                 🔄 تحديث البيانات
             </button>
@@ -10436,6 +10439,14 @@ function deleteShop(index) {
             shopsData.splice(originalIndex, 1);
             refreshShopsDisplay();
             updateShopsStats();
+            
+            // عرض تذكير بالحفظ
+            const statusDiv = document.getElementById('shopsUpdateStatus');
+            statusDiv.style.display = 'block';
+            statusDiv.style.background = '#fff3cd';
+            statusDiv.style.color = '#856404';
+            statusDiv.innerHTML = '⚠️ تم حذف المحل محلياً. لا تنسَ حفظ التغييرات إلى GitHub!';
+            setTimeout(() => statusDiv.style.display = 'none', 5000);
         }
     }
 }
@@ -10453,7 +10464,244 @@ function refreshShopsData() {
 
 // تعديل مجمع للمحلات
 function bulkEditShops() {
-    alert('ميزة التعديل المجمع قيد التطوير');
+    // إنشاء مودال التعديل المجمع
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.style.display = 'flex';
+    modal.style.zIndex = '10001';
+    
+    const modalContent = `
+        <div class="modal-content" style="max-width: 95%; width: 1100px;">
+            <button class="close-btn" onclick="this.closest('.modal-overlay').remove()">×</button>
+            <div class="stats-title" style="background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%); color: #000; padding: 15px;">
+                ✏️ التعديل المجمع للمحلات
+            </div>
+            
+            <div style="padding: 20px;">
+                <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                    <h4 style="margin: 0 0 10px 0; color: #856404;">📝 تعليمات التعديل المجمع:</h4>
+                    <ul style="margin: 0; padding-right: 20px; color: #856404; line-height: 1.8;">
+                        <li>يمكنك تعديل أسماء المحلات مباشرة في الخلايا</li>
+                        <li>اختر المنطقة الجديدة من القائمة المنسدلة</li>
+                        <li>ضع علامة ✓ على المحلات التي تريد حذفها</li>
+                        <li>انقر "تطبيق التغييرات" عند الانتهاء</li>
+                        <li><strong>لا تنسَ حفظ التغييرات بعد التطبيق!</strong></li>
+                    </ul>
+                </div>
+                
+                <div style="max-height: 500px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 8px;">
+                    <table id="bulkEditTable" style="width: 100%; border-collapse: collapse;">
+                        <thead style="background: #ffc107; color: #000; position: sticky; top: 0; z-index: 10;">
+                            <tr>
+                                <th style="padding: 10px; text-align: center; border: 1px solid #e0a800;">حذف</th>
+                                <th style="padding: 10px; text-align: center; border: 1px solid #e0a800;">#</th>
+                                <th style="padding: 10px; text-align: center; border: 1px solid #e0a800;">اسم المحل</th>
+                                <th style="padding: 10px; text-align: center; border: 1px solid #e0a800;">المنطقة</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bulkEditTableBody">
+                            <!-- سيتم ملؤها بواسطة JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
+                    <button onclick="applyBulkEdits()" style="background: #28a745; color: #fff; border: none; padding: 12px 30px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1.1em;">
+                        ✅ تطبيق التغييرات
+                    </button>
+                    <button onclick="this.closest('.modal-overlay').remove()" style="background: #6c757d; color: #fff; border: none; padding: 12px 30px; border-radius: 6px; cursor: pointer;">
+                        إلغاء
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    modal.innerHTML = modalContent;
+    document.body.appendChild(modal);
+    
+    // ملء الجدول بالمحلات
+    const tbody = document.getElementById('bulkEditTableBody');
+    let html = '';
+    
+    shopsData.forEach((shop, index) => {
+        const areaName = getAreaName(shop.areaId) || 'غير محدد';
+        html += `
+            <tr style="border-bottom: 1px solid #dee2e6;">
+                <td style="padding: 8px; text-align: center;">
+                    <input type="checkbox" id="delete_${index}" style="width: 20px; height: 20px; cursor: pointer;">
+                </td>
+                <td style="padding: 8px; text-align: center;">${index + 1}</td>
+                <td style="padding: 8px;">
+                    <input type="text" id="name_${index}" value="${shop.name}" 
+                        style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-family: 'Cairo', Arial, sans-serif;">
+                </td>
+                <td style="padding: 8px;">
+                    <select id="area_${index}" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-family: 'Cairo', Arial, sans-serif;">
+                        ${areasData.map(area => `
+                            <option value="${area.id}" ${area.id === shop.areaId ? 'selected' : ''}>${area.name}</option>
+                        `).join('')}
+                    </select>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html;
+}
+
+// تطبيق التعديلات المجمعة
+function applyBulkEdits() {
+    if (!confirm('هل أنت متأكد من تطبيق جميع التعديلات؟')) {
+        return;
+    }
+    
+    let deletedCount = 0;
+    let updatedCount = 0;
+    
+    // المرور على المحلات من الأخير للأول لتجنب مشاكل الفهرسة عند الحذف
+    for (let i = shopsData.length - 1; i >= 0; i--) {
+        const deleteCheckbox = document.getElementById(`delete_${i}`);
+        
+        if (deleteCheckbox && deleteCheckbox.checked) {
+            // حذف المحل
+            shopsData.splice(i, 1);
+            deletedCount++;
+        } else {
+            // تحديث البيانات
+            const nameInput = document.getElementById(`name_${i}`);
+            const areaSelect = document.getElementById(`area_${i}`);
+            
+            if (nameInput && areaSelect) {
+                const newName = nameInput.value.trim();
+                const newAreaId = areaSelect.value;
+                
+                if (shopsData[i].name !== newName || shopsData[i].areaId !== newAreaId) {
+                    shopsData[i].name = newName;
+                    shopsData[i].areaId = newAreaId;
+                    updatedCount++;
+                }
+            }
+        }
+    }
+    
+    // إغلاق المودال
+    const modal = document.querySelector('.modal-overlay');
+    if (modal) modal.remove();
+    
+    // تحديث العرض
+    refreshShopsDisplay();
+    updateShopsStats();
+    
+    // عرض رسالة النجاح
+    const statusDiv = document.getElementById('shopsUpdateStatus');
+    statusDiv.style.display = 'block';
+    statusDiv.style.background = '#d4edda';
+    statusDiv.style.color = '#155724';
+    statusDiv.innerHTML = `✅ تم تطبيق التعديلات المجمعة بنجاح!<br>
+        ${updatedCount > 0 ? `تم تحديث ${updatedCount} محل` : ''}
+        ${deletedCount > 0 ? ` | تم حذف ${deletedCount} محل` : ''}
+        <br><strong>⚠️ لا تنسَ حفظ التغييرات إلى GitHub!</strong>`;
+    
+    setTimeout(() => statusDiv.style.display = 'none', 8000);
+}
+
+// حفظ بيانات المحلات إلى GitHub
+async function saveShopsToGitHub() {
+    const statusDiv = document.getElementById('shopsUpdateStatus');
+    statusDiv.style.display = 'block';
+    statusDiv.style.background = '#d1ecf1';
+    statusDiv.style.color = '#0c5460';
+    statusDiv.innerHTML = '⏳ جاري حفظ بيانات المحلات إلى GitHub...';
+    
+    try {
+        // التحقق من صلاحيات المطور
+        if (!isDev && !window.isDev) {
+            throw new Error('صلاحيات المطور مطلوبة للحفظ');
+        }
+        
+        const repo = "aliabdelaal-adm/Monthly_inspection_plan";
+        let token = localStorage.getItem("devToken");
+        
+        if (!token) {
+            const defaultToken = "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";
+            localStorage.setItem("devToken", defaultToken);
+            token = defaultToken;
+        }
+        
+        if (!token) {
+            showTokenPopup();
+            throw new Error('لا يوجد توكن GitHub');
+        }
+        
+        // جلب المحتوى الحالي لـ plan-data.json
+        statusDiv.innerHTML = '⏳ جاري قراءة البيانات الحالية...';
+        
+        const getResponse = await fetch(`https://api.github.com/repos/${repo}/contents/plan-data.json`, {
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        });
+        
+        if (!getResponse.ok) {
+            throw new Error(`فشل في قراءة plan-data.json: ${getResponse.status}`);
+        }
+        
+        const currentFile = await getResponse.json();
+        const sha = currentFile.sha;
+        
+        // تحضير البيانات الجديدة
+        const planData = {
+            inspectionData: inspectionData,
+            inspectors: inspectorsData,
+            areas: areasData,
+            shops: shopsData,
+            lastUpdate: new Date().toISOString(),
+            bellNotes: bellNotesData || []
+        };
+        
+        const jsonContent = JSON.stringify(planData, null, 2);
+        const base64Content = btoa(unescape(encodeURIComponent(jsonContent)));
+        
+        // رفع البيانات المحدثة
+        statusDiv.innerHTML = '⏳ جاري رفع التغييرات إلى GitHub...';
+        
+        const updateResponse = await fetch(`https://api.github.com/repos/${repo}/contents/plan-data.json`, {
+            method: "PUT",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                message: `تحديث بيانات المحلات - ${new Date().toLocaleString('ar-EG')}`,
+                content: base64Content,
+                sha: sha
+            })
+        });
+        
+        if (updateResponse.ok) {
+            statusDiv.style.background = '#d4edda';
+            statusDiv.style.color = '#155724';
+            statusDiv.innerHTML = `✅ تم حفظ بيانات المحلات بنجاح!<br>
+                عدد المحلات: ${shopsData.length}<br>
+                التاريخ: ${new Date().toLocaleString('ar-EG')}<br>
+                <strong>✨ جميع التغييرات محفوظة في GitHub</strong>`;
+            
+            setTimeout(() => statusDiv.style.display = 'none', 6000);
+        } else {
+            throw new Error(`فشل الحفظ: ${updateResponse.status}`);
+        }
+    } catch (error) {
+        console.error('خطأ في حفظ البيانات:', error);
+        statusDiv.style.background = '#f8d7da';
+        statusDiv.style.color = '#721c24';
+        statusDiv.innerHTML = `❌ فشل في حفظ البيانات!<br>
+            الخطأ: ${error.message}<br>
+            يرجى المحاولة مرة أخرى أو التحقق من التوكن`;
+        
+        setTimeout(() => statusDiv.style.display = 'none', 8000);
+    }
 }
 
 // معالجة نموذج إضافة/تعديل المحل
@@ -10489,6 +10737,14 @@ document.addEventListener('DOMContentLoaded', function() {
             closeEditShopModal();
             refreshShopsDisplay();
             updateShopsStats();
+            
+            // عرض تذكير بالحفظ
+            const statusDiv = document.getElementById('shopsUpdateStatus');
+            statusDiv.style.display = 'block';
+            statusDiv.style.background = '#fff3cd';
+            statusDiv.style.color = '#856404';
+            statusDiv.innerHTML = '⚠️ تم حفظ التغييرات محلياً. لا تنسَ حفظ التغييرات إلى GitHub!';
+            setTimeout(() => statusDiv.style.display = 'none', 5000);
         });
     }
 });

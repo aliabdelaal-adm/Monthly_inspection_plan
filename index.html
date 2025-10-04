@@ -2872,6 +2872,14 @@ console.log('Smart distribution functions initialized');
                     </div>
                 </div>
                 
+                <!-- قسم فلتر المنطقة -->
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                    <h4 style="margin: 0; color: #234085; font-size: 0.9em;">فلتر المنطقة</h4>
+                    <select id="shopsAreaFilter" onchange="applyShopsAreaFilter()" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #ccc; font-size: 0.85em; min-width: 150px;">
+                        <option value="">-- جميع المناطق --</option>
+                    </select>
+                </div>
+                
                 <!-- قسم التصنيف الذكي -->
                 <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
                     <h4 style="margin: 0; color: #234085; font-size: 0.9em;">التصنيف الذكي</h4>
@@ -9654,6 +9662,7 @@ function showShopsManagementModal() {
     const modalElement = document.getElementById('shopsManagementModal');
     modalElement.style.display = 'flex';
     modalElement.classList.add('nested-modal');
+    populateShopsAreaFilter(); // Populate area filter dropdown
     refreshShopsDisplay();
     updateShopsStats();
     updateShopsEditingStatus(); // Update the editing status banner
@@ -9712,10 +9721,27 @@ function refreshShopsDisplay() {
     renderShopsTable();
 }
 
+// ملء قائمة فلتر المناطق
+function populateShopsAreaFilter() {
+    const areaFilter = document.getElementById('shopsAreaFilter');
+    if (areaFilter) {
+        areaFilter.innerHTML = '<option value="">-- جميع المناطق --</option>';
+        areasData.forEach(area => {
+            areaFilter.innerHTML += `<option value="${area.id}">${area.name}</option>`;
+        });
+    }
+}
+
+// تطبيق فلتر المنطقة
+function applyShopsAreaFilter() {
+    applyShopsClassification();
+}
+
 // تطبيق التصنيف الذكي
 function applyShopsClassification() {
     const filterValue = document.getElementById('shopsClassificationFilter').value;
     const searchTerm = document.getElementById('shopsSearchInput').value.toLowerCase().trim();
+    const selectedAreaId = document.getElementById('shopsAreaFilter').value;
     
     // تطبيق البحث النصي أولاً
     if (searchTerm) {
@@ -9725,6 +9751,11 @@ function applyShopsClassification() {
         );
     } else {
         filteredShopsData = [...shopsData];
+    }
+    
+    // تطبيق فلتر المنطقة
+    if (selectedAreaId) {
+        filteredShopsData = filteredShopsData.filter(shop => shop.areaId === selectedAreaId);
     }
     
     // تطبيق التصنيف
@@ -9907,6 +9938,7 @@ function filterShopsList() {
 
 // مسح الفلاتر
 function clearShopsFilters() {
+    document.getElementById('shopsAreaFilter').value = '';
     document.getElementById('shopsClassificationFilter').value = '';
     document.getElementById('shopsSearchInput').value = '';
     refreshShopsDisplay();

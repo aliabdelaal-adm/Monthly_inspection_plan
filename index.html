@@ -2855,6 +2855,40 @@ console.log('Smart distribution functions initialized');
             </div>
         </div>
         
+        <!-- إضافة سريعة للمحلات -->
+        <div id="quickAddShopSection" style="background: linear-gradient(135deg, #e8f5e9 0%, #f1f8f4 100%); padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 2px solid #4caf50; display: none;">
+            <h4 style="margin: 0 0 12px 0; color: #2e7d32; font-size: 1.05em; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.3em;">⚡</span>
+                <span>إضافة محل جديد بسرعة (بدون فتح نافذة منفصلة)</span>
+            </h4>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;">
+                <div style="flex: 1; min-width: 200px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9em; color: #2e7d32;">
+                        <span style="color: #d32f2f;">*</span> اسم المحل:
+                    </label>
+                    <input type="text" id="quickAddShopName" placeholder="مثال: محل الطيور السعيدة" 
+                           style="width: 100%; padding: 8px 12px; border: 2px solid #81c784; border-radius: 6px; font-size: 0.95em; font-family: 'Cairo', Arial, sans-serif;"
+                           onkeypress="if(event.key==='Enter'){quickAddShop()}">
+                </div>
+                <div style="flex: 1; min-width: 180px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9em; color: #2e7d32;">
+                        <span style="color: #d32f2f;">*</span> المنطقة:
+                    </label>
+                    <select id="quickAddShopArea" style="width: 100%; padding: 8px 12px; border: 2px solid #81c784; border-radius: 6px; font-size: 0.95em; font-family: 'Cairo', Arial, sans-serif;">
+                        <option value="">-- اختر المنطقة --</option>
+                    </select>
+                </div>
+                <button onclick="quickAddShop()" style="background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%); color: #fff; border: none; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1em; box-shadow: 0 3px 6px rgba(76,175,80,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                    ➕ إضافة فوراً
+                </button>
+            </div>
+            <div style="margin-top: 10px; padding: 8px; background: #fff; border-radius: 6px; border-left: 4px solid #4caf50;">
+                <small style="color: #555; font-size: 0.85em;">
+                    💡 <strong>نصيحة:</strong> سيتم إضافة المحل مباشرة للقائمة بدون فتح نافذة أخرى. تأكد من عدم تكرار الاسم.
+                </small>
+            </div>
+        </div>
+
         <!-- شريط أدوات إدارة المحلات -->
         <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #dee2e6;">
             <div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; align-items: center;">
@@ -2887,9 +2921,9 @@ console.log('Smart distribution functions initialized');
                 
                 <!-- قسم البحث والفلتر -->
                 <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                    <h4 style="margin: 0; color: #234085; font-size: 0.9em;">البحث والفلتر</h4>
+                    <h4 style="margin: 0; color: #234085; font-size: 0.9em;">🔍 البحث في المحلات</h4>
                     <div style="display: flex; gap: 8px;">
-                        <input type="text" id="shopsSearchInput" placeholder="بحث في المحلات..." onkeyup="filterShopsList()" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #ccc; font-size: 0.85em; width: 150px;">
+                        <input type="text" id="shopsSearchInput" placeholder="ابحث عن محل..." onkeyup="filterShopsList()" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #ccc; font-size: 0.85em; width: 150px;">
                         <button onclick="clearShopsFilters()" style="background: #6c757d; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85em;">
                             🗑️ مسح
                         </button>
@@ -9657,6 +9691,23 @@ function showShopsManagementModal() {
     refreshShopsDisplay();
     updateShopsStats();
     updateShopsEditingStatus(); // Update the editing status banner
+    
+    // Show quick add section for developers only
+    const quickAddSection = document.getElementById('quickAddShopSection');
+    if (quickAddSection) {
+        quickAddSection.style.display = (isDev || window.isDev) ? 'block' : 'none';
+        
+        // Populate area dropdown for quick add
+        if (isDev || window.isDev) {
+            const areaSelect = document.getElementById('quickAddShopArea');
+            if (areaSelect) {
+                areaSelect.innerHTML = '<option value="">-- اختر المنطقة --</option>';
+                areasData.forEach(area => {
+                    areaSelect.innerHTML += `<option value="${area.id}">${area.name}</option>`;
+                });
+            }
+        }
+    }
 }
 
 // تحديث حالة التحرير في مودال المحلات
@@ -10398,7 +10449,80 @@ function exportShopsToPDF() {
     doc.save(`قائمة_المحلات_${new Date().toISOString().split('T')[0]}.pdf`);
 }
 
-// إضافة محل جديد
+// إضافة محل جديد بسرعة (بدون فتح مودال منفصل)
+function quickAddShop() {
+    const nameInput = document.getElementById('quickAddShopName');
+    const areaSelect = document.getElementById('quickAddShopArea');
+    
+    if (!nameInput || !areaSelect) {
+        console.error('Quick add elements not found');
+        return;
+    }
+    
+    const name = nameInput.value.trim();
+    const areaId = areaSelect.value;
+    
+    // التحقق من الحقول المطلوبة
+    if (!name) {
+        alert('⚠️ يرجى إدخال اسم المحل');
+        nameInput.focus();
+        return;
+    }
+    
+    if (!areaId) {
+        alert('⚠️ يرجى اختيار المنطقة');
+        areaSelect.focus();
+        return;
+    }
+    
+    // التحقق من عدم التكرار
+    const existingShop = shopsData.find(shop => shop.name.trim().toLowerCase() === name.toLowerCase());
+    if (existingShop) {
+        const areaName = getAreaName(existingShop.areaId) || 'غير محدد';
+        alert('⚠️ هذا المحل موجود بالفعل في القائمة!\n\n' +
+              '📋 اسم المحل: ' + existingShop.name + '\n' +
+              '📍 المنطقة: ' + areaName + '\n\n' +
+              '💡 يرجى استخدام اسم مختلف أو تعديل المحل الموجود.');
+        nameInput.focus();
+        nameInput.select();
+        return;
+    }
+    
+    // إضافة المحل الجديد
+    const newShop = {
+        id: `shop_${Date.now()}_${Math.random()}`,
+        name: name,
+        areaId: areaId
+    };
+    
+    shopsData.push(newShop);
+    
+    // مسح حقول الإدخال
+    nameInput.value = '';
+    areaSelect.value = '';
+    nameInput.focus();
+    
+    // تحديث العرض
+    refreshShopsDisplay();
+    updateShopsStats();
+    
+    // عرض رسالة نجاح
+    const statusDiv = document.getElementById('shopsUpdateStatus');
+    if (statusDiv) {
+        statusDiv.style.display = 'block';
+        statusDiv.style.background = '#d4edda';
+        statusDiv.style.color = '#155724';
+        statusDiv.style.border = '1px solid #c3e6cb';
+        statusDiv.innerHTML = '✅ تمت إضافة المحل "' + name + '" بنجاح! لا تنسَ حفظ التغييرات إلى GitHub.';
+        
+        // إخفاء الرسالة بعد 5 ثوان
+        setTimeout(() => {
+            statusDiv.style.display = 'none';
+        }, 5000);
+    }
+}
+
+// إضافة محل جديد (فتح مودال التعديل)
 function addNewShop() {
     document.getElementById('editShopModal').style.display = 'flex';
     document.getElementById('editShopForm').reset();
@@ -10721,7 +10845,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             if (index === '') {
-                // إضافة محل جديد
+                // إضافة محل جديد - التحقق من عدم التكرار
+                const existingShop = shopsData.find(shop => shop.name.trim() === name);
+                if (existingShop) {
+                    alert('⚠️ هذا المحل موجود بالفعل في القائمة!\n\nاسم المحل: ' + existingShop.name + '\nالمنطقة: ' + (getAreaName(existingShop.areaId) || 'غير محدد'));
+                    return;
+                }
+                
                 const newShop = {
                     id: `shop_${Date.now()}_${Math.random()}`,
                     name: name,
@@ -10729,7 +10859,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
                 shopsData.push(newShop);
             } else {
-                // تعديل محل موجود
+                // تعديل محل موجود - التحقق من عدم التكرار مع محلات أخرى
+                const existingShop = shopsData.find((shop, idx) => shop.name.trim() === name && idx !== parseInt(index));
+                if (existingShop) {
+                    alert('⚠️ هذا الاسم مستخدم بالفعل لمحل آخر في القائمة!\n\nاسم المحل: ' + existingShop.name + '\nالمنطقة: ' + (getAreaName(existingShop.areaId) || 'غير محدد'));
+                    return;
+                }
+                
                 shopsData[parseInt(index)].name = name;
                 shopsData[parseInt(index)].areaId = areaId;
             }

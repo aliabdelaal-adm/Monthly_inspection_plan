@@ -2314,7 +2314,7 @@
                         <option value="">اختر المنطقة</option>
                     </select>
                 </div>
-                <button onclick="addNewShop()" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: #fff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; white-space: nowrap; box-shadow: 0 2px 5px rgba(40,167,69,0.3);">
+                <button onclick="addNewShopQuick()" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: #fff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; white-space: nowrap; box-shadow: 0 2px 5px rgba(40,167,69,0.3);">
                     ➕ إضافة محل
                 </button>
             </div>
@@ -3414,47 +3414,7 @@ let allPlanData = {
  * @param {function} allowedAction - الوظيفة المراد تنفيذها للمطور
  * @returns {boolean} - true إذا كان المستخدم مطور، false إذا كان مفتش
  */
-function checkDeveloperAccess(featureName, allowedAction) {
-    if (isDev || window.isDev) {
-        // المطور لديه صلاحية الوصول الكامل
-        if (allowedAction && typeof allowedAction === 'function') {
-            allowedAction();
-        }
-        return true;
-    } else {
-        // المفتش - عرض فقط مع رسالة منع
-        showAccessDeniedMessage(featureName);
-        return false;
-    }
-}
-
-/**
- * إظهار رسالة منع الوصول للمفتشين
- * @param {string} featureName - اسم الميزة
- */
-function showAccessDeniedMessage(featureName) {
-    const messages = {
-        'smart-rotation': 'التدوير الذكي للمحلات',
-        'vacation-tracking': 'تتبع الإجازات والعطل الأسبوعية',
-        'shop-management': 'قائمة المحلات الخاضعة للرقابة والتفتيش'
-    };
-    
-    const feature = messages[featureName] || featureName;
-    
-    const message = `
-        🔒 عذراً، هذا الإجراء مخصص للمطور فقط
-        
-        الميزة: ${feature}
-        
-        • يمكنك عرض جميع البيانات والتقارير
-        • التعديل والحفظ مقتصر على المطور د. علي عبدالعال
-        • للحصول على صلاحيات التحرير، يرجى تسجيل الدخول كمطور
-        
-        شكراً لتفهمك 🙏
-    `;
-    
-    alert(message);
-}
+// Removed duplicate checkDeveloperAccess - using the more comprehensive version later in the file
 // بيانات افتراضية
 let defaultInspectionData = [
     { inspector: "هاجر", day: "2025-09-22", shift: "صباحية", area: "المصفح", shops: ["محل 1", "محل 2"] },
@@ -8725,7 +8685,7 @@ function addNewArea() {
     saveDataToJSON();
 }
 
-function addNewShop() {
+function addNewShopQuick() {
     const nameInput = document.getElementById('newShopName');
     const areaSelect = document.getElementById('newShopArea');
     const name = nameInput.value.trim();
@@ -8802,8 +8762,8 @@ function displayShopsList() {
             <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;border-bottom:1px solid #eee;">
                 <span>${shop.name} - ${areaName}</span>
                 <div style="display:flex;gap:4px;">
-                    <button onclick="checkDeveloperAccess('shop-management', () => editShop(${index}))" style="background:#6c757d;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">تعديل</button>
-                    <button onclick="checkDeveloperAccess('shop-management', () => deleteShop(${index}))" style="background:#dc3545;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">حذف</button>
+                    <button onclick="checkDeveloperAccess('shop-management', () => editShopSimple(${index}))" style="background:#6c757d;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">تعديل</button>
+                    <button onclick="checkDeveloperAccess('shop-management', () => deleteShopSimple(${index}))" style="background:#dc3545;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">حذف</button>
                 </div>
             </div>
         `;
@@ -8885,7 +8845,7 @@ function editArea(index) {
     saveDataToJSON();
 }
 
-function deleteShop(index) {
+function deleteShopSimple(index) {
     if (confirm('هل أنت متأكد من حذف هذا المحل؟')) {
         shopsData.splice(index, 1);
         fillShopsDropdowns();
@@ -8894,7 +8854,7 @@ function deleteShop(index) {
     }
 }
 
-function editShop(index) {
+function editShopSimple(index) {
     const shop = shopsData[index];
     const area = areasData.find(a => a.id === shop.areaId);
     

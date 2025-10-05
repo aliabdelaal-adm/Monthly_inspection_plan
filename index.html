@@ -3896,7 +3896,7 @@ function saveInspectionData() {
 }
 
 // Function to save data to external JSON file automatically (for synchronization)
-async function saveToExternalFileAutomatic(planData) {
+async function saveToExternalFileAutomatic(planData, silent = false) {
     try {
         const dataStr = JSON.stringify(planData, null, 2);
         
@@ -3929,32 +3929,39 @@ async function saveToExternalFileAutomatic(planData) {
                     await writable.write(dataStr);
                     await writable.close();
                     console.log('✅ Data automatically saved using existing file handle to local repository');
-                    showUpdateMessage('✅ تم حفظ الملف في الموقع المحدد على جهازك');
+                    if (!silent) {
+                        showUpdateMessage('✅ تم حفظ الملف في الموقع المحدد على جهازك');
+                    }
                     return true;
                 } else {
                     // First time - prompt user to select the file location
-                    const fileHandle = await window.showSaveFilePicker({
-                        suggestedName: 'plan-data.json',
-                        types: [{
-                            description: 'JSON files',
-                            accept: {'application/json': ['.json']},
-                        }],
-                    });
-                    
-                    // Store file handle for future automatic saves
-                    window.bellDataFileHandle = fileHandle;
-                    
-                    const writable = await fileHandle.createWritable();
-                    await writable.write(dataStr);
-                    await writable.close();
-                    console.log('✅ Data saved to selected location and handle stored for future automatic saves');
-                    showUpdateMessage('✅ تم حفظ الملف! سيتم الحفظ في نفس الموقع تلقائياً في المستقبل');
-                    return true;
+                    // Only show file picker if not in silent mode
+                    if (!silent) {
+                        const fileHandle = await window.showSaveFilePicker({
+                            suggestedName: 'plan-data.json',
+                            types: [{
+                                description: 'JSON files',
+                                accept: {'application/json': ['.json']},
+                            }],
+                        });
+                        
+                        // Store file handle for future automatic saves
+                        window.bellDataFileHandle = fileHandle;
+                        
+                        const writable = await fileHandle.createWritable();
+                        await writable.write(dataStr);
+                        await writable.close();
+                        console.log('✅ Data saved to selected location and handle stored for future automatic saves');
+                        showUpdateMessage('✅ تم حفظ الملف! سيتم الحفظ في نفس الموقع تلقائياً في المستقبل');
+                        return true;
+                    }
                 }
             } catch (err) {
                 if (err.name === 'AbortError') {
                     console.log('File save cancelled by user');
-                    showUpdateMessage('تم إلغاء عملية الحفظ - البيانات محفوظة في localStorage فقط');
+                    if (!silent) {
+                        showUpdateMessage('تم إلغاء عملية الحفظ - البيانات محفوظة في localStorage فقط');
+                    }
                     return false;
                 } else {
                     console.log('File System Access API error:', err);
@@ -3965,7 +3972,10 @@ async function saveToExternalFileAutomatic(planData) {
         // Method 3: Fallback - only save to localStorage, no auto-download
         // Auto-download has been removed to prevent unwanted downloads to Downloads/OneDrive folder
         console.log('⚠️ File System Access API not available - data saved to localStorage only');
-        showUpdateMessage('⚠️ البيانات محفوظة في المتصفح فقط - يرجى استخدام زر "تصدير البيانات" لحفظ الملف');
+        // Only show warning if not in silent mode
+        if (!silent) {
+            showUpdateMessage('⚠️ البيانات محفوظة في المتصفح فقط - يرجى استخدام زر "تصدير البيانات" لحفظ الملف');
+        }
         
         return false;
     } catch (error) {
@@ -8900,6 +8910,7 @@ function deleteInspector(index) {
 
 function editInspector(index) {
     const inspector = inspectorsData[index];
+    const oldName = inspector.name;
     const newName = prompt('تعديل اسم المفتش:', inspector.name);
     
     if (newName === null) return; // User cancelled
@@ -8924,6 +8935,9 @@ function editInspector(index) {
     fillInspectorsDropdowns();
     displayInspectorsList();
     saveDataToJSON();
+    
+    // Show success message
+    showUpdateMessage(`✅ تم تحديث المفتش من "${oldName}" إلى "${newNameTrimmed}" وحفظ البيانات بنجاح`);
 }
 
 function deleteArea(index) {
@@ -8937,6 +8951,7 @@ function deleteArea(index) {
 
 function editArea(index) {
     const area = areasData[index];
+    const oldName = area.name;
     const newName = prompt('تعديل اسم المنطقة:', area.name);
     
     if (newName === null) return; // User cancelled
@@ -8960,6 +8975,9 @@ function editArea(index) {
     fillAreasDropdowns();
     displayAreasList();
     saveDataToJSON();
+    
+    // Show success message
+    showUpdateMessage(`✅ تم تحديث المنطقة من "${oldName}" إلى "${newNameTrimmed}" وحفظ البيانات بنجاح`);
 }
 
 function deleteShopSimple(index) {
@@ -8974,6 +8992,8 @@ function deleteShopSimple(index) {
 function editShopSimple(index) {
     const shop = shopsData[index];
     const area = areasData.find(a => a.id === shop.areaId);
+    const oldName = shop.name;
+    const oldAreaName = area ? area.name : 'غير محدد';
     
     const newName = prompt('تعديل اسم المحل:', shop.name);
     if (newName === null) return; // User cancelled
@@ -9022,9 +9042,15 @@ function editShopSimple(index) {
     fillShopsDropdowns();
     displayShopsList();
     saveDataToJSON();
+    
+    // Show success message
+    const newAreaName = selectedArea ? selectedArea.name : 'غير محدد';
+    if (oldName !== newNameTrimmed || oldAreaName !== newAreaName) {
+        showUpdateMessage(`✅ تم تحديث المحل "${oldName}" (${oldAreaName}) إلى "${newNameTrimmed}" (${newAreaName}) وحفظ البيانات بنجاح`);
+    }
 }
 
-function saveDataToJSON() {
+function saveDataToJSON(silent = true) {
     // Save all data to localStorage as backup
     const allData = {
         inspectionData: inspectionData,
@@ -9038,7 +9064,8 @@ function saveDataToJSON() {
     
     // Always try to save to external file for bell notifications synchronization
     // This ensures that bell notifications are shared across all users via Git
-    saveToExternalFileAutomatic(allData);
+    // Pass silent parameter to avoid showing warning messages during routine operations
+    saveToExternalFileAutomatic(allData, silent);
     
     console.log('Data saved to localStorage and attempting external file save for synchronization');
 }

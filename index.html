@@ -4462,7 +4462,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
-document.getElementById("devLoginBtn").onclick = function() {
+document.getElementById("devLoginBtn").onclick = async function() {
     let pw = document.getElementById("devPassword").value.trim();
     if (pw === DEV_PASSWORD) {
         isDev = true;
@@ -4471,6 +4471,31 @@ document.getElementById("devLoginBtn").onclick = function() {
         if (!localStorage.getItem("devToken")) {
             const defaultToken = "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";
             localStorage.setItem("devToken", defaultToken);
+        }
+        
+        // التحقق من صلاحية التوكن
+        const token = localStorage.getItem("devToken");
+        if (token) {
+            try {
+                const testResponse = await fetch('https://api.github.com/repos/aliabdelaal-adm/Monthly_inspection_plan', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                if (!testResponse.ok && (testResponse.status === 401 || testResponse.status === 403)) {
+                    // Token is invalid
+                    alert('⚠️ تحذير: التوكن الحالي غير صالح أو منتهي الصلاحية!\n\n' +
+                          '🔑 لحفظ البيانات على GitHub، ستحتاج إلى:\n' +
+                          '1. الذهاب إلى صفحة الإعدادات (أيقونة الإعدادات)\n' +
+                          '2. إدخال توكن GitHub جديد\n' +
+                          '3. حفظ التوكن\n\n' +
+                          '💡 يمكنك الاستمرار في استخدام التطبيق، لكن لن تتمكن من حفظ التغييرات على GitHub حتى تحديث التوكن.');
+                }
+            } catch (e) {
+                console.log('لم يتم التحقق من التوكن:', e);
+            }
         }
         
         setLastUpdateDate();
@@ -5465,7 +5490,7 @@ async function saveDataToGitHub(data) {
             }
             
             if (getResponse.status === 401 || getResponse.status === 403) {
-                errorMsg += '\n\n🔑 التوكن غير صالح أو منتهي الصلاحية. يرجى تسجيل الخروج ثم تسجيل الدخول مرة أخرى بتوكن جديد.';
+                errorMsg += '\n\n🔑 التوكن غير صالح أو منتهي الصلاحية.\n\nللحل:\n1. اضغط على أيقونة الإعدادات ⚙️\n2. أدخل توكن GitHub جديد\n3. احفظ وحاول مرة أخرى';
             }
             
             window.lastSaveError = errorMsg;
@@ -5503,7 +5528,7 @@ async function saveDataToGitHub(data) {
             }
             
             if (updateResponse.status === 401 || updateResponse.status === 403) {
-                errorMsg += '\n\n🔑 التوكن غير صالح أو منتهي الصلاحية. يرجى تسجيل الخروج ثم تسجيل الدخول مرة أخرى بتوكن جديد.';
+                errorMsg += '\n\n🔑 التوكن غير صالح أو منتهي الصلاحية.\n\nللحل:\n1. اضغط على أيقونة الإعدادات ⚙️\n2. أدخل توكن GitHub جديد\n3. احفظ وحاول مرة أخرى';
             }
             
             window.lastSaveError = errorMsg;
@@ -10907,7 +10932,7 @@ async function saveShopsToGitHub() {
             }
             
             if (getResponse.status === 401 || getResponse.status === 403) {
-                errorMsg += '\n\n🔑 التوكن غير صالح أو منتهي الصلاحية.\nيرجى تسجيل الخروج ثم تسجيل الدخول مرة أخرى بتوكن جديد.';
+                errorMsg += '\n\n🔑 التوكن غير صالح أو منتهي الصلاحية.\n\nللحل:\n1. اضغط على أيقونة الإعدادات ⚙️\n2. أدخل توكن GitHub جديد\n3. احفظ وحاول مرة أخرى';
             }
             
             throw new Error(errorMsg);
@@ -10966,7 +10991,7 @@ async function saveShopsToGitHub() {
             }
             
             if (updateResponse.status === 401 || updateResponse.status === 403) {
-                errorMsg += '\n\n🔑 التوكن غير صالح أو منتهي الصلاحية.\nيرجى تسجيل الخروج ثم تسجيل الدخول مرة أخرى بتوكن جديد.';
+                errorMsg += '\n\n🔑 التوكن غير صالح أو منتهي الصلاحية.\n\nللحل:\n1. اضغط على أيقونة الإعدادات ⚙️\n2. أدخل توكن GitHub جديد\n3. احفظ وحاول مرة أخرى';
             }
             
             throw new Error(errorMsg);
@@ -10982,7 +11007,12 @@ async function saveShopsToGitHub() {
             ${errorMsg}<br><br>
             💡 يرجى المحاولة مرة أخرى`;
         
-        setTimeout(() => statusDiv.style.display = 'none', 12000);
+        // If it's a token error, offer to open token popup
+        if (error.message.includes('401') || error.message.includes('403') || error.message.includes('التوكن')) {
+            statusDiv.innerHTML += `<br><br><button onclick="showTokenPopup()" style="background: #007bff; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em;">🔑 تحديث التوكن الآن</button>`;
+        }
+        
+        setTimeout(() => statusDiv.style.display = 'none', 15000);
     }
 }
 

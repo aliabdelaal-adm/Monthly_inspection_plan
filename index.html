@@ -361,6 +361,206 @@
                         inset 0 1px 0 rgba(255, 255, 255, 0.3);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
+
+        /* Animated decorative icons around title */
+        .title-decorator {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .title-icon {
+            font-size: 1.8em;
+            display: inline-block;
+            animation: float 3s ease-in-out infinite;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
+        .title-icon.left {
+            animation: floatLeft 3s ease-in-out infinite;
+        }
+
+        .title-icon.right {
+            animation: floatRight 3s ease-in-out infinite;
+        }
+
+        @keyframes floatLeft {
+            0%, 100% { transform: translateY(0px) rotate(-5deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+        @keyframes floatRight {
+            0%, 100% { transform: translateY(0px) rotate(5deg); }
+            50% { transform: translateY(-10px) rotate(-5deg); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+
+        /* Sparkle effect */
+        .sparkle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #ffd700;
+            border-radius: 50%;
+            animation: sparkleAnim 2s ease-in-out infinite;
+            box-shadow: 0 0 10px #ffd700;
+        }
+
+        @keyframes sparkleAnim {
+            0%, 100% { 
+                opacity: 0;
+                transform: scale(0);
+            }
+            50% { 
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Floating particles background */
+        .floating-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: radial-gradient(circle, rgba(35,64,133,0.6) 0%, rgba(35,64,133,0) 70%);
+            border-radius: 50%;
+            animation: floatParticle 20s linear infinite;
+        }
+
+        @keyframes floatParticle {
+            0% {
+                transform: translateY(100vh) translateX(0) scale(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) translateX(100px) scale(1);
+                opacity: 0;
+            }
+        }
+
+        /* Pulsing status indicator */
+        .status-pulse {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: #28a745;
+            border-radius: 50%;
+            margin: 0 5px;
+            animation: pulse 2s ease-in-out infinite;
+            box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+            }
+        }
+
+        /* Animated corner decorations */
+        .corner-decoration {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            font-size: 1.5em;
+            animation: rotateCorner 4s linear infinite;
+            opacity: 0.6;
+        }
+
+        @keyframes rotateCorner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .corner-decoration.top-left {
+            top: 10px;
+            left: 10px;
+        }
+
+        .corner-decoration.top-right {
+            top: 10px;
+            right: 10px;
+        }
+
+        .corner-decoration.bottom-left {
+            bottom: 10px;
+            left: 10px;
+        }
+
+        .corner-decoration.bottom-right {
+            bottom: 10px;
+            right: 10px;
+        }
+
+        /* Smart icons with hover effects */
+        .smart-icon {
+            display: inline-block;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .smart-icon:hover {
+            transform: scale(1.2) rotate(10deg);
+            filter: brightness(1.2);
+        }
+
+        /* Breathing animation for live indicators */
+        .breathing-icon {
+            animation: breathe 3s ease-in-out infinite;
+        }
+
+        @keyframes breathe {
+            0%, 100% { 
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% { 
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+        }
+
+        /* Glowing effect */
+        .glow-effect {
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #ffd700, 0 0 20px #ffd700;
+            }
+            to {
+                text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #ffd700, 0 0 40px #ffd700;
+            }
+        }
         .login-section, .inspector-select-section {margin: 10px 0 18px 0; width: 100%; display:flex;justify-content:center;align-items:center;gap:10px;}
         select, input[type="text"], input[type="date"], input[type="password"] {padding:7px 16px;font-size:1em;border-radius:6px;border:1px solid #b6b6b6;min-width:130px;max-width:210px;}
         
@@ -1731,14 +1931,24 @@
             position: absolute;
             left: 0;
             top: 0;
-            background: #ffd700;
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 50%, #ffd700 100%);
             color: #1e3c72;
             padding: 12px 15px;
             font-weight: bold;
             font-size: 14px;
             z-index: 2;
             border-radius: 0 8px 8px 0;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+            box-shadow: 2px 0 5px rgba(0,0,0,0.2), 0 0 15px rgba(255,215,0,0.3);
+            animation: labelPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes labelPulse {
+            0%, 100% { 
+                box-shadow: 2px 0 5px rgba(0,0,0,0.2), 0 0 15px rgba(255,215,0,0.3);
+            }
+            50% { 
+                box-shadow: 2px 0 8px rgba(0,0,0,0.3), 0 0 25px rgba(255,215,0,0.5);
+            }
         }
 
         .news-ticker-content {
@@ -1756,7 +1966,7 @@
             line-height: 45px;
             padding-right: 50px;
             display: inline-block;
-            animation: scroll-ticker 150s linear infinite;
+            animation: scroll-ticker 220s linear infinite;
             text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
         }
 
@@ -1793,7 +2003,7 @@
             .news-ticker-text {
                 font-size: 14px;
                 line-height: 40px;
-                animation: scroll-ticker 120s linear infinite;
+                animation: scroll-ticker 180s linear infinite;
             }
         }
 
@@ -1814,7 +2024,7 @@
             .news-ticker-text {
                 font-size: 13px;
                 line-height: 35px;
-                animation: scroll-ticker 105s linear infinite;
+                animation: scroll-ticker 160s linear infinite;
             }
         }
         
@@ -1893,15 +2103,28 @@
     <hr class="horizontal-line">
     
     <!-- News Ticker for Bell Notifications -->
+    <!-- Floating particles background effect -->
+    <div class="floating-particles" id="floatingParticles"></div>
+
     <div class="news-ticker-container" id="newsTicker">
-        <div class="news-ticker-label">🔔 إشعارات</div>
+        <div class="news-ticker-label">🔔 إشعارات <span class="status-pulse"></span></div>
         <div class="news-ticker-content">
             <div class="news-ticker-text" id="newsTickerText"></div>
         </div>
     </div>
     
     <div class="title-bar">
-        <div class="main-title-box">خطة التفتيش الشهرية</div>
+        <div class="main-title-box">
+            <div class="corner-decoration top-left">✨</div>
+            <div class="corner-decoration top-right">⭐</div>
+            <div class="corner-decoration bottom-left">💫</div>
+            <div class="corner-decoration bottom-right">🌟</div>
+            <div class="title-decorator">
+                <span class="title-icon left smart-icon">📋</span>
+                <span class="glow-effect">خطة التفتيش الشهرية</span>
+                <span class="title-icon right smart-icon">✅</span>
+            </div>
+        </div>
     </div>
     <div class="login-section">
         <label for="loginRole">تسجيل الدخول:</label>
@@ -2065,9 +2288,9 @@
     <!-- System Services Management -->
     <div class="system-services-container" id="systemServicesContainer">
         <div class="system-services-header" onclick="toggleSystemServices()">
-            <span class="system-services-icon" id="systemServicesIcon">⚙️</span>
+            <span class="system-services-icon breathing-icon" id="systemServicesIcon">⚙️</span>
             <span>إدارة خدمات النظام</span>
-            <small style="margin-right: 10px; font-size: 0.8em; opacity: 0.9;">انقر للوصول لجميع الأدوات</small>
+            <small style="margin-right: 10px; font-size: 0.8em; opacity: 0.9;">انقر للوصول لجميع الأدوات <span class="status-pulse" style="vertical-align: middle;"></span></small>
         </div>
         <div class="system-services-content" id="systemServicesContent">
             <div class="services-grid">
@@ -12651,6 +12874,75 @@ if (typeof closeShopsManagementModal === 'undefined') {
         }
     }
 }
+
+// ===== Initialize floating particles effect =====
+function initFloatingParticles() {
+    const container = document.getElementById('floatingParticles');
+    if (!container) return;
+    
+    const particleCount = 15;
+    
+    for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        
+        // Random starting position
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 20 + 's';
+        particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+        
+        // Random size variation
+        const size = 3 + Math.random() * 5;
+        particle.style.width = size + 'px';
+        particle.style.height = size + 'px';
+        
+        container.appendChild(particle);
+    }
+}
+
+// Initialize particles on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initFloatingParticles();
+    
+    // Add sparkles to title
+    addSparkles();
+});
+
+// Add sparkle effects around the title
+function addSparkles() {
+    const titleBox = document.querySelector('.main-title-box');
+    if (!titleBox) return;
+    
+    setInterval(() => {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'sparkle';
+        
+        // Random position within title box
+        sparkle.style.left = Math.random() * 100 + '%';
+        sparkle.style.top = Math.random() * 100 + '%';
+        sparkle.style.animationDelay = '0s';
+        
+        titleBox.appendChild(sparkle);
+        
+        // Remove sparkle after animation
+        setTimeout(() => {
+            sparkle.remove();
+        }, 2000);
+    }, 3000); // Create new sparkle every 3 seconds
+}
+
+// Add smart icon animation on hover
+document.addEventListener('DOMContentLoaded', function() {
+    const smartIcons = document.querySelectorAll('.smart-icon');
+    smartIcons.forEach(icon => {
+        icon.addEventListener('mouseenter', function() {
+            this.style.animation = 'none';
+            setTimeout(() => {
+                this.style.animation = '';
+            }, 10);
+        });
+    });
+});
 
 </script>
 </body>

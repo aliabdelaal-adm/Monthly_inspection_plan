@@ -12065,6 +12065,11 @@ function displayPublicFiles(files, category) {
     container.innerHTML = html;
 }
 
+function escapeForAttribute(str) {
+    if (!str) return '';
+    return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+}
+
 function generateFileCard(file) {
     const fileSize = formatPublicFileSize(file.size);
     const uploadDate = new Date(file.uploadDate).toLocaleDateString('ar-EG');
@@ -12073,10 +12078,10 @@ function generateFileCard(file) {
     
     // أزرار المطور - التحرير والحذف
     const developerButtons = isDeveloper ? `
-        <button onclick="editFileFromMain('${file.id}', '${file.name.replace(/'/g, "\\'")}', '${file.description.replace(/'/g, "\\'")}', '${file.category}')" style="background: #ffc107; color: #333; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em; white-space: nowrap;">
+        <button onclick="editFileFromMain('${file.id}', '${escapeForAttribute(file.name)}', '${escapeForAttribute(file.description)}', '${file.category}')" style="background: #ffc107; color: #333; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em; white-space: nowrap;">
             ✏️ تحرير
         </button>
-        <button onclick="deleteFileFromMain('${file.id}', '${file.path}', '${file.name.replace(/'/g, "\\'")}', '${file.category}')" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em; white-space: nowrap;">
+        <button onclick="deleteFileFromMain('${file.id}', '${escapeForAttribute(file.path)}', '${escapeForAttribute(file.name)}', '${file.category}')" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em; white-space: nowrap;">
             🗑️ حذف
         </button>
     ` : '';
@@ -12220,7 +12225,7 @@ async function uploadFileFromMain() {
                 if (uploadRes.status === 201) {
                     // تحديث ملف files.json
                     await updateFilesRegistryFromMain(fileName, filePath, category, file.size, description, token);
-                    statusDiv.textContent = '✅ تم رفع الملف بنجاح!';
+                    statusDiv.textContent = '✅ تم رفع وحفظ الملف بنجاح!';
                     statusDiv.style.color = '#28a745';
                     
                     // إعادة تعيين النموذج
@@ -12373,16 +12378,22 @@ async function editFileFromMain(fileId, fileName, description, category) {
                 });
                 
                 if (updateRes.ok) {
-                    statusDiv.textContent = '✅ تم تحديث الملف بنجاح';
+                    statusDiv.textContent = '✅ تم تحديث وحفظ الملف بنجاح';
                     statusDiv.style.color = '#28a745';
                     
                     // تحديث قائمة الملفات
                     setTimeout(() => loadPublicFiles(category), 1000);
                 } else {
-                    statusDiv.textContent = '❌ خطأ في تحديث الملف';
+                    statusDiv.textContent = '❌ خطأ في حفظ التعديلات';
                     statusDiv.style.color = '#dc3545';
                 }
+            } else {
+                statusDiv.textContent = '❌ الملف غير موجود في السجل';
+                statusDiv.style.color = '#dc3545';
             }
+        } else {
+            statusDiv.textContent = '❌ خطأ في تحميل بيانات الملفات';
+            statusDiv.style.color = '#dc3545';
         }
     } catch (error) {
         statusDiv.textContent = '❌ خطأ: ' + error.message;
@@ -12439,7 +12450,7 @@ async function deleteFileFromMain(fileId, filePath, fileName, category) {
             if (deleteRes.ok) {
                 // تحديث ملف files.json
                 await removeFromFilesRegistryFromMain(fileId, token);
-                statusDiv.textContent = '✅ تم حذف الملف بنجاح';
+                statusDiv.textContent = '✅ تم حذف وحفظ التغييرات بنجاح';
                 statusDiv.style.color = '#28a745';
                 
                 // تحديث قائمة الملفات

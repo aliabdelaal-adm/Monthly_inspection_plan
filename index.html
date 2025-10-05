@@ -4472,7 +4472,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
-document.getElementById("devLoginBtn").onclick = function() {
+document.getElementById("devLoginBtn").onclick = async function() {
     let pw = document.getElementById("devPassword").value.trim();
     if (pw === DEV_PASSWORD) {
         isDev = true;
@@ -4481,6 +4481,31 @@ document.getElementById("devLoginBtn").onclick = function() {
         if (!localStorage.getItem("devToken")) {
             const defaultToken = "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";
             localStorage.setItem("devToken", defaultToken);
+        }
+        
+        // التحقق من صلاحية التوكن
+        const token = localStorage.getItem("devToken");
+        if (token) {
+            try {
+                const testResponse = await fetch('https://api.github.com/repos/aliabdelaal-adm/Monthly_inspection_plan', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                if (!testResponse.ok && (testResponse.status === 401 || testResponse.status === 403)) {
+                    // Token is invalid
+                    alert('⚠️ تحذير: التوكن الحالي غير صالح أو منتهي الصلاحية!\n\n' +
+                          '🔑 لحفظ البيانات على GitHub، ستحتاج إلى:\n' +
+                          '1. الذهاب إلى صفحة الإعدادات (أيقونة الإعدادات)\n' +
+                          '2. إدخال توكن GitHub جديد\n' +
+                          '3. حفظ التوكن\n\n' +
+                          '💡 يمكنك الاستمرار في استخدام التطبيق، لكن لن تتمكن من حفظ التغييرات على GitHub حتى تحديث التوكن.');
+                }
+            } catch (e) {
+                console.log('لم يتم التحقق من التوكن:', e);
+            }
         }
         
         setLastUpdateDate();
@@ -5426,7 +5451,10 @@ async function saveShopDetails() {
                 cancelShopEdit();
             }, 2000);
         } else {
-            showShopSaveStatus('❌ فشل في حفظ البيانات. تحقق من الاتصال والصلاحيات.', 'error');
+            // Use detailed error message if available
+            const errorDetails = window.lastSaveError || 'تحقق من الاتصال والصلاحيات';
+            const formattedError = errorDetails.replace(/\n/g, '<br>');
+            showShopSaveStatus(`❌ فشل في حفظ البيانات.<br><br>${formattedError}`, 'error');
         }
         
     } catch (error) {
@@ -5446,11 +5474,39 @@ function showShopSaveStatus(message, type) {
 // --- حفظ البيانات على GitHub ---
 async function saveDataToGitHub(data) {
     const token = localStorage.getItem("devToken");
-    if (!token) return false;
+    if (!token) {
+        window.lastSaveError = 'لا يوجد توكن GitHub. يرجى تسجيل الدخول كمطور أولاً.';
+        return false;
+    }
     
     try {
         // الحصول على SHA الحالي للملف
-        const getResponse = await fetch('https://api.github.com/repos/aliabdelaal-adm/Monthly_inspection_plan/contents/plan-data.json');
+        const getResponse = await fetch('https://api.github.com/repos/aliabdelaal-adm/Monthly_inspection_plan/contents/plan-data.json', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        if (!getResponse.ok) {
+            let errorMsg = `فشل في قراءة الملف: ${getResponse.status}`;
+            try {
+                const errorData = await getResponse.json();
+                if (errorData.message) {
+                    errorMsg += ` - ${errorData.message}`;
+                }
+            } catch (e) {
+                // Ignore
+            }
+            
+            if (getResponse.status === 401 || getResponse.status === 403) {
+                errorMsg += '\n\n🔑 التوكن غير صالح أو منتهي الصلاحية.\n\nللحل:\n1. اضغط على أيقونة الإعدادات ⚙️\n2. أدخل توكن GitHub جديد\n3. احفظ وحاول مرة أخرى';
+            }
+            
+            window.lastSaveError = errorMsg;
+            return false;
+        }
+        
         const fileData = await getResponse.json();
         
         // إنشاء المحتوى المُرمز
@@ -5470,9 +5526,30 @@ async function saveDataToGitHub(data) {
             })
         });
         
-        return updateResponse.ok;
+        if (!updateResponse.ok) {
+            let errorMsg = `فشل في حفظ الملف: ${updateResponse.status}`;
+            try {
+                const errorData = await updateResponse.json();
+                if (errorData.message) {
+                    errorMsg += ` - ${errorData.message}`;
+                }
+            } catch (e) {
+                // Ignore
+            }
+            
+            if (updateResponse.status === 401 || updateResponse.status === 403) {
+                errorMsg += '\n\n🔑 التوكن غير صالح أو منتهي الصلاحية.\n\nللحل:\n1. اضغط على أيقونة الإعدادات ⚙️\n2. أدخل توكن GitHub جديد\n3. احفظ وحاول مرة أخرى';
+            }
+            
+            window.lastSaveError = errorMsg;
+            return false;
+        }
+        
+        window.lastSaveError = null;
+        return true;
     } catch (error) {
-        console.error('خطأ في حفظ البiانات على GitHub:', error);
+        console.error('خطأ في حفظ البيانات على GitHub:', error);
+        window.lastSaveError = `خطأ في الاتصال: ${error.message}`;
         return false;
     }
 }
@@ -10871,7 +10948,21 @@ async function saveShopsToGitHub() {
         });
         
         if (!getResponse.ok) {
-            throw new Error(`فشل في قراءة plan-data.json: ${getResponse.status}`);
+            let errorMsg = `فشل في قراءة plan-data.json: ${getResponse.status}`;
+            try {
+                const errorData = await getResponse.json();
+                if (errorData.message) {
+                    errorMsg += ` - ${errorData.message}`;
+                }
+            } catch (e) {
+                // Ignore JSON parse errors
+            }
+            
+            if (getResponse.status === 401 || getResponse.status === 403) {
+                errorMsg += '\n\n🔑 التوكن غير صالح أو منتهي الصلاحية.\n\nللحل:\n1. اضغط على أيقونة الإعدادات ⚙️\n2. أدخل توكن GitHub جديد\n3. احفظ وحاول مرة أخرى';
+            }
+            
+            throw new Error(errorMsg);
         }
         
         const currentFile = await getResponse.json();
@@ -10916,17 +11007,39 @@ async function saveShopsToGitHub() {
             
             setTimeout(() => statusDiv.style.display = 'none', 6000);
         } else {
-            throw new Error(`فشل الحفظ: ${updateResponse.status}`);
+            let errorMsg = `فشل الحفظ: ${updateResponse.status}`;
+            try {
+                const errorData = await updateResponse.json();
+                if (errorData.message) {
+                    errorMsg += ` - ${errorData.message}`;
+                }
+            } catch (e) {
+                // Ignore JSON parse errors
+            }
+            
+            if (updateResponse.status === 401 || updateResponse.status === 403) {
+                errorMsg += '\n\n🔑 التوكن غير صالح أو منتهي الصلاحية.\n\nللحل:\n1. اضغط على أيقونة الإعدادات ⚙️\n2. أدخل توكن GitHub جديد\n3. احفظ وحاول مرة أخرى';
+            }
+            
+            throw new Error(errorMsg);
         }
     } catch (error) {
         console.error('خطأ في حفظ البيانات:', error);
         statusDiv.style.background = '#f8d7da';
         statusDiv.style.color = '#721c24';
-        statusDiv.innerHTML = `❌ فشل في حفظ البيانات!<br>
-            الخطأ: ${error.message}<br>
-            يرجى المحاولة مرة أخرى أو التحقق من التوكن`;
         
-        setTimeout(() => statusDiv.style.display = 'none', 8000);
+        // Format error message with line breaks
+        const errorMsg = error.message.replace(/\n/g, '<br>');
+        statusDiv.innerHTML = `❌ فشل في حفظ البيانات!<br><br>
+            ${errorMsg}<br><br>
+            💡 يرجى المحاولة مرة أخرى`;
+        
+        // If it's a token error, offer to open token popup
+        if (error.message.includes('401') || error.message.includes('403') || error.message.includes('التوكن')) {
+            statusDiv.innerHTML += `<br><br><button onclick="showTokenPopup()" style="background: #007bff; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em;">🔑 تحديث التوكن الآن</button>`;
+        }
+        
+        setTimeout(() => statusDiv.style.display = 'none', 15000);
     }
 }
 

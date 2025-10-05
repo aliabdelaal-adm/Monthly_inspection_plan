@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Date-Filtered Validation</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .pass { color: green; font-weight: bold; }
+        .fail { color: red; font-weight: bold; }
+        h2 { color: #333; }
+        pre { background: #f8f8f8; padding: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Date-Filtered Duplicate Validation</h1>
+    
+    <div id="results"></div>
+
+    <script>
+        // Copy the validation function from index.html
+        function validateShopDuplicates(inspectionDataToValidate, daysToCheck = null) {
+            // Track shop assignments by day: {day: {shop: [inspector1, inspector2, ...]}}
+            const dayShopInspectors = {};
+            const duplicates = [];
+            
+            for (const entry of inspectionDataToValidate) {
+                const day = entry.day;
+                const inspector = entry.inspector;
+                const shops = entry.shops || [];
+                
+                if (!day || !inspector || shops.length === 0) {
+                    continue;
+                }
+                
+                // If daysToCheck is specified, only process entries for those days
+                if (daysToCheck !== null && !daysToCheck.includes(day)) {
+                    continue;
+                }
+                
+                if (!dayShopInspectors[day]) {
+                    dayShopInspectors[day] = {};
+                }
+                
+                for (const shop of shops) {
+                    if (!dayShopInspectors[day][shop]) {
+                        dayShopInspectors[day][shop] = [];
+                    }
+                    dayShopInspectors[day][shop].push(inspector);
+                }
+            }
+            
+            // Find duplicates
+            for (const [day, shopsDict] of Object.entries(dayShopInspectors)) {
+                for (const [shop, inspectors] of Object.entries(shopsDict)) {
+                    if (inspectors.length > 1) {
+                        duplicates.push({
+                            day: day,
+                            shop: shop,
+                            inspectors: inspectors
+                        });
+                    }
+                }
+            }
+            
+            return {
+                isValid: duplicates.length === 0,
+                duplicates: duplicates
+            };
+        }
+
+        // Run tests
+        const resultsDiv = document.getElementById('results');
+        let testResults = [];
+
+        function runTest(testName, testData, daysToCheck, expectedValid, description) {
+            const result = validateShopDuplicates(testData, daysToCheck);
+            const passed = result.isValid === expectedValid;
+            
+            testResults.push({
+                name: testName,
+                passed: passed,
+                description: description,
+                expected: expectedValid ? 'Valid' : 'Invalid',
+                got: result.isValid ? 'Valid' : 'Invalid',
+                duplicates: result.duplicates
+            });
+        }
+
+        // Test 1: Historical duplicate should not block new day entry
+        console.log('Test 1: Historical duplicate should not block new day entry');
+        const test1Data = [
+            { inspector: 'د. علي', day: '2025-09-26', shops: ['محل 1'] },
+            { inspector: 'د. آمنه', day: '2025-09-26', shops: ['محل 1'] }, // Duplicate on old date
+            { inspector: 'د. حسين', day: '2025-10-15', shops: ['محل 2'] }  // New entry for different day
+        ];
+        runTest(
+            'Test 1',
+            test1Data,
+            ['2025-10-15'], // Only check the new day
+            true, // Should be valid (no duplicates on the checked day)
+            'Historical duplicate on 2025-09-26 should not affect validation for 2025-10-15'
+        );
+
+        // Test 2: Duplicate on the checked day should be caught
+        console.log('Test 2: Duplicate on the checked day should be caught');
+        const test2Data = [
+            { inspector: 'د. علي', day: '2025-09-26', shops: ['محل 1'] },
+            { inspector: 'د. آمنه', day: '2025-09-26', shops: ['محل 1'] }, // Old duplicate
+            { inspector: 'د. حسين', day: '2025-10-15', shops: ['محل 2'] },
+            { inspector: 'د. فاطمة', day: '2025-10-15', shops: ['محل 2'] } // New duplicate
+        ];
+        runTest(
+            'Test 2',
+            test2Data,
+            ['2025-10-15'], // Only check the new day
+            false, // Should be invalid (duplicate on the checked day)
+            'Duplicate on 2025-10-15 should be caught'
+        );
+
+        // Test 3: No filter - should catch all duplicates
+        console.log('Test 3: No filter - should catch all duplicates');
+        const test3Data = [
+            { inspector: 'د. علي', day: '2025-09-26', shops: ['محل 1'] },
+            { inspector: 'د. آمنه', day: '2025-09-26', shops: ['محل 1'] } // Duplicate
+        ];
+        runTest(
+            'Test 3',
+            test3Data,
+            null, // No filter, check all days
+            false, // Should be invalid
+            'When no filter is specified, all duplicates should be caught'
+        );
+
+        // Test 4: Multiple days with duplicates, but only checking one clean day
+        console.log('Test 4: Multiple days with duplicates, checking one clean day');
+        const test4Data = [
+            { inspector: 'د. علي', day: '2025-09-26', shops: ['محل 1'] },
+            { inspector: 'د. آمنه', day: '2025-09-26', shops: ['محل 1'] }, // Old duplicate
+            { inspector: 'د. حسين', day: '2025-10-15', shops: ['محل 2'] },
+            { inspector: 'د. فاطمة', day: '2025-10-15', shops: ['محل 3'] } // Different shops, no duplicate
+        ];
+        runTest(
+            'Test 4',
+            test4Data,
+            ['2025-10-15'], // Only check the new day
+            true, // Should be valid (no duplicates on the checked day)
+            'Old duplicates should not affect validation for new clean day'
+        );
+
+        // Test 5: Check multiple days, some with duplicates
+        console.log('Test 5: Check multiple days, some with duplicates');
+        const test5Data = [
+            { inspector: 'د. علي', day: '2025-10-15', shops: ['محل 1'] },
+            { inspector: 'د. آمنه', day: '2025-10-16', shops: ['محل 2'] },
+            { inspector: 'د. حسين', day: '2025-10-16', shops: ['محل 2'] } // Duplicate on day 2
+        ];
+        runTest(
+            'Test 5',
+            test5Data,
+            ['2025-10-15', '2025-10-16'], // Check both days
+            false, // Should be invalid (duplicate on 2025-10-16)
+            'Should catch duplicates when checking multiple days'
+        );
+
+        // Test 6: Same shop on different days (should be allowed)
+        console.log('Test 6: Same shop on different days');
+        const test6Data = [
+            { inspector: 'د. علي', day: '2025-10-15', shops: ['محل 1'] },
+            { inspector: 'د. آمنه', day: '2025-10-16', shops: ['محل 1'] } // Same shop, different day
+        ];
+        runTest(
+            'Test 6',
+            test6Data,
+            ['2025-10-15', '2025-10-16'], // Check both days
+            true, // Should be valid (different days)
+            'Same shop on different days should be allowed'
+        );
+
+        // Display results
+        let html = '';
+        let passCount = 0;
+        let failCount = 0;
+
+        testResults.forEach(test => {
+            if (test.passed) passCount++;
+            else failCount++;
+
+            html += `
+                <div class="test-section">
+                    <h2>${test.name}: <span class="${test.passed ? 'pass' : 'fail'}">${test.passed ? '✅ PASS' : '❌ FAIL'}</span></h2>
+                    <p><strong>Description:</strong> ${test.description}</p>
+                    <p><strong>Expected:</strong> ${test.expected}</p>
+                    <p><strong>Got:</strong> ${test.got}</p>
+                    ${test.duplicates.length > 0 ? `
+                        <p><strong>Duplicates found:</strong></p>
+                        <pre>${JSON.stringify(test.duplicates, null, 2)}</pre>
+                    ` : ''}
+                </div>
+            `;
+        });
+
+        html = `
+            <div class="test-section">
+                <h2>Test Summary</h2>
+                <p><span class="pass">✅ Passed: ${passCount}</span></p>
+                <p><span class="fail">❌ Failed: ${failCount}</span></p>
+            </div>
+        ` + html;
+
+        resultsDiv.innerHTML = html;
+
+        console.log(`\n${'='.repeat(60)}`);
+        console.log(`Test Summary: ${passCount} passed, ${failCount} failed`);
+        if (failCount === 0) {
+            console.log('✅ All tests passed!');
+        } else {
+            console.log('❌ Some tests failed!');
+        }
+    </script>
+</body>
+</html>

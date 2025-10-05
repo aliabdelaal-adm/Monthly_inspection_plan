@@ -3795,7 +3795,7 @@ async function loadPlanData() {
  * Validate that no shop is assigned to multiple inspectors on the same day
  * Returns: { isValid: boolean, duplicates: array }
  */
-function validateShopDuplicates(inspectionDataToValidate) {
+function validateShopDuplicates(inspectionDataToValidate, daysToCheck = null) {
     // Track shop assignments by day: {day: {shop: [inspector1, inspector2, ...]}}
     const dayShopInspectors = {};
     const duplicates = [];
@@ -3806,6 +3806,11 @@ function validateShopDuplicates(inspectionDataToValidate) {
         const shops = entry.shops || [];
         
         if (!day || !inspector || shops.length === 0) {
+            continue;
+        }
+        
+        // If daysToCheck is specified, only process entries for those days
+        if (daysToCheck !== null && !daysToCheck.includes(day)) {
             continue;
         }
         
@@ -4656,7 +4661,8 @@ document.getElementById("addEditForm").addEventListener("submit", function(e){
     }
     
     // Validate for duplicate shops on the same day
-    const validation = validateShopDuplicates(tempInspectionData);
+    // Only check for duplicates on the specific day being added/edited
+    const validation = validateShopDuplicates(tempInspectionData, [day]);
     
     if (!validation.isValid) {
         // Show detailed error message with duplicate information
@@ -11525,8 +11531,12 @@ function applyGeneratedRotation() {
     // Create a temporary copy of inspectionData with the new plan to validate
     const tempInspectionData = [...inspectionData, ...generatedRotationPlan];
     
+    // Get unique days from the generated plan
+    const daysInGeneratedPlan = [...new Set(generatedRotationPlan.map(item => item.day))];
+    
     // Validate for duplicate shops on the same day
-    const validation = validateShopDuplicates(tempInspectionData);
+    // Only check for duplicates on the days being added in the generated plan
+    const validation = validateShopDuplicates(tempInspectionData, daysInGeneratedPlan);
     
     if (!validation.isValid) {
         // Show detailed error message with duplicate information

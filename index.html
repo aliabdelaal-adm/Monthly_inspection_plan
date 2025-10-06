@@ -645,6 +645,198 @@
             margin-right: 15px;
             background: #fff;
         }
+        
+        /* Custom dropdown for form shops selection - Overflows container */
+        .custom-shops-dropdown {
+            position: relative;
+            width: 100%;
+        }
+        
+        .custom-shops-trigger {
+            width: 100%;
+            min-height: 48px;
+            padding: 10px 40px 10px 12px;
+            background: #f8f9fa;
+            border: 2px solid #007bff;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Cairo', Arial, sans-serif;
+            font-size: 1em;
+            text-align: right;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .custom-shops-trigger:hover {
+            background: #e3f2fd;
+            border-color: #0056b3;
+        }
+        
+        .custom-shops-trigger.active {
+            border-color: #0056b3;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+        
+        .custom-shops-trigger-text {
+            flex: 1;
+            color: #495057;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .custom-shops-trigger-text.placeholder {
+            color: #6c757d;
+        }
+        
+        .custom-shops-trigger-icon {
+            margin-left: 8px;
+            font-size: 0.8em;
+            transition: transform 0.2s ease;
+        }
+        
+        .custom-shops-trigger.active .custom-shops-trigger-icon {
+            transform: rotate(180deg);
+        }
+        
+        .custom-shops-dropdown-menu {
+            display: none;
+            position: fixed;
+            background: #ffffff;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            box-shadow: 0 8px 25px rgba(0, 123, 255, 0.2);
+            z-index: 10000;
+            max-height: 400px;
+            min-width: 350px;
+            max-width: 600px;
+            overflow-y: auto;
+            font-family: 'Cairo', Arial, sans-serif;
+        }
+        
+        .custom-shops-dropdown-menu.show {
+            display: block;
+        }
+        
+        .custom-shops-search {
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            background: #f8f9fa;
+        }
+        
+        .custom-shops-search input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-family: 'Cairo', Arial, sans-serif;
+            font-size: 0.9em;
+        }
+        
+        .custom-shops-group {
+            margin: 0;
+        }
+        
+        .custom-shops-group-label {
+            padding: 10px 15px;
+            background: #e8f4f8;
+            color: #234085;
+            font-weight: 700;
+            font-size: 0.95em;
+            border-bottom: 1px solid #d0e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        
+        .custom-shops-option {
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .custom-shops-option:hover {
+            background: #e3f2fd;
+        }
+        
+        .custom-shops-option.selected {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .custom-shops-option-text {
+            flex: 1;
+            word-wrap: break-word;
+            white-space: normal;
+        }
+        
+        .custom-shops-option-check {
+            margin-left: 10px;
+            font-size: 1.2em;
+            display: none;
+        }
+        
+        .custom-shops-option.selected .custom-shops-option-check {
+            display: inline;
+        }
+        
+        .custom-shops-dropdown-footer {
+            padding: 10px;
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            bottom: 0;
+            z-index: 1;
+        }
+        
+        .custom-shops-dropdown-footer button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Cairo', Arial, sans-serif;
+            font-size: 0.85em;
+            transition: all 0.2s ease;
+        }
+        
+        .custom-shops-select-all {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .custom-shops-select-all:hover {
+            background: #138496;
+        }
+        
+        .custom-shops-clear {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .custom-shops-clear:hover {
+            background: #5a6268;
+        }
+        
+        .custom-shops-close {
+            background: #28a745;
+            color: white;
+            padding: 6px 16px;
+        }
+        
+        .custom-shops-close:hover {
+            background: #218838;
+        }
+        
         .actions-row {
             width: 100%;
             display: flex;
@@ -2334,26 +2526,45 @@
                 <button type="button" id="toggleAreaInput" style="position:absolute;left:-30px;top:0;background:#007bff;color:#fff;border:none;padding:7px 8px;border-radius:4px;cursor:pointer;font-size:0.8em;">+</button>
             </div>
             
-            <!-- محلات مع اختيار متعدد - Enhanced -->
+            <!-- محلات مع اختيار متعدد - Custom Dropdown with Overflow -->
             <div style="position:relative;min-width:350px;max-width:600px;flex:1;">
                 <label style="display:block;margin-bottom:6px;font-weight:600;color:#234085;font-size:0.95em;">
                     🏪 اختر المحلات المطلوب تفتيشها:
                 </label>
                 <div style="position:relative;">
-                    <select id="formShops" multiple style="min-height:150px;width:100%;max-height:250px;overflow-y:auto;" required>
-                        <option value="">اختر المحلات</option>
+                    <div class="custom-shops-dropdown">
+                        <div class="custom-shops-trigger" id="customShopsTrigger">
+                            <span class="custom-shops-trigger-text placeholder" id="customShopsTriggerText">
+                                اختر المحلات
+                            </span>
+                            <span class="custom-shops-trigger-icon">▼</span>
+                        </div>
+                        <div class="custom-shops-dropdown-menu" id="customShopsDropdownMenu">
+                            <div class="custom-shops-search">
+                                <input type="text" id="customShopsSearch" placeholder="🔍 ابحث عن محل..." autocomplete="off">
+                            </div>
+                            <div id="customShopsContent" style="max-height: 300px; overflow-y: auto;">
+                                <!-- Shops will be populated here -->
+                            </div>
+                            <div class="custom-shops-dropdown-footer">
+                                <div>
+                                    <button type="button" class="custom-shops-select-all" onclick="customSelectAllShops()">اختر الكل</button>
+                                    <button type="button" class="custom-shops-clear" onclick="customClearShopsSelection()">مسح</button>
+                                </div>
+                                <button type="button" class="custom-shops-close" onclick="closeCustomShopsDropdown()">تم ✓</button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Hidden select for form submission -->
+                    <select id="formShops" multiple style="display:none;" required>
                     </select>
                     <button type="button" id="addNewShop" style="position:absolute;left:-35px;top:0;background:#28a745;color:#fff;border:none;padding:10px 12px;border-radius:6px;cursor:pointer;font-size:1em;box-shadow:0 2px 5px rgba(0,0,0,0.2);" title="إضافة محل جديد">
                         ➕
                     </button>
                 </div>
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
-                    <small style="color:#666;font-size:0.85em;">💡 اضغط Ctrl (⌘ في Mac) للاختيار المتعدد</small>
+                    <small style="color:#666;font-size:0.85em;">💡 انقر على المحلات للاختيار المتعدد</small>
                     <small id="selectedShopsCount" style="color:#007bff;font-weight:600;font-size:0.9em;">0 محل</small>
-                </div>
-                <div style="margin-top:4px;">
-                    <button type="button" onclick="selectAllShops()" style="background:#17a2b8;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:0.8em;margin-left:5px;">اختر الكل</button>
-                    <button type="button" onclick="clearShopsSelection()" style="background:#6c757d;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:0.8em;">مسح الاختيار</button>
                 </div>
             </div>
             
@@ -4463,10 +4674,19 @@ function fillAreasDropdowns() {
     }
 }
 
+// Store selected shops for custom dropdown
+let customSelectedShops = [];
+
 function fillShopsDropdowns(selectedAreaId = null) {
     const shopsSelect = document.getElementById('formShops');
+    const customShopsContent = document.getElementById('customShopsContent');
+    
     if (shopsSelect) {
         shopsSelect.innerHTML = '';
+    }
+    
+    if (customShopsContent) {
+        customShopsContent.innerHTML = '';
         
         // Get the selected area name if not provided
         let selectedAreaName = null;
@@ -4487,15 +4707,35 @@ function fillShopsDropdowns(selectedAreaId = null) {
             
             // Add selected area shops with a special label
             if (selectedAreaShops.length > 0) {
-                const selectedAreaGroup = document.createElement('optgroup');
-                selectedAreaGroup.label = `محلات ${selectedAreaName} (المنطقة المحددة)`;
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'custom-shops-group';
+                
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'custom-shops-group-label';
+                labelDiv.textContent = `محلات ${selectedAreaName} (المنطقة المحددة)`;
+                groupDiv.appendChild(labelDiv);
+                
                 selectedAreaShops.forEach(shop => {
-                    const option = document.createElement('option');
-                    option.value = shop.name;
-                    option.textContent = shop.name;
-                    selectedAreaGroup.appendChild(option);
+                    const optionDiv = document.createElement('div');
+                    optionDiv.className = 'custom-shops-option';
+                    optionDiv.dataset.value = shop.name;
+                    optionDiv.innerHTML = `
+                        <span class="custom-shops-option-text">${shop.name}</span>
+                        <span class="custom-shops-option-check">✓</span>
+                    `;
+                    optionDiv.onclick = () => toggleShopSelection(shop.name, optionDiv);
+                    groupDiv.appendChild(optionDiv);
+                    
+                    // Also add to hidden select
+                    if (shopsSelect) {
+                        const option = document.createElement('option');
+                        option.value = shop.name;
+                        option.textContent = shop.name;
+                        shopsSelect.appendChild(option);
+                    }
                 });
-                shopsSelect.appendChild(selectedAreaGroup);
+                
+                customShopsContent.appendChild(groupDiv);
             }
             
             // Then, add shops from other areas
@@ -4505,17 +4745,38 @@ function fillShopsDropdowns(selectedAreaId = null) {
             });
             
             if (otherAreaShops.length > 0) {
-                const otherAreasGroup = document.createElement('optgroup');
-                otherAreasGroup.label = 'محلات من مناطق أخرى (اختياري)';
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'custom-shops-group';
+                
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'custom-shops-group-label';
+                labelDiv.textContent = 'محلات من مناطق أخرى (اختياري)';
+                groupDiv.appendChild(labelDiv);
+                
                 otherAreaShops.forEach(shop => {
                     const area = areasData.find(a => a.id === shop.areaId);
                     const areaName = area ? area.name : 'غير محدد';
-                    const option = document.createElement('option');
-                    option.value = shop.name;
-                    option.textContent = `${shop.name} (${areaName})`;
-                    otherAreasGroup.appendChild(option);
+                    
+                    const optionDiv = document.createElement('div');
+                    optionDiv.className = 'custom-shops-option';
+                    optionDiv.dataset.value = shop.name;
+                    optionDiv.innerHTML = `
+                        <span class="custom-shops-option-text">${shop.name} (${areaName})</span>
+                        <span class="custom-shops-option-check">✓</span>
+                    `;
+                    optionDiv.onclick = () => toggleShopSelection(shop.name, optionDiv);
+                    groupDiv.appendChild(optionDiv);
+                    
+                    // Also add to hidden select
+                    if (shopsSelect) {
+                        const option = document.createElement('option');
+                        option.value = shop.name;
+                        option.textContent = `${shop.name} (${areaName})`;
+                        shopsSelect.appendChild(option);
+                    }
                 });
-                shopsSelect.appendChild(otherAreasGroup);
+                
+                customShopsContent.appendChild(groupDiv);
             }
         } else {
             // No area selected - show all shops grouped by area
@@ -4531,15 +4792,35 @@ function fillShopsDropdowns(selectedAreaId = null) {
             
             // Add each area group
             Object.keys(groupedShops).sort().forEach(areaName => {
-                const areaGroup = document.createElement('optgroup');
-                areaGroup.label = areaName;
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'custom-shops-group';
+                
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'custom-shops-group-label';
+                labelDiv.textContent = areaName;
+                groupDiv.appendChild(labelDiv);
+                
                 groupedShops[areaName].forEach(shop => {
-                    const option = document.createElement('option');
-                    option.value = shop.name;
-                    option.textContent = shop.name;
-                    areaGroup.appendChild(option);
+                    const optionDiv = document.createElement('div');
+                    optionDiv.className = 'custom-shops-option';
+                    optionDiv.dataset.value = shop.name;
+                    optionDiv.innerHTML = `
+                        <span class="custom-shops-option-text">${shop.name}</span>
+                        <span class="custom-shops-option-check">✓</span>
+                    `;
+                    optionDiv.onclick = () => toggleShopSelection(shop.name, optionDiv);
+                    groupDiv.appendChild(optionDiv);
+                    
+                    // Also add to hidden select
+                    if (shopsSelect) {
+                        const option = document.createElement('option');
+                        option.value = shop.name;
+                        option.textContent = shop.name;
+                        shopsSelect.appendChild(option);
+                    }
                 });
-                shopsSelect.appendChild(areaGroup);
+                
+                customShopsContent.appendChild(groupDiv);
             });
         }
     }
@@ -4548,39 +4829,191 @@ function fillShopsDropdowns(selectedAreaId = null) {
     updateSelectedShopsCount();
 }
 
+// Function to toggle shop selection in custom dropdown
+function toggleShopSelection(shopName, optionElement) {
+    const index = customSelectedShops.indexOf(shopName);
+    
+    if (index > -1) {
+        // Remove from selection
+        customSelectedShops.splice(index, 1);
+        optionElement.classList.remove('selected');
+    } else {
+        // Add to selection
+        customSelectedShops.push(shopName);
+        optionElement.classList.add('selected');
+    }
+    
+    // Update hidden select
+    syncCustomSelectionToHiddenSelect();
+    
+    // Update counter and trigger text
+    updateSelectedShopsCount();
+    updateCustomTriggerText();
+}
+
+// Sync custom dropdown selections to hidden select element
+function syncCustomSelectionToHiddenSelect() {
+    const shopsSelect = document.getElementById('formShops');
+    if (shopsSelect) {
+        // Clear all selections
+        Array.from(shopsSelect.options).forEach(opt => opt.selected = false);
+        
+        // Select the shops that are in customSelectedShops
+        Array.from(shopsSelect.options).forEach(opt => {
+            if (customSelectedShops.includes(opt.value)) {
+                opt.selected = true;
+            }
+        });
+    }
+}
+
+// Update the trigger button text
+function updateCustomTriggerText() {
+    const triggerText = document.getElementById('customShopsTriggerText');
+    if (triggerText) {
+        if (customSelectedShops.length === 0) {
+            triggerText.textContent = 'اختر المحلات';
+            triggerText.classList.add('placeholder');
+        } else if (customSelectedShops.length === 1) {
+            triggerText.textContent = customSelectedShops[0];
+            triggerText.classList.remove('placeholder');
+        } else {
+            triggerText.textContent = `${customSelectedShops.length} محل محدد`;
+            triggerText.classList.remove('placeholder');
+        }
+    }
+}
+
 // Function to update selected shops count
 function updateSelectedShopsCount() {
-    const shopsSelect = document.getElementById('formShops');
     const countDisplay = document.getElementById('selectedShopsCount');
-    if (shopsSelect && countDisplay) {
-        const selectedCount = Array.from(shopsSelect.selectedOptions).filter(opt => opt.value !== '').length;
+    if (countDisplay) {
+        const selectedCount = customSelectedShops.length;
         countDisplay.textContent = `${selectedCount} محل`;
         countDisplay.style.color = selectedCount > 0 ? '#28a745' : '#007bff';
     }
 }
 
-// Function to select all shops in the dropdown
-function selectAllShops() {
-    const shopsSelect = document.getElementById('formShops');
-    if (shopsSelect) {
-        for (let option of shopsSelect.options) {
-            if (option.value !== '') {
-                option.selected = true;
-            }
-        }
-        updateSelectedShopsCount();
+// Open/Close custom dropdown
+function toggleCustomShopsDropdown() {
+    const menu = document.getElementById('customShopsDropdownMenu');
+    const trigger = document.getElementById('customShopsTrigger');
+    
+    if (menu.classList.contains('show')) {
+        closeCustomShopsDropdown();
+    } else {
+        openCustomShopsDropdown();
     }
 }
 
-// Function to clear shops selection
-function clearShopsSelection() {
-    const shopsSelect = document.getElementById('formShops');
-    if (shopsSelect) {
-        for (let option of shopsSelect.options) {
-            option.selected = false;
+function openCustomShopsDropdown() {
+    const menu = document.getElementById('customShopsDropdownMenu');
+    const trigger = document.getElementById('customShopsTrigger');
+    
+    if (menu && trigger) {
+        // Position the menu
+        const rect = trigger.getBoundingClientRect();
+        menu.style.left = rect.left + 'px';
+        menu.style.top = (rect.bottom + 5) + 'px';
+        menu.style.width = Math.max(350, rect.width) + 'px';
+        
+        // Show menu
+        menu.classList.add('show');
+        trigger.classList.add('active');
+        
+        // Focus search
+        const searchInput = document.getElementById('customShopsSearch');
+        if (searchInput) {
+            setTimeout(() => searchInput.focus(), 100);
         }
-        updateSelectedShopsCount();
     }
+}
+
+function closeCustomShopsDropdown() {
+    const menu = document.getElementById('customShopsDropdownMenu');
+    const trigger = document.getElementById('customShopsTrigger');
+    
+    if (menu && trigger) {
+        menu.classList.remove('show');
+        trigger.classList.remove('active');
+        
+        // Clear search
+        const searchInput = document.getElementById('customShopsSearch');
+        if (searchInput) {
+            searchInput.value = '';
+            filterCustomShops('');
+        }
+    }
+}
+
+// Filter shops based on search
+function filterCustomShops(searchTerm) {
+    const options = document.querySelectorAll('.custom-shops-option');
+    const groups = document.querySelectorAll('.custom-shops-group');
+    const term = searchTerm.toLowerCase().trim();
+    
+    options.forEach(option => {
+        const text = option.dataset.value.toLowerCase();
+        if (text.includes(term)) {
+            option.style.display = 'flex';
+        } else {
+            option.style.display = 'none';
+        }
+    });
+    
+    // Hide groups that have no visible options
+    groups.forEach(group => {
+        const visibleOptions = group.querySelectorAll('.custom-shops-option[style*="display: flex"], .custom-shops-option:not([style*="display"])');
+        if (visibleOptions.length === 0) {
+            group.style.display = 'none';
+        } else {
+            group.style.display = 'block';
+        }
+    });
+}
+
+// Select all visible shops in custom dropdown
+function customSelectAllShops() {
+    const options = document.querySelectorAll('.custom-shops-option');
+    
+    options.forEach(option => {
+        // Only select visible options
+        if (option.style.display !== 'none') {
+            const shopName = option.dataset.value;
+            if (!customSelectedShops.includes(shopName)) {
+                customSelectedShops.push(shopName);
+                option.classList.add('selected');
+            }
+        }
+    });
+    
+    syncCustomSelectionToHiddenSelect();
+    updateSelectedShopsCount();
+    updateCustomTriggerText();
+}
+
+// Clear all shop selections
+function customClearShopsSelection() {
+    const options = document.querySelectorAll('.custom-shops-option');
+    
+    options.forEach(option => {
+        option.classList.remove('selected');
+    });
+    
+    customSelectedShops = [];
+    
+    syncCustomSelectionToHiddenSelect();
+    updateSelectedShopsCount();
+    updateCustomTriggerText();
+}
+
+// Legacy functions - redirect to custom dropdown functions
+function selectAllShops() {
+    customSelectAllShops();
+}
+
+function clearShopsSelection() {
+    customClearShopsSelection();
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -4595,11 +5028,42 @@ document.addEventListener('DOMContentLoaded', function() {
     fillAreasDropdowns();
     fillShopsDropdowns();
     
-    // Add event listener for shop selection changes to update counter
-    const formShops = document.getElementById('formShops');
-    if (formShops) {
-        formShops.addEventListener('change', updateSelectedShopsCount);
-        formShops.addEventListener('click', updateSelectedShopsCount);
+    // Add event listeners for custom shops dropdown
+    const customShopsTrigger = document.getElementById('customShopsTrigger');
+    if (customShopsTrigger) {
+        customShopsTrigger.addEventListener('click', toggleCustomShopsDropdown);
+    }
+    
+    // Search functionality
+    const customShopsSearch = document.getElementById('customShopsSearch');
+    if (customShopsSearch) {
+        customShopsSearch.addEventListener('input', (e) => {
+            filterCustomShops(e.target.value);
+        });
+        customShopsSearch.addEventListener('keydown', (e) => {
+            e.stopPropagation();
+        });
+    }
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        const menu = document.getElementById('customShopsDropdownMenu');
+        const trigger = document.getElementById('customShopsTrigger');
+        
+        if (menu && trigger && 
+            !menu.contains(e.target) && 
+            !trigger.contains(e.target) &&
+            menu.classList.contains('show')) {
+            closeCustomShopsDropdown();
+        }
+    });
+    
+    // Prevent dropdown menu clicks from closing it
+    const customShopsDropdownMenu = document.getElementById('customShopsDropdownMenu');
+    if (customShopsDropdownMenu) {
+        customShopsDropdownMenu.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
     }
     
     // Add event listeners for toggle buttons and management buttons
@@ -5186,12 +5650,31 @@ function editPlan(idx) {
     // Always show all shops regardless of area selection
     fillShopsDropdowns();
     
-    // Set selected shops in multi-select
-    const shopsSelect = document.getElementById("formShops");
+    // Set selected shops in custom dropdown and hidden select
     setTimeout(() => {
-        for (let option of shopsSelect.options) {
-            option.selected = plan.shops.includes(option.value);
-        }
+        // Clear current selections
+        customSelectedShops = [];
+        
+        // Set shops from plan
+        customSelectedShops = [...plan.shops];
+        
+        // Update visual state in custom dropdown
+        const options = document.querySelectorAll('.custom-shops-option');
+        options.forEach(option => {
+            const shopName = option.dataset.value;
+            if (customSelectedShops.includes(shopName)) {
+                option.classList.add('selected');
+            } else {
+                option.classList.remove('selected');
+            }
+        });
+        
+        // Sync to hidden select
+        syncCustomSelectionToHiddenSelect();
+        
+        // Update counter and trigger text
+        updateSelectedShopsCount();
+        updateCustomTriggerText();
     }, 100);
     
     document.getElementById("formEditingIndex").value = idx;
@@ -8155,6 +8638,9 @@ function resetFormToggles() {
     areaInput.style.display = 'none';
     areaInput.removeAttribute('required'); // Remove required from input
     areaInput.value = '';
+    
+    // Reset custom shops dropdown
+    customClearShopsSelection();
     
     // Update area-based shops
     fillShopsDropdowns();

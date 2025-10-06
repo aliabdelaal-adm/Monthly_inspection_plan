@@ -12957,30 +12957,6 @@ if (typeof closeShopsManagementModal === 'undefined') {
     const playBtn = document.getElementById('playSheikhZayedBtn');
     let hasPlayedOnce = false;
     
-    function playSheikhZayedAudio() {
-        if (audio) {
-            audio.play().catch(error => {
-                console.log('Audio playback prevented by browser:', error);
-            });
-        }
-    }
-    
-    // Play when clicking the button
-    if (playBtn) {
-        playBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            playSheikhZayedAudio();
-        });
-    }
-    
-    // Play on any click on the page (only once to avoid repetition)
-    document.body.addEventListener('click', function() {
-        if (!hasPlayedOnce) {
-            playSheikhZayedAudio();
-            hasPlayedOnce = true;
-        }
-    }, { once: true });
-    
     // Update button text when playing/paused
     if (audio) {
         audio.addEventListener('play', function() {
@@ -12994,21 +12970,31 @@ if (typeof closeShopsManagementModal === 'undefined') {
         audio.addEventListener('ended', function() {
             if (playBtn) playBtn.textContent = '▶️ تشغيل الرسالة';
         });
-        
-        // Toggle play/pause on button click
-        if (playBtn) {
-            playBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                if (audio.paused) {
-                    audio.play().catch(error => {
-                        console.log('Audio playback prevented:', error);
-                    });
-                } else {
-                    audio.pause();
-                }
-            });
-        }
     }
+    
+    // Toggle play/pause on button click
+    if (playBtn && audio) {
+        playBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (audio.paused) {
+                audio.play().catch(error => {
+                    console.log('Audio playback prevented:', error);
+                });
+            } else {
+                audio.pause();
+            }
+        });
+    }
+    
+    // Play on any click on the page (only once to avoid repetition)
+    document.body.addEventListener('click', function() {
+        if (!hasPlayedOnce && audio) {
+            audio.play().catch(error => {
+                console.log('Audio playback prevented by browser:', error);
+            });
+            hasPlayedOnce = true;
+        }
+    }, { once: true });
 })();
 
 // Auto-scroll functionality - Very slow continuous scrolling

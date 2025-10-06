@@ -4651,7 +4651,7 @@ function fillAreasDropdowns() {
     if (areaSelect) {
         areaSelect.innerHTML = '<option value="">اختر منطقة</option>';
         areasData.forEach(area => {
-            areaSelect.innerHTML += `<option value="${area.name}">${area.name}</option>`;
+            areaSelect.innerHTML += `<option value="${area.id}">${area.name}</option>`;
         });
     }
     
@@ -4688,21 +4688,27 @@ function fillShopsDropdowns(selectedAreaId = null) {
     if (customShopsContent) {
         customShopsContent.innerHTML = '';
         
-        // Get the selected area name if not provided
+        // Get the selected area ID and name
+        let selectedAreaIdValue = null;
         let selectedAreaName = null;
         if (!selectedAreaId) {
             const areaSelect = document.getElementById('formArea');
-            selectedAreaName = areaSelect ? areaSelect.value : null;
+            selectedAreaIdValue = areaSelect ? areaSelect.value : null;
+            // Find the area by ID to get its name
+            if (selectedAreaIdValue) {
+                const selectedArea = areasData.find(a => a.id === selectedAreaIdValue);
+                selectedAreaName = selectedArea ? selectedArea.name : null;
+            }
         } else {
+            selectedAreaIdValue = selectedAreaId;
             const selectedArea = areasData.find(a => a.id === selectedAreaId);
             selectedAreaName = selectedArea ? selectedArea.name : null;
         }
         
-        if (selectedAreaName) {
+        if (selectedAreaIdValue && selectedAreaName) {
             // First, add shops from the selected area
             const selectedAreaShops = shopsData.filter(shop => {
-                const area = areasData.find(a => a.id === shop.areaId);
-                return area && area.name === selectedAreaName;
+                return shop.areaId === selectedAreaIdValue;
             });
             
             // Add selected area shops with a special label
@@ -4740,8 +4746,7 @@ function fillShopsDropdowns(selectedAreaId = null) {
             
             // Then, add shops from other areas
             const otherAreaShops = shopsData.filter(shop => {
-                const area = areasData.find(a => a.id === shop.areaId);
-                return !area || area.name !== selectedAreaName;
+                return shop.areaId !== selectedAreaIdValue;
             });
             
             if (otherAreaShops.length > 0) {

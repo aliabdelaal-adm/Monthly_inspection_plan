@@ -13240,31 +13240,28 @@ if (typeof closeShopsManagementModal === 'undefined') {
     
     // Pause auto-scroll when user manually scrolls
     let userScrollTimeout;
-    window.addEventListener('wheel', function() {
-        if (scrollInterval) {
-            clearInterval(scrollInterval);
-        }
-        
-        // Resume auto-scroll after user stops scrolling for 5 seconds
-        clearTimeout(userScrollTimeout);
-        userScrollTimeout = setTimeout(function() {
-            currentPosition = window.pageYOffset;
-            startAutoScroll();
-        }, 5000);
-    }, { passive: true });
     
-    // Also pause on touch scroll for mobile
-    window.addEventListener('touchmove', function() {
+    function pauseAndResumeAutoScroll() {
         if (scrollInterval) {
             clearInterval(scrollInterval);
         }
         
+        // Resume auto-scroll after user stops interacting for 3 seconds
         clearTimeout(userScrollTimeout);
         userScrollTimeout = setTimeout(function() {
             currentPosition = window.pageYOffset;
             startAutoScroll();
-        }, 5000);
-    }, { passive: true });
+        }, 3000);
+    }
+    
+    // Pause on mouse wheel scroll
+    window.addEventListener('wheel', pauseAndResumeAutoScroll, { passive: true });
+    
+    // Pause on touch scroll for mobile
+    window.addEventListener('touchmove', pauseAndResumeAutoScroll, { passive: true });
+    
+    // Pause on any click anywhere on the screen
+    window.addEventListener('click', pauseAndResumeAutoScroll, { passive: true });
 })();
 
 </script>

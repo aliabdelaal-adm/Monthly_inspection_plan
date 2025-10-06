@@ -4268,6 +4268,10 @@ function validateShopDuplicates(inspectionDataToValidate, daysToCheck = null) {
     const dayShopInspectors = {};
     const duplicates = [];
     
+    // Date cutoff: Only apply validation from October 7, 2024 onwards
+    // بداية تطبيق القاعدة: من 7 أكتوبر 2024 فصاعداً
+    const VALIDATION_START_DATE = new Date('2024-10-07');
+    
     for (const entry of inspectionDataToValidate) {
         const day = entry.day;
         const inspector = entry.inspector;
@@ -4279,6 +4283,13 @@ function validateShopDuplicates(inspectionDataToValidate, daysToCheck = null) {
         
         // If daysToCheck is specified, only process entries for those days
         if (daysToCheck !== null && !daysToCheck.includes(day)) {
+            continue;
+        }
+        
+        // Skip validation for dates before October 7, 2024
+        // تخطي التحقق للتواريخ قبل 7 أكتوبر 2024
+        const entryDate = new Date(day);
+        if (entryDate < VALIDATION_START_DATE) {
             continue;
         }
         
@@ -4294,7 +4305,8 @@ function validateShopDuplicates(inspectionDataToValidate, daysToCheck = null) {
         }
     }
     
-    // Find duplicates
+    // Find duplicates (only for dates >= October 7, 2024)
+    // البحث عن التكرارات (فقط للتواريخ >= 7 أكتوبر 2024)
     for (const [day, shopsDict] of Object.entries(dayShopInspectors)) {
         for (const [shop, inspectors] of Object.entries(shopsDict)) {
             if (inspectors.length > 1) {
@@ -4319,6 +4331,8 @@ function validateShopDuplicates(inspectionDataToValidate, daysToCheck = null) {
 function showDuplicateShopsError(duplicates) {
     let errorMessage = '❌ خطأ: تم اكتشاف تكرار محلات لعدة مفتشين في نفس اليوم!\n';
     errorMessage += '❌ Error: Duplicate shop assignments detected!\n\n';
+    errorMessage += '📅 القاعدة: لا يُسمح بتكرار نفس المحل لأكثر من مفتش في نفس اليوم (بدءاً من 7 أكتوبر 2024)\n';
+    errorMessage += '📅 Policy: Same shop cannot be assigned to multiple inspectors on the same day (starting from October 7, 2024)\n\n';
     errorMessage += `🔔 عدد التكرارات / Number of duplicates: ${duplicates.length}\n\n`;
     errorMessage += '📋 تفاصيل التكرارات / Duplicate Details:\n';
     errorMessage += '═══════════════════════════════════════════════════\n\n';
@@ -4343,10 +4357,12 @@ function showDuplicateShopsError(duplicates) {
     errorMessage += '⚠️  توصيات / Recommendations:\n';
     errorMessage += '   1. يرجى مراجعة الخطة وتعديل توزيع المحلات\n';
     errorMessage += '   1. Please review the plan and modify shop assignments\n';
-    errorMessage += '   2. تأكد من أن كل محل مخصص لمفتش واحد فقط في اليوم الواحد\n';
-    errorMessage += '   2. Ensure each shop is assigned to only one inspector per day\n';
+    errorMessage += '   2. تأكد من أن كل محل مخصص لمفتش واحد فقط في اليوم الواحد (صباحاً أو مساءً)\n';
+    errorMessage += '   2. Ensure each shop is assigned to only one inspector per day (morning or evening)\n';
     errorMessage += '   3. يمكن تخصيص نفس المحل لمفتشين مختلفين في أيام مختلفة\n';
     errorMessage += '   3. The same shop can be assigned to different inspectors on different days\n';
+    errorMessage += '   4. القاعدة تطبق على جميع التفتيشات بدءاً من 7 أكتوبر 2024 فصاعداً\n';
+    errorMessage += '   4. Policy applies to all inspections starting from October 7, 2024 onwards\n';
     
     alert(errorMessage);
 }

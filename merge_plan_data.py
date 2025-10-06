@@ -38,14 +38,23 @@ def create_inspection_key(entry):
 def validate_shop_duplicates(inspection_data):
     """Validate that no shop is assigned to multiple inspectors on the same day.
     
+    Only applies validation to dates from October 7, 2024 onwards.
+    Dates before this cutoff are not subject to the duplicate validation rule.
+    
     Returns:
         tuple: (is_valid, duplicate_info_list)
         - is_valid: True if no duplicates found, False otherwise
         - duplicate_info_list: List of dictionaries with duplicate information
     """
+    from datetime import datetime
+    
     # Track shop assignments by day: {day: {shop: [inspector1, inspector2, ...]}}
     day_shop_inspectors = {}
     duplicates = []
+    
+    # Date cutoff: Only apply validation from October 7, 2024 onwards
+    # بداية تطبيق القاعدة: من 7 أكتوبر 2024 فصاعداً
+    VALIDATION_START_DATE = datetime(2024, 10, 7)
     
     for entry in inspection_data:
         day = entry.get('day')
@@ -53,6 +62,16 @@ def validate_shop_duplicates(inspection_data):
         shops = entry.get('shops', [])
         
         if not day or not inspector or not shops:
+            continue
+        
+        # Skip validation for dates before October 7, 2024
+        # تخطي التحقق للتواريخ قبل 7 أكتوبر 2024
+        try:
+            entry_date = datetime.strptime(day, '%Y-%m-%d')
+            if entry_date < VALIDATION_START_DATE:
+                continue
+        except ValueError:
+            # If date parsing fails, skip this entry
             continue
             
         if day not in day_shop_inspectors:
@@ -63,7 +82,8 @@ def validate_shop_duplicates(inspection_data):
                 day_shop_inspectors[day][shop] = []
             day_shop_inspectors[day][shop].append(inspector)
     
-    # Find duplicates
+    # Find duplicates (only for dates >= October 7, 2024)
+    # البحث عن التكرارات (فقط للتواريخ >= 7 أكتوبر 2024)
     for day, shops_dict in day_shop_inspectors.items():
         for shop, inspectors in shops_dict.items():
             if len(inspectors) > 1:

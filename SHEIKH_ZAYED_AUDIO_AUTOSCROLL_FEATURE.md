@@ -94,8 +94,8 @@ Two new features have been added to the Monthly Inspection Plan page:
 3. **التفاعل مع المستخدم / User Interaction:**
    - يتوقف عند استخدام عجلة الفأرة أو اللمس أو النقر في أي مكان
    - Pauses when using mouse wheel, touch, or clicking anywhere on the screen
-   - يستأنف بعد 3 ثواني من عدم النشاط
-   - Resumes after 3 seconds of inactivity
+   - يستأنف بعد 10 ثواني من عدم النشاط
+   - Resumes after 10 seconds of inactivity
 
 ### كيفية العمل / How It Works
 
@@ -171,7 +171,7 @@ if (currentPosition >= maxScroll) {
 - ✅ بدء التمرير التلقائي بعد تحميل الصفحة
 - ✅ الوصول للأسفل والعودة للأعلى
 - ✅ إيقاف التمرير عند التفاعل اليدوي (عجلة الفأرة، اللمس، أو النقر)
-- ✅ استئناف التمرير بعد 3 ثواني من عدم النشاط
+- ✅ استئناف التمرير بعد 10 ثواني من عدم النشاط
 - ✅ التوافق مع الموبايل (اللمس)
 
 ---

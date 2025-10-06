@@ -4,11 +4,11 @@
 
 ### بالعربية
 تم تحديث ميزة التمرير التلقائي بناءً على الطلب التالي:
-> "عايز عند الضغط علي اي مكان في شاشة العرض تتوقف خاصية الشاشة المتحركة لحين انتهاء البحث ولمس الشاشة لتعود للحركة من جديد بعد عدم اللمس لمدة 3 ثواني"
+> "اجعل فترة توقف الشاشة المتحركة اطول عن 3 ثواني لتصبح 10 ثواني عند النقر علي الشاشة او استخدام الماوس"
 
 ### English
 The auto-scroll feature has been updated based on the following request:
-> "I want when clicking anywhere on the display screen, the auto-scroll feature should stop until the search is finished and touching the screen, then it should resume after 3 seconds of no touch"
+> "Make the pause period of the auto-scroll longer than 3 seconds to become 10 seconds when clicking on the screen or using the mouse"
 
 ---
 
@@ -18,9 +18,9 @@ The auto-scroll feature has been updated based on the following request:
 - **قبل / Before:** التمرير يتوقف فقط عند استخدام عجلة الفأرة أو اللمس
 - **بعد / After:** التمرير يتوقف أيضاً عند النقر في أي مكان على الشاشة
 
-### 2. تقليل وقت الاستئناف / Reduced Resume Time
-- **قبل / Before:** يستأنف بعد 5 ثواني من عدم النشاط
-- **بعد / After:** يستأنف بعد 3 ثواني من عدم النشاط
+### 2. زيادة وقت الاستئناف / Increased Resume Time
+- **قبل / Before:** يستأنف بعد 3 ثواني من عدم النشاط
+- **بعد / After:** يستأنف بعد 10 ثواني من عدم النشاط
 
 ### 3. تحسين الكود / Code Improvement
 - **قبل / Before:** كود متكرر لكل حدث (wheel, touchmove)
@@ -38,12 +38,12 @@ function pauseAndResumeAutoScroll() {
         clearInterval(scrollInterval);
     }
     
-    // Resume auto-scroll after user stops interacting for 3 seconds
+    // Resume auto-scroll after user stops interacting for 10 seconds
     clearTimeout(userScrollTimeout);
     userScrollTimeout = setTimeout(function() {
         currentPosition = window.pageYOffset;
         startAutoScroll();
-    }, 3000); // Changed from 5000 to 3000
+    }, 10000); // Changed from 3000 to 10000
 }
 
 // Pause on mouse wheel scroll
@@ -52,7 +52,7 @@ window.addEventListener('wheel', pauseAndResumeAutoScroll, { passive: true });
 // Pause on touch scroll for mobile
 window.addEventListener('touchmove', pauseAndResumeAutoScroll, { passive: true });
 
-// Pause on any click anywhere on the screen (NEW!)
+// Pause on any click anywhere on the screen
 window.addEventListener('click', pauseAndResumeAutoScroll, { passive: true });
 ```
 
@@ -84,7 +84,7 @@ window.addEventListener('click', pauseAndResumeAutoScroll, { passive: true });
    - التمرير باللمس يوقف التمرير التلقائي
    
 4. ✅ **الاستئناف التلقائي**
-   - بعد 3 ثواني من عدم النشاط، يستأنف التمرير التلقائي
+   - بعد 10 ثواني من عدم النشاط، يستأنف التمرير التلقائي
 
 ### لقطات الشاشة / Screenshots
 
@@ -98,13 +98,13 @@ window.addEventListener('click', pauseAndResumeAutoScroll, { passive: true });
 
 ### بالعربية
 1. **تجربة مستخدم أفضل:** المستخدم يمكنه إيقاف التمرير بسهولة بمجرد النقر
-2. **استجابة أسرع:** 3 ثواني بدلاً من 5 ثواني للاستئناف
+2. **وقت كافٍ للقراءة:** 10 ثواني تعطي المستخدم وقتاً كافياً للقراءة والتفاعل
 3. **كود أنظف:** دالة واحدة بدلاً من تكرار الكود
 4. **أكثر مرونة:** يعمل مع جميع أنواع التفاعل (نقر، لمس، عجلة فأرة)
 
 ### English
 1. **Better User Experience:** User can easily pause scrolling with just a click
-2. **Faster Response:** 3 seconds instead of 5 seconds to resume
+2. **Sufficient Reading Time:** 10 seconds gives users enough time to read and interact
 3. **Cleaner Code:** Single function instead of code duplication
 4. **More Flexible:** Works with all interaction types (click, touch, wheel)
 

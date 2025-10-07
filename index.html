@@ -13671,7 +13671,7 @@ if (typeof closeShopsManagementModal === 'undefined') {
         });
     }
     
-    // Toggle play/pause on button click
+    // Toggle play/pause on button click ONLY
     if (playBtn && audio) {
         playBtn.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -13684,16 +13684,6 @@ if (typeof closeShopsManagementModal === 'undefined') {
             }
         });
     }
-    
-    // Play on any click on the page (only once to avoid repetition)
-    document.body.addEventListener('click', function() {
-        if (!hasPlayedOnce && audio) {
-            audio.play().catch(error => {
-                console.log('Audio playback prevented by browser:', error);
-            });
-            hasPlayedOnce = true;
-        }
-    }, { once: true });
 })();
 
 // Auto-scroll functionality - Very slow continuous scrolling
@@ -13769,6 +13759,9 @@ if (typeof closeShopsManagementModal === 'undefined') {
     
     // Pause on any click anywhere on the screen
     window.addEventListener('click', pauseAndResumeAutoScroll, { passive: true });
+    
+    // Pause on mouse movement
+    window.addEventListener('mousemove', pauseAndResumeAutoScroll, { passive: true });
 })();
 
 </script>

@@ -48,7 +48,7 @@ function showMaintenanceMode(issues = []) {
     
     // Play music automatically
     if (audio) {
-        audio.volume = 0.3; // 30% volume
+        audio.volume = 0.15; // 15% volume
         audio.play().catch(err => {
             // Fallback: play on first user interaction if blocked
             document.addEventListener('click', () => {
@@ -109,7 +109,7 @@ function hideMaintenanceMode() {
 
 ## 🔊 إعدادات الصوت
 
-- **مستوى الصوت:** 30% (0.3)
+- **مستوى الصوت:** 15% (0.15)
 - **التكرار:** نعم (loop)
 - **التشغيل التلقائي:** نعم
 - **الإيقاف التلقائي:** نعم

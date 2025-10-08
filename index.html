@@ -13698,6 +13698,7 @@ if (typeof closeShopsManagementModal === 'undefined') {
 (function() {
     let scrollInterval;
     let currentPosition = 0;
+    let isScrolling = false;
     
     function startAutoScroll() {
         // Calculate scroll speed for very slow movement
@@ -13714,6 +13715,8 @@ if (typeof closeShopsManagementModal === 'undefined') {
         const scrollSpeed = 100; // milliseconds per pixel movement
         const pixelsPerStep = 1;
         
+        isScrolling = true;
+        
         scrollInterval = setInterval(function() {
             currentPosition += pixelsPerStep;
             
@@ -13722,16 +13725,17 @@ if (typeof closeShopsManagementModal === 'undefined') {
             if (currentPosition >= maxScroll) {
                 // Reset to top and start over
                 currentPosition = 0;
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                window.scrollTo({ top: 0, behavior: 'instant' });
                 
                 // Wait a bit before starting again
                 clearInterval(scrollInterval);
+                isScrolling = false;
                 setTimeout(startAutoScroll, 2000);
                 return;
             }
             
-            // Scroll smoothly
-            window.scrollTo({ top: currentPosition, behavior: 'smooth' });
+            // Scroll without smooth behavior to avoid conflicts
+            window.scrollTo({ top: currentPosition, behavior: 'instant' });
         }, scrollSpeed);
     }
     
@@ -13749,6 +13753,7 @@ if (typeof closeShopsManagementModal === 'undefined') {
     function pauseAndResumeAutoScroll() {
         if (scrollInterval) {
             clearInterval(scrollInterval);
+            isScrolling = false;
         }
         
         // Resume auto-scroll after user stops interacting for 10 seconds
@@ -13767,9 +13772,6 @@ if (typeof closeShopsManagementModal === 'undefined') {
     
     // Pause on any click anywhere on the screen
     window.addEventListener('click', pauseAndResumeAutoScroll, { passive: true });
-    
-    // Pause on mouse movement
-    window.addEventListener('mousemove', pauseAndResumeAutoScroll, { passive: true });
 })();
 
 </script>

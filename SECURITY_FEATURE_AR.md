@@ -30,7 +30,7 @@ The system validates:
 
 ```javascript
 const EXPECTED_DATA_SIGNATURE = {
-    minInspectors: 20,  // الحد الأدنى للمفتشين (الفعلي: 23)
+    minInspectors: 5,   // الحد الأدنى للمفتشين (الفعلي: 9)
     minAreas: 35,       // الحد الأدنى للمناطق (الفعلي: 38)
     minShops: 140       // الحد الأدنى للمحلات (الفعلي: 149)
 };
@@ -116,7 +116,7 @@ A prominent red warning appears at the top of the page including:
 3. حدّث القيم:
    ```javascript
    const EXPECTED_DATA_SIGNATURE = {
-       minInspectors: 20,  // عدّل هنا
+       minInspectors: 5,   // عدّل هنا
        minAreas: 35,       // عدّل هنا
        minShops: 140       // عدّل هنا
    };
@@ -183,12 +183,12 @@ function validateDataIntegrity(data) {
 
 1. ⚠️ **لا تعطل النظام** - التحذيرات تظهر لكن الصفحة تستمر في العمل
 2. 🔒 **للمطورين فقط** - تحديث الحدود المتوقعة يتطلب صلاحيات مطور
-3. 📊 **البيانات الفعلية** - النظام يعمل مع البيانات الفعلية الحالية (23 مفتش، 38 منطقة، 149 محل)
+3. 📊 **البيانات الفعلية** - النظام يعمل مع البيانات الفعلية الحالية (9 مفتشين، 38 منطقة، 149 محل)
 4. 🔄 **التحديث التلقائي** - النظام يعمل تلقائياً بدون تدخل المستخدم
 
 1. ⚠️ **Don't Disable** - Warnings display but page continues to work
 2. 🔒 **Developers Only** - Updating thresholds requires developer access
-3. 📊 **Current Data** - System works with current actual data (23 inspectors, 38 areas, 149 shops)
+3. 📊 **Current Data** - System works with current actual data (9 inspectors, 38 areas, 149 shops)
 4. 🔄 **Auto-Update** - System works automatically without user intervention
 
 ---

@@ -33,7 +33,7 @@ A comprehensive data integrity validation system was added that automatically de
 
 ```javascript
 const EXPECTED_DATA_SIGNATURE = {
-    minInspectors: 20,  // الحد الأدنى: 20 مفتش (الفعلي: 23)
+    minInspectors: 5,   // الحد الأدنى: 5 مفتشين (الفعلي: 9)
     minAreas: 35,       // الحد الأدنى: 35 منطقة (الفعلي: 38)
     minShops: 140       // الحد الأدنى: 140 محل (الفعلي: 149)
 };
@@ -215,7 +215,7 @@ The system works automatically! No action needed.
 
 ```javascript
 const EXPECTED_DATA_SIGNATURE = {
-    minInspectors: 20,  // عدّل هنا
+    minInspectors: 5,   // عدّل هنا
     minAreas: 35,       // عدّل هنا
     minShops: 140       // عدّل هنا
 };

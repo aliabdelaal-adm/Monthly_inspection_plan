@@ -6,7 +6,7 @@ Test script for security feature
 
 def validate_data_integrity(data):
     """Validate data integrity - Python version for testing"""
-    MIN_INSPECTORS = 20
+    MIN_INSPECTORS = 5
     MIN_AREAS = 35
     MIN_SHOPS = 140
     
@@ -78,9 +78,9 @@ def run_tests():
         print(f"Issues detected: {', '.join(result3['issues'])}")
     
     # Test 4: Too few inspectors
-    print("\nTest 4: Too few inspectors (10 instead of 23)")
+    print("\nTest 4: Too few inspectors (3 instead of 9)")
     few_inspectors = valid_data.copy()
-    few_inspectors['inspectors'] = [{'name': f'Inspector {i}'} for i in range(10)]
+    few_inspectors['inspectors'] = [{'name': f'Inspector {i}'} for i in range(3)]
     result4 = validate_data_integrity(few_inspectors)
     print(f"Result: {'✅ PASS (correctly detected tampering)' if not result4['isValid'] else '❌ FAIL'}")
     if result4['issues']:

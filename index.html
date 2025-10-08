@@ -4220,8 +4220,8 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('click', playClickSound);
     });
     
-    // Check maintenance mode on page load
-    checkMaintenanceMode();
+    // Start periodic maintenance mode checker
+    startMaintenanceStatusChecker();
 });
 
 </script>
@@ -4829,41 +4829,186 @@ function closeMaintenance() {
     }
 }
 
-// Enable maintenance mode for all users (called by developer)
-function enableMaintenanceModeForAll() {
-    localStorage.setItem('systemMaintenanceMode', 'true');
+// Save maintenance status to GitHub (server-side storage)
+async function saveMaintenanceStatusToGitHub(isEnabled, messages = []) {
+    const repo = "aliabdelaal-adm/Monthly_inspection_plan";
+    let token = localStorage.getItem("devToken");
     
-    // Show overlay for current user if not developer
-    if (!isDev && !window.isDev) {
-        showMaintenanceMode(['النظام قيد الصيانة والتحديث']);
+    // Use default token if not set
+    if (!token && (isDev || window.isDev)) {
+        const defaultToken = "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";
+        token = defaultToken;
     }
     
-    alert('✅ تم تفعيل وضع الصيانة للجميع\nسيرى جميع المستخدمين رسالة التحديث ولن يتمكنوا من الوصول للنظام');
-    console.log('🛡️ Maintenance mode enabled for all users');
+    if (!token) {
+        console.error('❌ No GitHub token available');
+        return false;
+    }
+    
+    try {
+        const status = {
+            isMaintenanceMode: isEnabled,
+            lastUpdated: new Date().toISOString(),
+            updatedBy: "المطور",
+            messages: messages
+        };
+        
+        // Get current file SHA
+        const getResponse = await fetch(`https://api.github.com/repos/${repo}/contents/maintenance-status.json`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        let sha = null;
+        if (getResponse.ok) {
+            const fileData = await getResponse.json();
+            sha = fileData.sha;
+        }
+        
+        // Create or update the file
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(status, null, 2))));
+        const method = sha ? 'PUT' : 'PUT'; // PUT works for both create and update
+        const body = {
+            message: isEnabled ? 'تفعيل وضع الصيانة للجميع' : 'إلغاء وضع الصيانة للجميع',
+            content: content
+        };
+        
+        if (sha) {
+            body.sha = sha;
+        }
+        
+        const updateResponse = await fetch(`https://api.github.com/repos/${repo}/contents/maintenance-status.json`, {
+            method: method,
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(body)
+        });
+        
+        if (!updateResponse.ok) {
+            console.error('❌ Failed to save maintenance status to GitHub:', updateResponse.status);
+            return false;
+        }
+        
+        console.log('✅ Maintenance status saved to GitHub successfully');
+        return true;
+    } catch (error) {
+        console.error('❌ Error saving maintenance status to GitHub:', error);
+        return false;
+    }
+}
+
+// Load maintenance status from GitHub (server-side storage)
+async function loadMaintenanceStatusFromGitHub() {
+    try {
+        // Try to fetch from GitHub with cache busting
+        const response = await fetch(`https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/maintenance-status.json?t=${Date.now()}`);
+        
+        if (!response.ok) {
+            console.log('⚠️ Could not load maintenance status from GitHub');
+            return null;
+        }
+        
+        const status = await response.json();
+        console.log('📥 Loaded maintenance status from GitHub:', status);
+        return status;
+    } catch (error) {
+        console.error('❌ Error loading maintenance status from GitHub:', error);
+        return null;
+    }
+}
+
+// Enable maintenance mode for all users (called by developer)
+async function enableMaintenanceModeForAll() {
+    if (!isDev && !window.isDev) {
+        alert('❌ عذراً، هذه الميزة متاحة للمطور فقط');
+        return;
+    }
+    
+    // Save to GitHub first
+    const messages = ['جاري تحديث النظام', 'يقوم المطور بإجراء تعديلات', 'شكراً على الانتظار'];
+    const saved = await saveMaintenanceStatusToGitHub(true, messages);
+    
+    if (saved) {
+        // Also save to localStorage for immediate effect
+        localStorage.setItem('systemMaintenanceMode', 'true');
+        
+        alert('✅ تم تفعيل وضع الصيانة للجميع\nسيرى جميع المستخدمين رسالة التحديث على جميع الأجهزة ولن يتمكنوا من الوصول للنظام');
+        console.log('🛡️ Maintenance mode enabled for all users on all devices');
+    } else {
+        alert('⚠️ تم تفعيل وضع الصيانة محلياً فقط\nقد لا يظهر للمستخدمين على الأجهزة الأخرى');
+        localStorage.setItem('systemMaintenanceMode', 'true');
+    }
 }
 
 // Disable maintenance mode for all users (called by developer)
-function disableMaintenanceModeForAll() {
-    localStorage.removeItem('systemMaintenanceMode');
-    hideMaintenanceMode();
+async function disableMaintenanceModeForAll() {
+    if (!isDev && !window.isDev) {
+        alert('❌ عذراً، هذه الميزة متاحة للمطور فقط');
+        return;
+    }
     
-    alert('✅ تم إلغاء وضع الصيانة للجميع\nيمكن للجميع الآن الوصول للنظام');
-    console.log('✅ Maintenance mode disabled for all users');
+    // Save to GitHub first
+    const saved = await saveMaintenanceStatusToGitHub(false, []);
+    
+    if (saved) {
+        // Also remove from localStorage for immediate effect
+        localStorage.removeItem('systemMaintenanceMode');
+        hideMaintenanceMode();
+        
+        alert('✅ تم إلغاء وضع الصيانة للجميع\nيمكن للجميع الآن الوصول للنظام على جميع الأجهزة');
+        console.log('✅ Maintenance mode disabled for all users on all devices');
+    } else {
+        alert('⚠️ تم إلغاء وضع الصيانة محلياً فقط\nقد لا يتم إلغاؤه للمستخدمين على الأجهزة الأخرى');
+        localStorage.removeItem('systemMaintenanceMode');
+        hideMaintenanceMode();
+    }
 }
 
 // Check if system is in maintenance mode on page load
-function checkMaintenanceMode() {
-    const isMaintenanceMode = localStorage.getItem('systemMaintenanceMode') === 'true';
+async function checkMaintenanceMode() {
+    // First check GitHub for the global maintenance status
+    const githubStatus = await loadMaintenanceStatusFromGitHub();
     
-    if (isMaintenanceMode) {
+    if (githubStatus && githubStatus.isMaintenanceMode) {
+        // Sync with localStorage
+        localStorage.setItem('systemMaintenanceMode', 'true');
+        
         // If user is not a developer, show maintenance overlay
         if (!isDev && !window.isDev) {
-            console.log('⚠️ System is in maintenance mode - showing overlay for non-developer');
-            showMaintenanceMode(['جاري تحديث النظام', 'يقوم المطور بإجراء تعديلات', 'شكراً على الانتظار']);
+            console.log('⚠️ System is in maintenance mode (from GitHub) - showing overlay for non-developer');
+            const messages = githubStatus.messages && githubStatus.messages.length > 0 
+                ? githubStatus.messages 
+                : ['جاري تحديث النظام', 'يقوم المطور بإجراء تعديلات', 'شكراً على الانتظار'];
+            showMaintenanceMode(messages);
         } else {
-            console.log('⚠️ System is in maintenance mode - developer has access');
+            console.log('⚠️ System is in maintenance mode (from GitHub) - developer has access');
+        }
+    } else {
+        // If GitHub says no maintenance, remove from localStorage
+        const localMode = localStorage.getItem('systemMaintenanceMode') === 'true';
+        if (!githubStatus || !githubStatus.isMaintenanceMode) {
+            localStorage.removeItem('systemMaintenanceMode');
+            // If overlay was shown, hide it
+            if (localMode) {
+                hideMaintenanceMode();
+            }
         }
     }
+}
+
+// Periodically check maintenance status (every 10 seconds)
+function startMaintenanceStatusChecker() {
+    // Check immediately
+    checkMaintenanceMode();
+    
+    // Then check every 10 seconds
+    setInterval(async () => {
+        await checkMaintenanceMode();
+    }, 10000); // 10 seconds
 }
 
 function performDataValidation(data) {

@@ -77,7 +77,7 @@ function showMaintenanceMode(issues = []) {
     
     // Play audio automatically
     if (audio) {
-        audio.volume = 0.15;        // 15% volume - quiet background
+        audio.volume = 0.25;        // 25% volume - quiet background
         audio.currentTime = 0;     // Start from beginning
         
         audio.play().catch(err => {
@@ -138,7 +138,7 @@ function hideMaintenanceMode() {
 ### إعدادات الصوت | Audio Settings
 
 ```javascript
-Volume:    0.15 (15%)          // Very quiet, non-intrusive
+Volume:    0.25 (25%)          // Very quiet, non-intrusive
 Loop:      true               // Continuous playback
 Autoplay:  true               // Starts immediately
 Hidden:    style="display:none;" // No visual elements

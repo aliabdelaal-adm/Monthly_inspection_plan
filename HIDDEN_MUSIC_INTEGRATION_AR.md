@@ -48,7 +48,7 @@ function showMaintenanceMode(issues = []) {
     
     // Play music automatically
     if (audio) {
-        audio.volume = 0.15; // 15% volume
+        audio.volume = 0.25; // 25% volume
         audio.play().catch(err => {
             // Fallback: play on first user interaction if blocked
             document.addEventListener('click', () => {

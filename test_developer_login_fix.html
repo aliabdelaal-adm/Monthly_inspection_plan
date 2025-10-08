@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار إصلاح تسجيل دخول المطور - Developer Login Fix Test</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+        
+        .test-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .test-section h2 {
+            color: #234085;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .login-section {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: bold;
+        }
+        
+        select, input, button {
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 1em;
+            margin-bottom: 10px;
+        }
+        
+        select, input {
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        button {
+            background: #198754;
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 10px 20px;
+            margin-left: 5px;
+        }
+        
+        button:hover {
+            background: #157347;
+        }
+        
+        button.logout {
+            background: #d32f2f;
+        }
+        
+        button.logout:hover {
+            background: #b71c1c;
+        }
+        
+        button.test-btn {
+            background: #2196F3;
+            margin-top: 10px;
+        }
+        
+        button.test-btn:hover {
+            background: #1976D2;
+        }
+        
+        .status-box {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        
+        .status-box.success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+        
+        .status-box.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+        
+        .status-box.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 2px solid #bee5eb;
+        }
+        
+        .log-box {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-top: 15px;
+        }
+        
+        .test-steps {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .test-steps h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        
+        .test-steps ol {
+            margin-right: 20px;
+        }
+        
+        .test-steps li {
+            margin-bottom: 8px;
+            color: #856404;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 اختبار إصلاح تسجيل دخول المطور</h1>
+        <p class="subtitle">Developer Login Fix Test - Password: ali@1940</p>
+        
+        <!-- Test Instructions -->
+        <div class="test-steps">
+            <h3>📋 خطوات الاختبار - Test Steps:</h3>
+            <ol>
+                <li><strong>اختبار 1:</strong> قم بتسجيل الدخول بكلمة السر <code>ali@1940</code></li>
+                <li><strong>اختبار 2:</strong> اختر "المطور" من القائمة مرة أخرى - يجب أن تبقى مسجل دخول ✅</li>
+                <li><strong>اختبار 3:</strong> قم بتحديث الصفحة (F5) - يجب أن تبقى مسجل دخول ✅</li>
+                <li><strong>اختبار 4:</strong> اختر "مفتش" أو اختر فارغ - يجب تسجيل الخروج ✅</li>
+                <li><strong>اختبار 5:</strong> سجل دخول مرة أخرى ثم اضغط "إغلاق المطور" - يجب تسجيل الخروج ✅</li>
+            </ol>
+        </div>
+        
+        <!-- Login Section -->
+        <div class="test-section">
+            <h2>🔐 تسجيل الدخول - Login</h2>
+            <div class="login-section">
+                <label for="loginRole">تسجيل الدخول:</label>
+                <select id="loginRole">
+                    <option value="">-- اختر --</option>
+                    <option value="inspector">مفتش</option>
+                    <option value="developer">المطور</option>
+                </select>
+                <br>
+                <input type="password" id="devPassword" placeholder="كلمة سر المطور" style="display:none;">
+                <button id="devLoginBtn" style="display:none;">دخول المطور</button>
+                <button id="devLogoutBtn" class="logout" style="display:none;">إغلاق المطور</button>
+                <div id="devError" style="color:#d32f2f;margin-top:10px;"></div>
+            </div>
+        </div>
+        
+        <!-- Status Display -->
+        <div class="test-section">
+            <h2>📊 الحالة الحالية - Current Status</h2>
+            <div id="statusDisplay" class="status-box info">
+                غير مسجل دخول - Not logged in
+            </div>
+            <div id="devSection" style="display:none;">
+                <div class="status-box success">
+                    ✅ أنت مسجل دخول كمطور - You are logged in as developer
+                </div>
+            </div>
+        </div>
+        
+        <!-- Test Controls -->
+        <div class="test-section">
+            <h2>🧪 اختبارات سريعة - Quick Tests</h2>
+            <div class="controls">
+                <button class="test-btn" onclick="testReload()">🔄 اختبار إعادة التحميل</button>
+                <button class="test-btn" onclick="testDropdownSwitch()">🔀 اختبار تبديل القائمة</button>
+                <button class="test-btn" onclick="checkLocalStorage()">💾 فحص LocalStorage</button>
+                <button class="test-btn" onclick="clearLog()">🗑️ مسح السجل</button>
+            </div>
+        </div>
+        
+        <!-- Log Display -->
+        <div class="test-section">
+            <h2>📝 سجل الاختبار - Test Log</h2>
+            <div id="logBox" class="log-box"></div>
+        </div>
+    </div>
+    
+    <script>
+        const DEV_PASSWORD = "ali@1940";
+        let isDev = localStorage.getItem('isDevLoggedIn') === 'true';
+        
+        function log(message) {
+            const logBox = document.getElementById('logBox');
+            const timestamp = new Date().toLocaleTimeString('ar-EG');
+            logBox.textContent += `[${timestamp}] ${message}\n`;
+            logBox.scrollTop = logBox.scrollHeight;
+            console.log(message);
+        }
+        
+        function updateStatus() {
+            const statusDisplay = document.getElementById('statusDisplay');
+            const devSection = document.getElementById('devSection');
+            
+            if (isDev) {
+                statusDisplay.className = 'status-box success';
+                statusDisplay.textContent = '✅ مسجل دخول كمطور - Logged in as developer';
+                devSection.style.display = 'block';
+            } else {
+                statusDisplay.className = 'status-box info';
+                statusDisplay.textContent = '❌ غير مسجل دخول - Not logged in';
+                devSection.style.display = 'none';
+            }
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🚀 تم تحميل الصفحة - Page loaded');
+            
+            // Restore session if exists
+            if (isDev) {
+                log('✅ تم استعادة جلسة المطور من localStorage');
+                document.getElementById('devSection').style.display = 'block';
+                document.getElementById('devLogoutBtn').style.display = 'inline-block';
+                document.getElementById('loginRole').value = 'developer';
+                updateStatus();
+            } else {
+                log('ℹ️ لا توجد جلسة محفوظة');
+            }
+            
+            // Login role change handler
+            document.getElementById("loginRole").addEventListener("change", function() {
+                let role = this.value;
+                document.getElementById("devError").innerText = "";
+                log(`🔄 تغيير الدور إلى: ${role || 'فارغ'}`);
+                
+                if(role === "developer") {
+                    // Check if developer is already logged in
+                    const isAlreadyLoggedIn = isDev || localStorage.getItem('isDevLoggedIn') === 'true';
+                    
+                    if (isAlreadyLoggedIn) {
+                        // Developer is already logged in, just show the UI
+                        log('✅ المطور مسجل دخول بالفعل - الحفاظ على الجلسة');
+                        document.getElementById("devSection").style.display = "block";
+                        document.getElementById("devLogoutBtn").style.display = "inline-block";
+                        document.getElementById("devPassword").style.display = "none";
+                        document.getElementById("devLoginBtn").style.display = "none";
+                        updateStatus();
+                    } else {
+                        // Show login form for new login
+                        log('ℹ️ عرض نموذج تسجيل الدخول');
+                        document.getElementById("devPassword").style.display = "inline-block";
+                        document.getElementById("devLoginBtn").style.display = "inline-block";
+                        document.getElementById("devLogoutBtn").style.display = "none";
+                        document.getElementById("devSection").style.display = "none";
+                    }
+                } else {
+                    // Switching to inspector or empty selection
+                    if (role === "inspector" || role === "") {
+                        const wasLoggedIn = isDev || localStorage.getItem('isDevLoggedIn') === 'true';
+                        if (wasLoggedIn) {
+                            log('🚪 تسجيل خروج المطور - التبديل إلى مفتش/فارغ');
+                        }
+                        isDev = false;
+                        localStorage.removeItem('isDevLoggedIn');
+                    }
+                    
+                    document.getElementById("devPassword").style.display = "none";
+                    document.getElementById("devLoginBtn").style.display = "none";
+                    document.getElementById("devLogoutBtn").style.display = "none";
+                    document.getElementById("devSection").style.display = "none";
+                    updateStatus();
+                }
+            });
+            
+            // Login button handler
+            document.getElementById("devLoginBtn").onclick = function() {
+                let pw = document.getElementById("devPassword").value.trim();
+                if (pw === DEV_PASSWORD) {
+                    isDev = true;
+                    localStorage.setItem('isDevLoggedIn', 'true');
+                    log('✅ تم تسجيل الدخول بنجاح - Login successful');
+                    
+                    document.getElementById("devSection").style.display = "block";
+                    document.getElementById("devLogoutBtn").style.display = "inline-block";
+                    document.getElementById("devPassword").style.display = "none";
+                    document.getElementById("devLoginBtn").style.display = "none";
+                    document.getElementById("devError").innerText = "";
+                    updateStatus();
+                } else {
+                    document.getElementById("devError").innerText = "كلمة السر غير صحيحة!";
+                    log('❌ كلمة سر خاطئة - Wrong password');
+                }
+            };
+            
+            // Logout button handler
+            document.getElementById("devLogoutBtn").onclick = function() {
+                isDev = false;
+                localStorage.removeItem('isDevLoggedIn');
+                log('🚪 تم تسجيل الخروج - Logged out');
+                
+                document.getElementById("devSection").style.display = "none";
+                document.getElementById("devLogoutBtn").style.display = "none";
+                document.getElementById("devPassword").style.display = "none";
+                document.getElementById("devLoginBtn").style.display = "none";
+                document.getElementById("loginRole").value = "";
+                document.getElementById("devError").innerText = "";
+                updateStatus();
+            };
+        });
+        
+        // Test functions
+        function testReload() {
+            log('🔄 اختبار إعادة التحميل...');
+            if (isDev) {
+                log('✅ الجلسة محفوظة - سيتم استعادتها بعد التحميل');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                log('⚠️ لا توجد جلسة للاختبار - قم بتسجيل الدخول أولاً');
+            }
+        }
+        
+        function testDropdownSwitch() {
+            log('🔀 اختبار تبديل القائمة...');
+            const dropdown = document.getElementById('loginRole');
+            if (dropdown.value === 'developer') {
+                log('ℹ️ تبديل إلى فارغ ثم العودة للمطور');
+                dropdown.value = '';
+                dropdown.dispatchEvent(new Event('change'));
+                setTimeout(() => {
+                    dropdown.value = 'developer';
+                    dropdown.dispatchEvent(new Event('change'));
+                }, 1000);
+            } else {
+                log('ℹ️ تبديل إلى المطور');
+                dropdown.value = 'developer';
+                dropdown.dispatchEvent(new Event('change'));
+            }
+        }
+        
+        function checkLocalStorage() {
+            const stored = localStorage.getItem('isDevLoggedIn');
+            log(`💾 LocalStorage: isDevLoggedIn = ${stored}`);
+            log(`💾 متغير isDev = ${isDev}`);
+        }
+        
+        function clearLog() {
+            document.getElementById('logBox').textContent = '';
+            log('🗑️ تم مسح السجل');
+        }
+    </script>
+</body>
+</html>

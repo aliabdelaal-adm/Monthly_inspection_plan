@@ -5539,9 +5539,15 @@ function renderPlanTable() {
          currentSearchFilters.area || currentSearchFilters.shift);
     
     if (!hasActiveSearchFilters) {
-        // عرض تفتيشات اليوم الحالي فقط (بالتوقيت المحلي)
         const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format in local timezone
-        rows = rows.filter(item => item.day === today);
+        
+        if (selectedInspector) {
+            // عند اختيار مفتش: عرض جميع التفتيشات من اليوم الحالي فصاعداً
+            rows = rows.filter(item => item.day >= today);
+        } else {
+            // بدون اختيار مفتش: عرض تفتيشات اليوم الحالي فقط
+            rows = rows.filter(item => item.day === today);
+        }
     }
     
     // Apply search filters
@@ -5554,11 +5560,17 @@ function renderPlanTable() {
         searchResultsInfo.style.display = 'block';
         searchResultsCount.textContent = rows.length;
     } else {
-        // عرض معلومات التفتيشات اليومية
+        // عرض معلومات التفتيشات
         if (rows.length > 0) {
             searchResultsInfo.style.display = 'block';
             const today = new Date().toLocaleDateString('ar-EG');
-            searchResultsInfo.innerHTML = `<strong>تفتيشات اليوم (${today}):</strong> <span id="searchResultsCount">${rows.length}</span> تفتيش`;
+            if (selectedInspector) {
+                // عند اختيار مفتش: عرض جميع التفتيشات القادمة
+                searchResultsInfo.innerHTML = `<strong>تفتيشات ${selectedInspector} القادمة:</strong> <span id="searchResultsCount">${rows.length}</span> تفتيش`;
+            } else {
+                // بدون اختيار مفتش: عرض تفتيشات اليوم فقط
+                searchResultsInfo.innerHTML = `<strong>تفتيشات اليوم (${today}):</strong> <span id="searchResultsCount">${rows.length}</span> تفتيش`;
+            }
         } else {
             searchResultsInfo.style.display = 'none';
         }
@@ -5567,8 +5579,10 @@ function renderPlanTable() {
     if (rows.length === 0) {
         if (hasActiveSearchFilters) {
             container.innerHTML = '<div style="text-align:center;color:#c00;font-weight:bold;margin:30px 0;">لا توجد نتائج للبحث المحدد.</div>';
+        } else if (selectedInspector) {
+            container.innerHTML = `<div style="text-align:center;color:#666;font-weight:bold;margin:30px 0;">لا توجد تفتيشات قادمة للمفتش ${selectedInspector}</div>`;
         } else {
-            container.innerHTML = '<div style="text-align:center;color:#666;font-weight:bold;margin:30px 0;">لا توجد تفتيشات لليوم الحالي.<br><small style="font-weight:normal;">استخدم البحث للعثور على تفتيشات الأيام السابقة</small></div>';
+            container.innerHTML = '<div style="text-align:center;color:#666;font-weight:bold;margin:30px 0;">لا توجد تفتيشات لليوم الحالي.<br><small style="font-weight:normal;">استخدم البحث للعثور على تفتيشات الأيام السابقة أو اختر مفتشاً لعرض تفتيشاته القادمة</small></div>';
         }
         return;
     }

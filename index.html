@@ -4765,6 +4765,12 @@ function validateDataIntegrity(data) {
     };
 }
 
+// Global variable to store audio context and interval for dynamic audio
+let maintenanceAudioContext = null;
+let maintenanceGainNode = null;
+let maintenanceFilterNode = null;
+let maintenanceDynamicInterval = null;
+
 function showMaintenanceMode(issues = []) {
     const overlay = document.getElementById('maintenanceOverlay');
     const detailsDiv = document.getElementById('maintenanceDetails');
@@ -4791,18 +4797,92 @@ function showMaintenanceMode(issues = []) {
     detailsDiv.innerHTML = detailsHTML;
     overlay.style.display = 'flex';
     
-    // Play calm classical music automatically
+    // Play calm classical music automatically with dynamic variations
     if (audio) {
- copilot/adjust-music-volume-level
-        audio.volume = 0.25; // Set volume to 25% for quiet background music
-
- main
         // Reset audio to start from beginning
         audio.currentTime = 0;
         
+        // Setup Web Audio API for dynamic sound modulation
+        try {
+            // Create audio context if not exists
+            if (!maintenanceAudioContext) {
+                maintenanceAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Create source from audio element
+                const source = maintenanceAudioContext.createMediaElementSource(audio);
+                
+                // Create gain node for volume control
+                maintenanceGainNode = maintenanceAudioContext.createGain();
+                
+                // Create biquad filter for frequency modulation
+                maintenanceFilterNode = maintenanceAudioContext.createBiquadFilter();
+                maintenanceFilterNode.type = 'lowpass';
+                maintenanceFilterNode.frequency.value = 2000;
+                maintenanceFilterNode.Q.value = 1;
+                
+                // Connect the audio graph: source -> filter -> gain -> destination
+                source.connect(maintenanceFilterNode);
+                maintenanceFilterNode.connect(maintenanceGainNode);
+                maintenanceGainNode.connect(maintenanceAudioContext.destination);
+                
+                // Set initial volume
+                maintenanceGainNode.gain.value = 0.15;
+            }
+            
+            // Start dynamic audio variations over 20 minutes
+            let elapsedSeconds = 0;
+            const totalDuration = 20 * 60; // 20 minutes in seconds
+            
+            // Clear any existing interval
+            if (maintenanceDynamicInterval) {
+                clearInterval(maintenanceDynamicInterval);
+            }
+            
+            // Update audio parameters every 5 seconds for smooth transitions
+            maintenanceDynamicInterval = setInterval(() => {
+                elapsedSeconds += 5;
+                
+                if (elapsedSeconds >= totalDuration) {
+                    elapsedSeconds = 0; // Reset for continuous loop
+                }
+                
+                // Calculate progress through the 20-minute cycle (0 to 1)
+                const progress = elapsedSeconds / totalDuration;
+                
+                // Volume variation: gentle wave between 0.10 and 0.20
+                // Creates a breathing effect
+                const volumeWave = 0.15 + 0.05 * Math.sin(progress * Math.PI * 4);
+                maintenanceGainNode.gain.linearRampToValueAtTime(
+                    volumeWave, 
+                    maintenanceAudioContext.currentTime + 5
+                );
+                
+                // Filter frequency variation: smooth changes between 1500Hz and 3000Hz
+                // Creates tonal variation without being jarring
+                const filterFreq = 2000 + 500 * Math.sin(progress * Math.PI * 6);
+                maintenanceFilterNode.frequency.linearRampToValueAtTime(
+                    filterFreq,
+                    maintenanceAudioContext.currentTime + 5
+                );
+                
+                // Filter Q variation: subtle resonance changes
+                const filterQ = 1 + 0.5 * Math.sin(progress * Math.PI * 3);
+                maintenanceFilterNode.Q.linearRampToValueAtTime(
+                    filterQ,
+                    maintenanceAudioContext.currentTime + 5
+                );
+                
+                console.log(`🎵 Audio variation at ${Math.floor(elapsedSeconds/60)}:${String(elapsedSeconds%60).padStart(2,'0')} - Volume: ${volumeWave.toFixed(2)}, Filter: ${Math.floor(filterFreq)}Hz`);
+            }, 5000); // Update every 5 seconds
+            
+        } catch (error) {
+            console.warn('⚠️ Web Audio API not available, using standard playback:', error);
+            // Fallback to simple volume control
+            audio.volume = 0.15;
+        }
+        
         // Unmute and set volume (audio starts muted with autoplay attribute)
         audio.muted = false;
-        audio.volume = 0.15; // Set volume to 15% for quiet background music
         
         // Ensure audio plays
         audio.play().catch(err => {
@@ -4813,7 +4893,6 @@ function showMaintenanceMode(issues = []) {
                 // Successfully started muted, now unmute
                 setTimeout(() => {
                     audio.muted = false;
-                    audio.volume = 0.15;
                     console.log('✅ Audio playing (unmuted after start)');
                 }, 100);
             }).catch(e => {
@@ -4822,7 +4901,6 @@ function showMaintenanceMode(issues = []) {
                 const playOnInteraction = () => {
                     audio.muted = false;
                     audio.currentTime = 0;
-                    audio.volume = 0.15;
                     audio.play().catch(err2 => console.log('Audio play failed:', err2));
                     document.removeEventListener('click', playOnInteraction);
                     document.removeEventListener('touchstart', playOnInteraction);
@@ -4856,6 +4934,13 @@ function hideMaintenanceMode() {
         audio.pause();
         audio.currentTime = 0;
         audio.muted = true; // Mute for next time
+    }
+    
+    // Clear dynamic audio interval
+    if (maintenanceDynamicInterval) {
+        clearInterval(maintenanceDynamicInterval);
+        maintenanceDynamicInterval = null;
+        console.log('🎵 Dynamic audio variations stopped');
     }
     
     // Clear maintenance mode state

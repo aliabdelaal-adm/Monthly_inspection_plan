@@ -10528,6 +10528,10 @@ function saveDataToJSON(silent = true) {
                     document.getElementById('devError').innerText = '';
                     // Show system services for developer
                     document.getElementById('systemServicesContainer').style.display = 'block';
+                    
+                    // Hide maintenance overlay for developer after login
+                    hideMaintenanceMode();
+                    console.log('✅ Developer logged in (backup handler) - maintenance overlay hidden');
                 } else {
                     document.getElementById('devError').innerText = 'كلمة السر غير صحيحة!';
                 }
@@ -10548,6 +10552,10 @@ function saveDataToJSON(silent = true) {
                 document.getElementById('devError').innerText = '';
                 // Hide system services for non-developer
                 document.getElementById('systemServicesContainer').style.display = 'none';
+                
+                // Automatically disable maintenance mode for all users when developer logs out
+                disableMaintenanceModeForAll();
+                console.log('🚪 Developer logged out (backup handler) - maintenance mode disabled for all');
             };
         }
     }

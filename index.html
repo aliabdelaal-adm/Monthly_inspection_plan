@@ -2351,9 +2351,242 @@
         .token-popup-box button:hover {
             background:#1a2870;
         }
+        
+        /* Maintenance Mode Overlay Styles */
+        #maintenanceOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, 
+                rgba(35, 54, 160, 0.95) 0%,
+                rgba(76, 175, 80, 0.95) 50%,
+                rgba(33, 150, 243, 0.95) 100%);
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .maintenance-content {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 30px;
+            padding: 60px 50px;
+            text-align: center;
+            box-shadow: 0 20px 80px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            animation: slideUp 0.8s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .maintenance-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.4), 
+                transparent);
+            animation: shimmer 3s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 200%; }
+        }
+        
+        .maintenance-icon {
+            position: relative;
+            margin: 0 auto 30px;
+            width: 120px;
+            height: 120px;
+        }
+        
+        .shield-icon {
+            font-size: 80px;
+            animation: pulse 2s ease-in-out infinite;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+        }
+        
+        .lock-icon {
+            font-size: 40px;
+            position: absolute;
+            top: 60%;
+            left: 55%;
+            transform: translate(-50%, -50%);
+            animation: bounce 2s ease-in-out infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+            50% { transform: translate(-50%, -50%) translateY(-10px); }
+        }
+        
+        .maintenance-title {
+            font-family: 'Tajawal', 'Cairo', sans-serif;
+            font-size: 2.5em;
+            font-weight: 800;
+            color: #2336a0;
+            margin: 20px 0 15px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            animation: colorShift 4s ease-in-out infinite;
+        }
+        
+        @keyframes colorShift {
+            0%, 100% { color: #2336a0; }
+            50% { color: #4caf50; }
+        }
+        
+        .maintenance-message {
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.8em;
+            font-weight: 600;
+            color: #333;
+            margin: 10px 0;
+        }
+        
+        .maintenance-submessage {
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.3em;
+            color: #666;
+            margin: 10px 0 30px;
+        }
+        
+        .maintenance-spinner {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 30px auto;
+        }
+        
+        .spinner-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 4px solid transparent;
+            border-radius: 50%;
+            animation: spin 2s linear infinite;
+        }
+        
+        .spinner-ring:nth-child(1) {
+            border-top-color: #2336a0;
+            animation-delay: 0s;
+        }
+        
+        .spinner-ring:nth-child(2) {
+            border-right-color: #4caf50;
+            animation-delay: 0.3s;
+            width: 80%;
+            height: 80%;
+            top: 10%;
+            left: 10%;
+        }
+        
+        .spinner-ring:nth-child(3) {
+            border-bottom-color: #2196f3;
+            animation-delay: 0.6s;
+            width: 60%;
+            height: 60%;
+            top: 20%;
+            left: 20%;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .maintenance-details {
+            margin-top: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #fff3cd 0%, #ffe4b3 100%);
+            border-radius: 15px;
+            border: 2px solid #ffc107;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.95em;
+            color: #856404;
+            line-height: 1.8;
+            text-align: right;
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+        }
+        
+        .maintenance-details strong {
+            color: #d32f2f;
+            font-weight: 700;
+        }
+        
+        /* Responsive design for maintenance mode */
+        @media (max-width: 768px) {
+            .maintenance-content {
+                padding: 40px 30px;
+                margin: 20px;
+            }
+            
+            .maintenance-title {
+                font-size: 2em;
+            }
+            
+            .maintenance-message {
+                font-size: 1.5em;
+            }
+            
+            .maintenance-submessage {
+                font-size: 1.1em;
+            }
+        }
     </style>
 </head>
 <body>
+<!-- Maintenance Mode Overlay -->
+<div id="maintenanceOverlay" style="display:none;">
+    <div class="maintenance-content">
+        <div class="maintenance-icon">
+            <div class="shield-icon">🛡️</div>
+            <div class="lock-icon">🔒</div>
+        </div>
+        <h2 class="maintenance-title">الزملاء الأعزاء</h2>
+        <p class="maintenance-message">جاري تحديث البيانات</p>
+        <p class="maintenance-submessage">شكراً على الانتظار</p>
+        <div class="maintenance-spinner">
+            <div class="spinner-ring"></div>
+            <div class="spinner-ring"></div>
+            <div class="spinner-ring"></div>
+        </div>
+        <div class="maintenance-details" id="maintenanceDetails"></div>
+    </div>
+</div>
+
 <!-- Animated Background Shapes -->
 <div class="bg-shape cloud cloud-1"></div>
 <div class="bg-shape cloud cloud-2"></div>
@@ -4105,6 +4338,178 @@ function startDailyRefresh() {
     }, 30000); // Check every 30 seconds (same as auto-refresh)
 }
 
+// Data Validation and Security Functions
+function validateInspectorNames(inspectors) {
+    // List of valid inspector name patterns
+    const validInspectorPatterns = [
+        /^د\.\s*.+$/,  // Must start with "د."
+        /علي\s*عبدالعال/,  // Known inspectors
+        /آمنه\s*بن\s*صرم/,
+        /آيه\s*سلامة/,
+        /حسينة\s*العامري/,
+        /حصة\s*العلي/,
+        /فايز\s*المسالمة/,
+        /محمد\s*إسماعيل/,
+        /محمد\s*سعيد/,
+        /هاجر\s*الغافري/,
+        /سعاد\s*السامرائي/,
+        /طارق\s*حمزة/,
+        /وائل\s*عبدالرحيم/
+    ];
+    
+    const invalidInspectors = [];
+    
+    for (const inspector of inspectors) {
+        const name = inspector.name || inspector;
+        
+        // Check if name is too short or contains suspicious characters
+        if (name.length < 5 || name.length > 50) {
+            invalidInspectors.push({ name, reason: 'طول الاسم غير صحيح' });
+            continue;
+        }
+        
+        // Check if name contains numbers or special characters (except Arabic and spaces)
+        if (/[0-9!@#$%^&*()_+=\[\]{};':"\\|,.<>\/?]/.test(name)) {
+            invalidInspectors.push({ name, reason: 'يحتوي على أحرف غير صحيحة' });
+            continue;
+        }
+        
+        // Check if name doesn't start with د.
+        if (!name.startsWith('د.')) {
+            invalidInspectors.push({ name, reason: 'لا يبدأ بـ د.' });
+            continue;
+        }
+        
+        // Check against valid patterns
+        let isValid = validInspectorPatterns.some(pattern => pattern.test(name));
+        if (!isValid) {
+            invalidInspectors.push({ name, reason: 'اسم غير معروف' });
+        }
+    }
+    
+    return {
+        isValid: invalidInspectors.length === 0,
+        invalidInspectors: invalidInspectors
+    };
+}
+
+function validateDataIntegrity(data) {
+    const issues = [];
+    
+    // Check if essential data exists
+    if (!data.inspectors || !Array.isArray(data.inspectors)) {
+        issues.push('بيانات المفتشين مفقودة أو غير صحيحة');
+    }
+    
+    if (!data.areas || !Array.isArray(data.areas)) {
+        issues.push('بيانات المناطق مفقودة أو غير صحيحة');
+    }
+    
+    if (!data.shops || !Array.isArray(data.shops)) {
+        issues.push('بيانات المحلات مفقودة أو غير صحيحة');
+    }
+    
+    if (!data.inspectionData || !Array.isArray(data.inspectionData)) {
+        issues.push('بيانات التفتيش مفقودة أو غير صحيحة');
+    }
+    
+    // Check for duplicate inspector IDs
+    if (data.inspectors && Array.isArray(data.inspectors)) {
+        const ids = data.inspectors.map(i => i.id);
+        const duplicateIds = ids.filter((id, index) => ids.indexOf(id) !== index);
+        if (duplicateIds.length > 0) {
+            issues.push(`توجد معرفات مفتشين مكررة: ${duplicateIds.length} حالة`);
+        }
+    }
+    
+    // Validate inspector names
+    if (data.inspectors && Array.isArray(data.inspectors)) {
+        const validation = validateInspectorNames(data.inspectors);
+        if (!validation.isValid) {
+            validation.invalidInspectors.forEach(invalid => {
+                issues.push(`مفتش غير صحيح: "${invalid.name}" - ${invalid.reason}`);
+            });
+        }
+    }
+    
+    return {
+        isValid: issues.length === 0,
+        issues: issues
+    };
+}
+
+function showMaintenanceMode(issues = []) {
+    const overlay = document.getElementById('maintenanceOverlay');
+    const detailsDiv = document.getElementById('maintenanceDetails');
+    
+    if (!overlay) return;
+    
+    // Build details message
+    let detailsHTML = '<strong>تفاصيل التحديث:</strong><br>';
+    if (issues.length > 0) {
+        detailsHTML += '<ul style="text-align: right; margin: 10px 0; padding-right: 20px;">';
+        issues.forEach(issue => {
+            detailsHTML += `<li>${issue}</li>`;
+        });
+        detailsHTML += '</ul>';
+        detailsHTML += '<br><strong>جاري إصلاح المشاكل وتأمين البيانات...</strong>';
+    } else {
+        detailsHTML += 'جاري فحص البيانات والتأكد من سلامتها...';
+    }
+    
+    detailsDiv.innerHTML = detailsHTML;
+    overlay.style.display = 'flex';
+    
+    // Log for developer
+    console.log('⚠️ Maintenance Mode Activated');
+    console.log('Issues found:', issues);
+}
+
+function hideMaintenanceMode() {
+    const overlay = document.getElementById('maintenanceOverlay');
+    if (overlay) {
+        overlay.style.display = 'none';
+    }
+    console.log('✅ Maintenance Mode Deactivated');
+}
+
+function performDataValidation(data) {
+    console.log('🔍 Performing data validation...');
+    
+    const validation = validateDataIntegrity(data);
+    
+    if (!validation.isValid) {
+        console.error('❌ Data validation failed:', validation.issues);
+        showMaintenanceMode(validation.issues);
+        return false;
+    }
+    
+    console.log('✅ Data validation passed');
+    return true;
+}
+
+// Firewall Protection - Check data before allowing operations
+function firewallCheck() {
+    // Get current data
+    const currentData = allPlanData || {};
+    
+    // Basic firewall checks
+    if (!currentData.inspectors || currentData.inspectors.length === 0) {
+        console.warn('🛡️ Firewall: No inspectors data found');
+        return false;
+    }
+    
+    // Check for suspicious data
+    const validation = validateDataIntegrity(currentData);
+    if (!validation.isValid) {
+        console.error('🛡️ Firewall: Suspicious data detected!', validation.issues);
+        showMaintenanceMode(validation.issues);
+        return false;
+    }
+    
+    return true;
+}
+
 // Load data from JSON file
 async function loadInspectionData() {
     const statusDiv = document.getElementById('refreshStatus');
@@ -4116,6 +4521,40 @@ async function loadInspectionData() {
         const response = await fetch('./plan-data.json?t=' + Date.now());
         if (response.ok) {
             const data = await response.json();
+            
+            // 🛡️ Firewall Protection: Validate data before loading
+            console.log('🛡️ Firewall: Validating incoming data...');
+            const validation = validateDataIntegrity(data);
+            
+            if (!validation.isValid) {
+                console.error('🛡️ Firewall: Data validation failed!', validation.issues);
+                showMaintenanceMode(validation.issues);
+                
+                // Use cached data from localStorage instead
+                const allLocalData = localStorage.getItem('allPlanData');
+                if (allLocalData) {
+                    const cachedData = JSON.parse(allLocalData);
+                    console.log('🛡️ Firewall: Using cached safe data from localStorage');
+                    
+                    if (cachedData.inspectionData) inspectionData = cachedData.inspectionData;
+                    if (cachedData.inspectors) {
+                        inspectorsData = cachedData.inspectors;
+                        inspectors = inspectorsData.map(i => i.name);
+                    }
+                    if (cachedData.areas) areasData = cachedData.areas;
+                    if (cachedData.shops) shopsData = cachedData.shops;
+                    if (cachedData.bellNotes) bellNotesData = cachedData.bellNotes;
+                    
+                    allPlanData = cachedData;
+                }
+                
+                // Don't proceed with corrupted data
+                return;
+            }
+            
+            console.log('✅ Firewall: Data validation passed');
+            hideMaintenanceMode();
+            
             if (data.inspectionData && Array.isArray(data.inspectionData)) {
                 inspectionData = data.inspectionData;
                 lastUpdateTime = data.lastUpdate;
@@ -5039,6 +5478,10 @@ function clearShopsSelection() {
 
 document.addEventListener('DOMContentLoaded', function() {
     initializeLastUpdateDate();
+    
+    // 🛡️ Initial data validation on page load
+    console.log('🛡️ Starting initial data validation...');
+    
     // Removed automatic playback - sound only plays on user touch/click interactions
     loadInspectionData(); // Load data from JSON file - will call fillInspectorsDropdowns() when complete
     startAutoRefresh(); // Start auto-refresh functionality

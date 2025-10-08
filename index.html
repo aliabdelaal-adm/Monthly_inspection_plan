@@ -2546,6 +2546,43 @@
             font-weight: 700;
         }
         
+        /* Developer close button for maintenance mode */
+        .maintenance-close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            display: none; /* Hidden by default */
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+        
+        .maintenance-close-btn:hover {
+            background: linear-gradient(135deg, #c82333 0%, #a71d2a 100%);
+            transform: scale(1.1) rotate(90deg);
+            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.6);
+        }
+        
+        .maintenance-close-btn:active {
+            transform: scale(0.95) rotate(90deg);
+        }
+        
+        /* Show close button only for developers */
+        .maintenance-close-btn.show-for-dev {
+            display: flex;
+        }
+        
         /* Responsive design for maintenance mode */
         @media (max-width: 768px) {
             .maintenance-content {
@@ -2571,6 +2608,7 @@
 <!-- Maintenance Mode Overlay -->
 <div id="maintenanceOverlay" style="display:none;">
     <div class="maintenance-content">
+        <button id="maintenanceCloseBtn" class="maintenance-close-btn" onclick="closeMaintenance()" title="إغلاق (للمطور فقط)">×</button>
         <div class="maintenance-icon">
             <div class="shield-icon">🛡️</div>
             <div class="lock-icon">🔒</div>
@@ -4704,9 +4742,22 @@ function validateDataIntegrity(data) {
 function showMaintenanceMode(issues = []) {
     const overlay = document.getElementById('maintenanceOverlay');
     const detailsDiv = document.getElementById('maintenanceDetails');
+ copilot/add-update-message-dismiss-permission
+    const closeBtn = document.getElementById('maintenanceCloseBtn');
+
     const audio = document.getElementById('maintenanceAudio');
+ main
     
     if (!overlay) return;
+    
+    // Show close button only for developers
+    if (closeBtn) {
+        if (isDev || window.isDev) {
+            closeBtn.classList.add('show-for-dev');
+        } else {
+            closeBtn.classList.remove('show-for-dev');
+        }
+    }
     
     // Build details message
     let detailsHTML = '<strong>تفاصيل التحديث:</strong><br>';
@@ -4766,6 +4817,19 @@ function hideMaintenanceMode() {
     localStorage.removeItem('systemMaintenanceMode');
     
     console.log('✅ Maintenance Mode Deactivated');
+}
+
+// Close maintenance mode with developer permission check
+function closeMaintenance() {
+    // Only allow developers to close the maintenance mode
+    if (isDev || window.isDev) {
+        hideMaintenanceMode();
+        console.log('✅ Maintenance Mode closed by developer');
+        alert('✅ تم إغلاق وضع الصيانة بنجاح!\n\nيمكنك الآن الوصول إلى لوحة التحكم.');
+    } else {
+        alert('🔒 عذراً، إغلاق وضع الصيانة مخصص للمطور فقط\n\nللوصول إلى هذه الميزة:\n1. قم بتسجيل الدخول كمطور\n2. استخدم كلمة سر المطور\n3. ثم يمكنك إغلاق وضع الصيانة');
+        console.log('⚠️ Non-developer attempted to close maintenance mode');
+    }
 }
 
 // Enable maintenance mode for all users (called by developer)

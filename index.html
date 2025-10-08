@@ -4362,21 +4362,23 @@ function validateInspectorNames(inspectors) {
     for (const inspector of inspectors) {
         const name = inspector.name || inspector;
         
-        // Check if name is too short or contains suspicious characters
+        // Check if name is too short or too long
         if (name.length < 5 || name.length > 50) {
             invalidInspectors.push({ name, reason: 'طول الاسم غير صحيح' });
-            continue;
-        }
-        
-        // Check if name contains numbers or special characters (except Arabic and spaces)
-        if (/[0-9!@#$%^&*()_+=\[\]{};':"\\|,.<>\/?]/.test(name)) {
-            invalidInspectors.push({ name, reason: 'يحتوي على أحرف غير صحيحة' });
             continue;
         }
         
         // Check if name doesn't start with د.
         if (!name.startsWith('د.')) {
             invalidInspectors.push({ name, reason: 'لا يبدأ بـ د.' });
+            continue;
+        }
+        
+        // Check if name contains numbers or suspicious special characters (excluding period after د)
+        // Remove "د." prefix before checking for special characters
+        const nameWithoutPrefix = name.substring(2).trim();
+        if (/[0-9!@#$%^&*()_+=\[\]{};':"\\|<>\/?~`]/.test(nameWithoutPrefix)) {
+            invalidInspectors.push({ name, reason: 'يحتوي على أحرف غير صحيحة' });
             continue;
         }
         

@@ -62,7 +62,7 @@ This document describes the merge operation that combined data from `plan-data91
 ## New Areas Added
 
 The following 7 new areas were added from `plan-data91.json`:
-1. المصفح الصناعية (ID: area_1758831448230)
+1. المصفح (ID: area_1758831448230)
 2. الوثبة جنوب (ID: area_1758831528008)
 3. سوق التراث (ID: area_1758839353326)
 4. سوق الميناء (ID: area_1758839345230)

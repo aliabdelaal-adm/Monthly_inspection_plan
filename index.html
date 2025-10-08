@@ -6349,7 +6349,14 @@ document.getElementById("devLoginBtn").onclick = async function() {
             }
         }
         
-        setLastUpdateDate();
+        // Try to update last update date if function is available
+        if (typeof setLastUpdateDate === 'function') {
+            try {
+                setLastUpdateDate();
+            } catch (e) {
+                console.log('setLastUpdateDate error:', e);
+            }
+        }
         document.getElementById("devSection").style.display = "block";
         document.getElementById("devLogoutBtn").style.display = "inline-block";
         document.getElementById("devPassword").style.display = "none";

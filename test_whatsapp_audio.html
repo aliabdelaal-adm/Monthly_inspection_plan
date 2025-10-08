@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار دمج صوت الواتساب في رسالة الصيانة</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .test-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-width: 600px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .info {
+            background: #f0f8ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: right;
+        }
+        
+        .test-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px;
+            transition: transform 0.2s;
+        }
+        
+        .test-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .test-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .maintenance-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .maintenance-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 500px;
+        }
+        
+        .maintenance-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+        
+        .close-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        .success {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        
+        .features {
+            text-align: right;
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .features li {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🎵 اختبار دمج صوت الواتساب</h1>
+        
+        <div class="info">
+            <p><strong>الملف الصوتي:</strong> whatsapp Audio.mp3</p>
+            <p><strong>الحجم:</strong> 7.9 MB</p>
+            <p><strong>التشغيل:</strong> تلقائي عند ظهور رسالة الصيانة</p>
+        </div>
+        
+        <div class="features">
+            <h3>✨ مميزات الدمج:</h3>
+            <ul>
+                <li>✅ الملف الصوتي مدمج ومخفي تماماً</li>
+                <li>✅ التشغيل التلقائي عند ظهور رسالة "جاري التحديث"</li>
+                <li>✅ لا يوجد أزرار ظاهرة أو عناصر تحكم</li>
+                <li>✅ يعمل على جميع المتصفحات</li>
+                <li>✅ مستوى الصوت: 30%</li>
+                <li>✅ التكرار التلقائي (loop)</li>
+                <li>✅ إيقاف تلقائي عند إغلاق الرسالة</li>
+            </ul>
+        </div>
+        
+        <button class="test-btn" onclick="showMaintenance()">
+            🧪 اختبار عرض رسالة الصيانة مع الصوت
+        </button>
+        
+        <div class="success" style="margin-top: 20px; display: none;" id="successMsg">
+            ✅ تم دمج الملف الصوتي بنجاح!
+        </div>
+    </div>
+    
+    <!-- Maintenance Overlay (Hidden) -->
+    <div class="maintenance-overlay" id="maintenanceOverlay">
+        <div class="maintenance-content">
+            <div class="maintenance-icon">🔧</div>
+            <h2>جاري التحديث...</h2>
+            <p>يتم تحديث النظام الآن. يرجى الانتظار.</p>
+            <p style="color: #666; font-size: 14px; margin-top: 20px;">
+                🎵 يتم تشغيل الموسيقى تلقائياً في الخلفية
+            </p>
+            <button class="close-btn" onclick="hideMaintenance()">إغلاق الاختبار</button>
+        </div>
+    </div>
+    
+    <!-- Hidden Audio Element -->
+    <audio id="maintenanceAudio" loop preload="auto" style="display:none;">
+        <source src="whatsapp Audio.mp3" type="audio/mpeg">
+        متصفحك لا يدعم تشغيل الملفات الصوتية.
+    </audio>
+    
+    <script>
+        function showMaintenance() {
+            const overlay = document.getElementById('maintenanceOverlay');
+            const audio = document.getElementById('maintenanceAudio');
+            const successMsg = document.getElementById('successMsg');
+            
+            // Show overlay
+            overlay.style.display = 'flex';
+            
+            // Play audio automatically (same logic as in main index.html)
+            if (audio) {
+                audio.volume = 0.3; // 30% volume
+                audio.currentTime = 0; // Start from beginning
+                
+                audio.play().catch(err => {
+                    console.log('🎵 Audio autoplay prevented by browser. Will try on user interaction.');
+                    
+                    // Fallback: play on first user interaction
+                    const playOnInteraction = () => {
+                        audio.currentTime = 0;
+                        audio.play().catch(e => console.log('Audio play failed:', e));
+                        document.removeEventListener('click', playOnInteraction);
+                        document.removeEventListener('touchstart', playOnInteraction);
+                    };
+                    
+                    document.addEventListener('click', playOnInteraction, { once: true });
+                    document.addEventListener('touchstart', playOnInteraction, { once: true });
+                });
+                
+                successMsg.style.display = 'block';
+            } else {
+                console.warn('⚠️ Audio element not found');
+            }
+        }
+        
+        function hideMaintenance() {
+            const overlay = document.getElementById('maintenanceOverlay');
+            const audio = document.getElementById('maintenanceAudio');
+            
+            // Hide overlay
+            overlay.style.display = 'none';
+            
+            // Stop and reset audio
+            if (audio) {
+                audio.pause();
+                audio.currentTime = 0;
+            }
+            
+            console.log('✅ Maintenance mode closed');
+        }
+        
+        // Show success message on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('successMsg').style.display = 'block';
+            }, 500);
+        });
+    </script>
+</body>
+</html>

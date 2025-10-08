@@ -14781,15 +14781,18 @@ if (typeof closeShopsManagementModal === 'undefined') {
     }
 })();
 
-// Auto-scroll functionality - Very slow continuous scrolling
+// Auto-scroll functionality - Very slow continuous scrolling with smooth animation
 (function() {
-    let scrollInterval;
+    let animationFrameId;
     let currentPosition = 0;
     let isScrolling = false;
+    let lastTimestamp = 0;
+    
+    // Pixels per second for very slow scrolling (10 pixels/second)
+    const scrollSpeed = 10;
     
     function startAutoScroll() {
         // Calculate scroll speed for very slow movement
-        // We want it to take about 120 seconds to scroll through a typical page
         const pageHeight = Math.max(
             document.body.scrollHeight,
             document.body.offsetHeight,
@@ -14798,32 +14801,42 @@ if (typeof closeShopsManagementModal === 'undefined') {
             document.documentElement.offsetHeight
         );
         
-        // Very slow scroll: move 1 pixel every 100ms (10 pixels per second)
-        const scrollSpeed = 100; // milliseconds per pixel movement
-        const pixelsPerStep = 1;
-        
         isScrolling = true;
+        lastTimestamp = performance.now();
         
-        scrollInterval = setInterval(function() {
-            currentPosition += pixelsPerStep;
+        function animate(timestamp) {
+            if (!isScrolling) return;
+            
+            // Calculate time elapsed since last frame
+            const deltaTime = timestamp - lastTimestamp;
+            lastTimestamp = timestamp;
+            
+            // Calculate pixels to move based on time elapsed (smooth framerate-independent animation)
+            const pixelsToMove = (scrollSpeed * deltaTime) / 1000;
+            currentPosition += pixelsToMove;
             
             // Check if we've reached the bottom
             const maxScroll = pageHeight - window.innerHeight;
             if (currentPosition >= maxScroll) {
                 // Reset to top and start over
                 currentPosition = 0;
-                window.scrollTo({ top: 0, behavior: 'instant' });
+                window.scrollTo({ top: 0, behavior: 'auto' });
                 
                 // Wait a bit before starting again
-                clearInterval(scrollInterval);
                 isScrolling = false;
                 setTimeout(startAutoScroll, 2000);
                 return;
             }
             
-            // Scroll without smooth behavior to avoid conflicts
-            window.scrollTo({ top: currentPosition, behavior: 'instant' });
-        }, scrollSpeed);
+            // Use scrollTo with 'auto' behavior for instant but smooth pixel-by-pixel movement
+            window.scrollTo({ top: Math.round(currentPosition), behavior: 'auto' });
+            
+            // Continue animation
+            animationFrameId = requestAnimationFrame(animate);
+        }
+        
+        // Start the animation
+        animationFrameId = requestAnimationFrame(animate);
     }
     
     // Start auto-scroll when page loads
@@ -14838,8 +14851,8 @@ if (typeof closeShopsManagementModal === 'undefined') {
     let userScrollTimeout;
     
     function pauseAndResumeAutoScroll() {
-        if (scrollInterval) {
-            clearInterval(scrollInterval);
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
             isScrolling = false;
         }
         

@@ -187,6 +187,7 @@ Open `test_maintenance_mode.html` in your browser to:
 - View simple maintenance mode  
 - Test UI animations
 - See example messages
+- **NEW**: Toggle developer mode to test close button visibility
 
 ### Manual Testing
 ```bash
@@ -195,6 +196,12 @@ python3 -m http.server 8080
 
 # Open browser
 http://localhost:8080/test_maintenance_mode.html
+
+# Test developer close button:
+# 1. Click "تبديل وضع المطور" to enable developer mode
+# 2. Click "عرض وضع الصيانة مع أخطاء" 
+# 3. Notice the red (×) button in top-right corner
+# 4. Click (×) to close - only works in developer mode
 ```
 
 ---
@@ -241,6 +248,19 @@ showMaintenanceMode([
 • تم اكتشاف أسماء مفتشين غير صحيحة
 • مفتش غير صحيح: "..." - السبب
 • جاري إصلاح المشاكل وتأمين البيانات...
+```
+
+### Close Button (Developer Only) - زر الإغلاق للمطور فقط
+```
+🔴 Close Button (×) - Visible ONLY to developers
+   ↓
+✅ Developer logged in → Button appears in top-right corner
+❌ Regular users/inspectors → Button is hidden
+
+When clicked by developer:
+- Shows success message
+- Closes maintenance overlay
+- Allows access to control panel
 ```
 
 ---

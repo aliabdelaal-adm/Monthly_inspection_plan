@@ -4830,7 +4830,7 @@ function closeMaintenance() {
 }
 
 // Save maintenance status to GitHub (server-side storage)
-async function saveMaintenanceStatusToGitHub(isEnabled, messages = []) {
+async function saveMaintenanceStatusToGitHub(isEnabled, messages = [], retryCount = 3) {
     const repo = "aliabdelaal-adm/Monthly_inspection_plan";
     let token = localStorage.getItem("devToken");
     
@@ -4845,60 +4845,83 @@ async function saveMaintenanceStatusToGitHub(isEnabled, messages = []) {
         return false;
     }
     
-    try {
-        const status = {
-            isMaintenanceMode: isEnabled,
-            lastUpdated: new Date().toISOString(),
-            updatedBy: "المطور",
-            messages: messages
-        };
-        
-        // Get current file SHA
-        const getResponse = await fetch(`https://api.github.com/repos/${repo}/contents/maintenance-status.json`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
+    // Retry logic for network failures
+    for (let attempt = 1; attempt <= retryCount; attempt++) {
+        try {
+            if (attempt > 1) {
+                console.log(`🔄 Retry attempt ${attempt}/${retryCount}...`);
+                // Wait before retrying (exponential backoff)
+                await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
             }
-        });
-        
-        let sha = null;
-        if (getResponse.ok) {
-            const fileData = await getResponse.json();
-            sha = fileData.sha;
+            
+            const status = {
+                isMaintenanceMode: isEnabled,
+                lastUpdated: new Date().toISOString(),
+                updatedBy: "المطور",
+                messages: messages
+            };
+            
+            // Get current file SHA
+            const getResponse = await fetch(`https://api.github.com/repos/${repo}/contents/maintenance-status.json`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            let sha = null;
+            if (getResponse.ok) {
+                const fileData = await getResponse.json();
+                sha = fileData.sha;
+            } else if (getResponse.status !== 404) {
+                // If it's not a 404 (file not found), log the error
+                console.error(`❌ Failed to get file SHA: ${getResponse.status}`, await getResponse.text());
+            }
+            
+            // Create or update the file
+            const content = btoa(unescape(encodeURIComponent(JSON.stringify(status, null, 2))));
+            const body = {
+                message: isEnabled ? 'تفعيل وضع الصيانة للجميع' : 'إلغاء وضع الصيانة للجميع',
+                content: content
+            };
+            
+            if (sha) {
+                body.sha = sha;
+            }
+            
+            const updateResponse = await fetch(`https://api.github.com/repos/${repo}/contents/maintenance-status.json`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(body)
+            });
+            
+            if (!updateResponse.ok) {
+                const errorText = await updateResponse.text();
+                console.error(`❌ Failed to save maintenance status to GitHub (${updateResponse.status}):`, errorText);
+                
+                // If this is not the last attempt, continue to retry
+                if (attempt < retryCount) {
+                    continue;
+                }
+                return false;
+            }
+            
+            console.log('✅ Maintenance status saved to GitHub successfully');
+            return true;
+        } catch (error) {
+            console.error(`❌ Error saving maintenance status to GitHub (attempt ${attempt}/${retryCount}):`, error);
+            
+            // If this is the last attempt, return false
+            if (attempt >= retryCount) {
+                return false;
+            }
         }
-        
-        // Create or update the file
-        const content = btoa(unescape(encodeURIComponent(JSON.stringify(status, null, 2))));
-        const method = sha ? 'PUT' : 'PUT'; // PUT works for both create and update
-        const body = {
-            message: isEnabled ? 'تفعيل وضع الصيانة للجميع' : 'إلغاء وضع الصيانة للجميع',
-            content: content
-        };
-        
-        if (sha) {
-            body.sha = sha;
-        }
-        
-        const updateResponse = await fetch(`https://api.github.com/repos/${repo}/contents/maintenance-status.json`, {
-            method: method,
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(body)
-        });
-        
-        if (!updateResponse.ok) {
-            console.error('❌ Failed to save maintenance status to GitHub:', updateResponse.status);
-            return false;
-        }
-        
-        console.log('✅ Maintenance status saved to GitHub successfully');
-        return true;
-    } catch (error) {
-        console.error('❌ Error saving maintenance status to GitHub:', error);
-        return false;
     }
+    
+    return false;
 }
 
 // Load maintenance status from GitHub (server-side storage)
@@ -4928,19 +4951,33 @@ async function enableMaintenanceModeForAll() {
         return;
     }
     
-    // Save to GitHub first
+    // Show loading message
+    const loadingMsg = '⏳ جاري تفعيل وضع الصيانة للجميع...\nيرجى الانتظار...';
+    console.log(loadingMsg);
+    
+    // Save to localStorage immediately for instant effect on current device
+    localStorage.setItem('systemMaintenanceMode', 'true');
+    
+    // Save to GitHub for synchronization across all devices
     const messages = ['جاري تحديث النظام', 'يقوم المطور بإجراء تعديلات', 'شكراً على الانتظار'];
     const saved = await saveMaintenanceStatusToGitHub(true, messages);
     
     if (saved) {
-        // Also save to localStorage for immediate effect
-        localStorage.setItem('systemMaintenanceMode', 'true');
-        
-        alert('✅ تم تفعيل وضع الصيانة للجميع\nسيرى جميع المستخدمين رسالة التحديث على جميع الأجهزة ولن يتمكنوا من الوصول للنظام');
+        alert('✅ تم تفعيل وضع الصيانة للجميع بنجاح!\n\n' +
+              '📱 الحالة الآن:\n' +
+              '• تم التفعيل على هذا الجهاز فوراً\n' +
+              '• سيظهر على جميع الأجهزة الأخرى خلال 10-30 ثانية\n' +
+              '• جميع المستخدمين سيرون رسالة الصيانة ولن يتمكنوا من الوصول للنظام');
         console.log('🛡️ Maintenance mode enabled for all users on all devices');
     } else {
-        alert('⚠️ تم تفعيل وضع الصيانة محلياً فقط\nقد لا يظهر للمستخدمين على الأجهزة الأخرى');
-        localStorage.setItem('systemMaintenanceMode', 'true');
+        // Even if GitHub save failed, keep local mode active and show appropriate message
+        alert('⚠️ تحذير: حدث خطأ في حفظ حالة الصيانة على GitHub\n\n' +
+              '📱 الحالة الحالية:\n' +
+              '• تم التفعيل على هذا الجهاز فقط\n' +
+              '• قد لا يظهر للمستخدمين على الأجهزة الأخرى\n' +
+              '• يرجى التحقق من الاتصال بالإنترنت والمحاولة مرة أخرى\n\n' +
+              '💡 نصيحة: تحقق من صلاحية التوكن في لوحة المطور');
+        console.error('⚠️ Maintenance mode activated locally only - GitHub sync failed');
     }
 }
 
@@ -4951,20 +4988,32 @@ async function disableMaintenanceModeForAll() {
         return;
     }
     
-    // Save to GitHub first
+    // Show loading message
+    const loadingMsg = '⏳ جاري إلغاء وضع الصيانة للجميع...\nيرجى الانتظار...';
+    console.log(loadingMsg);
+    
+    // Remove from localStorage immediately for instant effect on current device
+    localStorage.removeItem('systemMaintenanceMode');
+    hideMaintenanceMode();
+    
+    // Save to GitHub for synchronization across all devices
     const saved = await saveMaintenanceStatusToGitHub(false, []);
     
     if (saved) {
-        // Also remove from localStorage for immediate effect
-        localStorage.removeItem('systemMaintenanceMode');
-        hideMaintenanceMode();
-        
-        alert('✅ تم إلغاء وضع الصيانة للجميع\nيمكن للجميع الآن الوصول للنظام على جميع الأجهزة');
+        alert('✅ تم إلغاء وضع الصيانة للجميع بنجاح!\n\n' +
+              '📱 الحالة الآن:\n' +
+              '• تم الإلغاء على هذا الجهاز فوراً\n' +
+              '• سيختفي من جميع الأجهزة الأخرى خلال 10-30 ثانية\n' +
+              '• جميع المستخدمين يمكنهم الآن الوصول للنظام');
         console.log('✅ Maintenance mode disabled for all users on all devices');
     } else {
-        alert('⚠️ تم إلغاء وضع الصيانة محلياً فقط\nقد لا يتم إلغاؤه للمستخدمين على الأجهزة الأخرى');
-        localStorage.removeItem('systemMaintenanceMode');
-        hideMaintenanceMode();
+        alert('⚠️ تحذير: حدث خطأ في حفظ حالة الصيانة على GitHub\n\n' +
+              '📱 الحالة الحالية:\n' +
+              '• تم الإلغاء على هذا الجهاز فقط\n' +
+              '• قد لا يتم إلغاؤه للمستخدمين على الأجهزة الأخرى\n' +
+              '• يرجى التحقق من الاتصال بالإنترنت والمحاولة مرة أخرى\n\n' +
+              '💡 نصيحة: تحقق من صلاحية التوكن في لوحة المطور');
+        console.error('⚠️ Maintenance mode disabled locally only - GitHub sync failed');
     }
 }
 

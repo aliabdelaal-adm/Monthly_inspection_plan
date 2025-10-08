@@ -4742,11 +4742,8 @@ function validateDataIntegrity(data) {
 function showMaintenanceMode(issues = []) {
     const overlay = document.getElementById('maintenanceOverlay');
     const detailsDiv = document.getElementById('maintenanceDetails');
- copilot/add-update-message-dismiss-permission
     const closeBtn = document.getElementById('maintenanceCloseBtn');
-
     const audio = document.getElementById('maintenanceAudio');
- main
     
     if (!overlay) return;
     
@@ -5010,6 +5007,19 @@ async function loadInspectionData() {
         }
     } catch (error) {
         console.warn('Failed to load plan data, using fallback data:', error);
+        
+        // Show maintenance mode message to inform users about the update
+        showMaintenanceMode([
+            'تعذر تحميل البيانات من الخادم',
+            'جاري استخدام البيانات المحفوظة',
+            'سيتم تحديث البيانات تلقائياً'
+        ]);
+        
+        // Auto-hide maintenance mode after 5 seconds
+        setTimeout(() => {
+            hideMaintenanceMode();
+        }, 5000);
+        
         // First try to load complete data from localStorage
         const allLocalData = localStorage.getItem('allPlanData');
         if (allLocalData) {

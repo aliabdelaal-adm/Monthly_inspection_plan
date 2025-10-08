@@ -4661,21 +4661,6 @@ function fillInspectorsDropdowns() {
         });
     }
 }
-
-// Helper function to get area name from area ID or name
-function getAreaName(areaValue) {
-    if (!areaValue) return '';
-    
-    // Check if it's an ID (starts with 'area_')
-    if (areaValue.startsWith('area_')) {
-        const area = areasData.find(a => a.id === areaValue);
-        return area ? area.name : areaValue;
-    }
-    
-    // If it's already a name, return it as-is
-    return areaValue;
-}
-
 function fillAreasDropdowns() {
     // منطقة في نموذج المطور
     const areaSelect = document.getElementById('formArea');
@@ -10857,9 +10842,17 @@ function updateShopsStats() {
 }
 
 // وظائف مساعدة
-function getAreaName(areaId) {
-    const area = areasData.find(a => a.id === areaId);
-    return area ? area.name : null;
+function getAreaName(areaValue) {
+    if (!areaValue) return '';
+    
+    // Check if it's an ID (starts with 'area_')
+    if (typeof areaValue === 'string' && areaValue.startsWith('area_')) {
+        const area = areasData.find(a => a.id === areaValue);
+        return area ? area.name : areaValue;
+    }
+    
+    // If it's already a name, return it as-is
+    return areaValue;
 }
 
 function getShopActivity(shopName) {

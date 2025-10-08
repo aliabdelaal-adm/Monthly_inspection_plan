@@ -4220,6 +4220,17 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('click', playClickSound);
     });
     
+    // Restore developer UI state if logged in
+    if (isDev) {
+        console.log('✅ Developer session restored from localStorage');
+        // Show developer UI elements
+        document.getElementById("devSection").style.display = "block";
+        document.getElementById("devLogoutBtn").style.display = "inline-block";
+        document.getElementById("systemServicesContainer").style.display = "block";
+        // Update maintenance close button visibility
+        updateMaintenanceCloseButton();
+    }
+    
     // Start periodic maintenance mode checker
     startMaintenanceStatusChecker();
 });
@@ -4261,7 +4272,8 @@ let shopsData = [
     {id:"shop11", name:"محل 11", nameEn:"Shop 11", areaId:"area_c", licenseNumber:"LIC-011", googleMapsUrl:"https://maps.google.com/?q=24.4893,54.3514"}
 ];
 
-let isDev = false;
+// Restore developer login state from localStorage if exists
+let isDev = localStorage.getItem('isDevLoggedIn') === 'true';
 let selectedInspector = "";
 const DEV_PASSWORD = "ali@2006";
 
@@ -4768,10 +4780,13 @@ function showMaintenanceMode(issues = []) {
     // Play calm classical music automatically
     if (audio) {
         audio.volume = 0.3; // Set volume to 30% for calm background music
+        // Reset audio to start from beginning
+        audio.currentTime = 0;
         audio.play().catch(err => {
             console.log('🎵 Audio autoplay prevented by browser. Will try on user interaction.');
             // Try to play on first user interaction
             const playOnInteraction = () => {
+                audio.currentTime = 0;
                 audio.play().catch(e => console.log('Audio play failed:', e));
                 document.removeEventListener('click', playOnInteraction);
                 document.removeEventListener('touchstart', playOnInteraction);
@@ -4779,6 +4794,8 @@ function showMaintenanceMode(issues = []) {
             document.addEventListener('click', playOnInteraction, { once: true });
             document.addEventListener('touchstart', playOnInteraction, { once: true });
         });
+    } else {
+        console.warn('⚠️ Maintenance audio element not found');
     }
     
     // Save maintenance mode state
@@ -6275,6 +6292,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Hide system services until login
             document.getElementById("systemServicesContainer").style.display = "none";
             isDev = false;
+            // Clear saved login state when switching to developer login screen
+            localStorage.removeItem('isDevLoggedIn');
         } else {
             document.getElementById("devPassword").style.display = "none";
             document.getElementById("devLoginBtn").style.display = "none";
@@ -6283,6 +6302,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Hide system services for inspectors - developer only
             document.getElementById("systemServicesContainer").style.display = "none";
             isDev = false;
+            // Clear saved login state when switching to inspector role
+            localStorage.removeItem('isDevLoggedIn');
             renderPlanTable();
         }
     });
@@ -6291,6 +6312,8 @@ document.getElementById("devLoginBtn").onclick = async function() {
     let pw = document.getElementById("devPassword").value.trim();
     if (pw === DEV_PASSWORD) {
         isDev = true;
+        // Save developer login state to persist across page reloads
+        localStorage.setItem('isDevLoggedIn', 'true');
         
         // تعيين التوكن الافتراضي تلقائياً إذا لم يكن موجوداً
         if (!localStorage.getItem("devToken")) {
@@ -6360,6 +6383,8 @@ document.getElementById("devLoginBtn").onclick = async function() {
 }
 document.getElementById("devLogoutBtn").onclick = function() {
     isDev = false;
+    // Remove developer login state from localStorage
+    localStorage.removeItem('isDevLoggedIn');
     document.getElementById("devSection").style.display = "none";
     document.getElementById("devLogoutBtn").style.display = "none";
     document.getElementById("devPassword").style.display = "none";
@@ -11063,6 +11088,8 @@ function saveDataToJSON(silent = true) {
                     // Hide system services until login
                     document.getElementById('systemServicesContainer').style.display = 'none';
                     window.isDev = false;
+                    // Clear saved login state when switching to developer login screen
+                    localStorage.removeItem('isDevLoggedIn');
                 } else {
                     document.getElementById('devPassword').style.display = 'none';
                     document.getElementById('devLoginBtn').style.display = 'none';
@@ -11071,6 +11098,8 @@ function saveDataToJSON(silent = true) {
                     // Hide system services for inspectors - developer only
                     document.getElementById('systemServicesContainer').style.display = 'none';
                     window.isDev = false;
+                    // Clear saved login state when switching to inspector role
+                    localStorage.removeItem('isDevLoggedIn');
                 }
             });
         }
@@ -11084,6 +11113,8 @@ function saveDataToJSON(silent = true) {
                 if (pw === DEV_PASSWORD) {
                     window.isDev = true;
                     isDev = true;
+                    // Save developer login state to persist across page reloads
+                    localStorage.setItem('isDevLoggedIn', 'true');
                     
                     // تعيين التوكن الافتراضي تلقائياً إذا لم يكن موجوداً
                     if (!localStorage.getItem("devToken")) {
@@ -11115,6 +11146,8 @@ function saveDataToJSON(silent = true) {
             devLogoutBtn.onclick = function() {
                 window.isDev = false;
                 isDev = false;  // تأكد من إعادة تعيين متغير isDev أيضاً
+                // Remove developer login state from localStorage
+                localStorage.removeItem('isDevLoggedIn');
                 document.getElementById('devSection').style.display = 'none';
                 document.getElementById('devLogoutBtn').style.display = 'none';
                 document.getElementById('devPassword').style.display = 'none';

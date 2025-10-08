@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>Test: Maintenance Close Button - Developer Login Flow</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Cairo', Arial, sans-serif;
+            background: linear-gradient(135deg, #e8f0fe 0%, #f0e8ff 50%, #e8fff0 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #2336a0;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .status-box {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .status-box.dev {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+        
+        .status-box.user {
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+        
+        .test-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            background: #2336a0;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+            flex: 1;
+            min-width: 150px;
+        }
+        
+        button:hover {
+            background: #1a2870;
+        }
+        
+        button.danger {
+            background: #dc3545;
+        }
+        
+        button.danger:hover {
+            background: #c82333;
+        }
+        
+        button.success {
+            background: #28a745;
+        }
+        
+        button.success:hover {
+            background: #218838;
+        }
+        
+        .log {
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        /* Maintenance Overlay Styles */
+        #maintenanceOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, 
+                rgba(35, 54, 160, 0.95) 0%,
+                rgba(76, 175, 80, 0.95) 50%,
+                rgba(220, 53, 69, 0.95) 100%);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+            backdrop-filter: blur(10px);
+        }
+        
+        .maintenance-content {
+            background: white;
+            border-radius: 20px;
+            padding: 50px 40px;
+            text-align: center;
+            max-width: 500px;
+            position: relative;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.3);
+        }
+        
+        .maintenance-close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            display: none; /* Hidden by default */
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+        
+        .maintenance-close-btn:hover {
+            background: linear-gradient(135deg, #c82333 0%, #a71d2a 100%);
+            transform: scale(1.1) rotate(90deg);
+            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.6);
+        }
+        
+        .maintenance-close-btn.show-for-dev {
+            display: flex;
+        }
+        
+        .maintenance-title {
+            font-size: 28px;
+            color: #2336a0;
+            margin-bottom: 15px;
+        }
+        
+        .maintenance-message {
+            font-size: 20px;
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+        
+        .maintenance-submessage {
+            font-size: 16px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Test: Maintenance Close Button Feature</h1>
+        
+        <div class="status-box" id="statusBox">
+            <h3>حالة المستخدم الحالية:</h3>
+            <p id="statusText">مستخدم عادي 👤</p>
+        </div>
+        
+        <div class="test-buttons">
+            <button onclick="loginAsDev()" class="success">🔓 تسجيل الدخول كمطور</button>
+            <button onclick="logoutDev()" class="danger">🚪 تسجيل الخروج</button>
+        </div>
+        
+        <div class="test-buttons">
+            <button onclick="showMaintenance()">⚠️ عرض وضع الصيانة</button>
+            <button onclick="hideMaintenance()">✅ إخفاء وضع الصيانة</button>
+        </div>
+        
+        <div class="test-buttons">
+            <button onclick="clearLog()">🗑️ مسح السجل</button>
+        </div>
+        
+        <h3>📋 سجل الأحداث:</h3>
+        <div class="log" id="logBox"></div>
+    </div>
+    
+    <!-- Maintenance Overlay -->
+    <div id="maintenanceOverlay">
+        <div class="maintenance-content">
+            <button id="maintenanceCloseBtn" class="maintenance-close-btn" onclick="closeMaintenance()" title="إغلاق (للمطور فقط)">×</button>
+            <h2 class="maintenance-title">الزملاء الأعزاء</h2>
+            <p class="maintenance-message">جاري التحديث الآن</p>
+            <p class="maintenance-submessage">شكراً على الانتظار</p>
+        </div>
+    </div>
+    
+    <script>
+        let isDev = false;
+        
+        function log(message) {
+            const logBox = document.getElementById('logBox');
+            const timestamp = new Date().toLocaleTimeString('ar-EG');
+            logBox.textContent += `[${timestamp}] ${message}\n`;
+            logBox.scrollTop = logBox.scrollHeight;
+            console.log(message);
+        }
+        
+        function updateStatus() {
+            const statusBox = document.getElementById('statusBox');
+            const statusText = document.getElementById('statusText');
+            
+            if (isDev) {
+                statusBox.className = 'status-box dev';
+                statusText.textContent = 'مطور مسجل دخول 👨‍💻 - يمكن إغلاق وضع الصيانة';
+            } else {
+                statusBox.className = 'status-box user';
+                statusText.textContent = 'مستخدم عادي 👤 - لا يمكن إغلاق وضع الصيانة';
+            }
+        }
+        
+        // Update close button visibility based on developer status
+        function updateMaintenanceCloseButton() {
+            const closeBtn = document.getElementById('maintenanceCloseBtn');
+            if (closeBtn) {
+                if (isDev) {
+                    closeBtn.classList.add('show-for-dev');
+                    log('🔓 زر الإغلاق (×) أصبح مرئياً للمطور');
+                } else {
+                    closeBtn.classList.remove('show-for-dev');
+                    log('🔒 زر الإغلاق (×) مخفي للمستخدم العادي');
+                }
+            }
+        }
+        
+        function loginAsDev() {
+            isDev = true;
+            updateStatus();
+            updateMaintenanceCloseButton();
+            log('✅ تم تسجيل الدخول كمطور بنجاح!');
+            log('💡 الآن يمكنك رؤية زر الإغلاق (×) في رسالة الصيانة');
+        }
+        
+        function logoutDev() {
+            isDev = false;
+            updateStatus();
+            updateMaintenanceCloseButton();
+            log('🚪 تم تسجيل الخروج - أنت الآن مستخدم عادي');
+            log('🔒 زر الإغلاق (×) لن يظهر بعد الآن');
+        }
+        
+        function showMaintenance() {
+            const overlay = document.getElementById('maintenanceOverlay');
+            overlay.style.display = 'flex';
+            updateMaintenanceCloseButton();
+            log('⚠️ تم عرض رسالة الصيانة');
+            
+            if (isDev) {
+                log('✅ يمكنك رؤية زر الإغلاق (×) في الزاوية العلوية اليمنى');
+            } else {
+                log('❌ زر الإغلاق (×) مخفي - يجب تسجيل الدخول كمطور');
+            }
+        }
+        
+        function hideMaintenance() {
+            const overlay = document.getElementById('maintenanceOverlay');
+            overlay.style.display = 'none';
+            log('✅ تم إخفاء رسالة الصيانة');
+        }
+        
+        function closeMaintenance() {
+            if (isDev) {
+                hideMaintenance();
+                log('✅ تم إغلاق وضع الصيانة بنجاح من قبل المطور');
+                log('💡 في النظام الفعلي، سيتم المزامنة مع GitHub');
+                alert('✅ تم إغلاق وضع الصيانة بنجاح!\n\nيمكنك الآن الوصول إلى لوحة التحكم.\n\n📱 تم إلغاء وضع الصيانة على جميع الأجهزة.');
+            } else {
+                log('⚠️ محاولة إغلاق وضع الصيانة من مستخدم عادي - مرفوض');
+                alert('🔒 عذراً، إغلاق وضع الصيانة مخصص للمطور فقط\n\nللوصول إلى هذه الميزة:\n1. قم بتسجيل الدخول كمطور\n2. استخدم كلمة سر المطور\n3. ثم يمكنك إغلاق وضع الصيانة');
+            }
+        }
+        
+        function clearLog() {
+            document.getElementById('logBox').textContent = '';
+            log('🗑️ تم مسح السجل');
+        }
+        
+        // Initialize
+        updateStatus();
+        log('🚀 تم تحميل صفحة الاختبار');
+        log('💡 جرب: (1) عرض الصيانة (2) تسجيل الدخول كمطور (3) انظر إلى زر (×)');
+    </script>
+</body>
+</html>

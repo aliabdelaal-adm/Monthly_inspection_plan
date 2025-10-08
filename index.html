@@ -4742,19 +4742,12 @@ function validateDataIntegrity(data) {
 function showMaintenanceMode(issues = []) {
     const overlay = document.getElementById('maintenanceOverlay');
     const detailsDiv = document.getElementById('maintenanceDetails');
-    const closeBtn = document.getElementById('maintenanceCloseBtn');
     const audio = document.getElementById('maintenanceAudio');
     
     if (!overlay) return;
     
-    // Show close button only for developers
-    if (closeBtn) {
-        if (isDev || window.isDev) {
-            closeBtn.classList.add('show-for-dev');
-        } else {
-            closeBtn.classList.remove('show-for-dev');
-        }
-    }
+    // Update close button visibility based on developer status
+    updateMaintenanceCloseButton();
     
     // Build details message
     let detailsHTML = '<strong>تفاصيل التحديث:</strong><br>';
@@ -4816,13 +4809,39 @@ function hideMaintenanceMode() {
     console.log('✅ Maintenance Mode Deactivated');
 }
 
+// Update close button visibility based on developer status
+function updateMaintenanceCloseButton() {
+    const closeBtn = document.getElementById('maintenanceCloseBtn');
+    if (closeBtn) {
+        if (isDev || window.isDev) {
+            closeBtn.classList.add('show-for-dev');
+            console.log('🔓 Maintenance close button now visible for developer');
+        } else {
+            closeBtn.classList.remove('show-for-dev');
+            console.log('🔒 Maintenance close button hidden for non-developer');
+        }
+    }
+}
+
 // Close maintenance mode with developer permission check
-function closeMaintenance() {
+async function closeMaintenance() {
     // Only allow developers to close the maintenance mode
     if (isDev || window.isDev) {
+        // First hide the overlay immediately for this device
         hideMaintenanceMode();
-        console.log('✅ Maintenance Mode closed by developer');
-        alert('✅ تم إغلاق وضع الصيانة بنجاح!\n\nيمكنك الآن الوصول إلى لوحة التحكم.');
+        console.log('✅ Maintenance Mode closed by developer on this device');
+        
+        // Then sync with GitHub to close it for all devices
+        console.log('⏳ Syncing maintenance mode closure with GitHub...');
+        const saved = await saveMaintenanceStatusToGitHub(false, []);
+        
+        if (saved) {
+            alert('✅ تم إغلاق وضع الصيانة بنجاح!\n\nيمكنك الآن الوصول إلى لوحة التحكم.\n\n📱 تم إلغاء وضع الصيانة على جميع الأجهزة.');
+            console.log('✅ Maintenance Mode closed and synced with GitHub for all devices');
+        } else {
+            alert('✅ تم إغلاق وضع الصيانة على هذا الجهاز!\n\n⚠️ لم يتم المزامنة مع GitHub - قد يظهر على الأجهزة الأخرى\n\nيمكنك الآن الوصول إلى لوحة التحكم.');
+            console.log('⚠️ Maintenance Mode closed locally but GitHub sync failed');
+        }
     } else {
         alert('🔒 عذراً، إغلاق وضع الصيانة مخصص للمطور فقط\n\nللوصول إلى هذه الميزة:\n1. قم بتسجيل الدخول كمطور\n2. استخدم كلمة سر المطور\n3. ثم يمكنك إغلاق وضع الصيانة');
         console.log('⚠️ Non-developer attempted to close maintenance mode');
@@ -6332,9 +6351,9 @@ document.getElementById("devLoginBtn").onclick = async function() {
             }, 150);
         }
         
-        // Hide maintenance overlay for developer after login
-        hideMaintenanceMode();
-        console.log('✅ Developer logged in - maintenance overlay hidden');
+        // Update maintenance close button visibility for developer
+        updateMaintenanceCloseButton();
+        console.log('✅ Developer logged in - maintenance close button now visible');
     } else {
         document.getElementById("devError").innerText = "كلمة السر غير صحيحة!";
     }
@@ -6366,9 +6385,12 @@ document.getElementById("devLogoutBtn").onclick = function() {
         }, 150);
     }
     
+    // Update maintenance close button visibility
+    updateMaintenanceCloseButton();
+    
     // Automatically disable maintenance mode for all users when developer logs out
     disableMaintenanceModeForAll();
-    console.log('🚪 Developer logged out - maintenance mode disabled for all users');
+    console.log('🚪 Developer logged out - maintenance close button hidden and mode disabled for all users');
 };
 
 // فحص صلاحيات المطور مع رسائل توضيحية محسنة
@@ -11078,9 +11100,9 @@ function saveDataToJSON(silent = true) {
                     // Show system services for developer
                     document.getElementById('systemServicesContainer').style.display = 'block';
                     
-                    // Hide maintenance overlay for developer after login
-                    hideMaintenanceMode();
-                    console.log('✅ Developer logged in (backup handler) - maintenance overlay hidden');
+                    // Update maintenance close button visibility for developer
+                    updateMaintenanceCloseButton();
+                    console.log('✅ Developer logged in (backup handler) - maintenance close button now visible');
                 } else {
                     document.getElementById('devError').innerText = 'كلمة السر غير صحيحة!';
                 }
@@ -11102,9 +11124,12 @@ function saveDataToJSON(silent = true) {
                 // Hide system services for non-developer
                 document.getElementById('systemServicesContainer').style.display = 'none';
                 
+                // Update maintenance close button visibility
+                updateMaintenanceCloseButton();
+                
                 // Automatically disable maintenance mode for all users when developer logs out
                 disableMaintenanceModeForAll();
-                console.log('🚪 Developer logged out (backup handler) - maintenance mode disabled for all');
+                console.log('🚪 Developer logged out (backup handler) - maintenance close button hidden and mode disabled for all');
             };
         }
     }

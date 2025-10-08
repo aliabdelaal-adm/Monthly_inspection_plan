@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>اختبار ميزة الأمان - Security Feature Test</title>
+    <style>
+        body {
+            font-family: 'Cairo', Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-case {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-case h3 {
+            color: #2336a0;
+        }
+        .result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .result.pass {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .result.fail {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+    <h1>اختبار نظام الحماية والأمان - Security System Test</h1>
+    
+    <div class="test-case">
+        <h3>Test 1: Valid Data</h3>
+        <div id="test1-result" class="result"></div>
+    </div>
+    
+    <div class="test-case">
+        <h3>Test 2: Missing Inspectors</h3>
+        <div id="test2-result" class="result"></div>
+    </div>
+    
+    <div class="test-case">
+        <h3>Test 3: Too Few Shops</h3>
+        <div id="test3-result" class="result"></div>
+    </div>
+    
+    <div class="test-case">
+        <h3>Test 4: Future Timestamp</h3>
+        <div id="test4-result" class="result"></div>
+    </div>
+    
+    <div class="test-case">
+        <h3>Test 5: Missing lastUpdate</h3>
+        <div id="test5-result" class="result"></div>
+    </div>
+
+    <script>
+        // Copy the security functions from index.html
+        const EXPECTED_DATA_SIGNATURE = {
+            hasInspectionData: true,
+            hasInspectors: true,
+            hasAreas: true,
+            hasShops: true,
+            hasBellNotes: true,
+            hasLastUpdate: true,
+            minInspectors: 20,
+            minAreas: 35,
+            minShops: 140
+        };
+
+        function validateDataIntegrity(data) {
+            const issues = [];
+            
+            if (!data.inspectionData || !Array.isArray(data.inspectionData)) {
+                issues.push('بيانات التفتيش مفقودة أو تالفة');
+            }
+            
+            if (!data.inspectors || !Array.isArray(data.inspectors)) {
+                issues.push('بيانات المفتشين مفقودة أو تالفة');
+            } else if (data.inspectors.length < EXPECTED_DATA_SIGNATURE.minInspectors) {
+                issues.push(`عدد المفتشين أقل من المتوقع (${data.inspectors.length} من ${EXPECTED_DATA_SIGNATURE.minInspectors})`);
+            }
+            
+            if (!data.areas || !Array.isArray(data.areas)) {
+                issues.push('بيانات المناطق مفقودة أو تالفة');
+            } else if (data.areas.length < EXPECTED_DATA_SIGNATURE.minAreas) {
+                issues.push(`عدد المناطق أقل من المتوقع (${data.areas.length} من ${EXPECTED_DATA_SIGNATURE.minAreas})`);
+            }
+            
+            if (!data.shops || !Array.isArray(data.shops)) {
+                issues.push('بيانات المحلات مفقودة أو تالفة');
+            } else if (data.shops.length < EXPECTED_DATA_SIGNATURE.minShops) {
+                issues.push(`عدد المحلات أقل من المتوقع (${data.shops.length} من ${EXPECTED_DATA_SIGNATURE.minShops})`);
+            }
+            
+            if (!data.lastUpdate) {
+                issues.push('تاريخ آخر تحديث مفقود');
+            }
+            
+            if (data.lastUpdate) {
+                const updateDate = new Date(data.lastUpdate);
+                const now = new Date();
+                const oneYearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+                const oneMonthInFuture = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+                
+                if (updateDate > oneMonthInFuture) {
+                    issues.push('تاريخ التحديث في المستقبل - قد يكون هناك تلاعب');
+                } else if (updateDate < oneYearAgo) {
+                    issues.push('تاريخ التحديث قديم جداً - قد تكون البيانات غير محدثة');
+                }
+            }
+            
+            return {
+                isValid: issues.length === 0,
+                issues: issues
+            };
+        }
+
+        // Test cases
+        function runTests() {
+            // Test 1: Valid data
+            const validData = {
+                inspectionData: [{ inspector: 'Test', day: '2025-01-01', shift: 'صباحية', area: 'Test', shops: [] }],
+                inspectors: Array(23).fill({ id: '1', name: 'Test' }),
+                areas: Array(38).fill({ id: '1', name: 'Test' }),
+                shops: Array(149).fill({ id: '1', name: 'Test', areaId: '1' }),
+                bellNotes: { notifications: [] },
+                lastUpdate: new Date().toISOString()
+            };
+            const result1 = validateDataIntegrity(validData);
+            document.getElementById('test1-result').className = result1.isValid ? 'result pass' : 'result fail';
+            document.getElementById('test1-result').textContent = result1.isValid 
+                ? '✅ PASS: Data is valid' 
+                : '❌ FAIL: ' + result1.issues.join(', ');
+
+            // Test 2: Missing inspectors
+            const missingInspectors = { ...validData, inspectors: null };
+            const result2 = validateDataIntegrity(missingInspectors);
+            document.getElementById('test2-result').className = !result2.isValid ? 'result pass' : 'result fail';
+            document.getElementById('test2-result').textContent = !result2.isValid 
+                ? '✅ PASS: Detected missing inspectors - ' + result2.issues.join(', ')
+                : '❌ FAIL: Should have detected missing inspectors';
+
+            // Test 3: Too few shops
+            const tooFewShops = { ...validData, shops: Array(50).fill({ id: '1', name: 'Test', areaId: '1' }) };
+            const result3 = validateDataIntegrity(tooFewShops);
+            document.getElementById('test3-result').className = !result3.isValid ? 'result pass' : 'result fail';
+            document.getElementById('test3-result').textContent = !result3.isValid 
+                ? '✅ PASS: Detected too few shops - ' + result3.issues.join(', ')
+                : '❌ FAIL: Should have detected too few shops';
+
+            // Test 4: Future timestamp
+            const futureDate = new Date();
+            futureDate.setMonth(futureDate.getMonth() + 2);
+            const futureTimestamp = { ...validData, lastUpdate: futureDate.toISOString() };
+            const result4 = validateDataIntegrity(futureTimestamp);
+            document.getElementById('test4-result').className = !result4.isValid ? 'result pass' : 'result fail';
+            document.getElementById('test4-result').textContent = !result4.isValid 
+                ? '✅ PASS: Detected future timestamp - ' + result4.issues.join(', ')
+                : '❌ FAIL: Should have detected future timestamp';
+
+            // Test 5: Missing lastUpdate
+            const noLastUpdate = { ...validData, lastUpdate: null };
+            const result5 = validateDataIntegrity(noLastUpdate);
+            document.getElementById('test5-result').className = !result5.isValid ? 'result pass' : 'result fail';
+            document.getElementById('test5-result').textContent = !result5.isValid 
+                ? '✅ PASS: Detected missing lastUpdate - ' + result5.issues.join(', ')
+                : '❌ FAIL: Should have detected missing lastUpdate';
+        }
+
+        // Run tests when page loads
+        window.addEventListener('load', runTests);
+    </script>
+</body>
+</html>

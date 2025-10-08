@@ -4274,6 +4274,140 @@ function restartTickerAnimation() {
 }
 let lastUpdateTime = null;
 
+// =============================================================================
+// نظام الحماية والأمان - Security and Protection System
+// =============================================================================
+
+// Expected data structure signature - Updated by developer only
+const EXPECTED_DATA_SIGNATURE = {
+    hasInspectionData: true,
+    hasInspectors: true,
+    hasAreas: true,
+    hasShops: true,
+    hasBellNotes: true,
+    hasLastUpdate: true,
+    minInspectors: 20, // Minimum expected number of inspectors (actual: 23)
+    minAreas: 35,      // Minimum expected number of areas (actual: 38)
+    minShops: 140      // Minimum expected number of shops (actual: 149)
+};
+
+// Security check: Validate data integrity
+function validateDataIntegrity(data) {
+    const issues = [];
+    
+    // Check required fields exist
+    if (!data.inspectionData || !Array.isArray(data.inspectionData)) {
+        issues.push('بيانات التفتيش مفقودة أو تالفة');
+    }
+    
+    if (!data.inspectors || !Array.isArray(data.inspectors)) {
+        issues.push('بيانات المفتشين مفقودة أو تالفة');
+    } else if (data.inspectors.length < EXPECTED_DATA_SIGNATURE.minInspectors) {
+        issues.push(`عدد المفتشين أقل من المتوقع (${data.inspectors.length} من ${EXPECTED_DATA_SIGNATURE.minInspectors})`);
+    }
+    
+    if (!data.areas || !Array.isArray(data.areas)) {
+        issues.push('بيانات المناطق مفقودة أو تالفة');
+    } else if (data.areas.length < EXPECTED_DATA_SIGNATURE.minAreas) {
+        issues.push(`عدد المناطق أقل من المتوقع (${data.areas.length} من ${EXPECTED_DATA_SIGNATURE.minAreas})`);
+    }
+    
+    if (!data.shops || !Array.isArray(data.shops)) {
+        issues.push('بيانات المحلات مفقودة أو تالفة');
+    } else if (data.shops.length < EXPECTED_DATA_SIGNATURE.minShops) {
+        issues.push(`عدد المحلات أقل من المتوقع (${data.shops.length} من ${EXPECTED_DATA_SIGNATURE.minShops})`);
+    }
+    
+    if (!data.lastUpdate) {
+        issues.push('تاريخ آخر تحديث مفقود');
+    }
+    
+    // Validate lastUpdate timestamp is reasonable (not in future, not too old)
+    if (data.lastUpdate) {
+        const updateDate = new Date(data.lastUpdate);
+        const now = new Date();
+        const oneYearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+        const oneMonthInFuture = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+        
+        if (updateDate > oneMonthInFuture) {
+            issues.push('تاريخ التحديث في المستقبل - قد يكون هناك تلاعب');
+        } else if (updateDate < oneYearAgo) {
+            issues.push('تاريخ التحديث قديم جداً - قد تكون البيانات غير محدثة');
+        }
+    }
+    
+    return {
+        isValid: issues.length === 0,
+        issues: issues
+    };
+}
+
+// Display security warning message
+function showSecurityWarning(issues) {
+    // Create a persistent warning banner at the top of the page
+    const existingWarning = document.getElementById('securityWarning');
+    if (existingWarning) {
+        existingWarning.remove();
+    }
+    
+    const warningDiv = document.createElement('div');
+    warningDiv.id = 'securityWarning';
+    warningDiv.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+        color: white;
+        padding: 20px;
+        text-align: center;
+        z-index: 10000;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        font-family: 'Cairo', Arial, sans-serif;
+        font-size: 18px;
+        font-weight: bold;
+        border-bottom: 3px solid #7f1d1d;
+    `;
+    
+    const title = document.createElement('div');
+    title.style.cssText = `
+        font-size: 24px;
+        margin-bottom: 10px;
+        color: #fef2f2;
+    `;
+    title.innerHTML = '⚠️ تحذير أمني: تم اكتشاف تغييرات غير مصرح بها ⚠️';
+    
+    const message = document.createElement('div');
+    message.style.cssText = `
+        font-size: 16px;
+        margin-top: 10px;
+        color: #fee2e2;
+        line-height: 1.8;
+    `;
+    message.innerHTML = `
+        <strong>يرجى تحديث البيانات من المصدر الرسمي</strong><br>
+        المشاكل المكتشفة:<br>
+        ${issues.map(issue => `• ${issue}`).join('<br>')}
+        <br><br>
+        <span style="font-size: 14px;">
+        للمطورين: تواصل مع المسؤول للحصول على آخر تحديث رسمي للبيانات
+        </span>
+    `;
+    
+    warningDiv.appendChild(title);
+    warningDiv.appendChild(message);
+    
+    // Insert at the beginning of body
+    document.body.insertBefore(warningDiv, document.body.firstChild);
+    
+    // Also add padding to body to prevent content from being hidden
+    document.body.style.paddingTop = '200px';
+    
+    // Log to console for debugging
+    console.error('🔴 SECURITY WARNING: Data integrity check failed');
+    console.error('Issues detected:', issues);
+}
+
 // Auto-refresh functionality
 function startAutoRefresh() {
     setInterval(async () => {
@@ -4281,6 +4415,13 @@ function startAutoRefresh() {
             const response = await fetch('./plan-data.json?t=' + Date.now());
             if (response.ok) {
                 const data = await response.json();
+                
+                // SECURITY CHECK: Validate data integrity on auto-refresh
+                const integrityCheck = validateDataIntegrity(data);
+                if (!integrityCheck.isValid) {
+                    showSecurityWarning(integrityCheck.issues);
+                }
+                
                 if (data.lastUpdate && data.lastUpdate !== lastUpdateTime) {
                     await loadInspectionData();
                     showUpdateMessage('تم تحديث البيانات تلقائياً');
@@ -4524,6 +4665,15 @@ async function loadInspectionData() {
         if (response.ok) {
             const data = await response.json();
             
+ copilot/add-security-alert-feature
+            // SECURITY CHECK: Validate data integrity
+            const integrityCheck = validateDataIntegrity(data);
+            if (!integrityCheck.isValid) {
+                showSecurityWarning(integrityCheck.issues);
+                // Continue loading but with warning displayed
+            }
+            
+
             // 🛡️ Firewall Protection: Validate data before loading
             console.log('🛡️ Firewall: Validating incoming data...');
             const validation = validateDataIntegrity(data);
@@ -4557,6 +4707,7 @@ async function loadInspectionData() {
             console.log('✅ Firewall: Data validation passed');
             hideMaintenanceMode();
             
+ main
             if (data.inspectionData && Array.isArray(data.inspectionData)) {
                 inspectionData = data.inspectionData;
                 lastUpdateTime = data.lastUpdate;

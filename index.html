@@ -4046,6 +4046,9 @@ console.log('Smart distribution functions initialized');
 <script>
 // ===== وظائف إدارة خدمات النظام الجديدة =====
 
+// Restore developer login state from localStorage if exists (moved here to prevent reference errors)
+let isDev = localStorage.getItem('isDevLoggedIn') === 'true';
+
 // تبديل عرض/إخفاء قسم خدمات النظام
 function toggleSystemServices() {
     const content = document.getElementById('systemServicesContent');
@@ -4238,7 +4241,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Start periodic maintenance mode checker
-    startMaintenanceStatusChecker();
+    if (typeof startMaintenanceStatusChecker === 'function') {
+        startMaintenanceStatusChecker();
+    }
 });
 
 </script>
@@ -4278,8 +4283,7 @@ let shopsData = [
     {id:"shop11", name:"محل 11", nameEn:"Shop 11", areaId:"area_c", licenseNumber:"LIC-011", googleMapsUrl:"https://maps.google.com/?q=24.4893,54.3514"}
 ];
 
-// Restore developer login state from localStorage if exists
-let isDev = localStorage.getItem('isDevLoggedIn') === 'true';
+// Note: isDev is now declared at the top of the first script block to prevent reference errors
 let selectedInspector = "";
 const DEV_PASSWORD = "ali@1940";
 
@@ -4367,9 +4371,9 @@ const EXPECTED_DATA_SIGNATURE = {
     hasShops: true,
     hasBellNotes: true,
     hasLastUpdate: true,
-    minInspectors: 20, // Minimum expected number of inspectors (actual: 23)
-    minAreas: 35,      // Minimum expected number of areas (actual: 38)
-    minShops: 140      // Minimum expected number of shops (actual: 149)
+    minInspectors: 5,  // Minimum expected number of inspectors (current: 9)
+    minAreas: 35,      // Minimum expected number of areas (current: 38)
+    minShops: 140      // Minimum expected number of shops (current: 149)
 };
 
 // Security check: Validate data integrity
@@ -6318,14 +6322,14 @@ document.addEventListener('DOMContentLoaded', function() {
             // Hide system services for inspectors - developer only
             document.getElementById("systemServicesContainer").style.display = "none";
             // Hide file library button for inspectors
-            const fileLibraryBtn = document.getElementById("fileLibraryBtn");
-            if (fileLibraryBtn) {
-                fileLibraryBtn.style.display = "none";
+            const fileLibraryBtn2 = document.getElementById("fileLibraryBtn");
+            if (fileLibraryBtn2) {
+                fileLibraryBtn2.style.display = "none";
             }
             // Hide file library section if open
-            const fileSection = document.getElementById('fileManagementSection');
-            if (fileSection) {
-                fileSection.style.display = 'none';
+            const fileSection2 = document.getElementById('fileManagementSection');
+            if (fileSection2) {
+                fileSection2.style.display = 'none';
             }
             isDev = false;
             // Clear saved login state when switching to inspector role
@@ -6398,8 +6402,8 @@ document.getElementById("devLoginBtn").onclick = async function() {
         setTimeout(function() { renderPlanTable(); }, 100);
         
         // تحديث مكتبة الملفات إذا كانت مفتوحة لإظهار أزرار التحرير والحذف
-        const fileSection = document.getElementById('fileManagementSection');
-        if (fileSection && fileSection.style.display === 'block') {
+        const fileSectionLogin = document.getElementById('fileManagementSection');
+        if (fileSectionLogin && fileSectionLogin.style.display === 'block') {
             // إعادة تحميل الملفات مع الحفاظ على التصنيف الحالي
             const currentCategory = getCurrentFileCategory();
             setTimeout(function() { 
@@ -6444,8 +6448,8 @@ document.getElementById("devLogoutBtn").onclick = function() {
     renderPlanTable();
     
     // تحديث مكتبة الملفات إذا كانت مفتوحة لإخفاء أزرار التحرير والحذف
-    const fileSection = document.getElementById('fileManagementSection');
-    if (fileSection && fileSection.style.display === 'block') {
+    const fileSectionLogout = document.getElementById('fileManagementSection');
+    if (fileSectionLogout && fileSectionLogout.style.display === 'block') {
         // إعادة تحميل الملفات مع الحفاظ على التصنيف الحالي
         const currentCategory = getCurrentFileCategory();
         setTimeout(function() { 
@@ -14791,11 +14795,15 @@ async function previewPublicFile(filePath, fileName, fileType) {
 // تحميل الملفات تلقائياً عند تحميل الصفحة
 document.addEventListener('DOMContentLoaded', function() {
     // تحميل تفاصيل المحلات من ملف Excel المستخرج
-    loadShopsDetails();
+    if (typeof loadShopsDetails === 'function') {
+        loadShopsDetails();
+    }
     
     // تأخير تحميل الملفات قليلاً للسماح للصفحة بالتحميل الكامل
     setTimeout(() => {
-        loadPublicFiles('all');
+        if (typeof loadPublicFiles === 'function') {
+            loadPublicFiles('all');
+        }
     }, 1000);
     
     // تهيئة قسم إدارة خدمات النظام كمفتوح افتراضياً

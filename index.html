@@ -2730,6 +2730,22 @@
                 <button id="exportDataBtn" onclick="saveToExternalFile()" style="background:#dc3545;color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-weight:bold;">تصدير البيانات إلى ملف JSON</button>
                 <p style="margin:8px 0 0 0;font-size:0.9em;color:#666;">احفظ التغييرات في ملف plan-data.json جديد</p>
             </div>
+            <!-- Maintenance Mode Controls -->
+            <div style="margin-top:15px;padding-top:15px;border-top:1px solid #dee2e6;text-align:center;">
+                <h4 style="margin:0 0 10px 0;color:#856404;font-size:1em;">🛡️ إدارة وضع الصيانة</h4>
+                <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+                    <button onclick="enableMaintenanceModeForAll()" style="background:#ffc107;color:#000;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-weight:bold;box-shadow:0 2px 5px rgba(0,0,0,0.2);">
+                        🔒 تفعيل وضع الصيانة للجميع
+                    </button>
+                    <button onclick="disableMaintenanceModeForAll()" style="background:#28a745;color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-weight:bold;box-shadow:0 2px 5px rgba(0,0,0,0.2);">
+                        ✅ إلغاء وضع الصيانة للجميع
+                    </button>
+                </div>
+                <p style="margin:8px 0 0 0;font-size:0.85em;color:#666;">
+                    💡 عند تفعيل وضع الصيانة، سيرى جميع المستخدمين (عدا المطور) رسالة التحديث ولن يتمكنوا من استخدام النظام<br>
+                    عند الخروج من حسابك كمطور، سيتم إلغاء وضع الصيانة تلقائياً
+                </p>
+            </div>
         </div>
 
         <form id="addEditForm" style="width:100%;max-width:700px;display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:center;margin-bottom:12px;">
@@ -4159,6 +4175,9 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('button, .system-services-header').forEach(button => {
         button.addEventListener('click', playClickSound);
     });
+    
+    // Check maintenance mode on page load
+    checkMaintenanceMode();
 });
 
 </script>
@@ -4603,6 +4622,9 @@ function showMaintenanceMode(issues = []) {
     detailsDiv.innerHTML = detailsHTML;
     overlay.style.display = 'flex';
     
+    // Save maintenance mode state
+    localStorage.setItem('systemMaintenanceMode', 'true');
+    
     // Log for developer
     console.log('⚠️ Maintenance Mode Activated');
     console.log('Issues found:', issues);
@@ -4613,7 +4635,48 @@ function hideMaintenanceMode() {
     if (overlay) {
         overlay.style.display = 'none';
     }
+    
+    // Clear maintenance mode state
+    localStorage.removeItem('systemMaintenanceMode');
+    
     console.log('✅ Maintenance Mode Deactivated');
+}
+
+// Enable maintenance mode for all users (called by developer)
+function enableMaintenanceModeForAll() {
+    localStorage.setItem('systemMaintenanceMode', 'true');
+    
+    // Show overlay for current user if not developer
+    if (!isDev && !window.isDev) {
+        showMaintenanceMode(['النظام قيد الصيانة والتحديث']);
+    }
+    
+    alert('✅ تم تفعيل وضع الصيانة للجميع\nسيرى جميع المستخدمين رسالة التحديث ولن يتمكنوا من الوصول للنظام');
+    console.log('🛡️ Maintenance mode enabled for all users');
+}
+
+// Disable maintenance mode for all users (called by developer)
+function disableMaintenanceModeForAll() {
+    localStorage.removeItem('systemMaintenanceMode');
+    hideMaintenanceMode();
+    
+    alert('✅ تم إلغاء وضع الصيانة للجميع\nيمكن للجميع الآن الوصول للنظام');
+    console.log('✅ Maintenance mode disabled for all users');
+}
+
+// Check if system is in maintenance mode on page load
+function checkMaintenanceMode() {
+    const isMaintenanceMode = localStorage.getItem('systemMaintenanceMode') === 'true';
+    
+    if (isMaintenanceMode) {
+        // If user is not a developer, show maintenance overlay
+        if (!isDev && !window.isDev) {
+            console.log('⚠️ System is in maintenance mode - showing overlay for non-developer');
+            showMaintenanceMode(['جاري تحديث النظام', 'يقوم المطور بإجراء تعديلات', 'شكراً على الانتظار']);
+        } else {
+            console.log('⚠️ System is in maintenance mode - developer has access');
+        }
+    }
 }
 
 function performDataValidation(data) {
@@ -5870,6 +5933,10 @@ document.getElementById("devLoginBtn").onclick = async function() {
                 }
             }, 150);
         }
+        
+        // Hide maintenance overlay for developer after login
+        hideMaintenanceMode();
+        console.log('✅ Developer logged in - maintenance overlay hidden');
     } else {
         document.getElementById("devError").innerText = "كلمة السر غير صحيحة!";
     }
@@ -5900,6 +5967,10 @@ document.getElementById("devLogoutBtn").onclick = function() {
             }
         }, 150);
     }
+    
+    // Automatically disable maintenance mode for all users when developer logs out
+    disableMaintenanceModeForAll();
+    console.log('🚪 Developer logged out - maintenance mode disabled for all users');
 };
 
 // فحص صلاحيات المطور مع رسائل توضيحية محسنة
@@ -10608,6 +10679,10 @@ function saveDataToJSON(silent = true) {
                     document.getElementById('devError').innerText = '';
                     // Show system services for developer
                     document.getElementById('systemServicesContainer').style.display = 'block';
+                    
+                    // Hide maintenance overlay for developer after login
+                    hideMaintenanceMode();
+                    console.log('✅ Developer logged in (backup handler) - maintenance overlay hidden');
                 } else {
                     document.getElementById('devError').innerText = 'كلمة السر غير صحيحة!';
                 }
@@ -10628,6 +10703,10 @@ function saveDataToJSON(silent = true) {
                 document.getElementById('devError').innerText = '';
                 // Hide system services for non-developer
                 document.getElementById('systemServicesContainer').style.display = 'none';
+                
+                // Automatically disable maintenance mode for all users when developer logs out
+                disableMaintenanceModeForAll();
+                console.log('🚪 Developer logged out (backup handler) - maintenance mode disabled for all');
             };
         }
     }

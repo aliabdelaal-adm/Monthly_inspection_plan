@@ -2622,6 +2622,12 @@
             <div class="spinner-ring"></div>
         </div>
         <div class="maintenance-details" id="maintenanceDetails"></div>
+        
+        <!-- Audio for maintenance mode - calm classical music -->
+        <audio id="maintenanceAudio" loop preload="auto" style="display:none;">
+            <source src="https://cdn.pixabay.com/audio/2022/03/10/audio_c8c8e51e28.mp3" type="audio/mpeg">
+            متصفحك لا يدعم تشغيل الملفات الصوتية.
+        </audio>
     </div>
 </div>
 
@@ -4465,7 +4471,7 @@ function showSecurityWarning(issues) {
     console.error('Issues detected:', issues);
 }
 
-// Auto-refresh functionality
+// Auto-refresh functionality with automatic maintenance mode on data changes
 function startAutoRefresh() {
     setInterval(async () => {
         try {
@@ -4476,18 +4482,113 @@ function startAutoRefresh() {
                 // SECURITY CHECK: Validate data integrity on auto-refresh
                 const integrityCheck = validateDataIntegrity(data);
                 if (!integrityCheck.isValid) {
+                    // Automatically show maintenance mode with issues
+                    console.log('🔴 Data integrity issues detected - showing maintenance mode automatically');
+                    showMaintenanceMode(integrityCheck.issues);
                     showSecurityWarning(integrityCheck.issues);
+                    return; // Don't proceed with invalid data
                 }
                 
+                // Check for data changes (new inspections, updates)
                 if (data.lastUpdate && data.lastUpdate !== lastUpdateTime) {
-                    await loadInspectionData();
-                    showUpdateMessage('تم تحديث البيانات تلقائياً');
+                    console.log('📊 Data change detected - showing maintenance mode for update');
+                    
+                    // Detect what changed
+                    const changeDetails = detectDataChanges(allPlanData, data);
+                    
+                    // Show maintenance mode with change details
+                    if (changeDetails.length > 0) {
+                        showMaintenanceMode([
+                            'تم اكتشاف تحديثات في البيانات',
+                            ...changeDetails,
+                            'جاري تحديث الصفحة...'
+                        ]);
+                        
+                        // Wait 3 seconds before loading new data
+                        setTimeout(async () => {
+                            await loadInspectionData();
+                            hideMaintenanceMode();
+                            showUpdateMessage('تم تحديث البيانات تلقائياً');
+                        }, 3000);
+                    } else {
+                        // No specific changes detected, just update normally
+                        await loadInspectionData();
+                        showUpdateMessage('تم تحديث البيانات تلقائياً');
+                    }
                 }
             }
         } catch (error) {
             console.log('Auto-refresh check failed:', error);
         }
     }, 30000); // Check every 30 seconds
+}
+
+// Detect what changed in the data
+function detectDataChanges(oldData, newData) {
+    const changes = [];
+    
+    if (!oldData || !oldData.inspectionData) {
+        return ['بيانات جديدة متاحة'];
+    }
+    
+    try {
+        // Check for new inspections
+        if (newData.inspectionData && oldData.inspectionData) {
+            const newCount = newData.inspectionData.length;
+            const oldCount = oldData.inspectionData.length;
+            
+            if (newCount > oldCount) {
+                const diff = newCount - oldCount;
+                changes.push(`تمت إضافة ${diff} تفتيش جديد`);
+            } else if (newCount < oldCount) {
+                const diff = oldCount - newCount;
+                changes.push(`تم حذف ${diff} تفتيش`);
+            }
+        }
+        
+        // Check for new inspectors
+        if (newData.inspectors && oldData.inspectors) {
+            const newInspectors = newData.inspectors.length;
+            const oldInspectors = oldData.inspectors.length;
+            
+            if (newInspectors > oldInspectors) {
+                const diff = newInspectors - oldInspectors;
+                changes.push(`تمت إضافة ${diff} مفتش جديد`);
+            }
+        }
+        
+        // Check for new shops
+        if (newData.shops && oldData.shops) {
+            const newShops = newData.shops.length;
+            const oldShops = oldData.shops.length;
+            
+            if (newShops > oldShops) {
+                const diff = newShops - oldShops;
+                changes.push(`تمت إضافة ${diff} محل جديد`);
+            }
+        }
+        
+        // Check for new areas
+        if (newData.areas && oldData.areas) {
+            const newAreas = newData.areas.length;
+            const oldAreas = oldData.areas.length;
+            
+            if (newAreas > oldAreas) {
+                const diff = newAreas - oldAreas;
+                changes.push(`تمت إضافة ${diff} منطقة جديدة`);
+            }
+        }
+        
+        // If no specific changes detected, just say data updated
+        if (changes.length === 0) {
+            changes.push('تم تحديث البيانات');
+        }
+    } catch (e) {
+        console.error('Error detecting changes:', e);
+        changes.push('تم تحديث البيانات');
+    }
+    
+    return changes;
 }
 
 // Daily auto-refresh functionality at midnight
@@ -4641,7 +4742,11 @@ function validateDataIntegrity(data) {
 function showMaintenanceMode(issues = []) {
     const overlay = document.getElementById('maintenanceOverlay');
     const detailsDiv = document.getElementById('maintenanceDetails');
+ copilot/add-update-message-dismiss-permission
     const closeBtn = document.getElementById('maintenanceCloseBtn');
+
+    const audio = document.getElementById('maintenanceAudio');
+ main
     
     if (!overlay) return;
     
@@ -4670,6 +4775,22 @@ function showMaintenanceMode(issues = []) {
     detailsDiv.innerHTML = detailsHTML;
     overlay.style.display = 'flex';
     
+    // Play calm classical music automatically
+    if (audio) {
+        audio.volume = 0.3; // Set volume to 30% for calm background music
+        audio.play().catch(err => {
+            console.log('🎵 Audio autoplay prevented by browser. Will try on user interaction.');
+            // Try to play on first user interaction
+            const playOnInteraction = () => {
+                audio.play().catch(e => console.log('Audio play failed:', e));
+                document.removeEventListener('click', playOnInteraction);
+                document.removeEventListener('touchstart', playOnInteraction);
+            };
+            document.addEventListener('click', playOnInteraction, { once: true });
+            document.addEventListener('touchstart', playOnInteraction, { once: true });
+        });
+    }
+    
     // Save maintenance mode state
     localStorage.setItem('systemMaintenanceMode', 'true');
     
@@ -4680,8 +4801,16 @@ function showMaintenanceMode(issues = []) {
 
 function hideMaintenanceMode() {
     const overlay = document.getElementById('maintenanceOverlay');
+    const audio = document.getElementById('maintenanceAudio');
+    
     if (overlay) {
         overlay.style.display = 'none';
+    }
+    
+    // Stop and reset maintenance audio
+    if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
     }
     
     // Clear maintenance mode state
@@ -4795,7 +4924,6 @@ async function loadInspectionData() {
                 showSecurityWarning(integrityCheck.issues);
                 // Continue loading but with warning displayed
             }
-            
 
             // 🛡️ Firewall Protection: Validate data before loading
             console.log('🛡️ Firewall: Validating incoming data...');
@@ -4862,6 +4990,13 @@ async function loadInspectionData() {
                     bellNotes: bellNotesData || { notifications: [] },
                     lastUpdate: data.lastUpdate
                 };
+                
+                // Store in localStorage for comparison in next auto-refresh
+                try {
+                    localStorage.setItem('allPlanData', JSON.stringify(allPlanData));
+                } catch (e) {
+                    console.warn('Failed to cache data in localStorage:', e);
+                }
                 
                 // Display last update date/time for all users
                 displayLastUpdateFromData(data.lastUpdate);

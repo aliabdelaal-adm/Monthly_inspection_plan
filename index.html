@@ -6462,7 +6462,7 @@ document.getElementById("devLoginBtn").onclick = async function() {
         document.getElementById("devError").innerText = "كلمة السر غير صحيحة!";
     }
 }
-document.getElementById("devLogoutBtn").onclick = function() {
+document.getElementById("devLogoutBtn").onclick = async function() {
     isDev = false;
     // Remove developer login state from localStorage
     localStorage.removeItem('isDevLoggedIn');
@@ -6505,7 +6505,7 @@ document.getElementById("devLogoutBtn").onclick = function() {
     updateMaintenanceCloseButton();
     
     // Automatically disable maintenance mode for all users when developer logs out
-    disableMaintenanceModeForAll();
+    await disableMaintenanceModeForAll();
     console.log('🚪 Developer logged out - maintenance close button hidden and mode disabled for all users');
 };
 
@@ -11197,7 +11197,7 @@ function saveDataToJSON(silent = true) {
         
         if (devLoginBtn && !devLoginBtn.onclickBackup) {
             devLoginBtn.onclickBackup = true;
-            devLoginBtn.onclick = function() {
+            devLoginBtn.onclick = async function() {
                 const pw = document.getElementById('devPassword').value.trim();
                 const DEV_PASSWORD = 'ali@1940';
                 
@@ -11241,7 +11241,7 @@ function saveDataToJSON(silent = true) {
         const devLogoutBtn = document.getElementById('devLogoutBtn');
         if (devLogoutBtn && !devLogoutBtn.onclickBackup) {
             devLogoutBtn.onclickBackup = true;
-            devLogoutBtn.onclick = function() {
+            devLogoutBtn.onclick = async function() {
                 window.isDev = false;
                 isDev = false;  // تأكد من إعادة تعيين متغير isDev أيضاً
                 // Remove developer login state from localStorage
@@ -11259,7 +11259,7 @@ function saveDataToJSON(silent = true) {
                 updateMaintenanceCloseButton();
                 
                 // Automatically disable maintenance mode for all users when developer logs out
-                disableMaintenanceModeForAll();
+                await disableMaintenanceModeForAll();
                 console.log('🚪 Developer logged out (backup handler) - maintenance close button hidden and mode disabled for all');
             };
         }

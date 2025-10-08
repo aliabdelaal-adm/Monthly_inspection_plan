@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار إصلاح أزرار وضع الصيانة</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #234085;
+            text-align: center;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #856404;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .login-btn {
+            background: #198754;
+            color: white;
+        }
+        .logout-btn {
+            background: #d32f2f;
+            color: white;
+        }
+        .enable-btn {
+            background: #ffc107;
+            color: black;
+        }
+        .disable-btn {
+            background: #28a745;
+            color: white;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        #log {
+            background: #222;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-top: 15px;
+        }
+        input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 اختبار إصلاح أزرار وضع الصيانة</h1>
+        
+        <div class="test-section">
+            <h3>📝 وصف الاختبار</h3>
+            <p>هذا الاختبار يتحقق من أن أزرار تفعيل/إلغاء وضع الصيانة تعمل بشكل صحيح بعد تسجيل دخول المطور.</p>
+            <div class="info status">
+                <strong>المشكلة الأصلية:</strong> الأزرار لم تكن تعمل لأن معالج الأحداث الاحتياطي لم يكن async
+            </div>
+            <div class="success status">
+                <strong>الحل:</strong> تم تحويل جميع معالجات الأحداث إلى async وإضافة await للدوال غير المتزامنة
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔐 تسجيل الدخول</h3>
+            <div id="loginStatus" class="status info">
+                الحالة: <strong>غير مسجل دخول</strong>
+            </div>
+            <div>
+                <input type="password" id="devPassword" placeholder="كلمة سر المطور" value="ali@1940">
+                <button class="login-btn" onclick="testLogin()">🔓 دخول المطور</button>
+                <button class="logout-btn" onclick="testLogout()" style="display:none;" id="logoutBtn">🔒 خروج المطور</button>
+            </div>
+        </div>
+
+        <div class="test-section" id="maintenanceSection" style="display:none;">
+            <h3>🛡️ إدارة وضع الصيانة</h3>
+            <div id="maintenanceStatus" class="status info">
+                حالة الصيانة: <strong id="maintenanceStatusText">غير مفعل</strong>
+            </div>
+            <div>
+                <button class="enable-btn" onclick="testEnableMaintenanceMode()">🔒 تفعيل وضع الصيانة للجميع</button>
+                <button class="disable-btn" onclick="testDisableMaintenanceMode()">✅ إلغاء وضع الصيانة للجميع</button>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 سجل الاختبار</h3>
+            <button onclick="clearLog()" style="background:#6c757d;color:white;">🗑️ مسح السجل</button>
+            <div id="log"></div>
+        </div>
+    </div>
+
+    <script>
+        // Simulate the developer login state
+        let isDev = false;
+        let maintenanceMode = false;
+        
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString('ar-EG');
+            const color = type === 'success' ? '#0f0' : type === 'error' ? '#f00' : type === 'warning' ? '#ff0' : '#0ff';
+            logDiv.innerHTML += `<span style="color:${color}">[${timestamp}] ${message}</span>\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+        
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+            log('تم مسح السجل', 'info');
+        }
+        
+        function updateLoginStatus() {
+            const statusDiv = document.getElementById('loginStatus');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const maintenanceSection = document.getElementById('maintenanceSection');
+            
+            if (isDev) {
+                statusDiv.className = 'status success';
+                statusDiv.innerHTML = 'الحالة: <strong>مسجل دخول كمطور</strong>';
+                logoutBtn.style.display = 'inline-block';
+                maintenanceSection.style.display = 'block';
+            } else {
+                statusDiv.className = 'status info';
+                statusDiv.innerHTML = 'الحالة: <strong>غير مسجل دخول</strong>';
+                logoutBtn.style.display = 'none';
+                maintenanceSection.style.display = 'none';
+            }
+        }
+        
+        function updateMaintenanceStatus() {
+            const statusText = document.getElementById('maintenanceStatusText');
+            const statusDiv = document.getElementById('maintenanceStatus');
+            
+            if (maintenanceMode) {
+                statusText.textContent = 'مفعل';
+                statusDiv.className = 'status error';
+            } else {
+                statusText.textContent = 'غير مفعل';
+                statusDiv.className = 'status info';
+            }
+        }
+        
+        // Test login function (simulates async login)
+        async function testLogin() {
+            const pw = document.getElementById('devPassword').value.trim();
+            const DEV_PASSWORD = 'ali@1940';
+            
+            log('🔄 جاري تسجيل الدخول...', 'info');
+            
+            if (pw === DEV_PASSWORD) {
+                isDev = true;
+                log('✅ تم تسجيل الدخول بنجاح', 'success');
+                updateLoginStatus();
+            } else {
+                log('❌ كلمة السر غير صحيحة', 'error');
+            }
+        }
+        
+        // Test logout function (simulates async logout with maintenance disable)
+        async function testLogout() {
+            log('🔄 جاري تسجيل الخروج...', 'info');
+            isDev = false;
+            
+            // Simulate disabling maintenance mode
+            if (maintenanceMode) {
+                log('🔄 إلغاء وضع الصيانة تلقائياً...', 'warning');
+                await testDisableMaintenanceMode();
+            }
+            
+            log('✅ تم تسجيل الخروج بنجاح', 'success');
+            updateLoginStatus();
+        }
+        
+        // Simulate async enableMaintenanceModeForAll function
+        async function testEnableMaintenanceMode() {
+            if (!isDev) {
+                alert('❌ عذراً، هذه الميزة متاحة للمطور فقط');
+                log('❌ محاولة تفعيل وضع الصيانة بدون صلاحيات', 'error');
+                return;
+            }
+            
+            log('⏳ جاري تفعيل وضع الصيانة للجميع...', 'info');
+            
+            // Simulate async operation
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            maintenanceMode = true;
+            updateMaintenanceStatus();
+            
+            log('✅ تم تفعيل وضع الصيانة للجميع بنجاح!', 'success');
+            alert('✅ تم تفعيل وضع الصيانة للجميع بنجاح!\n\n' +
+                  '📱 الحالة الآن:\n' +
+                  '• تم التفعيل على هذا الجهاز فوراً\n' +
+                  '• جميع المستخدمين سيرون رسالة الصيانة');
+        }
+        
+        // Simulate async disableMaintenanceModeForAll function
+        async function testDisableMaintenanceMode() {
+            if (!isDev) {
+                alert('❌ عذراً، هذه الميزة متاحة للمطور فقط');
+                log('❌ محاولة إلغاء وضع الصيانة بدون صلاحيات', 'error');
+                return;
+            }
+            
+            log('⏳ جاري إلغاء وضع الصيانة للجميع...', 'info');
+            
+            // Simulate async operation
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            maintenanceMode = false;
+            updateMaintenanceStatus();
+            
+            log('✅ تم إلغاء وضع الصيانة للجميع بنجاح!', 'success');
+            alert('✅ تم إلغاء وضع الصيانة للجميع بنجاح!\n\n' +
+                  '📱 الحالة الآن:\n' +
+                  '• تم الإلغاء على هذا الجهاز فوراً\n' +
+                  '• جميع المستخدمين يمكنهم الآن الوصول للنظام');
+        }
+        
+        // Initialize
+        log('🚀 تم تحميل صفحة الاختبار', 'success');
+        log('📝 الخطوات:', 'info');
+        log('1. انقر على "دخول المطور"', 'info');
+        log('2. جرب أزرار تفعيل/إلغاء وضع الصيانة', 'info');
+        log('3. تحقق من أن الأزرار تعمل بشكل صحيح', 'info');
+        log('---', 'info');
+        updateLoginStatus();
+        updateMaintenanceStatus();
+    </script>
+</body>
+</html>

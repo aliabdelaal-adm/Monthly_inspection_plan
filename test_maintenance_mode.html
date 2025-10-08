@@ -231,6 +231,38 @@
             color: #d32f2f;
             font-weight: 700;
         }
+        
+        /* Developer close button for maintenance mode */
+        .maintenance-close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+        
+        .maintenance-close-btn:hover {
+            background: linear-gradient(135deg, #c82333 0%, #a71d2a 100%);
+            transform: scale(1.1) rotate(90deg);
+            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.6);
+        }
+        
+        .maintenance-close-btn:active {
+            transform: scale(0.95) rotate(90deg);
+        }
     </style>
 </head>
 <body>
@@ -240,11 +272,16 @@
         <button onclick="showMaintenanceWithErrors()">🛡️ عرض وضع الصيانة مع أخطاء</button>
         <button onclick="showMaintenanceSimple()">⚠️ عرض وضع الصيانة بسيط</button>
         <button onclick="hideMaintenanceMode()">✅ إخفاء وضع الصيانة</button>
+        <button onclick="toggleDevMode()">👨‍💻 تبديل وضع المطور</button>
+    </div>
+    <div class="test-buttons" style="background: #f8d7da; border: 2px solid #dc3545;">
+        <p id="devStatus" style="font-weight: bold; color: #721c24;">الحالة: مستخدم عادي (لا يمكن إغلاق رسالة الصيانة)</p>
     </div>
     
     <!-- Maintenance Mode Overlay -->
     <div id="maintenanceOverlay" style="display:none;">
         <div class="maintenance-content">
+            <button id="maintenanceCloseBtn" class="maintenance-close-btn" onclick="closeMaintenance()" title="إغلاق (للمطور فقط)">×</button>
             <div class="maintenance-icon">
                 <div class="shield-icon">🛡️</div>
                 <div class="lock-icon">🔒</div>
@@ -262,6 +299,38 @@
     </div>
     
     <script>
+        // Simulate developer mode flag
+        let isDev = false;
+        
+        function updateDevStatus() {
+            const statusDiv = document.getElementById('devStatus');
+            const closeBtn = document.getElementById('maintenanceCloseBtn');
+            
+            if (isDev) {
+                statusDiv.textContent = 'الحالة: مطور 👨‍💻 (يمكن إغلاق رسالة الصيانة)';
+                statusDiv.style.color = '#155724';
+                statusDiv.parentElement.style.background = '#d4edda';
+                statusDiv.parentElement.style.border = '2px solid #28a745';
+                if (closeBtn) {
+                    closeBtn.style.display = 'flex';
+                }
+            } else {
+                statusDiv.textContent = 'الحالة: مستخدم عادي (لا يمكن إغلاق رسالة الصيانة)';
+                statusDiv.style.color = '#721c24';
+                statusDiv.parentElement.style.background = '#f8d7da';
+                statusDiv.parentElement.style.border = '2px solid #dc3545';
+                if (closeBtn) {
+                    closeBtn.style.display = 'none';
+                }
+            }
+        }
+        
+        function toggleDevMode() {
+            isDev = !isDev;
+            updateDevStatus();
+            alert(isDev ? '✅ تم تفعيل وضع المطور!\n\nيمكنك الآن رؤية زر الإغلاق (×) في رسالة الصيانة.' : '⚠️ تم تعطيل وضع المطور!\n\nلن تتمكن من إغلاق رسالة الصيانة.');
+        }
+        
         function showMaintenanceWithErrors() {
             const overlay = document.getElementById('maintenanceOverlay');
             const detailsDiv = document.getElementById('maintenanceDetails');
@@ -283,6 +352,7 @@
             
             detailsDiv.innerHTML = detailsHTML;
             overlay.style.display = 'flex';
+            updateDevStatus(); // Update close button visibility
         }
         
         function showMaintenanceSimple() {
@@ -291,12 +361,29 @@
             
             detailsDiv.innerHTML = 'جاري فحص البيانات والتأكد من سلامتها...';
             overlay.style.display = 'flex';
+            updateDevStatus(); // Update close button visibility
         }
         
         function hideMaintenanceMode() {
             const overlay = document.getElementById('maintenanceOverlay');
             overlay.style.display = 'none';
         }
+        
+        // Close maintenance mode with developer permission check
+        function closeMaintenance() {
+            // Only allow developers to close the maintenance mode
+            if (isDev) {
+                hideMaintenanceMode();
+                console.log('✅ Maintenance Mode closed by developer');
+                alert('✅ تم إغلاق وضع الصيانة بنجاح!\n\nيمكنك الآن الوصول إلى لوحة التحكم.');
+            } else {
+                alert('🔒 عذراً، إغلاق وضع الصيانة مخصص للمطور فقط\n\nللوصول إلى هذه الميزة:\n1. قم بتسجيل الدخول كمطور\n2. استخدم كلمة سر المطور\n3. ثم يمكنك إغلاق وضع الصيانة');
+                console.log('⚠️ Non-developer attempted to close maintenance mode');
+            }
+        }
+        
+        // Initialize on page load
+        updateDevStatus();
     </script>
 </body>
 </html>

@@ -72,7 +72,7 @@ function showMaintenanceMode(issues = []) {
     
     // Play music automatically
     if (audio) {
-        audio.volume = 0.3; // 30% volume
+        audio.volume = 0.15; // 15% volume
         audio.currentTime = 0; // Start from beginning
         audio.play().catch(err => {
             // Fallback: play on first user interaction if blocked
@@ -111,7 +111,7 @@ function hideMaintenanceMode() {
 
 | الإعداد / Setting | القيمة / Value | الوصف / Description |
 |------------------|---------------|---------------------|
-| مستوى الصوت / Volume | 30% (0.3) | هادئ وغير مزعج / Calm and non-intrusive |
+| مستوى الصوت / Volume | 15% (0.15) | هادئ جداً وغير مزعج / Very quiet and non-intrusive |
 | التكرار / Loop | نعم / Yes | يعاد تلقائياً / Repeats automatically |
 | التشغيل التلقائي / Autoplay | نعم / Yes | يبدأ فوراً / Starts immediately |
 | الإيقاف التلقائي / Auto-stop | نعم / Yes | يتوقف عند الإغلاق / Stops on close |

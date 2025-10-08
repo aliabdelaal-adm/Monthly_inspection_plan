@@ -4219,6 +4219,11 @@ function playClickSound() {
     }
 }
 
+// Restore developer login state from localStorage if exists - MUST be declared before DOMContentLoaded
+let isDev = localStorage.getItem('isDevLoggedIn') === 'true';
+let selectedInspector = "";
+const DEV_PASSWORD = "ali@1940";
+
 // إضافة مستمعات الأحداث لأصوات النقر
 document.addEventListener('DOMContentLoaded', function() {
     // إضافة أصوات النقر لجميع الأزرار
@@ -4278,10 +4283,7 @@ let shopsData = [
     {id:"shop11", name:"محل 11", nameEn:"Shop 11", areaId:"area_c", licenseNumber:"LIC-011", googleMapsUrl:"https://maps.google.com/?q=24.4893,54.3514"}
 ];
 
-// Restore developer login state from localStorage if exists
-let isDev = localStorage.getItem('isDevLoggedIn') === 'true';
-let selectedInspector = "";
-const DEV_PASSWORD = "ali@1940";
+// Note: isDev, selectedInspector, and DEV_PASSWORD are now declared earlier before DOMContentLoaded
 
 // Global plan data variable - properly initialize to prevent undefined errors
 let allPlanData = {
@@ -6291,45 +6293,63 @@ document.addEventListener('DOMContentLoaded', function() {
         let role = this.value;
         document.getElementById("devError").innerText = "";
         if(role === "developer") {
-            document.getElementById("devPassword").style.display = "inline-block";
-            document.getElementById("devLoginBtn").style.display = "inline-block";
-            document.getElementById("devLogoutBtn").style.display = "none";
-            document.getElementById("devSection").style.display = "none";
-            // Hide system services until login
-            document.getElementById("systemServicesContainer").style.display = "none";
-            // Hide file library button until login
-            const fileLibraryBtn = document.getElementById("fileLibraryBtn");
-            if (fileLibraryBtn) {
-                fileLibraryBtn.style.display = "none";
+            // Check if developer is already logged in
+            const isAlreadyLoggedIn = isDev || localStorage.getItem('isDevLoggedIn') === 'true';
+            
+            if (isAlreadyLoggedIn) {
+                // Developer is already logged in, just show the UI
+                console.log('✅ Developer already logged in - preserving session');
+                document.getElementById("devSection").style.display = "block";
+                document.getElementById("devLogoutBtn").style.display = "inline-block";
+                document.getElementById("devPassword").style.display = "none";
+                document.getElementById("devLoginBtn").style.display = "none";
+                document.getElementById("systemServicesContainer").style.display = "block";
+                const fileLibraryBtn = document.getElementById("fileLibraryBtn");
+                if (fileLibraryBtn) {
+                    fileLibraryBtn.style.display = "inline-flex";
+                }
+            } else {
+                // Show login form for new login
+                document.getElementById("devPassword").style.display = "inline-block";
+                document.getElementById("devLoginBtn").style.display = "inline-block";
+                document.getElementById("devLogoutBtn").style.display = "none";
+                document.getElementById("devSection").style.display = "none";
+                document.getElementById("systemServicesContainer").style.display = "none";
+                const fileLibraryBtn = document.getElementById("fileLibraryBtn");
+                if (fileLibraryBtn) {
+                    fileLibraryBtn.style.display = "none";
+                }
             }
-            // Hide file library section if open
+            // Hide file library section if open when showing login form
             const fileSection = document.getElementById('fileManagementSection');
-            if (fileSection) {
+            if (fileSection && !isAlreadyLoggedIn) {
                 fileSection.style.display = 'none';
             }
-            isDev = false;
-            // Clear saved login state when switching to developer login screen
-            localStorage.removeItem('isDevLoggedIn');
         } else {
+            // Switching to inspector or empty selection - only then clear developer session
+            if (role === "inspector" || role === "") {
+                // Only clear session when explicitly switching away from developer
+                const wasLoggedIn = isDev || localStorage.getItem('isDevLoggedIn') === 'true';
+                if (wasLoggedIn) {
+                    console.log('🚪 Logging out developer - switching to inspector');
+                }
+                isDev = false;
+                localStorage.removeItem('isDevLoggedIn');
+            }
+            
             document.getElementById("devPassword").style.display = "none";
             document.getElementById("devLoginBtn").style.display = "none";
             document.getElementById("devLogoutBtn").style.display = "none";
             document.getElementById("devSection").style.display = "none";
-            // Hide system services for inspectors - developer only
             document.getElementById("systemServicesContainer").style.display = "none";
-            // Hide file library button for inspectors
             const fileLibraryBtn = document.getElementById("fileLibraryBtn");
             if (fileLibraryBtn) {
                 fileLibraryBtn.style.display = "none";
             }
-            // Hide file library section if open
             const fileSection = document.getElementById('fileManagementSection');
             if (fileSection) {
                 fileSection.style.display = 'none';
             }
-            isDev = false;
-            // Clear saved login state when switching to inspector role
-            localStorage.removeItem('isDevLoggedIn');
             renderPlanTable();
         }
     });
@@ -11170,7 +11190,14 @@ function saveDataToJSON(silent = true) {
                         localStorage.setItem("devToken", defaultToken);
                     }
                     
-                    setLastUpdateDate();
+                    // Try to update last update date if function is available
+                    if (typeof setLastUpdateDate === 'function') {
+                        try {
+                            setLastUpdateDate();
+                        } catch (e) {
+                            console.log('setLastUpdateDate error:', e);
+                        }
+                    }
                     document.getElementById('devSection').style.display = 'block';
                     document.getElementById('devLogoutBtn').style.display = 'inline-block';
                     document.getElementById('devPassword').style.display = 'none';

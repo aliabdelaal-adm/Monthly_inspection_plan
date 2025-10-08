@@ -2624,7 +2624,7 @@
         <div class="maintenance-details" id="maintenanceDetails"></div>
         
         <!-- Audio for maintenance mode - hidden background music -->
-        <audio id="maintenanceAudio" loop preload="auto" style="display:none;">
+        <audio id="maintenanceAudio" loop preload="auto" autoplay muted style="display:none;">
             <source src="whatsapp Audio.mp3" type="audio/mpeg">
             متصفحك لا يدعم تشغيل الملفات الصوتية.
         </audio>
@@ -4792,20 +4792,39 @@ function showMaintenanceMode(issues = []) {
     
     // Play calm classical music automatically
     if (audio) {
-        audio.volume = 0.15; // Set volume to 15% for quiet background music
         // Reset audio to start from beginning
         audio.currentTime = 0;
+        
+        // Unmute and set volume (audio starts muted with autoplay attribute)
+        audio.muted = false;
+        audio.volume = 0.15; // Set volume to 15% for quiet background music
+        
+        // Ensure audio plays
         audio.play().catch(err => {
-            console.log('🎵 Audio autoplay prevented by browser. Will try on user interaction.');
-            // Try to play on first user interaction
-            const playOnInteraction = () => {
-                audio.currentTime = 0;
-                audio.play().catch(e => console.log('Audio play failed:', e));
-                document.removeEventListener('click', playOnInteraction);
-                document.removeEventListener('touchstart', playOnInteraction);
-            };
-            document.addEventListener('click', playOnInteraction, { once: true });
-            document.addEventListener('touchstart', playOnInteraction, { once: true });
+            console.log('🎵 Audio autoplay prevented by browser. Trying alternative method...');
+            // Alternative: Start muted, then unmute after a tiny delay
+            audio.muted = true;
+            audio.play().then(() => {
+                // Successfully started muted, now unmute
+                setTimeout(() => {
+                    audio.muted = false;
+                    audio.volume = 0.15;
+                    console.log('✅ Audio playing (unmuted after start)');
+                }, 100);
+            }).catch(e => {
+                console.log('⚠️ Audio play failed even when muted:', e);
+                // Last resort: play on first user interaction
+                const playOnInteraction = () => {
+                    audio.muted = false;
+                    audio.currentTime = 0;
+                    audio.volume = 0.15;
+                    audio.play().catch(err2 => console.log('Audio play failed:', err2));
+                    document.removeEventListener('click', playOnInteraction);
+                    document.removeEventListener('touchstart', playOnInteraction);
+                };
+                document.addEventListener('click', playOnInteraction, { once: true });
+                document.addEventListener('touchstart', playOnInteraction, { once: true });
+            });
         });
     } else {
         console.warn('⚠️ Maintenance audio element not found');
@@ -4831,6 +4850,7 @@ function hideMaintenanceMode() {
     if (audio) {
         audio.pause();
         audio.currentTime = 0;
+        audio.muted = true; // Mute for next time
     }
     
     // Clear maintenance mode state

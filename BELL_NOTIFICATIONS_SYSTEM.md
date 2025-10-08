@@ -29,7 +29,7 @@ The bell notifications system provides centralized management of notifications a
 ## How to Use
 
 ### For Developers
-1. **Login as Developer**: Select "المطور" from login dropdown and enter password (2008)
+1. **Login as Developer**: Select "المطور" from login dropdown and enter password (ali@2006)
 2. **Access Bell Notifications**: Click the bell icon (🔔) in the top-right corner
 3. **Add Notifications**: Type in the "إضافة إشعار جديد" text area and click "➕ إضافة إشعار"
 4. **Edit Notifications**: Click on any existing notification text to edit inline

@@ -5509,8 +5509,8 @@ function filterInspectionData(data) {
             return false;
         }
         
-        // Filter by area
-        if (currentSearchFilters.area && item.area !== currentSearchFilters.area) {
+        // Filter by area (compare using area names to handle both ID and name formats)
+        if (currentSearchFilters.area && getAreaName(item.area) !== currentSearchFilters.area) {
             return false;
         }
         
@@ -5628,7 +5628,7 @@ function renderPlanTable() {
                         ${row.shift}
                     </span>
                 </td>
-                <td style="padding:12px 8px;font-weight:500;color:${row.area === 'سوق الميناء' || row.area === 'سوق التراث' ? '#1976d2' : '#d32f2f'};background:#fff;">${row.area}</td>
+                <td style="padding:12px 8px;font-weight:500;color:${getAreaName(row.area) === 'سوق الميناء' || getAreaName(row.area) === 'سوق التراث' ? '#1976d2' : '#d32f2f'};background:#fff;">${getAreaName(row.area)}</td>
                 <td style="padding:12px 8px;background:#f8faff;max-width:300px;">${shopsDisplay}</td>
                 ${isDev?`
                 <td style="padding:8px;text-align:center;background:#fff;">
@@ -7541,7 +7541,7 @@ function showMonthlyReport() {
     
     // Calculate overall statistics
     inspectionData.forEach(item => {
-        totals.areas.add(item.area);
+        totals.areas.add(getAreaName(item.area));
         if (item.shops) {
             item.shops.forEach(shop => totals.uniqueShops.add(shop));
         }
@@ -7847,7 +7847,7 @@ function exportMonthlyReportToExcel() {
     };
     
     inspectionData.forEach(item => {
-        totals.areas.add(item.area);
+        totals.areas.add(getAreaName(item.area));
         if (item.shops) {
             item.shops.forEach(shop => totals.uniqueShops.add(shop));
         }
@@ -8080,7 +8080,7 @@ function generateInspectorMonthlyReport(data, inspectorName) {
             html += `
                 <tr>
                     <td>${item.day}</td>
-                    <td style="color:${item.area === 'سوق الميناء' || item.area === 'سوق التراث' ? '#1976d2' : '#d32f2f'};">${item.area}</td>
+                    <td style="color:${getAreaName(item.area) === 'سوق الميناء' || getAreaName(item.area) === 'سوق التراث' ? '#1976d2' : '#d32f2f'};">${getAreaName(item.area)}</td>
                     <td>${item.shift}</td>
                     <td>${shopsCount}</td>
                     <td>${item.shops ? item.shops.join(', ') : ''}</td>
@@ -8343,7 +8343,7 @@ function generateShopAnalyticsReport(data, selectedYear, selectedMonth) {
         if (!item.shops || !Array.isArray(item.shops)) return;
         
         const weekOfYear = getWeekOfYear(item.day);
-        const area = item.area;
+        const area = getAreaName(item.area);
         
         // Initialize area if not exists
         if (!areaAnalytics[area]) {
@@ -8786,7 +8786,7 @@ function displayFullScheduleTable() {
                         ${item.shift}
                     </span>
                 </td>
-                <td style="color:${item.area === 'سوق الميناء' || item.area === 'سوق التراث' ? '#1976d2' : '#d32f2f'};">${item.area}</td>
+                <td style="color:${getAreaName(item.area) === 'سوق الميناء' || getAreaName(item.area) === 'سوق التراث' ? '#1976d2' : '#d32f2f'};">${getAreaName(item.area)}</td>
                 <td style="text-align: center;">
                     <span class="shops-count">${item.shops.length}</span>
                 </td>
@@ -10842,9 +10842,17 @@ function updateShopsStats() {
 }
 
 // وظائف مساعدة
-function getAreaName(areaId) {
-    const area = areasData.find(a => a.id === areaId);
-    return area ? area.name : null;
+function getAreaName(areaValue) {
+    if (!areaValue) return '';
+    
+    // Check if it's an ID (starts with 'area_')
+    if (typeof areaValue === 'string' && areaValue.startsWith('area_')) {
+        const area = areasData.find(a => a.id === areaValue);
+        return area ? area.name : areaValue;
+    }
+    
+    // If it's already a name, return it as-is
+    return areaValue;
 }
 
 function getShopActivity(shopName) {
@@ -12395,7 +12403,7 @@ function displayRotationPreview() {
                 <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">
                     <span style="padding: 3px 8px; border-radius: 12px; font-size: 0.8em; ${item.shift === 'صباحية' ? 'background: #e8f5e8; color: #2e7d32;' : 'background: #fff3e0; color: #f57c00;'}">${item.shift}</span>
                 </td>
-                <td style="border: 1px solid #ddd; padding: 8px; color:${item.area === 'سوق الميناء' || item.area === 'سوق التراث' ? '#1976d2' : '#d32f2f'};">${item.area}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; color:${getAreaName(item.area) === 'سوق الميناء' || getAreaName(item.area) === 'سوق التراث' ? '#1976d2' : '#d32f2f'};">${getAreaName(item.area)}</td>
                 <td style="border: 1px solid #ddd; padding: 8px; font-size: 0.85em;">${item.shops.join(', ')}</td>
             </tr>
         `;

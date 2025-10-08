@@ -4766,6 +4766,12 @@ function validateDataIntegrity(data) {
 }
 
 function showMaintenanceMode(issues = []) {
+    // Don't show maintenance overlay for developers - they should always have access
+    if (isDev || window.isDev) {
+        console.log('⚠️ Maintenance mode active, but developer has access - overlay not shown');
+        return;
+    }
+    
     const overlay = document.getElementById('maintenanceOverlay');
     const detailsDiv = document.getElementById('maintenanceDetails');
     const audio = document.getElementById('maintenanceAudio');
@@ -6462,6 +6468,14 @@ document.getElementById("devLoginBtn").onclick = async function() {
         
         // Update maintenance close button visibility for developer
         updateMaintenanceCloseButton();
+        
+        // Hide maintenance overlay for developer if it's showing
+        const overlay = document.getElementById('maintenanceOverlay');
+        if (overlay && overlay.style.display === 'flex') {
+            hideMaintenanceMode();
+            console.log('✅ Developer logged in - maintenance overlay hidden automatically');
+        }
+        
         console.log('✅ Developer logged in - maintenance close button now visible');
     } else {
         document.getElementById("devError").innerText = "كلمة السر غير صحيحة!";
@@ -6509,9 +6523,14 @@ document.getElementById("devLogoutBtn").onclick = async function() {
     // Update maintenance close button visibility
     updateMaintenanceCloseButton();
     
-    // Automatically disable maintenance mode for all users when developer logs out
-    await disableMaintenanceModeForAll();
-    console.log('🚪 Developer logged out - maintenance close button hidden and mode disabled for all users');
+    // Show maintenance overlay if maintenance mode is active (check GitHub status)
+    const maintenanceStatus = localStorage.getItem('systemMaintenanceMode') === 'true';
+    if (maintenanceStatus) {
+        await checkMaintenanceMode();
+        console.log('🚪 Developer logged out - maintenance overlay shown for non-developer');
+    }
+    
+    console.log('🚪 Developer logged out - maintenance close button hidden');
 };
 
 // فحص صلاحيات المطور مع رسائل توضيحية محسنة
@@ -11236,6 +11255,14 @@ function saveDataToJSON(silent = true) {
                     
                     // Update maintenance close button visibility for developer
                     updateMaintenanceCloseButton();
+                    
+                    // Hide maintenance overlay for developer if it's showing
+                    const overlay = document.getElementById('maintenanceOverlay');
+                    if (overlay && overlay.style.display === 'flex') {
+                        hideMaintenanceMode();
+                        console.log('✅ Developer logged in (backup) - maintenance overlay hidden automatically');
+                    }
+                    
                     console.log('✅ Developer logged in (backup handler) - maintenance close button now visible');
                 } else {
                     document.getElementById('devError').innerText = 'كلمة السر غير صحيحة!';
@@ -11263,9 +11290,14 @@ function saveDataToJSON(silent = true) {
                 // Update maintenance close button visibility
                 updateMaintenanceCloseButton();
                 
-                // Automatically disable maintenance mode for all users when developer logs out
-                await disableMaintenanceModeForAll();
-                console.log('🚪 Developer logged out (backup handler) - maintenance close button hidden and mode disabled for all');
+                // Show maintenance overlay if maintenance mode is active (check GitHub status)
+                const maintenanceStatus = localStorage.getItem('systemMaintenanceMode') === 'true';
+                if (maintenanceStatus) {
+                    await checkMaintenanceMode();
+                    console.log('🚪 Developer logged out (backup) - maintenance overlay shown for non-developer');
+                }
+                
+                console.log('🚪 Developer logged out (backup handler) - maintenance close button hidden');
             };
         }
     }

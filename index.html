@@ -4653,7 +4653,9 @@ function showSecurityWarning(issues) {
 function startAutoRefresh() {
     setInterval(async () => {
         try {
-            const response = await fetch('./plan-data.json?t=' + Date.now());
+            // Use aggressive cache-busting with timestamp and random component
+            const cacheBuster = Date.now() + '_' + Math.random().toString(36).substring(7);
+            const response = await fetch('./plan-data.json?t=' + cacheBuster);
             if (response.ok) {
                 const data = await response.json();
                 
@@ -4667,9 +4669,15 @@ function startAutoRefresh() {
                     return; // Don't proceed with invalid data
                 }
                 
+                // Quick version check from localStorage for faster comparison
+                const cachedVersion = localStorage.getItem('dataVersion');
+                const newVersion = data.lastUpdate;
+                
                 // Check for data changes (new inspections, updates)
-                if (data.lastUpdate && data.lastUpdate !== lastUpdateTime) {
+                if (newVersion && newVersion !== lastUpdateTime && newVersion !== cachedVersion) {
                     console.log('📊 Data change detected - showing maintenance mode for update');
+                    console.log('   Previous version:', lastUpdateTime || cachedVersion);
+                    console.log('   New version:', newVersion);
                     
                     // Detect what changed
                     const changeDetails = detectDataChanges(allPlanData, data);
@@ -4682,23 +4690,23 @@ function startAutoRefresh() {
                             'جاري تحديث الصفحة...'
                         ]);
                         
-                        // Wait 3 seconds before loading new data
+                        // Wait 2 seconds before loading new data (reduced from 3 for faster updates)
                         setTimeout(async () => {
                             await loadInspectionData();
                             hideMaintenanceMode();
-                            showUpdateMessage('تم تحديث البيانات تلقائياً');
-                        }, 3000);
+                            showUpdateMessage('✅ تم تحديث البيانات تلقائياً - التغييرات ظاهرة الآن');
+                        }, 2000);
                     } else {
                         // No specific changes detected, just update normally
                         await loadInspectionData();
-                        showUpdateMessage('تم تحديث البيانات تلقائياً');
+                        showUpdateMessage('✅ تم تحديث البيانات تلقائياً');
                     }
                 }
             }
         } catch (error) {
             console.log('Auto-refresh check failed:', error);
         }
-    }, 30000); // Check every 30 seconds
+    }, 10000); // Check every 10 seconds - reduced from 30 seconds for faster sync across devices
 }
 
 // Detect what changed in the data
@@ -4773,7 +4781,7 @@ function detectDataChanges(oldData, newData) {
 function startDailyRefresh() {
     let lastCheckedDay = new Date().getDate(); // Keep track of the current day
     
-    // Check every 30 seconds for day change (including midnight transition)
+    // Check every 10 seconds for day change (including midnight transition)
     setInterval(() => {
         const now = new Date();
         const currentDay = now.getDate();
@@ -4798,7 +4806,7 @@ function startDailyRefresh() {
         }
         
         // Also check specifically for midnight for immediate response
-        if (now.getHours() === 0 && now.getMinutes() === 0 && now.getSeconds() < 30) {
+        if (now.getHours() === 0 && now.getMinutes() === 0 && now.getSeconds() < 10) {
             console.log('Midnight detected - ensuring daily inspections are current');
             
             // Clear any active search filters to show today's inspections
@@ -4812,7 +4820,7 @@ function startDailyRefresh() {
             const todayStr = now.toLocaleDateString('ar-EG');
             showUpdateMessage(`🌙 منتصف الليل - تم تحديث التفتيشات لليوم الجديد ${todayStr}`);
         }
-    }, 30000); // Check every 30 seconds (same as auto-refresh)
+    }, 10000); // Check every 10 seconds - reduced from 30 seconds for faster sync
 }
 
 // Data Validation and Security Functions
@@ -5436,7 +5444,9 @@ async function loadInspectionData() {
             statusDiv.style.display = 'block';
         }
         
-        const response = await fetch('./plan-data.json?t=' + Date.now());
+        // Use aggressive cache-busting to ensure fresh data
+        const cacheBuster = Date.now() + '_' + Math.random().toString(36).substring(7);
+        const response = await fetch('./plan-data.json?t=' + cacheBuster);
         if (response.ok) {
             const data = await response.json();
             
@@ -5516,6 +5526,9 @@ async function loadInspectionData() {
                 // Store in localStorage for comparison in next auto-refresh
                 try {
                     localStorage.setItem('allPlanData', JSON.stringify(allPlanData));
+                    // Store data version for quick comparison
+                    localStorage.setItem('dataVersion', data.lastUpdate || new Date().toISOString());
+                    console.log('✅ Data cached in localStorage with version:', data.lastUpdate);
                 } catch (e) {
                     console.warn('Failed to cache data in localStorage:', e);
                 }
@@ -6426,6 +6439,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 🛡️ Initial data validation on page load
     console.log('🛡️ Starting initial data validation...');
+    console.log('⚡ Fast Sync Mode: Data checks every 10 seconds (reduced from 30 seconds)');
+    console.log('🔄 Changes will appear on all devices within 10-20 seconds');
     
     // Removed automatic playback - sound only plays on user touch/click interactions
     loadInspectionData(); // Load data from JSON file - will call fillInspectorsDropdowns() when complete

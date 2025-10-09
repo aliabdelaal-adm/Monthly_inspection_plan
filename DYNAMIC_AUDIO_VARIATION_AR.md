@@ -7,11 +7,11 @@
 
 ### بالعربية
 
-تم تحديث نظام الصوت في رسالة "جاري التحديث" ليصبح ديناميكيًا ومتغيرًا بدلاً من التكرار الثابت للموسيقى. الآن يتغير الصوت تلقائيًا كل 5 ثوان على مدار دورة مدتها 20 دقيقة، مما يخلق تجربة صوتية أكثر تنوعًا وأقل رتابة.
+تم تحديث نظام الصوت في رسالة "جاري التحديث" ليصبح ديناميكيًا ومتغيرًا بدلاً من التكرار الثابت للموسيقى. الآن يتغير الصوت تلقائيًا كل ثانية على مدار دورة مدتها 20 دقيقة، مما يخلق تجربة صوتية أكثر تنوعًا وأقل رتابة.
 
 ### In English
 
-The audio system in the "Update in Progress" message has been updated to be dynamic and varying instead of static music repetition. Now the audio automatically changes every 5 seconds over a 20-minute cycle, creating a more varied and less monotonous audio experience.
+The audio system in the "Update in Progress" message has been updated to be dynamic and varying instead of static music repetition. Now the audio automatically changes every second over a 20-minute cycle, creating a more varied and less monotonous audio experience.
 
 ---
 
@@ -29,7 +29,7 @@ The embedded audio file in the "update in progress" message doesn't change its c
 - ✅ إضافة تغييرات ديناميكية في مستوى الصوت
 - ✅ تعديل تردد الفلتر لتغيير النغمة
 - ✅ دورة تغييرات مستمرة على مدار 20 دقيقة
-- ✅ تحديثات سلسة كل 5 ثوان
+- ✅ تحديثات سلسة كل ثانية
 
 ---
 
@@ -59,12 +59,12 @@ maintenanceFilterNode.connect(maintenanceGainNode);
 maintenanceGainNode.connect(maintenanceAudioContext.destination);
 ```
 
-### 2. التحديثات الديناميكية كل 5 ثوان
+### 2. التحديثات الديناميكية كل ثانية
 
 ```javascript
-// التحديث كل 5 ثوان
+// التحديث كل ثانية
 maintenanceDynamicInterval = setInterval(() => {
-    elapsedSeconds += 5;
+    elapsedSeconds += 1;
     const progress = elapsedSeconds / totalDuration; // 20 minutes
     
     // تغيير مستوى الصوت (Volume)
@@ -78,7 +78,7 @@ maintenanceDynamicInterval = setInterval(() => {
     // تغيير جودة الفلتر (Filter Q)
     const filterQ = 1 + 0.5 * Math.sin(progress * Math.PI * 3);
     maintenanceFilterNode.Q.linearRampToValueAtTime(filterQ, ...);
-}, 5000);
+}, 1000);
 ```
 
 ---
@@ -147,10 +147,10 @@ Q = 1 + 0.5 × sin(progress × π × 3)
 
 ### التحديثات
 
-- **تكرار التحديث:** كل 5 ثوان
-- **عدد التحديثات:** 240 تحديث في 20 دقيقة
+- **تكرار التحديث:** كل ثانية
+- **عدد التحديثات:** 1200 تحديث في 20 دقيقة (1200 ثانية)
 - **نوع الانتقال:** سلس (linear ramp)
-- **مدة الانتقال:** 5 ثوان لكل تغيير
+- **مدة الانتقال:** 1 ثانية لكل تغيير
 
 ---
 
@@ -272,7 +272,7 @@ python -m http.server 8000
 ### المشكلة 1: لا أسمع تغييرات في الصوت
 
 **الأسباب المحتملة:**
-- التحديثات تحدث كل 5 ثوان، انتظر قليلاً
+- التحديثات تحدث كل ثانية، انتظر قليلاً
 - التغييرات دقيقة ومصممة لتكون طبيعية
 - مستوى صوت الجهاز منخفض جدًا
 
@@ -356,7 +356,7 @@ const filterFreq = 2000 + 200 * Math.sin(progress * Math.PI * 6);
    - انتقالات سلسة بدون قفزات
    - كفاءة عالية في المعالجة
 
-2. **تحديثات كل 5 ثوان**
+2. **تحديثات كل ثانية**
    - توازن بين التنوع والأداء
    - لا يرهق المعالج
 

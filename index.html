@@ -5420,60 +5420,100 @@ async function enableMaintenanceModeForAll() {
         return;
     }
     
-    // Validate token before proceeding
-    const tokenValid = await validateTokenForMaintenance();
-    if (!tokenValid) {
-        console.log('⚠️ إلغاء تفعيل وضع الصيانة - التوكن غير صالح');
-        return;
-    }
-    
-    // Show loading message immediately to user
-    const loadingMsg = '⏳ جاري تفعيل وضع الصيانة للجميع...\nيرجى الانتظار...';
-    console.log(loadingMsg);
-    showUpdateMessage('⏳ جاري تفعيل وضع الصيانة للجميع...');
-    
-    // Save to localStorage immediately for instant effect on current device
-    localStorage.setItem('systemMaintenanceMode', 'true');
-    
-    // Save to GitHub for synchronization across all devices
-    const messages = ['جاري تحديث النظام', 'يقوم المطور بإجراء تعديلات', 'شكراً على الانتظار'];
-    const saved = await saveMaintenanceStatusToGitHub(true, messages);
-    
-    if (saved) {
-        // Verify that the status was actually saved and is accessible
-        console.log('⏳ جاري التحقق من نجاح العملية...');
-        showUpdateMessage('⏳ جاري التحقق من نجاح العملية...');
+    try {
+        // Step 1: Show initial progress message
+        showMaintenanceProgress('🔐 جاري تفعيل وضع الصيانة للجميع...\n⏳ يرجى الانتظار...', 'loading');
+        console.log('🔐 Starting maintenance mode activation...');
         
-        const verified = await verifyMaintenanceStatus(true, 15);
-        
-        if (verified) {
-            alert('✅ تم تفعيل وضع الصيانة للجميع بنجاح! (تم التحقق)\n\n' +
-                  '📱 الحالة الآن:\n' +
-                  '• ✓ تم التفعيل والتحقق منه بنجاح\n' +
-                  '• ✓ الحالة متاحة على GitHub\n' +
-                  '• ✓ سيظهر على جميع الأجهزة خلال 10-30 ثانية\n' +
-                  '• ✓ جميع المستخدمين سيرون رسالة الصيانة\n\n' +
-                  '🎯 الحل الجذري: تم إضافة نظام التحقق التلقائي لضمان عمل الصيانة دائماً');
-            console.log('🛡️ Maintenance mode enabled for all users on all devices (VERIFIED)');
-        } else {
-            alert('⚠️ تحذير: تم الحفظ ولكن لم نتمكن من التحقق\n\n' +
-                  '📱 الحالة:\n' +
-                  '• تم الحفظ على GitHub\n' +
-                  '• لم نتمكن من قراءة الحالة للتحقق منها\n' +
-                  '• قد يكون هناك تأخير في التحديث\n' +
-                  '• يرجى الانتظار 30 ثانية ثم تحديث الصفحة على جهاز آخر\n\n' +
-                  '💡 نصيحة: إذا لم يظهر بعد دقيقة، حاول مرة أخرى');
-            console.log('🛡️ Maintenance mode saved but verification failed - may still work');
+        // Step 2: Validate token before proceeding
+        showMaintenanceProgress('🔑 جاري التحقق من صلاحية التوكن...', 'loading');
+        const tokenValid = await validateTokenForMaintenance();
+        if (!tokenValid) {
+            console.log('⚠️ إلغاء تفعيل وضع الصيانة - التوكن غير صالح');
+            hideMaintenanceProgress();
+            return;
         }
-    } else {
-        // Even if GitHub save failed, keep local mode active and show appropriate message
-        alert('⚠️ تحذير: حدث خطأ في حفظ حالة الصيانة على GitHub\n\n' +
-              '📱 الحالة الحالية:\n' +
-              '• تم التفعيل على هذا الجهاز فقط\n' +
-              '• قد لا يظهر للمستخدمين على الأجهزة الأخرى\n' +
-              '• يرجى التحقق من الاتصال بالإنترنت والمحاولة مرة أخرى\n\n' +
-              '💡 نصيحة: تحقق من صلاحية التوكن بالنقر على زر "🔑 تحديث التوكن"');
-        console.error('⚠️ Maintenance mode activated locally only - GitHub sync failed');
+        
+        // Step 3: Save to localStorage immediately for instant effect on current device
+        showMaintenanceProgress('💾 جاري التفعيل على هذا الجهاز...', 'loading');
+        localStorage.setItem('systemMaintenanceMode', 'true');
+        console.log('✅ Enabled locally');
+        
+        // Step 4: Save to GitHub for synchronization across all devices
+        showMaintenanceProgress('☁️ جاري حفظ الحالة على GitHub...\n⏳ هذا قد يستغرق بضع ثوان...', 'loading');
+        const messages = ['جاري تحديث النظام', 'يقوم المطور بإجراء تعديلات', 'شكراً على الانتظار'];
+        const saved = await saveMaintenanceStatusToGitHub(true, messages);
+        
+        if (saved) {
+            // Step 5: Verify that the status was actually saved and is accessible
+            console.log('⏳ جاري التحقق من نجاح العملية...');
+            showMaintenanceProgress('🔍 جاري التحقق من نجاح العملية...\n⏳ يرجى الانتظار حتى 15 ثانية...', 'info');
+            
+            const verified = await verifyMaintenanceStatus(true, 15);
+            
+            if (verified) {
+                showMaintenanceProgress('✅ تم تفعيل وضع الصيانة للجميع بنجاح!\n\n' +
+                      '📱 الحالة الآن:\n' +
+                      '• ✓ تم التفعيل والتحقق منه بنجاح\n' +
+                      '• ✓ الحالة متاحة على GitHub\n' +
+                      '• ✓ سيظهر على جميع الأجهزة خلال 10-30 ثانية\n' +
+                      '• ✓ جميع المستخدمين سيرون رسالة الصيانة', 'success');
+                console.log('🛡️ Maintenance mode enabled for all users on all devices (VERIFIED)');
+                
+                // Show alert after a brief delay so user can see the progress message
+                setTimeout(() => {
+                    alert('✅ تم تفعيل وضع الصيانة للجميع بنجاح! (تم التحقق)\n\n' +
+                          '📱 الحالة الآن:\n' +
+                          '• ✓ تم التفعيل والتحقق منه بنجاح\n' +
+                          '• ✓ الحالة متاحة على GitHub\n' +
+                          '• ✓ سيظهر على جميع الأجهزة خلال 10-30 ثانية\n' +
+                          '• ✓ جميع المستخدمين سيرون رسالة الصيانة\n\n' +
+                          '🎯 الحل الجذري: تم إضافة نظام التحقق التلقائي لضمان عمل الصيانة دائماً');
+                    hideMaintenanceProgress();
+                }, 1000);
+            } else {
+                showMaintenanceProgress('⚠️ تحذير: تم الحفظ ولكن لم نتمكن من التحقق\n\n' +
+                      '📱 الحالة:\n' +
+                      '• تم الحفظ على GitHub\n' +
+                      '• لم نتمكن من قراءة الحالة للتحقق منها\n' +
+                      '• قد يكون هناك تأخير في التحديث', 'error');
+                console.log('🛡️ Maintenance mode saved but verification failed - may still work');
+                
+                setTimeout(() => {
+                    alert('⚠️ تحذير: تم الحفظ ولكن لم نتمكن من التحقق\n\n' +
+                          '📱 الحالة:\n' +
+                          '• تم الحفظ على GitHub\n' +
+                          '• لم نتمكن من قراءة الحالة للتحقق منها\n' +
+                          '• قد يكون هناك تأخير في التحديث\n' +
+                          '• يرجى الانتظار 30 ثانية ثم تحديث الصفحة على جهاز آخر\n\n' +
+                          '💡 نصيحة: إذا لم يظهر بعد دقيقة، حاول مرة أخرى');
+                    hideMaintenanceProgress();
+                }, 1000);
+            }
+        } else {
+            // Even if GitHub save failed, keep local mode active and show appropriate message
+            showMaintenanceProgress('❌ خطأ: فشل حفظ حالة الصيانة على GitHub\n\n' +
+                  '📱 تم التفعيل على هذا الجهاز فقط\n' +
+                  '• قد لا يظهر للمستخدمين على الأجهزة الأخرى', 'error');
+            console.error('⚠️ Maintenance mode activated locally only - GitHub sync failed');
+            
+            setTimeout(() => {
+                alert('⚠️ تحذير: حدث خطأ في حفظ حالة الصيانة على GitHub\n\n' +
+                      '📱 الحالة الحالية:\n' +
+                      '• تم التفعيل على هذا الجهاز فقط\n' +
+                      '• قد لا يظهر للمستخدمين على الأجهزة الأخرى\n' +
+                      '• يرجى التحقق من الاتصال بالإنترنت والمحاولة مرة أخرى\n\n' +
+                      '💡 نصيحة: تحقق من صلاحية التوكن بالنقر على زر "🔑 تحديث التوكن"');
+                hideMaintenanceProgress();
+            }, 1000);
+        }
+    } catch (error) {
+        console.error('❌ Error in enableMaintenanceModeForAll:', error);
+        showMaintenanceProgress('❌ حدث خطأ غير متوقع\n\n' + error.message, 'error');
+        setTimeout(() => {
+            alert('❌ حدث خطأ غير متوقع: ' + error.message);
+            hideMaintenanceProgress();
+        }, 1000);
     }
 }
 
@@ -5484,59 +5524,99 @@ async function disableMaintenanceModeForAll() {
         return;
     }
     
-    // Validate token before proceeding
-    const tokenValid = await validateTokenForMaintenance();
-    if (!tokenValid) {
-        console.log('⚠️ إلغاء إيقاف وضع الصيانة - التوكن غير صالح');
-        return;
-    }
-    
-    // Show loading message immediately to user
-    const loadingMsg = '⏳ جاري إلغاء وضع الصيانة للجميع...\nيرجى الانتظار...';
-    console.log(loadingMsg);
-    showUpdateMessage('⏳ جاري إلغاء وضع الصيانة للجميع...');
-    
-    // Remove from localStorage immediately for instant effect on current device
-    localStorage.removeItem('systemMaintenanceMode');
-    hideMaintenanceMode();
-    
-    // Save to GitHub for synchronization across all devices
-    const saved = await saveMaintenanceStatusToGitHub(false, []);
-    
-    if (saved) {
-        // Verify that the status was actually saved and is accessible
-        console.log('⏳ جاري التحقق من نجاح العملية...');
-        showUpdateMessage('⏳ جاري التحقق من نجاح العملية...');
+    try {
+        // Step 1: Show initial progress message
+        showMaintenanceProgress('🔓 جاري إلغاء وضع الصيانة للجميع...\n⏳ يرجى الانتظار...', 'loading');
+        console.log('🔓 Starting maintenance mode deactivation...');
         
-        const verified = await verifyMaintenanceStatus(false, 15);
-        
-        if (verified) {
-            alert('✅ تم إلغاء وضع الصيانة للجميع بنجاح! (تم التحقق)\n\n' +
-                  '📱 الحالة الآن:\n' +
-                  '• ✓ تم الإلغاء والتحقق منه بنجاح\n' +
-                  '• ✓ الحالة محدثة على GitHub\n' +
-                  '• ✓ سيختفي من جميع الأجهزة خلال 10-30 ثانية\n' +
-                  '• ✓ جميع المستخدمين يمكنهم الآن الوصول للنظام\n\n' +
-                  '🎯 الحل الجذري: نظام التحقق يضمن عمل الإلغاء بشكل موثوق');
-            console.log('✅ Maintenance mode disabled for all users on all devices (VERIFIED)');
-        } else {
-            alert('⚠️ تحذير: تم الحفظ ولكن لم نتمكن من التحقق\n\n' +
-                  '📱 الحالة:\n' +
-                  '• تم الحفظ على GitHub\n' +
-                  '• لم نتمكن من قراءة الحالة للتحقق منها\n' +
-                  '• قد يكون هناك تأخير في التحديث\n' +
-                  '• يرجى الانتظار 30 ثانية ثم تحديث الصفحة على جهاز آخر\n\n' +
-                  '💡 نصيحة: إذا لم يختفي بعد دقيقة، حاول مرة أخرى');
-            console.log('✅ Maintenance mode disabled but verification failed - may still work');
+        // Step 2: Validate token before proceeding
+        showMaintenanceProgress('🔑 جاري التحقق من صلاحية التوكن...', 'loading');
+        const tokenValid = await validateTokenForMaintenance();
+        if (!tokenValid) {
+            console.log('⚠️ إلغاء إيقاف وضع الصيانة - التوكن غير صالح');
+            hideMaintenanceProgress();
+            return;
         }
-    } else {
-        alert('⚠️ تحذير: حدث خطأ في حفظ حالة الصيانة على GitHub\n\n' +
-              '📱 الحالة الحالية:\n' +
-              '• تم الإلغاء على هذا الجهاز فقط\n' +
-              '• قد لا يتم إلغاؤه للمستخدمين على الأجهزة الأخرى\n' +
-              '• يرجى التحقق من الاتصال بالإنترنت والمحاولة مرة أخرى\n\n' +
-              '💡 نصيحة: تحقق من صلاحية التوكن بالنقر على زر "🔑 تحديث التوكن"');
-        console.error('⚠️ Maintenance mode disabled locally only - GitHub sync failed');
+        
+        // Step 3: Remove from localStorage immediately for instant effect on current device
+        showMaintenanceProgress('💾 جاري الإلغاء على هذا الجهاز...', 'loading');
+        localStorage.removeItem('systemMaintenanceMode');
+        hideMaintenanceMode();
+        console.log('✅ Disabled locally');
+        
+        // Step 4: Save to GitHub for synchronization across all devices
+        showMaintenanceProgress('☁️ جاري حفظ الحالة على GitHub...\n⏳ هذا قد يستغرق بضع ثوان...', 'loading');
+        const saved = await saveMaintenanceStatusToGitHub(false, []);
+        
+        if (saved) {
+            // Step 5: Verify that the status was actually saved and is accessible
+            console.log('⏳ جاري التحقق من نجاح العملية...');
+            showMaintenanceProgress('🔍 جاري التحقق من نجاح العملية...\n⏳ يرجى الانتظار حتى 15 ثانية...', 'info');
+            
+            const verified = await verifyMaintenanceStatus(false, 15);
+            
+            if (verified) {
+                showMaintenanceProgress('✅ تم إلغاء وضع الصيانة للجميع بنجاح!\n\n' +
+                      '📱 الحالة الآن:\n' +
+                      '• ✓ تم الإلغاء والتحقق منه بنجاح\n' +
+                      '• ✓ الحالة محدثة على GitHub\n' +
+                      '• ✓ سيختفي من جميع الأجهزة خلال 10-30 ثانية\n' +
+                      '• ✓ جميع المستخدمين يمكنهم الآن الوصول للنظام', 'success');
+                console.log('✅ Maintenance mode disabled for all users on all devices (VERIFIED)');
+                
+                // Show alert after a brief delay so user can see the progress message
+                setTimeout(() => {
+                    alert('✅ تم إلغاء وضع الصيانة للجميع بنجاح! (تم التحقق)\n\n' +
+                          '📱 الحالة الآن:\n' +
+                          '• ✓ تم الإلغاء والتحقق منه بنجاح\n' +
+                          '• ✓ الحالة محدثة على GitHub\n' +
+                          '• ✓ سيختفي من جميع الأجهزة خلال 10-30 ثانية\n' +
+                          '• ✓ جميع المستخدمين يمكنهم الآن الوصول للنظام\n\n' +
+                          '🎯 الحل الجذري: نظام التحقق يضمن عمل الإلغاء بشكل موثوق');
+                    hideMaintenanceProgress();
+                }, 1000);
+            } else {
+                showMaintenanceProgress('⚠️ تحذير: تم الحفظ ولكن لم نتمكن من التحقق\n\n' +
+                      '📱 الحالة:\n' +
+                      '• تم الحفظ على GitHub\n' +
+                      '• لم نتمكن من قراءة الحالة للتحقق منها\n' +
+                      '• قد يكون هناك تأخير في التحديث', 'error');
+                console.log('✅ Maintenance mode disabled but verification failed - may still work');
+                
+                setTimeout(() => {
+                    alert('⚠️ تحذير: تم الحفظ ولكن لم نتمكن من التحقق\n\n' +
+                          '📱 الحالة:\n' +
+                          '• تم الحفظ على GitHub\n' +
+                          '• لم نتمكن من قراءة الحالة للتحقق منها\n' +
+                          '• قد يكون هناك تأخير في التحديث\n' +
+                          '• يرجى الانتظار 30 ثانية ثم تحديث الصفحة على جهاز آخر\n\n' +
+                          '💡 نصيحة: إذا لم يختفي بعد دقيقة، حاول مرة أخرى');
+                    hideMaintenanceProgress();
+                }, 1000);
+            }
+        } else {
+            showMaintenanceProgress('❌ خطأ: فشل حفظ حالة الصيانة على GitHub\n\n' +
+                  '📱 تم الإلغاء على هذا الجهاز فقط\n' +
+                  '• قد لا يتم إلغاؤه للمستخدمين على الأجهزة الأخرى', 'error');
+            console.error('⚠️ Maintenance mode disabled locally only - GitHub sync failed');
+            
+            setTimeout(() => {
+                alert('⚠️ تحذير: حدث خطأ في حفظ حالة الصيانة على GitHub\n\n' +
+                      '📱 الحالة الحالية:\n' +
+                      '• تم الإلغاء على هذا الجهاز فقط\n' +
+                      '• قد لا يتم إلغاؤه للمستخدمين على الأجهزة الأخرى\n' +
+                      '• يرجى التحقق من الاتصال بالإنترنت والمحاولة مرة أخرى\n\n' +
+                      '💡 نصيحة: تحقق من صلاحية التوكن بالنقر على زر "🔑 تحديث التوكن"');
+                hideMaintenanceProgress();
+            }, 1000);
+        }
+    } catch (error) {
+        console.error('❌ Error in disableMaintenanceModeForAll:', error);
+        showMaintenanceProgress('❌ حدث خطأ غير متوقع\n\n' + error.message, 'error');
+        setTimeout(() => {
+            alert('❌ حدث خطأ غير متوقع: ' + error.message);
+            hideMaintenanceProgress();
+        }, 1000);
     }
 }
 
@@ -6194,6 +6274,76 @@ function showUpdateMessage(message) {
     messageDiv.textContent = message;
     document.body.appendChild(messageDiv);
     setTimeout(() => document.body.removeChild(messageDiv), 3000);
+}
+
+// Show persistent progress message for maintenance mode operations
+function showMaintenanceProgress(message, type = 'loading') {
+    // Remove any existing maintenance progress message
+    const existing = document.getElementById('maintenanceProgressMsg');
+    if (existing) {
+        existing.remove();
+    }
+    
+    // Create new progress message
+    const messageDiv = document.createElement('div');
+    messageDiv.id = 'maintenanceProgressMsg';
+    
+    // Choose background color based on type
+    let bgColor = '#ffc107'; // warning/loading color (yellow)
+    if (type === 'success') bgColor = '#28a745'; // green
+    if (type === 'error') bgColor = '#dc3545'; // red
+    if (type === 'info') bgColor = '#17a2b8'; // blue
+    
+    messageDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: ${bgColor};
+        color: white;
+        padding: 15px 25px;
+        border-radius: 8px;
+        z-index: 10000;
+        font-size: 16px;
+        font-weight: bold;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        text-align: center;
+        min-width: 300px;
+        max-width: 600px;
+        white-space: pre-line;
+        animation: slideDown 0.3s ease-out;
+    `;
+    
+    messageDiv.textContent = message;
+    document.body.appendChild(messageDiv);
+    
+    return messageDiv;
+}
+
+// Hide maintenance progress message
+function hideMaintenanceProgress() {
+    const existing = document.getElementById('maintenanceProgressMsg');
+    if (existing) {
+        existing.style.animation = 'slideUp 0.3s ease-in';
+        setTimeout(() => existing.remove(), 300);
+    }
+}
+
+// Add CSS animation for progress messages
+if (!document.getElementById('maintenanceProgressStyles')) {
+    const style = document.createElement('style');
+    style.id = 'maintenanceProgressStyles';
+    style.textContent = `
+        @keyframes slideDown {
+            from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { transform: translateX(-50%) translateY(0); opacity: 1; }
+            to { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+        }
+    `;
+    document.head.appendChild(style);
 }
 function setLastUpdateDate() {
     // Only update the date/time dynamically if user is a developer making changes

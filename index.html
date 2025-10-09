@@ -548,6 +548,51 @@
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
+        /* Glittering and shimmer animations for main title */
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% { 
+                box-shadow: 0 8px 32px rgba(26, 44, 91, 0.4), 
+                            0 4px 16px rgba(35, 64, 133, 0.3),
+                            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            }
+            50% { 
+                box-shadow: 0 12px 48px rgba(26, 44, 91, 0.6), 
+                            0 6px 24px rgba(35, 64, 133, 0.5),
+                            inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                            0 0 30px rgba(74, 103, 179, 0.5);
+            }
+        }
+        
+        @keyframes sparkle {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+        
+        .main-title-box {
+            animation: pulse-glow 3s ease-in-out infinite;
+        }
+        
+        .main-title-box::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.2) 25%, 
+                rgba(255, 255, 255, 0.4) 50%, 
+                rgba(255, 255, 255, 0.2) 75%, 
+                transparent);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+        
         /* Sheikh Zayed Audio Message Styles */
         .sheikh-zayed-message-container {
             width: auto;
@@ -593,7 +638,29 @@
             box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
         }
         
-        .login-section, .inspector-select-section {margin: 5px 0 6px 0; width: 100%; display:flex;justify-content:center;align-items:center;}
+        .login-section, .inspector-select-section {margin: 5px 0 6px 0; width: 100%; display:flex;justify-content:center;align-items:center;gap:10px;}
+        
+        /* Login and Inspector labels - desktop only */
+        .login-label, .inspector-label {
+            font-weight: 600;
+            color: #234085;
+            font-size: 1.1em;
+            display: none; /* Hidden by default (mobile) */
+        }
+        
+        /* Show labels on desktop */
+        @media (min-width: 769px) {
+            .login-label, .inspector-label {
+                display: inline-block;
+            }
+        }
+        
+        /* Hide labels on mobile */
+        @media (max-width: 768px) {
+            .login-label, .inspector-label {
+                display: none;
+            }
+        }
         select, input[type="text"], input[type="date"], input[type="password"] {padding:7px 16px;font-size:1em;border-radius:6px;border:1px solid #b6b6b6;min-width:130px;max-width:210px;}
         
         /* Enhanced multi-select styling for better visibility */
@@ -910,10 +977,43 @@
             transition: all 0.1s;
         }
         
+        /* Enhanced 3D and animation effects for icon buttons */
+        @keyframes bounce-icon {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        @keyframes rotate-icon {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes pulse-shadow {
+            0%, 100% { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); }
+            50% { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 255, 255, 0.2); }
+        }
+        
+        .icon-btn {
+            animation: pulse-shadow 3s ease-in-out infinite;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+        }
+        
+        .icon-btn:hover {
+            transform: translateY(-8px) scale(1.05) rotateX(5deg);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.25), 
+                        0 0 30px rgba(255, 255, 255, 0.15);
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+        }
+        
         .icon-btn .icon {
             font-size: 2.2em;
             margin-bottom: 6px;
             display: block;
+            transition: all 0.4s ease;
+        }
+        
+        .icon-btn:hover .icon {
+            animation: bounce-icon 0.6s ease-in-out;
         }
         
         .icon-btn .label {
@@ -1433,11 +1533,54 @@
         }
         .shops-dropdown-wrap {position:relative; display:inline-block;}
         .show-shops-btn {
-            touch-action: manipulation; /* تحسين اللمس على الهواتف */
-            user-select: none; /* منع تحديد النص */
+            touch-action: manipulation;
+            user-select: none;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 123, 255, 0.3);
         }
+        
+        /* Enhanced shop button animations */
+        @keyframes glow-pulse {
+            0%, 100% { 
+                box-shadow: 0 2px 5px rgba(0, 123, 255, 0.3);
+            }
+            50% { 
+                box-shadow: 0 4px 15px rgba(0, 123, 255, 0.6),
+                            0 0 20px rgba(0, 123, 255, 0.4);
+            }
+        }
+        
+        @keyframes shine-effect {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        .show-shops-btn {
+            animation: glow-pulse 2s ease-in-out infinite;
+        }
+        
+        .show-shops-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: shine-effect 3s ease-in-out infinite;
+        }
+        
+        .show-shops-btn:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 20px rgba(0, 123, 255, 0.5),
+                        0 0 30px rgba(0, 123, 255, 0.3);
+            background: linear-gradient(135deg, #0056b3 0%, #007bff 100%) !important;
+        }
+        
         .show-shops-btn:active {
-            transform: scale(0.95); /* تغذية راجعة بصرية عند النقر */
+            transform: scale(0.95);
             transition: transform 0.1s ease;
         }
         .inspector-report-div {margin:16px 0 0 0;background:#f7f9fc;border-radius:10px;padding:18px 12px;width:100%;color:#234085;font-size:1.1em;box-shadow:0 1px 5px #e2e2e2;}
@@ -2698,6 +2841,7 @@
     </div>
     
     <div class="login-section">
+        <span class="login-label">تسجيل الدخول:</span>
         <select id="loginRole">
             <option value="">تسجيل الدخول</option>
             <option value="inspector">مفتش</option>
@@ -2710,6 +2854,7 @@
         <div id="refreshStatus" style="color:#28a745;font-size:0.9em;margin-top:5px;display:none;">🔄 جاري تحديث البيانات...</div>
     </div>
     <div class="inspector-select-section">
+        <span class="inspector-label">اختر المفتش :</span>
         <select id="inspectorSelect">
             <option value="">-- اختر المفتش --</option>
         </select>
@@ -4882,24 +5027,37 @@ function showMaintenanceMode(issues = []) {
         // Unmute and set volume (audio starts muted with autoplay attribute)
         audio.muted = false;
         
-        // Ensure audio plays
+        // Ensure audio plays with enhanced error handling
         audio.play().catch(err => {
-            console.log('🎵 Audio autoplay prevented by browser. Trying alternative method...');
+            console.log('🎵 Audio autoplay prevented by browser. Trying alternative method...', err);
             // Alternative: Start muted, then unmute after a tiny delay
             audio.muted = true;
             audio.play().then(() => {
                 // Successfully started muted, now unmute
                 setTimeout(() => {
                     audio.muted = false;
+                    audio.volume = 0.15; // Ensure volume is set
                     console.log('✅ Audio playing (unmuted after start)');
                 }, 100);
             }).catch(e => {
                 console.log('⚠️ Audio play failed even when muted:', e);
+                // Check if audio file exists
+                fetch('whatsapp Audio.mp3', { method: 'HEAD' })
+                    .then(response => {
+                        if (!response.ok) {
+                            console.error('❌ Audio file not found or inaccessible');
+                        }
+                    })
+                    .catch(fetchErr => console.error('❌ Error checking audio file:', fetchErr));
+                
                 // Last resort: play on first user interaction
                 const playOnInteraction = () => {
                     audio.muted = false;
+                    audio.volume = 0.15;
                     audio.currentTime = 0;
-                    audio.play().catch(err2 => console.log('Audio play failed:', err2));
+                    audio.play()
+                        .then(() => console.log('✅ Audio started on user interaction'))
+                        .catch(err2 => console.error('❌ Audio play failed on interaction:', err2));
                     document.removeEventListener('click', playOnInteraction);
                     document.removeEventListener('touchstart', playOnInteraction);
                 };
@@ -6708,6 +6866,12 @@ document.getElementById("addEditForm").addEventListener("submit", function(e){
     const newAreaInput = document.getElementById("newAreaInput");
     if (newAreaInput.style.display !== 'none' && newAreaInput.value.trim()) {
         area = newAreaInput.value.trim();
+    } else if (area) {
+        // Convert area ID to area name (dropdown uses IDs as values)
+        const areaObj = areasData.find(a => a.id === area);
+        if (areaObj) {
+            area = areaObj.name;
+        }
     }
     
     // Get selected shops from multi-select
@@ -6990,7 +7154,9 @@ function editPlan(idx) {
     document.getElementById("formShift").value = plan.shift;
     
     // Set area and update shops accordingly
-    document.getElementById("formArea").value = plan.area;
+    // Convert area name to area ID (dropdown uses IDs as values)
+    const areaObj = areasData.find(a => a.name === plan.area);
+    document.getElementById("formArea").value = areaObj ? areaObj.id : plan.area;
     // Always show all shops regardless of area selection
     fillShopsDropdowns();
     

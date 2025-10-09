@@ -4649,6 +4649,77 @@ function showSecurityWarning(issues) {
     console.error('Issues detected:', issues);
 }
 
+// ===== Scheduled Maintenance Mode (9 PM - 11 PM Daily) =====
+
+/**
+ * Check if current time is within scheduled maintenance window (9 PM - 11 PM)
+ * @returns {boolean} True if within maintenance window
+ */
+function isScheduledMaintenanceTime() {
+    const now = new Date();
+    const currentHour = now.getHours();
+    
+    // Maintenance window: 9 PM (21:00) to 11 PM (23:00)
+    const isMaintenanceTime = currentHour >= 21 && currentHour < 23;
+    
+    if (isMaintenanceTime) {
+        console.log(`⏰ Scheduled maintenance time detected: ${currentHour}:${String(now.getMinutes()).padStart(2, '0')}`);
+    }
+    
+    return isMaintenanceTime;
+}
+
+/**
+ * Check and apply scheduled maintenance mode if needed
+ * Automatically shows maintenance message during 9 PM - 11 PM
+ * Developer is always exempt from maintenance mode
+ */
+function checkScheduledMaintenance() {
+    // Developer bypass - developers never see maintenance mode
+    if (isDev || window.isDev) {
+        console.log('✅ Developer logged in - skipping scheduled maintenance check');
+        return false;
+    }
+    
+    // Check if we're in maintenance window
+    if (isScheduledMaintenanceTime()) {
+        const now = new Date();
+        const currentTime = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+        
+        console.log('🔧 Activating scheduled maintenance mode...');
+        showMaintenanceMode([
+            '⏰ وضع الصيانة المجدولة',
+            'الصيانة اليومية من الساعة 9 مساءً حتى 11 مساءً',
+            `الوقت الحالي: ${currentTime}`,
+            'جاري إجراء الصيانة الدورية للنظام...',
+            'سيعود النظام تلقائياً بعد انتهاء وقت الصيانة'
+        ]);
+        return true;
+    }
+    
+    return false;
+}
+
+/**
+ * Start periodic check for scheduled maintenance (every minute)
+ */
+function startScheduledMaintenanceChecker() {
+    // Check immediately on page load
+    checkScheduledMaintenance();
+    
+    // Then check every minute (60000 ms)
+    setInterval(() => {
+        const wasInMaintenance = document.getElementById('maintenanceOverlay').style.display === 'flex';
+        const isInMaintenanceTime = checkScheduledMaintenance();
+        
+        // If we just exited maintenance time, hide the overlay
+        if (wasInMaintenance && !isInMaintenanceTime && !isDev) {
+            console.log('✅ Scheduled maintenance period ended - hiding maintenance mode');
+            hideMaintenanceMode();
+        }
+    }, 60000); // Check every 1 minute
+}
+
 // Auto-refresh functionality with automatic maintenance mode on data changes
 function startAutoRefresh() {
     setInterval(async () => {
@@ -6446,6 +6517,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadInspectionData(); // Load data from JSON file - will call fillInspectorsDropdowns() when complete
     startAutoRefresh(); // Start auto-refresh functionality
     startDailyRefresh(); // Start daily midnight refresh functionality
+    startScheduledMaintenanceChecker(); // Start scheduled maintenance checker (9 PM - 11 PM daily)
     
     // Ensure dropdowns are filled on page load
     fillInspectorsDropdowns();

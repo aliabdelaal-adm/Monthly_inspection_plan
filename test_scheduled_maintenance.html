@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار وضع الصيانة المجدول - Test Scheduled Maintenance</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Tajawal', 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .status-box {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .status-row:last-child {
+            border-bottom: none;
+        }
+        
+        .status-label {
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .status-value {
+            font-family: monospace;
+            padding: 5px 15px;
+            border-radius: 5px;
+            background: white;
+            border: 1px solid #ddd;
+        }
+        
+        .status-value.active {
+            background: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+        
+        .status-value.inactive {
+            background: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
+        
+        .status-value.developer {
+            background: #fff3cd;
+            color: #856404;
+            border-color: #ffeaa7;
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            padding: 12px 20px;
+            font-size: 1em;
+            font-family: 'Tajawal', sans-serif;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
+        
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #da190b;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
+        }
+        
+        .btn-warning {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            background: #e68900;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 152, 0, 0.3);
+        }
+        
+        .btn-info {
+            background: #2196F3;
+            color: white;
+        }
+        
+        .btn-info:hover {
+            background: #0b7dda;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+        }
+        
+        .log-container {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 10px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid #333;
+        }
+        
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+        
+        .log-time {
+            color: #858585;
+            margin-left: 10px;
+        }
+        
+        .log-success {
+            color: #4ec9b0;
+        }
+        
+        .log-error {
+            color: #f48771;
+        }
+        
+        .log-warning {
+            color: #dcdcaa;
+        }
+        
+        .log-info {
+            color: #569cd6;
+        }
+        
+        .test-scenarios {
+            margin-top: 30px;
+        }
+        
+        .scenario {
+            background: #f8f9fa;
+            border-left: 4px solid #4CAF50;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+        }
+        
+        .scenario h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .scenario ol {
+            margin-right: 20px;
+            line-height: 1.8;
+        }
+        
+        .time-simulator {
+            background: #e3f2fd;
+            border: 2px solid #2196F3;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .time-simulator h3 {
+            color: #1976d2;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .time-presets {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+        
+        /* Maintenance Overlay Styles */
+        #maintenanceOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, 
+                rgba(35, 54, 160, 0.95) 0%,
+                rgba(76, 175, 80, 0.95) 50%,
+                rgba(33, 150, 243, 0.95) 100%);
+            z-index: 99999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+        
+        #maintenanceOverlay.show {
+            display: flex;
+        }
+        
+        .maintenance-content {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 30px;
+            padding: 60px 50px;
+            text-align: center;
+            box-shadow: 0 20px 80px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            position: relative;
+        }
+        
+        .maintenance-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        
+        .maintenance-title {
+            font-size: 2em;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .maintenance-message {
+            font-size: 1.5em;
+            color: #4CAF50;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .maintenance-details {
+            text-align: right;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            color: #555;
+            line-height: 1.8;
+        }
+        
+        .spinner {
+            margin: 20px auto;
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4CAF50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 اختبار وضع الصيانة المجدول</h1>
+        <p class="subtitle">Test Scheduled Maintenance Mode (9 PM - 11 PM)</p>
+        
+        <!-- Status Box -->
+        <div class="status-box">
+            <div class="status-row">
+                <span class="status-label">الوقت الحالي | Current Time:</span>
+                <span class="status-value" id="currentTime">--:--:--</span>
+            </div>
+            <div class="status-row">
+                <span class="status-label">حالة الصيانة المجدولة | Scheduled Maintenance:</span>
+                <span class="status-value" id="maintenanceStatus">--</span>
+            </div>
+            <div class="status-row">
+                <span class="status-label">نوع المستخدم | User Type:</span>
+                <span class="status-value" id="userType">مفتش | Inspector</span>
+            </div>
+            <div class="status-row">
+                <span class="status-label">عرض وضع الصيانة | Showing Maintenance:</span>
+                <span class="status-value" id="overlayStatus">--</span>
+            </div>
+        </div>
+        
+        <!-- Time Simulator -->
+        <div class="time-simulator">
+            <h3>⏰ محاكي الوقت | Time Simulator</h3>
+            <p style="text-align: center; color: #666; margin-bottom: 15px;">اختبر وضع الصيانة في أوقات مختلفة</p>
+            <div class="time-presets">
+                <button class="btn-info" onclick="setTestTime(8, 0)">8:00 مساءً</button>
+                <button class="btn-warning" onclick="setTestTime(21, 0)">9:00 مساءً ✓</button>
+                <button class="btn-warning" onclick="setTestTime(21, 30)">9:30 مساءً ✓</button>
+                <button class="btn-warning" onclick="setTestTime(22, 0)">10:00 مساءً ✓</button>
+                <button class="btn-warning" onclick="setTestTime(22, 30)">10:30 مساءً ✓</button>
+                <button class="btn-info" onclick="setTestTime(23, 0)">11:00 مساءً</button>
+                <button class="btn-info" onclick="setTestTime(0, 0)">12:00 صباحاً</button>
+                <button class="btn-primary" onclick="useRealTime()">⏱️ الوقت الفعلي</button>
+            </div>
+        </div>
+        
+        <!-- Controls -->
+        <div class="controls">
+            <button class="btn-primary" onclick="checkMaintenance()">🔍 فحص وضع الصيانة</button>
+            <button class="btn-danger" onclick="showMaintenance()">🔧 إظهار الصيانة</button>
+            <button class="btn-primary" onclick="hideMaintenance()">✅ إخفاء الصيانة</button>
+            <button class="btn-warning" onclick="toggleDeveloper()">👨‍💻 تبديل المطور</button>
+            <button class="btn-info" onclick="clearLogs()">🗑️ مسح السجل</button>
+        </div>
+        
+        <!-- Log Container -->
+        <div class="log-container" id="logContainer">
+            <div class="log-entry log-info">
+                <span class="log-time">[--:--:--]</span>
+                <span>🚀 جاهز للاختبار | Ready for testing...</span>
+            </div>
+        </div>
+        
+        <!-- Test Scenarios -->
+        <div class="test-scenarios">
+            <h2 style="margin-bottom: 20px;">📋 سيناريوهات الاختبار | Test Scenarios</h2>
+            
+            <div class="scenario">
+                <h3>🎯 السيناريو 1: وقت الصيانة المجدول (9 PM - 11 PM)</h3>
+                <ol>
+                    <li>اختر وقت 9:00 مساءً من محاكي الوقت</li>
+                    <li>اضغط "فحص وضع الصيانة"</li>
+                    <li>النتيجة المتوقعة: يجب ظهور رسالة الصيانة تلقائياً ✅</li>
+                    <li>تحقق من ظهور الموسيقى الهادئة مع الرسالة 🎵</li>
+                </ol>
+            </div>
+            
+            <div class="scenario">
+                <h3>🎯 السيناريو 2: خارج وقت الصيانة</h3>
+                <ol>
+                    <li>اختر وقت 8:00 مساءً (قبل الصيانة)</li>
+                    <li>اضغط "فحص وضع الصيانة"</li>
+                    <li>النتيجة المتوقعة: لا يجب ظهور رسالة الصيانة ✅</li>
+                </ol>
+            </div>
+            
+            <div class="scenario">
+                <h3>🎯 السيناريو 3: المطور في وقت الصيانة</h3>
+                <ol>
+                    <li>اختر وقت 9:00 مساءً</li>
+                    <li>اضغط "تبديل المطور" لتسجيل الدخول كمطور</li>
+                    <li>اضغط "فحص وضع الصيانة"</li>
+                    <li>النتيجة المتوقعة: المطور لا يرى رسالة الصيانة أبداً ✅</li>
+                </ol>
+            </div>
+            
+            <div class="scenario">
+                <h3>🎯 السيناريو 4: الانتقال من وقت الصيانة إلى خارجه</h3>
+                <ol>
+                    <li>اختر وقت 10:30 مساءً (داخل وقت الصيانة)</li>
+                    <li>اضغط "فحص وضع الصيانة" - يجب ظهور الرسالة</li>
+                    <li>اختر وقت 11:00 مساءً (خارج وقت الصيانة)</li>
+                    <li>النتيجة المتوقعة: يجب إخفاء الرسالة تلقائياً ✅</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Maintenance Overlay -->
+    <div id="maintenanceOverlay">
+        <div class="maintenance-content">
+            <div class="maintenance-icon">🛡️</div>
+            <h2 class="maintenance-title">الزملاء الأعزاء</h2>
+            <p class="maintenance-message">جاري التحديث الآن</p>
+            <div class="spinner"></div>
+            <div class="maintenance-details" id="maintenanceDetails"></div>
+            
+            <!-- Hidden audio element -->
+            <audio id="maintenanceAudio" loop preload="auto" style="display:none;">
+                <source src="whatsapp Audio.mp3" type="audio/mpeg">
+            </audio>
+        </div>
+    </div>
+    
+    <script>
+        // Global variables
+        let isDev = false;
+        let simulatedTime = null; // null means use real time
+        let updateInterval = null;
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🚀 التطبيق جاهز للاختبار | Application ready for testing', 'success');
+            startStatusUpdates();
+            updateStatus();
+        });
+        
+        // Logging function
+        function log(message, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const now = getCurrentTime();
+            const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+            
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.innerHTML = `<span class="log-time">[${timeStr}]</span><span>${message}</span>`;
+            
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        function clearLogs() {
+            document.getElementById('logContainer').innerHTML = '';
+            log('السجل تم مسحه | Logs cleared', 'info');
+        }
+        
+        // Get current time (real or simulated)
+        function getCurrentTime() {
+            if (simulatedTime !== null) {
+                return simulatedTime;
+            }
+            return new Date();
+        }
+        
+        // Set simulated time
+        function setTestTime(hours, minutes) {
+            simulatedTime = new Date();
+            simulatedTime.setHours(hours, minutes, 0, 0);
+            log(`⏰ تم تعيين الوقت المحاكى: ${hours}:${String(minutes).padStart(2, '0')} | Time set to: ${hours}:${String(minutes).padStart(2, '0')}`, 'warning');
+            updateStatus();
+            checkMaintenance();
+        }
+        
+        // Use real time
+        function useRealTime() {
+            simulatedTime = null;
+            log('⏱️ تم الرجوع للوقت الفعلي | Switched to real time', 'info');
+            updateStatus();
+            checkMaintenance();
+        }
+        
+        // Check if current time is within scheduled maintenance window
+        function isScheduledMaintenanceTime() {
+            const now = getCurrentTime();
+            const currentHour = now.getHours();
+            
+            // Maintenance window: 9 PM (21:00) to 11 PM (23:00)
+            return currentHour >= 21 && currentHour < 23;
+        }
+        
+        // Check and apply scheduled maintenance
+        function checkMaintenance() {
+            log('🔍 فحص وضع الصيانة المجدول... | Checking scheduled maintenance...', 'info');
+            
+            // Developer bypass
+            if (isDev) {
+                log('✅ المطور مسجل دخول - تخطي الصيانة | Developer logged in - skipping maintenance', 'success');
+                hideMaintenance();
+                updateStatus();
+                return false;
+            }
+            
+            // Check maintenance time
+            if (isScheduledMaintenanceTime()) {
+                const now = getCurrentTime();
+                const currentTime = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+                
+                log('🔧 وقت الصيانة المجدولة - تفعيل وضع الصيانة | Scheduled maintenance time - activating', 'warning');
+                showMaintenanceFull([
+                    '⏰ وضع الصيانة المجدولة',
+                    'الصيانة اليومية من الساعة 9 مساءً حتى 11 مساءً',
+                    `الوقت الحالي: ${currentTime}`,
+                    'جاري إجراء الصيانة الدورية للنظام...',
+                    'سيعود النظام تلقائياً بعد انتهاء وقت الصيانة'
+                ]);
+                updateStatus();
+                return true;
+            } else {
+                log('✅ خارج وقت الصيانة - النظام متاح | Outside maintenance time - system available', 'success');
+                hideMaintenance();
+                updateStatus();
+                return false;
+            }
+        }
+        
+        // Show maintenance mode with details
+        function showMaintenanceFull(issues = []) {
+            const overlay = document.getElementById('maintenanceOverlay');
+            const detailsDiv = document.getElementById('maintenanceDetails');
+            const audio = document.getElementById('maintenanceAudio');
+            
+            // Build details message
+            let detailsHTML = '<strong>تفاصيل التحديث:</strong><br>';
+            if (issues.length > 0) {
+                detailsHTML += '<ul style="text-align: right; margin: 10px 0; padding-right: 20px;">';
+                issues.forEach(issue => {
+                    detailsHTML += `<li>${issue}</li>`;
+                });
+                detailsHTML += '</ul>';
+            }
+            
+            detailsDiv.innerHTML = detailsHTML;
+            overlay.classList.add('show');
+            
+            // Play audio
+            if (audio) {
+                audio.currentTime = 0;
+                audio.volume = 0.15;
+                audio.play().catch(err => {
+                    log('⚠️ لم يتم تشغيل الصوت تلقائياً (يتطلب تفاعل المستخدم) | Audio autoplay prevented', 'warning');
+                });
+            }
+            
+            log('🔧 تم عرض وضع الصيانة | Maintenance mode shown', 'warning');
+        }
+        
+        // Simple show/hide for manual testing
+        function showMaintenance() {
+            showMaintenanceFull(['تم تفعيل وضع الصيانة يدوياً | Manual maintenance activation']);
+            updateStatus();
+        }
+        
+        function hideMaintenance() {
+            const overlay = document.getElementById('maintenanceOverlay');
+            const audio = document.getElementById('maintenanceAudio');
+            
+            overlay.classList.remove('show');
+            
+            if (audio) {
+                audio.pause();
+                audio.currentTime = 0;
+            }
+            
+            log('✅ تم إخفاء وضع الصيانة | Maintenance mode hidden', 'success');
+            updateStatus();
+        }
+        
+        // Toggle developer mode
+        function toggleDeveloper() {
+            isDev = !isDev;
+            const status = isDev ? 'مطور | Developer' : 'مفتش | Inspector';
+            log(`👨‍💻 تم التبديل إلى: ${status} | Switched to: ${status}`, isDev ? 'warning' : 'info');
+            updateStatus();
+            
+            // If developer logs in during maintenance, hide it
+            if (isDev) {
+                const overlay = document.getElementById('maintenanceOverlay');
+                if (overlay.classList.contains('show')) {
+                    hideMaintenance();
+                    log('✅ إخفاء الصيانة تلقائياً للمطور | Maintenance hidden automatically for developer', 'success');
+                }
+            }
+        }
+        
+        // Update status display
+        function updateStatus() {
+            const now = getCurrentTime();
+            const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+            
+            // Current time
+            document.getElementById('currentTime').textContent = timeStr;
+            if (simulatedTime !== null) {
+                document.getElementById('currentTime').textContent += ' (محاكى | Simulated)';
+            }
+            
+            // Maintenance status
+            const isMaintenance = isScheduledMaintenanceTime();
+            const maintenanceEl = document.getElementById('maintenanceStatus');
+            maintenanceEl.textContent = isMaintenance ? '🔧 نشط | Active' : '✅ غير نشط | Inactive';
+            maintenanceEl.className = isMaintenance ? 'status-value active' : 'status-value inactive';
+            
+            // User type
+            const userTypeEl = document.getElementById('userType');
+            userTypeEl.textContent = isDev ? '👨‍💻 مطور | Developer' : '👤 مفتش | Inspector';
+            userTypeEl.className = isDev ? 'status-value developer' : 'status-value';
+            
+            // Overlay status
+            const overlay = document.getElementById('maintenanceOverlay');
+            const isShowing = overlay.classList.contains('show');
+            const overlayEl = document.getElementById('overlayStatus');
+            overlayEl.textContent = isShowing ? '🔧 معروض | Showing' : '✅ مخفي | Hidden';
+            overlayEl.className = isShowing ? 'status-value active' : 'status-value inactive';
+        }
+        
+        // Start periodic status updates
+        function startStatusUpdates() {
+            updateInterval = setInterval(() => {
+                updateStatus();
+            }, 1000); // Update every second
+        }
+    </script>
+</body>
+</html>

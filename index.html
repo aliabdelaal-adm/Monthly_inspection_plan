@@ -640,6 +640,15 @@
         
         .login-section, .inspector-select-section {margin: 5px 0 6px 0; width: 100%; display:flex;justify-content:center;align-items:center;gap:10px;}
         
+        /* Search button section - visible between login and inspector on mobile */
+        .search-button-section {
+            margin: 5px 0 6px 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
         /* Login and Inspector labels - desktop only */
         .login-label, .inspector-label {
             font-weight: 600;
@@ -653,11 +662,22 @@
             .login-label, .inspector-label {
                 display: inline-block;
             }
+            /* Hide mobile search button on desktop */
+            .search-button-section {
+                display: none;
+            }
         }
         
         /* Hide labels on mobile */
         @media (max-width: 768px) {
             .login-label, .inspector-label {
+                display: none;
+            }
+            /* Show mobile search button and hide desktop one on mobile */
+            .search-button-section {
+                display: flex;
+            }
+            .inspector-select-section #searchToggleBtn {
                 display: none;
             }
         }
@@ -2853,6 +2873,13 @@
         <span id="devError" style="color:#d32f2f;margin-right:10px;"></span>
         <div id="refreshStatus" style="color:#28a745;font-size:0.9em;margin-top:5px;display:none;">🔄 جاري تحديث البيانات...</div>
     </div>
+    <!-- Search button section - visible between login and inspector on mobile -->
+    <div class="search-button-section">
+        <button id="searchToggleBtnMobile" style="background:#234085;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:0.9em;" title="البحث">
+            🔍 البحث
+        </button>
+    </div>
+    
     <div class="inspector-select-section">
         <span class="inspector-label">اختر المفتش :</span>
         <select id="inspectorSelect">
@@ -6540,6 +6567,20 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Search toggle functionality
     document.getElementById('searchToggleBtn').addEventListener('click', function() {
+        const searchSection = document.getElementById('searchFiltersSection');
+        if (searchSection.style.display === 'none' || searchSection.style.display === '') {
+            searchSection.style.display = 'block';
+            this.innerHTML = '🔍 إخفاء البحث';
+            this.style.background = '#dc3545';
+        } else {
+            searchSection.style.display = 'none';
+            this.innerHTML = '🔍 البحث';
+            this.style.background = '#234085';
+        }
+    });
+    
+    // Mobile search button (same functionality)
+    document.getElementById('searchToggleBtnMobile').addEventListener('click', function() {
         const searchSection = document.getElementById('searchFiltersSection');
         if (searchSection.style.display === 'none' || searchSection.style.display === '') {
             searchSection.style.display = 'block';

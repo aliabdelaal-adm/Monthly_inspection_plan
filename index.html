@@ -1206,6 +1206,10 @@
             display: contents; /* Remove the category container, let icons flow directly */
         }
         
+        .service-category.developer-only-category {
+            display: none; /* Hide developer-only categories by default */
+        }
+        
         .service-category-title {
             display: none; /* Hide category titles to create a single row layout */
         }
@@ -3045,7 +3049,7 @@
         <div class="system-services-content" id="systemServicesContent">
             <div class="services-grid">
                 <!-- Reports & Analytics Category -->
-                <div class="service-category">
+                <div class="service-category" id="reportsCategory">
                     <div class="service-category-title">📊 التقارير والتحليلات</div>
                     <div class="service-icons-grid">
                         <button class="icon-btn inspector-report-btn tooltip" onclick="showInspectorReport()" data-tooltip="عرض تقرير مفصل للمفتش">
@@ -3066,7 +3070,7 @@
                 </div>
 
                 <!-- Schedule Management Category -->
-                <div class="service-category">
+                <div class="service-category developer-only-category" id="scheduleCategory">
                     <div class="service-category-title">📋 إدارة الجداول</div>
                     <div class="service-icons-grid">
                         <button class="icon-btn monthly-schedule-btn tooltip" onclick="showMonthlyScheduleModal()" data-tooltip="جدول المناوبات الشهري لجميع المفتشين">
@@ -3087,7 +3091,7 @@
                 </div>
 
                 <!-- Data Management Category -->
-                <div class="service-category">
+                <div class="service-category developer-only-category" id="dataManagementCategory">
                     <div class="service-category-title">🏪 إدارة البيانات</div>
                     <div class="service-icons-grid">
                         <button class="icon-btn shops-management-btn tooltip" onclick="showShopsManagementModal()" data-tooltip="إدارة قائمة المحلات والمناطق">
@@ -4380,6 +4384,11 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById("devSection").style.display = "block";
         document.getElementById("devLogoutBtn").style.display = "inline-block";
         document.getElementById("systemServicesContainer").style.display = "block";
+        
+        // Show all categories including developer-only categories
+        const developerCategories = document.querySelectorAll('.developer-only-category');
+        developerCategories.forEach(cat => cat.style.display = 'contents');
+        
         // Update maintenance close button visibility
         updateMaintenanceCloseButton();
     }
@@ -6577,6 +6586,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById("devPassword").style.display = "none";
                 document.getElementById("devLoginBtn").style.display = "none";
                 document.getElementById("systemServicesContainer").style.display = "block";
+                
+                // Show all categories including developer-only categories
+                const developerCategories = document.querySelectorAll('.developer-only-category');
+                developerCategories.forEach(cat => cat.style.display = 'contents');
+                
                 const fileLibraryBtn = document.getElementById("fileLibraryBtn");
                 if (fileLibraryBtn) {
                     fileLibraryBtn.style.display = "inline-flex";
@@ -6598,24 +6612,49 @@ document.addEventListener('DOMContentLoaded', function() {
             if (fileSection && !isAlreadyLoggedIn) {
                 fileSection.style.display = 'none';
             }
-        } else {
-            // Switching to inspector or empty selection - only then clear developer session
-            if (role === "inspector" || role === "") {
-                // Only clear session when explicitly switching away from developer
-                const wasLoggedIn = isDev || localStorage.getItem('isDevLoggedIn') === 'true';
-                if (wasLoggedIn) {
-                    console.log('🚪 Logging out developer - switching to inspector');
-                }
-                isDev = false;
-                localStorage.removeItem('isDevLoggedIn');
+        } else if (role === "inspector") {
+            // Switching to inspector - clear developer session
+            const wasLoggedIn = isDev || localStorage.getItem('isDevLoggedIn') === 'true';
+            if (wasLoggedIn) {
+                console.log('🚪 Logging out developer - switching to inspector');
             }
+            isDev = false;
+            localStorage.removeItem('isDevLoggedIn');
+            
+            document.getElementById("devPassword").style.display = "none";
+            document.getElementById("devLoginBtn").style.display = "none";
+            document.getElementById("devLogoutBtn").style.display = "none";
+            document.getElementById("devSection").style.display = "none";
+            
+            // Show system services container for inspector (with only reports visible)
+            document.getElementById("systemServicesContainer").style.display = "block";
+            
+            // Hide developer-only categories
+            const developerCategories = document.querySelectorAll('.developer-only-category');
+            developerCategories.forEach(cat => cat.style.display = 'none');
+            
+            // Hide file library button for inspectors
+            const fileLibraryBtn = document.getElementById("fileLibraryBtn");
+            if (fileLibraryBtn) {
+                fileLibraryBtn.style.display = "none";
+            }
+            // Hide file library section if open
+            const fileSection = document.getElementById('fileManagementSection');
+            if (fileSection) {
+                fileSection.style.display = 'none';
+            }
+            renderPlanTable();
+        } else {
+            // Empty selection - clear developer session
+            isDev = false;
+            localStorage.removeItem('isDevLoggedIn');
             
             document.getElementById("devPassword").style.display = "none";
             document.getElementById("devLoginBtn").style.display = "none";
             document.getElementById("devLogoutBtn").style.display = "none";
             document.getElementById("devSection").style.display = "none";
             document.getElementById("systemServicesContainer").style.display = "none";
-            // Hide file library button for inspectors
+            // Hide file library button
             const fileLibraryBtn = document.getElementById("fileLibraryBtn");
             if (fileLibraryBtn) {
                 fileLibraryBtn.style.display = "none";
@@ -6682,6 +6721,11 @@ document.getElementById("devLoginBtn").onclick = async function() {
         document.getElementById("devError").innerText = "";
         // Show system services for developer
         document.getElementById("systemServicesContainer").style.display = "block";
+        
+        // Show all categories including developer-only categories
+        const developerCategories = document.querySelectorAll('.developer-only-category');
+        developerCategories.forEach(cat => cat.style.display = 'contents');
+        
         // Show file library button for developer
         const fileLibraryBtn = document.getElementById("fileLibraryBtn");
         if (fileLibraryBtn) {
@@ -11454,15 +11498,30 @@ function saveDataToJSON(silent = true) {
                     window.isDev = false;
                     // Clear saved login state when switching to developer login screen
                     localStorage.removeItem('isDevLoggedIn');
+                } else if (role === 'inspector') {
+                    document.getElementById('devPassword').style.display = 'none';
+                    document.getElementById('devLoginBtn').style.display = 'none';
+                    document.getElementById('devLogoutBtn').style.display = 'none';
+                    document.getElementById('devSection').style.display = 'none';
+                    // Show system services for inspectors (with only reports visible)
+                    document.getElementById('systemServicesContainer').style.display = 'block';
+                    
+                    // Hide developer-only categories
+                    const developerCategories = document.querySelectorAll('.developer-only-category');
+                    developerCategories.forEach(cat => cat.style.display = 'none');
+                    
+                    window.isDev = false;
+                    // Clear saved login state when switching to inspector role
+                    localStorage.removeItem('isDevLoggedIn');
                 } else {
                     document.getElementById('devPassword').style.display = 'none';
                     document.getElementById('devLoginBtn').style.display = 'none';
                     document.getElementById('devLogoutBtn').style.display = 'none';
                     document.getElementById('devSection').style.display = 'none';
-                    // Hide system services for inspectors - developer only
+                    // Hide system services for empty selection
                     document.getElementById('systemServicesContainer').style.display = 'none';
                     window.isDev = false;
-                    // Clear saved login state when switching to inspector role
+                    // Clear saved login state when switching to empty selection
                     localStorage.removeItem('isDevLoggedIn');
                 }
             });
@@ -11501,6 +11560,10 @@ function saveDataToJSON(silent = true) {
                     document.getElementById('devError').innerText = '';
                     // Show system services for developer
                     document.getElementById('systemServicesContainer').style.display = 'block';
+                    
+                    // Show all categories including developer-only categories
+                    const developerCategories = document.querySelectorAll('.developer-only-category');
+                    developerCategories.forEach(cat => cat.style.display = 'contents');
                     
                     // Update maintenance close button visibility for developer
                     updateMaintenanceCloseButton();

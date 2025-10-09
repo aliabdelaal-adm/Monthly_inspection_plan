@@ -4762,6 +4762,7 @@ let maintenanceAudioContext = null;
 let maintenanceGainNode = null;
 let maintenanceFilterNode = null;
 let maintenanceDynamicInterval = null;
+let maintenanceElapsedSeconds = 0; // Track elapsed time across multiple calls
 
 function showMaintenanceMode(issues = []) {
     // Don't show maintenance overlay for developers - they should always have access
@@ -4828,7 +4829,6 @@ function showMaintenanceMode(issues = []) {
             }
             
             // Start dynamic audio variations over 20 minutes
-            let elapsedSeconds = 0;
             const totalDuration = 20 * 60; // 20 minutes in seconds
             
             // Clear any existing interval
@@ -4838,14 +4838,14 @@ function showMaintenanceMode(issues = []) {
             
             // Update audio parameters every 5 seconds for smooth transitions
             maintenanceDynamicInterval = setInterval(() => {
-                elapsedSeconds += 5;
+                maintenanceElapsedSeconds += 5;
                 
-                if (elapsedSeconds >= totalDuration) {
-                    elapsedSeconds = 0; // Reset for continuous loop
+                if (maintenanceElapsedSeconds >= totalDuration) {
+                    maintenanceElapsedSeconds = 0; // Reset for continuous loop
                 }
                 
                 // Calculate progress through the 20-minute cycle (0 to 1)
-                const progress = elapsedSeconds / totalDuration;
+                const progress = maintenanceElapsedSeconds / totalDuration;
                 
                 // Volume variation: gentle wave between 0.10 and 0.20
                 // Creates a breathing effect
@@ -4870,7 +4870,7 @@ function showMaintenanceMode(issues = []) {
                     maintenanceAudioContext.currentTime + 5
                 );
                 
-                console.log(`🎵 Audio variation at ${Math.floor(elapsedSeconds/60)}:${String(elapsedSeconds%60).padStart(2,'0')} - Volume: ${volumeWave.toFixed(2)}, Filter: ${Math.floor(filterFreq)}Hz`);
+                console.log(`🎵 Audio variation at ${Math.floor(maintenanceElapsedSeconds/60)}:${String(maintenanceElapsedSeconds%60).padStart(2,'0')} - Volume: ${volumeWave.toFixed(2)}, Filter: ${Math.floor(filterFreq)}Hz`);
             }, 5000); // Update every 5 seconds
             
         } catch (error) {
@@ -4934,11 +4934,12 @@ function hideMaintenanceMode() {
         audio.muted = true; // Mute for next time
     }
     
-    // Clear dynamic audio interval
+    // Clear dynamic audio interval and reset elapsed time
     if (maintenanceDynamicInterval) {
         clearInterval(maintenanceDynamicInterval);
         maintenanceDynamicInterval = null;
-        console.log('🎵 Dynamic audio variations stopped');
+        maintenanceElapsedSeconds = 0; // Reset for next time
+        console.log('🎵 Dynamic audio variations stopped and reset');
     }
     
     // Clear maintenance mode state

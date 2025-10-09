@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار إصلاح التشغيل التلقائي للصوت | Audio Autoplay Fix Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            margin: 0;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            opacity: 0.8;
+            margin-bottom: 30px;
+        }
+        
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .test-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .status.pending {
+            background: #ffc107;
+            color: #000;
+        }
+        
+        .status.success {
+            background: #4caf50;
+            color: white;
+        }
+        
+        .status.failed {
+            background: #f44336;
+            color: white;
+        }
+        
+        .status.info {
+            background: #2196f3;
+            color: white;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 5px;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: scale(1.05);
+        }
+        
+        button:active {
+            transform: scale(0.95);
+        }
+        
+        .log-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid;
+            padding-left: 10px;
+        }
+        
+        .log-entry.success {
+            border-color: #4caf50;
+            background: rgba(76, 175, 80, 0.1);
+        }
+        
+        .log-entry.error {
+            border-color: #f44336;
+            background: rgba(244, 67, 54, 0.1);
+        }
+        
+        .log-entry.info {
+            border-color: #2196f3;
+            background: rgba(33, 150, 243, 0.1);
+        }
+        
+        .log-entry.warning {
+            border-color: #ff9800;
+            background: rgba(255, 152, 0, 0.1);
+        }
+        
+        .timestamp {
+            opacity: 0.7;
+            font-size: 12px;
+        }
+        
+        .maintenance-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+        
+        .maintenance-overlay.show {
+            display: flex;
+        }
+        
+        .maintenance-content {
+            background: white;
+            color: #333;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+        
+        .maintenance-title {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+        
+        .maintenance-subtitle {
+            font-size: 18px;
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(102, 126, 234, 0.3);
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .audio-info {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 اختبار إصلاح التشغيل التلقائي للصوت</h1>
+        <p class="subtitle">Audio Autoplay Fix Test - PR #346</p>
+        
+        <div class="test-section">
+            <div class="test-title">
+                <span>1️⃣</span>
+                <span>اختبار عنصر الصوت | Audio Element Test</span>
+                <span class="status pending" id="audioElementStatus">جاري الفحص...</span>
+            </div>
+            <div class="audio-info" id="audioElementInfo">جاري التحقق من خصائص عنصر الصوت...</div>
+        </div>
+        
+        <div class="test-section">
+            <div class="test-title">
+                <span>2️⃣</span>
+                <span>اختبار التشغيل التلقائي | Autoplay Test</span>
+                <span class="status pending" id="autoplayStatus">جاري الفحص...</span>
+            </div>
+            <button onclick="testAutoplay()">🎵 اختبار التشغيل التلقائي | Test Autoplay</button>
+            <button onclick="resetTest()">🔄 إعادة تعيين | Reset</button>
+        </div>
+        
+        <div class="test-section">
+            <div class="test-title">
+                <span>3️⃣</span>
+                <span>اختبار وضع الصيانة | Maintenance Mode Test</span>
+            </div>
+            <button onclick="showMaintenanceTest()">🔧 إظهار وضع الصيانة | Show Maintenance</button>
+            <button onclick="hideMaintenanceTest()">✅ إخفاء وضع الصيانة | Hide Maintenance</button>
+        </div>
+        
+        <div class="test-section">
+            <div class="test-title">
+                <span>📋</span>
+                <span>سجل الأحداث | Event Log</span>
+            </div>
+            <div class="log-container" id="logContainer"></div>
+        </div>
+    </div>
+    
+    <!-- Audio Element -->
+    <audio id="maintenanceAudio" loop preload="auto" autoplay muted style="display:none;">
+        <source src="whatsapp Audio.mp3" type="audio/mpeg">
+        متصفحك لا يدعم تشغيل الملفات الصوتية.
+    </audio>
+    
+    <!-- Maintenance Overlay -->
+    <div id="maintenanceOverlay" class="maintenance-overlay">
+        <div class="maintenance-content">
+            <div class="maintenance-title">جاري التحديث الآن</div>
+            <div class="maintenance-subtitle">شكراً على الانتظار</div>
+            <div class="spinner"></div>
+            <div id="maintenanceDetails" style="margin-top: 20px;">
+                <strong>تفاصيل التحديث:</strong><br>
+                جاري فحص البيانات والتأكد من سلامتها...
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let maintenanceAudioContext = null;
+        let maintenanceGainNode = null;
+        let maintenanceFilterNode = null;
+        let maintenanceDynamicInterval = null;
+        let maintenanceElapsedSeconds = 0;
+        
+        function log(message, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const timestamp = new Date().toLocaleTimeString('ar-EG');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerHTML = `<span class="timestamp">[${timestamp}]</span> ${message}`;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+        
+        function updateStatus(elementId, status, text) {
+            const element = document.getElementById(elementId);
+            element.className = `status ${status}`;
+            element.textContent = text;
+        }
+        
+        // Test 1: Check audio element attributes
+        function checkAudioElement() {
+            const audio = document.getElementById('maintenanceAudio');
+            if (!audio) {
+                log('❌ عنصر الصوت غير موجود | Audio element not found', 'error');
+                updateStatus('audioElementStatus', 'failed', 'فشل | Failed');
+                return false;
+            }
+            
+            const hasAutoplay = audio.hasAttribute('autoplay');
+            const hasMuted = audio.hasAttribute('muted');
+            const hasLoop = audio.hasAttribute('loop');
+            const hasPreload = audio.hasAttribute('preload');
+            
+            let infoHTML = '<div style="text-align: right;">';
+            infoHTML += `<div>✓ autoplay: ${hasAutoplay ? '✅ موجود' : '❌ مفقود'}</div>`;
+            infoHTML += `<div>✓ muted: ${hasMuted ? '✅ موجود' : '❌ مفقود'}</div>`;
+            infoHTML += `<div>✓ loop: ${hasLoop ? '✅ موجود' : '❌ مفقود'}</div>`;
+            infoHTML += `<div>✓ preload: ${hasPreload ? '✅ موجود' : '❌ مفقود'}</div>`;
+            infoHTML += `<div>✓ src: ${audio.querySelector('source')?.src || 'N/A'}</div>`;
+            infoHTML += '</div>';
+            
+            document.getElementById('audioElementInfo').innerHTML = infoHTML;
+            
+            if (hasAutoplay && hasMuted) {
+                log('✅ عنصر الصوت يحتوي على الخصائص الصحيحة | Audio element has correct attributes', 'success');
+                updateStatus('audioElementStatus', 'success', 'نجح | Passed');
+                return true;
+            } else {
+                log('⚠️ عنصر الصوت مفقود بعض الخصائص | Audio element missing some attributes', 'warning');
+                updateStatus('audioElementStatus', 'failed', 'فشل | Failed');
+                return false;
+            }
+        }
+        
+        // Test 2: Test autoplay
+        async function testAutoplay() {
+            log('🎵 بدء اختبار التشغيل التلقائي | Starting autoplay test', 'info');
+            updateStatus('autoplayStatus', 'pending', 'جاري الاختبار...');
+            
+            const audio = document.getElementById('maintenanceAudio');
+            
+            // Check if audio is already playing
+            if (!audio.paused) {
+                log('✅ الصوت يعمل بالفعل (autoplay نجح) | Audio already playing (autoplay successful)', 'success');
+                updateStatus('autoplayStatus', 'success', 'نجح | Passed');
+                return;
+            }
+            
+            // Try manual play
+            try {
+                audio.currentTime = 0;
+                audio.muted = false;
+                audio.volume = 0.15;
+                await audio.play();
+                log('✅ التشغيل اليدوي نجح | Manual play successful', 'success');
+                updateStatus('autoplayStatus', 'success', 'نجح | Passed');
+            } catch (err) {
+                log('❌ التشغيل اليدوي فشل: ' + err.message, 'error');
+                updateStatus('autoplayStatus', 'failed', 'فشل | Failed');
+            }
+        }
+        
+        // Test 3: Show maintenance mode
+        function showMaintenanceTest() {
+            log('🔧 عرض وضع الصيانة | Showing maintenance mode', 'info');
+            const overlay = document.getElementById('maintenanceOverlay');
+            const audio = document.getElementById('maintenanceAudio');
+            
+            overlay.classList.add('show');
+            
+            if (audio) {
+                audio.currentTime = 0;
+                
+                try {
+                    if (!maintenanceAudioContext) {
+                        maintenanceAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+                        const source = maintenanceAudioContext.createMediaElementSource(audio);
+                        maintenanceGainNode = maintenanceAudioContext.createGain();
+                        maintenanceFilterNode = maintenanceAudioContext.createBiquadFilter();
+                        maintenanceFilterNode.type = 'lowpass';
+                        maintenanceFilterNode.frequency.value = 2000;
+                        maintenanceFilterNode.Q.value = 1;
+                        source.connect(maintenanceFilterNode);
+                        maintenanceFilterNode.connect(maintenanceGainNode);
+                        maintenanceGainNode.connect(maintenanceAudioContext.destination);
+                        maintenanceGainNode.gain.value = 0.15;
+                        log('✅ تم إنشاء Web Audio API Context', 'success');
+                    }
+                } catch (error) {
+                    log('⚠️ Web Audio API غير متاح: ' + error.message, 'warning');
+                }
+                
+                audio.volume = 0.15;
+                audio.muted = false;
+                
+                audio.play().catch(err => {
+                    log('🎵 التشغيل التلقائي محظور. محاولة الطريقة البديلة...', 'warning');
+                    audio.muted = true;
+                    audio.play().then(() => {
+                        setTimeout(() => {
+                            audio.muted = false;
+                            log('✅ الصوت يعمل (تم إلغاء الكتم بعد البدء)', 'success');
+                        }, 100);
+                    }).catch(e => {
+                        log('⚠️ فشل التشغيل حتى مع الكتم', 'error');
+                    });
+                });
+            }
+        }
+        
+        // Test 4: Hide maintenance mode
+        function hideMaintenanceTest() {
+            log('✅ إخفاء وضع الصيانة | Hiding maintenance mode', 'info');
+            const overlay = document.getElementById('maintenanceOverlay');
+            const audio = document.getElementById('maintenanceAudio');
+            
+            overlay.classList.remove('show');
+            
+            if (audio) {
+                audio.pause();
+                audio.currentTime = 0;
+                audio.muted = true;
+                log('🔇 تم إيقاف الصوت وإعادة تعيينه | Audio stopped and reset', 'info');
+            }
+            
+            if (maintenanceDynamicInterval) {
+                clearInterval(maintenanceDynamicInterval);
+                maintenanceDynamicInterval = null;
+                maintenanceElapsedSeconds = 0;
+            }
+        }
+        
+        function resetTest() {
+            log('🔄 إعادة تعيين الاختبار | Resetting test', 'info');
+            hideMaintenanceTest();
+            updateStatus('audioElementStatus', 'pending', 'جاري الفحص...');
+            updateStatus('autoplayStatus', 'pending', 'جاري الفحص...');
+            setTimeout(() => {
+                checkAudioElement();
+            }, 500);
+        }
+        
+        // Initialize tests on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            log('🚀 بدء الاختبارات | Starting tests', 'info');
+            log('📝 هذا اختبار لإصلاح مشكلة التشغيل التلقائي للصوت (PR #346)', 'info');
+            
+            setTimeout(() => {
+                checkAudioElement();
+                
+                const audio = document.getElementById('maintenanceAudio');
+                if (audio && !audio.paused) {
+                    log('✅ التشغيل التلقائي نجح عند تحميل الصفحة | Autoplay successful on page load', 'success');
+                    updateStatus('autoplayStatus', 'success', 'نجح | Passed');
+                } else {
+                    log('ℹ️ الصوت لم يبدأ تلقائياً - انقر على زر الاختبار | Audio didn\'t start automatically - click test button', 'info');
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

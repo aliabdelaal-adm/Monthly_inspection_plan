@@ -6707,6 +6707,12 @@ document.getElementById("addEditForm").addEventListener("submit", function(e){
     const newAreaInput = document.getElementById("newAreaInput");
     if (newAreaInput.style.display !== 'none' && newAreaInput.value.trim()) {
         area = newAreaInput.value.trim();
+    } else if (area) {
+        // Convert area ID to area name
+        const areaObj = areasData.find(ar => ar.id === area);
+        if (areaObj) {
+            area = areaObj.name;
+        }
     }
     
     // Get selected shops from multi-select
@@ -6989,7 +6995,13 @@ function editPlan(idx) {
     document.getElementById("formShift").value = plan.shift;
     
     // Set area and update shops accordingly
-    document.getElementById("formArea").value = plan.area;
+    // Convert area name to area ID for the dropdown
+    const areaObj = areasData.find(ar => ar.name === plan.area);
+    if (areaObj) {
+        document.getElementById("formArea").value = areaObj.id;
+    } else {
+        document.getElementById("formArea").value = plan.area;
+    }
     // Always show all shops regardless of area selection
     fillShopsDropdowns();
     

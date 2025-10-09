@@ -76,10 +76,10 @@ function showMaintenanceMode(issues = []) {
     }
     
     maintenanceDynamicInterval = setInterval(() => {
-        elapsedSeconds += 5;
+        elapsedSeconds += 1;
         // Calculate audio variations based on elapsedSeconds
         // ...
-    }, 5000);
+    }, 1000);
 }
 ```
 
@@ -115,7 +115,7 @@ function showMaintenanceMode(issues = []) {
     }
     
     maintenanceDynamicInterval = setInterval(() => {
-        maintenanceElapsedSeconds += 5; // ✅ Uses global variable
+        maintenanceElapsedSeconds += 1; // ✅ Uses global variable
         
         if (maintenanceElapsedSeconds >= totalDuration) {
             maintenanceElapsedSeconds = 0; // Reset after full cycle
@@ -124,7 +124,7 @@ function showMaintenanceMode(issues = []) {
         const progress = maintenanceElapsedSeconds / totalDuration;
         // Calculate audio variations based on progress
         // ...
-    }, 5000);
+    }, 1000);
 }
 
 function hideMaintenanceMode() {
@@ -179,8 +179,8 @@ const totalDuration = 20 * 60; // 20 minutes in seconds
 
 ```diff
 maintenanceDynamicInterval = setInterval(() => {
--    elapsedSeconds += 5;
-+    maintenanceElapsedSeconds += 5;
+-    elapsedSeconds += 1;
++    maintenanceElapsedSeconds += 1;
     
 -    if (elapsedSeconds >= totalDuration) {
 -        elapsedSeconds = 0; // Reset for continuous loop

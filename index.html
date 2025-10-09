@@ -5161,9 +5161,9 @@ function showMaintenanceMode(issues = []) {
                 clearInterval(maintenanceDynamicInterval);
             }
             
-            // Update audio parameters every 5 seconds for smooth transitions
+            // Update audio parameters every 1 second for smooth transitions
             maintenanceDynamicInterval = setInterval(() => {
-                maintenanceElapsedSeconds += 5;
+                maintenanceElapsedSeconds += 1;
                 
                 if (maintenanceElapsedSeconds >= totalDuration) {
                     maintenanceElapsedSeconds = 0; // Reset for continuous loop
@@ -5177,7 +5177,7 @@ function showMaintenanceMode(issues = []) {
                 const volumeWave = 0.15 + 0.05 * Math.sin(progress * Math.PI * 4);
                 maintenanceGainNode.gain.linearRampToValueAtTime(
                     volumeWave, 
-                    maintenanceAudioContext.currentTime + 5
+                    maintenanceAudioContext.currentTime + 1
                 );
                 
                 // Filter frequency variation: smooth changes between 1500Hz and 3000Hz
@@ -5185,18 +5185,18 @@ function showMaintenanceMode(issues = []) {
                 const filterFreq = 2000 + 500 * Math.sin(progress * Math.PI * 6);
                 maintenanceFilterNode.frequency.linearRampToValueAtTime(
                     filterFreq,
-                    maintenanceAudioContext.currentTime + 5
+                    maintenanceAudioContext.currentTime + 1
                 );
                 
                 // Filter Q variation: subtle resonance changes
                 const filterQ = 1 + 0.5 * Math.sin(progress * Math.PI * 3);
                 maintenanceFilterNode.Q.linearRampToValueAtTime(
                     filterQ,
-                    maintenanceAudioContext.currentTime + 5
+                    maintenanceAudioContext.currentTime + 1
                 );
                 
                 console.log(`🎵 Audio variation at ${Math.floor(maintenanceElapsedSeconds/60)}:${String(maintenanceElapsedSeconds%60).padStart(2,'0')} - Volume: ${volumeWave.toFixed(2)}, Filter: ${Math.floor(filterFreq)}Hz`);
-            }, 5000); // Update every 5 seconds
+            }, 1000); // Update every 1 second
             
         } catch (error) {
             console.warn('⚠️ Web Audio API not available, using standard playback:', error);

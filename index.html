@@ -2766,7 +2766,7 @@
         <div class="maintenance-details" id="maintenanceDetails"></div>
         
         <!-- Audio for maintenance mode - hidden background music -->
-        <audio id="maintenanceAudio" loop preload="auto" autoplay muted style="display:none;">
+        <audio id="maintenanceAudio" loop preload="auto" style="display:none;">
             <source src="whatsapp Audio.mp3" type="audio/mpeg">
             متصفحك لا يدعم تشغيل الملفات الصوتية.
         </audio>
@@ -5204,7 +5204,8 @@ function showMaintenanceMode(issues = []) {
             audio.volume = 0.15;
         }
         
-        // Unmute and set volume (audio starts muted with autoplay attribute)
+        // Set volume to very quiet level (15%)
+        audio.volume = 0.15;
         audio.muted = false;
         
         // Ensure audio plays with enhanced error handling
@@ -5212,11 +5213,11 @@ function showMaintenanceMode(issues = []) {
             console.log('🎵 Audio autoplay prevented by browser. Trying alternative method...', err);
             // Alternative: Start muted, then unmute after a tiny delay
             audio.muted = true;
+            audio.volume = 0.15;
             audio.play().then(() => {
                 // Successfully started muted, now unmute
                 setTimeout(() => {
                     audio.muted = false;
-                    audio.volume = 0.15; // Ensure volume is set
                     console.log('✅ Audio playing (unmuted after start)');
                 }, 100);
             }).catch(e => {
@@ -5226,6 +5227,8 @@ function showMaintenanceMode(issues = []) {
                     .then(response => {
                         if (!response.ok) {
                             console.error('❌ Audio file not found or inaccessible');
+                        } else {
+                            console.log('✅ Audio file exists and is accessible');
                         }
                     })
                     .catch(fetchErr => console.error('❌ Error checking audio file:', fetchErr));
@@ -5269,7 +5272,6 @@ function hideMaintenanceMode() {
     if (audio) {
         audio.pause();
         audio.currentTime = 0;
-        audio.muted = true; // Mute for next time
     }
     
     // Clear dynamic audio interval and reset elapsed time

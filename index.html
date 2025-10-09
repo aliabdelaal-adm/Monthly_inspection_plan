@@ -3040,7 +3040,7 @@
     </div>
 
     <!-- System Services Management -->
-    <div class="system-services-container" id="systemServicesContainer" style="display: none;">
+    <div class="system-services-container" id="systemServicesContainer" style="display: block;">
         <div class="system-services-header" onclick="toggleSystemServices()">
             <span class="system-services-icon" id="systemServicesIcon">⚙️</span>
             <span>إدارة خدمات النظام</span>
@@ -6609,7 +6609,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById("devLoginBtn").style.display = "inline-block";
                 document.getElementById("devLogoutBtn").style.display = "none";
                 document.getElementById("devSection").style.display = "none";
-                document.getElementById("systemServicesContainer").style.display = "none";
+                // Keep system services visible (showing only reports for non-logged-in users)
+                // document.getElementById("systemServicesContainer").style.display = "none";
                 const fileLibraryBtn = document.getElementById("fileLibraryBtn");
                 if (fileLibraryBtn) {
                     fileLibraryBtn.style.display = "none";
@@ -6666,7 +6667,8 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById("devLoginBtn").style.display = "none";
             document.getElementById("devLogoutBtn").style.display = "none";
             document.getElementById("devSection").style.display = "none";
-            document.getElementById("systemServicesContainer").style.display = "none";
+            // Keep system services visible (showing only reports for inspectors)
+            document.getElementById("systemServicesContainer").style.display = "block";
             // Hide file library button
             const fileLibraryBtn = document.getElementById("fileLibraryBtn");
             if (fileLibraryBtn) {
@@ -6794,8 +6796,13 @@ document.getElementById("devLogoutBtn").onclick = async function() {
     document.getElementById("devLoginBtn").style.display = "none";
     document.getElementById("loginRole").value = "";
     document.getElementById("devError").innerText = "";
-    // Hide system services when developer logs out
-    document.getElementById("systemServicesContainer").style.display = "none";
+    // Keep system services visible when developer logs out (inspectors can still see reports)
+    document.getElementById("systemServicesContainer").style.display = "block";
+    // Hide developer-only categories
+    const developerCategories = document.querySelectorAll('.developer-only-category');
+    developerCategories.forEach(cat => {
+        cat.style.display = 'none';
+    });
     // Hide file library button when developer logs out
     const fileLibraryBtn = document.getElementById("fileLibraryBtn");
     if (fileLibraryBtn) {
@@ -11511,8 +11518,8 @@ function saveDataToJSON(silent = true) {
                     document.getElementById('devLoginBtn').style.display = 'inline-block';
                     document.getElementById('devLogoutBtn').style.display = 'none';
                     document.getElementById('devSection').style.display = 'none';
-                    // Hide system services until login
-                    document.getElementById('systemServicesContainer').style.display = 'none';
+                    // Keep system services visible (showing only reports for non-logged-in users)
+                    // document.getElementById('systemServicesContainer').style.display = 'none';
                     window.isDev = false;
                     // Clear saved login state when switching to developer login screen
                     localStorage.removeItem('isDevLoggedIn');
@@ -11541,8 +11548,8 @@ function saveDataToJSON(silent = true) {
                     document.getElementById('devLoginBtn').style.display = 'none';
                     document.getElementById('devLogoutBtn').style.display = 'none';
                     document.getElementById('devSection').style.display = 'none';
-                    // Hide system services for empty selection
-                    document.getElementById('systemServicesContainer').style.display = 'none';
+                    // Keep system services visible (showing only reports for inspectors)
+                    document.getElementById('systemServicesContainer').style.display = 'block';
                     window.isDev = false;
                     // Clear saved login state when switching to empty selection
                     localStorage.removeItem('isDevLoggedIn');
@@ -11624,8 +11631,13 @@ function saveDataToJSON(silent = true) {
                 document.getElementById('devLoginBtn').style.display = 'none';
                 document.getElementById('loginRole').value = '';
                 document.getElementById('devError').innerText = '';
-                // Hide system services for non-developer
-                document.getElementById('systemServicesContainer').style.display = 'none';
+                // Keep system services visible when developer logs out (inspectors can still see reports)
+                document.getElementById('systemServicesContainer').style.display = 'block';
+                // Hide developer-only categories
+                const developerCategories = document.querySelectorAll('.developer-only-category');
+                developerCategories.forEach(cat => {
+                    cat.style.display = 'none';
+                });
                 
                 // Update maintenance close button visibility
                 updateMaintenanceCloseButton();

@@ -5182,6 +5182,9 @@ async function saveMaintenanceStatusToGitHub(isEnabled, messages = [], retryCoun
     const repo = "aliabdelaal-adm/Monthly_inspection_plan";
     let token = localStorage.getItem("devToken");
     
+    console.log(`📝 Saving maintenance status: ${isEnabled ? 'ENABLED' : 'DISABLED'}`);
+    console.log(`📋 Messages: ${JSON.stringify(messages)}`);
+    
     // Use default token if not set
     if (!token && (isDev || window.isDev)) {
         const defaultToken = "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";
@@ -5273,35 +5276,77 @@ async function saveMaintenanceStatusToGitHub(isEnabled, messages = [], retryCoun
 }
 
 // Load maintenance status from GitHub (server-side storage)
-async function loadMaintenanceStatusFromGitHub() {
-    try {
-        // Try to fetch from GitHub with aggressive cache busting to ensure all devices get updates
-        // Using timestamp + random to bypass all caching layers (CDN, browser, proxies)
-        const cacheBuster = `${Date.now()}_${Math.random().toString(36).substring(7)}`;
-        const url = `https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/maintenance-status.json?t=${cacheBuster}`;
+async function loadMaintenanceStatusFromGitHub(retries = 3, delayMs = 1000) {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+            // Try to fetch from GitHub with aggressive cache busting to ensure all devices get updates
+            // Using timestamp + random to bypass all caching layers (CDN, browser, proxies)
+            const cacheBuster = `${Date.now()}_${Math.random().toString(36).substring(7)}`;
+            const url = `https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/maintenance-status.json?t=${cacheBuster}`;
+            
+            console.log(`📡 Fetching maintenance status (attempt ${attempt}/${retries})...`);
+            
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                },
+                cache: 'no-store' // Force fetch to bypass browser cache
+            });
+            
+            if (!response.ok) {
+                console.log(`⚠️ Could not load maintenance status from GitHub (attempt ${attempt}/${retries}): ${response.status}`);
+                if (attempt < retries) {
+                    await new Promise(resolve => setTimeout(resolve, delayMs * attempt));
+                    continue;
+                }
+                return null;
+            }
+            
+            const status = await response.json();
+            console.log('📥 Loaded maintenance status from GitHub:', status);
+            
+            // Validate the response structure
+            if (typeof status.isMaintenanceMode !== 'boolean') {
+                console.error('❌ Invalid maintenance status format:', status);
+                return null;
+            }
+            
+            return status;
+        } catch (error) {
+            console.error(`❌ Error loading maintenance status from GitHub (attempt ${attempt}/${retries}):`, error);
+            if (attempt < retries) {
+                await new Promise(resolve => setTimeout(resolve, delayMs * attempt));
+            }
+        }
+    }
+    
+    console.error('❌ Failed to load maintenance status after all retries');
+    return null;
+}
+
+// Verify maintenance status was actually saved by reading it back
+async function verifyMaintenanceStatus(expectedStatus, maxWaitSeconds = 30) {
+    console.log(`🔍 Verifying maintenance status (expecting: ${expectedStatus})...`);
+    const startTime = Date.now();
+    
+    // Try to verify for up to maxWaitSeconds
+    while ((Date.now() - startTime) < maxWaitSeconds * 1000) {
+        const status = await loadMaintenanceStatusFromGitHub(2, 500);
         
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache',
-                'Expires': '0'
-            },
-            cache: 'no-store' // Force fetch to bypass browser cache
-        });
-        
-        if (!response.ok) {
-            console.log('⚠️ Could not load maintenance status from GitHub');
-            return null;
+        if (status && status.isMaintenanceMode === expectedStatus) {
+            console.log(`✅ Verification successful! Status confirmed: ${expectedStatus}`);
+            return true;
         }
         
-        const status = await response.json();
-        console.log('📥 Loaded maintenance status from GitHub:', status);
-        return status;
-    } catch (error) {
-        console.error('❌ Error loading maintenance status from GitHub:', error);
-        return null;
+        console.log(`⏳ Status not yet confirmed, waiting... (${Math.floor((Date.now() - startTime) / 1000)}s)`);
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds between checks
     }
+    
+    console.error(`❌ Verification failed after ${maxWaitSeconds} seconds`);
+    return false;
 }
 
 // Validate and ensure token is available before maintenance operations
@@ -5395,12 +5440,31 @@ async function enableMaintenanceModeForAll() {
     const saved = await saveMaintenanceStatusToGitHub(true, messages);
     
     if (saved) {
-        alert('✅ تم تفعيل وضع الصيانة للجميع بنجاح!\n\n' +
-              '📱 الحالة الآن:\n' +
-              '• تم التفعيل على هذا الجهاز فوراً\n' +
-              '• سيظهر على جميع الأجهزة الأخرى خلال 10-30 ثانية\n' +
-              '• جميع المستخدمين سيرون رسالة الصيانة ولن يتمكنوا من الوصول للنظام');
-        console.log('🛡️ Maintenance mode enabled for all users on all devices');
+        // Verify that the status was actually saved and is accessible
+        console.log('⏳ جاري التحقق من نجاح العملية...');
+        showUpdateMessage('⏳ جاري التحقق من نجاح العملية...');
+        
+        const verified = await verifyMaintenanceStatus(true, 15);
+        
+        if (verified) {
+            alert('✅ تم تفعيل وضع الصيانة للجميع بنجاح! (تم التحقق)\n\n' +
+                  '📱 الحالة الآن:\n' +
+                  '• ✓ تم التفعيل والتحقق منه بنجاح\n' +
+                  '• ✓ الحالة متاحة على GitHub\n' +
+                  '• ✓ سيظهر على جميع الأجهزة خلال 10-30 ثانية\n' +
+                  '• ✓ جميع المستخدمين سيرون رسالة الصيانة\n\n' +
+                  '🎯 الحل الجذري: تم إضافة نظام التحقق التلقائي لضمان عمل الصيانة دائماً');
+            console.log('🛡️ Maintenance mode enabled for all users on all devices (VERIFIED)');
+        } else {
+            alert('⚠️ تحذير: تم الحفظ ولكن لم نتمكن من التحقق\n\n' +
+                  '📱 الحالة:\n' +
+                  '• تم الحفظ على GitHub\n' +
+                  '• لم نتمكن من قراءة الحالة للتحقق منها\n' +
+                  '• قد يكون هناك تأخير في التحديث\n' +
+                  '• يرجى الانتظار 30 ثانية ثم تحديث الصفحة على جهاز آخر\n\n' +
+                  '💡 نصيحة: إذا لم يظهر بعد دقيقة، حاول مرة أخرى');
+            console.log('🛡️ Maintenance mode saved but verification failed - may still work');
+        }
     } else {
         // Even if GitHub save failed, keep local mode active and show appropriate message
         alert('⚠️ تحذير: حدث خطأ في حفظ حالة الصيانة على GitHub\n\n' +
@@ -5440,12 +5504,31 @@ async function disableMaintenanceModeForAll() {
     const saved = await saveMaintenanceStatusToGitHub(false, []);
     
     if (saved) {
-        alert('✅ تم إلغاء وضع الصيانة للجميع بنجاح!\n\n' +
-              '📱 الحالة الآن:\n' +
-              '• تم الإلغاء على هذا الجهاز فوراً\n' +
-              '• سيختفي من جميع الأجهزة الأخرى خلال 10-30 ثانية\n' +
-              '• جميع المستخدمين يمكنهم الآن الوصول للنظام');
-        console.log('✅ Maintenance mode disabled for all users on all devices');
+        // Verify that the status was actually saved and is accessible
+        console.log('⏳ جاري التحقق من نجاح العملية...');
+        showUpdateMessage('⏳ جاري التحقق من نجاح العملية...');
+        
+        const verified = await verifyMaintenanceStatus(false, 15);
+        
+        if (verified) {
+            alert('✅ تم إلغاء وضع الصيانة للجميع بنجاح! (تم التحقق)\n\n' +
+                  '📱 الحالة الآن:\n' +
+                  '• ✓ تم الإلغاء والتحقق منه بنجاح\n' +
+                  '• ✓ الحالة محدثة على GitHub\n' +
+                  '• ✓ سيختفي من جميع الأجهزة خلال 10-30 ثانية\n' +
+                  '• ✓ جميع المستخدمين يمكنهم الآن الوصول للنظام\n\n' +
+                  '🎯 الحل الجذري: نظام التحقق يضمن عمل الإلغاء بشكل موثوق');
+            console.log('✅ Maintenance mode disabled for all users on all devices (VERIFIED)');
+        } else {
+            alert('⚠️ تحذير: تم الحفظ ولكن لم نتمكن من التحقق\n\n' +
+                  '📱 الحالة:\n' +
+                  '• تم الحفظ على GitHub\n' +
+                  '• لم نتمكن من قراءة الحالة للتحقق منها\n' +
+                  '• قد يكون هناك تأخير في التحديث\n' +
+                  '• يرجى الانتظار 30 ثانية ثم تحديث الصفحة على جهاز آخر\n\n' +
+                  '💡 نصيحة: إذا لم يختفي بعد دقيقة، حاول مرة أخرى');
+            console.log('✅ Maintenance mode disabled but verification failed - may still work');
+        }
     } else {
         alert('⚠️ تحذير: حدث خطأ في حفظ حالة الصيانة على GitHub\n\n' +
               '📱 الحالة الحالية:\n' +
@@ -5459,45 +5542,89 @@ async function disableMaintenanceModeForAll() {
 
 // Check if system is in maintenance mode on page load
 async function checkMaintenanceMode() {
-    // First check GitHub for the global maintenance status
-    const githubStatus = await loadMaintenanceStatusFromGitHub();
-    
-    if (githubStatus && githubStatus.isMaintenanceMode) {
-        // Sync with localStorage
-        localStorage.setItem('systemMaintenanceMode', 'true');
+    try {
+        // First check GitHub for the global maintenance status
+        const githubStatus = await loadMaintenanceStatusFromGitHub();
         
-        // If user is not a developer, show maintenance overlay
-        if (!isDev && !window.isDev) {
-            console.log('⚠️ System is in maintenance mode (from GitHub) - showing overlay for non-developer');
-            const messages = githubStatus.messages && githubStatus.messages.length > 0 
-                ? githubStatus.messages 
-                : ['جاري تحديث النظام', 'يقوم المطور بإجراء تعديلات', 'شكراً على الانتظار'];
-            showMaintenanceMode(messages);
-        } else {
-            console.log('⚠️ System is in maintenance mode (from GitHub) - developer has access');
-        }
-    } else {
-        // If GitHub says no maintenance, remove from localStorage
-        const localMode = localStorage.getItem('systemMaintenanceMode') === 'true';
-        if (!githubStatus || !githubStatus.isMaintenanceMode) {
-            localStorage.removeItem('systemMaintenanceMode');
-            // If overlay was shown, hide it
-            if (localMode) {
-                hideMaintenanceMode();
+        if (githubStatus && githubStatus.isMaintenanceMode) {
+            // Sync with localStorage
+            localStorage.setItem('systemMaintenanceMode', 'true');
+            
+            // If user is not a developer, show maintenance overlay
+            if (!isDev && !window.isDev) {
+                console.log('⚠️ System is in maintenance mode (from GitHub) - showing overlay for non-developer');
+                const messages = githubStatus.messages && githubStatus.messages.length > 0 
+                    ? githubStatus.messages 
+                    : ['جاري تحديث النظام', 'يقوم المطور بإجراء تعديلات', 'شكراً على الانتظار'];
+                showMaintenanceMode(messages);
+            } else {
+                console.log('⚠️ System is in maintenance mode (from GitHub) - developer has access');
             }
+        } else {
+            // If GitHub says no maintenance, remove from localStorage
+            const localMode = localStorage.getItem('systemMaintenanceMode') === 'true';
+            if (!githubStatus || !githubStatus.isMaintenanceMode) {
+                localStorage.removeItem('systemMaintenanceMode');
+                // If overlay was shown, hide it
+                if (localMode) {
+                    hideMaintenanceMode();
+                }
+            }
+        }
+    } catch (error) {
+        console.error('❌ Error in checkMaintenanceMode:', error);
+        // On error, check localStorage as fallback
+        const localMode = localStorage.getItem('systemMaintenanceMode') === 'true';
+        if (localMode && !isDev && !window.isDev) {
+            console.log('⚠️ Using local maintenance status as fallback');
+            showMaintenanceMode(['جاري تحديث النظام', 'يقوم المطور بإجراء تعديلات', 'شكراً على الانتظار']);
         }
     }
 }
 
-// Periodically check maintenance status (every 10 seconds)
+// Force an immediate maintenance status check (useful for debugging)
+async function forceMaintenanceCheck() {
+    console.log('🔄 Forcing immediate maintenance status check...');
+    await checkMaintenanceMode();
+    console.log('✅ Forced check completed');
+}
+
+// Periodically check maintenance status with adaptive intervals
 function startMaintenanceStatusChecker() {
+    let checkCount = 0;
+    
     // Check immediately
     checkMaintenanceMode();
     
-    // Then check every 10 seconds
-    setInterval(async () => {
-        await checkMaintenanceMode();
-    }, 10000); // 10 seconds
+    // Function to determine check interval based on how long page has been open
+    const getCheckInterval = () => {
+        if (checkCount < 6) {
+            // First 30 seconds: check every 5 seconds (faster detection)
+            return 5000;
+        } else if (checkCount < 12) {
+            // Next 30 seconds: check every 10 seconds
+            return 10000;
+        } else {
+            // After 1 minute: check every 15 seconds (reduce server load)
+            return 15000;
+        }
+    };
+    
+    // Schedule next check with adaptive interval
+    const scheduleNextCheck = () => {
+        const interval = getCheckInterval();
+        setTimeout(async () => {
+            await checkMaintenanceMode();
+            checkCount++;
+            scheduleNextCheck(); // Schedule the next one
+        }, interval);
+    };
+    
+    // Start the adaptive checking
+    scheduleNextCheck();
+    
+    console.log('✅ Maintenance status checker started (adaptive intervals: 5s → 10s → 15s)');
+    console.log('💡 Tip: Run forceMaintenanceCheck() in console to check immediately');
 }
 
 function performDataValidation(data) {

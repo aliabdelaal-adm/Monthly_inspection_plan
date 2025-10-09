@@ -3017,6 +3017,161 @@
             <button type="submit" style="background:#198754;color:#fff;border:none;padding:8px 22px;border-radius:7px;font-size:1em;cursor:pointer;">إضافة / تعديل</button>
             <input type="hidden" id="formEditingIndex" value="">
         </form>
+        
+        <!-- Enhanced Quick Data Entry Tools -->
+        <div id="enhancedDataTools" style="margin-top:20px;padding:20px;background:#fff;border-radius:12px;border:2px solid #007bff;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+            <h3 style="margin:0 0 20px 0;color:#007bff;text-align:center;font-size:1.4em;">⚡ أدوات إدخال البيانات السريعة</h3>
+            
+            <!-- Quick Action Buttons -->
+            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:20px;">
+                <button onclick="showQuickBulkImport()" style="background:linear-gradient(135deg, #28a745 0%, #20c997 100%);color:#fff;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-weight:bold;box-shadow:0 4px 8px rgba(0,0,0,0.2);">
+                    📋 استيراد جماعي (Bulk Import)
+                </button>
+                <button onclick="showQuickClone()" style="background:linear-gradient(135deg, #17a2b8 0%, #138496 100%);color:#fff;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-weight:bold;box-shadow:0 4px 8px rgba(0,0,0,0.2);">
+                    📑 نسخ خطة موجودة
+                </button>
+                <button onclick="showBatchOperations()" style="background:linear-gradient(135deg, #ffc107 0%, #ff9800 100%);color:#000;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-weight:bold;box-shadow:0 4px 8px rgba(0,0,0,0.2);">
+                    🔄 عمليات دفعية
+                </button>
+                <button onclick="saveDirectToGitHub()" style="background:linear-gradient(135deg, #dc3545 0%, #c82333 100%);color:#fff;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-weight:bold;box-shadow:0 4px 8px rgba(0,0,0,0.2);">
+                    💾 حفظ مباشر إلى GitHub
+                </button>
+            </div>
+            
+            <!-- Bulk Import Section (Hidden by default) -->
+            <div id="bulkImportSection" style="display:none;margin-top:20px;padding:20px;background:#f8f9fa;border-radius:8px;border:1px solid #dee2e6;">
+                <h4 style="color:#28a745;margin:0 0 15px 0;">📋 استيراد بيانات جماعي</h4>
+                <p style="margin:0 0 15px 0;color:#666;font-size:0.95em;">
+                    الصق بيانات JSON أو أدخل بيانات متعددة بسرعة. يمكنك استخدام صيغة JSON كاملة أو قائمة بسيطة.
+                </p>
+                
+                <!-- Format Selection -->
+                <div style="margin-bottom:15px;">
+                    <label style="display:block;margin-bottom:8px;font-weight:bold;color:#333;">اختر الصيغة:</label>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <button onclick="setBulkImportFormat('json')" id="formatJsonBtn" style="background:#007bff;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">
+                            JSON Format
+                        </button>
+                        <button onclick="setBulkImportFormat('csv')" id="formatCsvBtn" style="background:#6c757d;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">
+                            CSV Format
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Format Examples -->
+                <div id="formatExample" style="margin-bottom:15px;padding:15px;background:#e7f3ff;border-radius:6px;border:1px solid #007bff;">
+                    <strong style="color:#007bff;">مثال JSON:</strong>
+                    <pre style="margin:10px 0 0 0;padding:10px;background:#fff;border-radius:4px;overflow-x:auto;font-size:0.85em;">[
+  {
+    "inspector": "د. علي عبدالعال",
+    "day": "2025-10-01",
+    "shift": "صباحية",
+    "area": "سوق الميناء",
+    "shops": ["محل 1", "محل 2"]
+  }
+]</pre>
+                </div>
+                
+                <textarea id="bulkImportData" rows="12" placeholder="الصق البيانات هنا..." style="width:100%;padding:12px;border-radius:6px;border:1px solid #ccc;box-sizing:border-box;font-family:monospace;font-size:0.95em;"></textarea>
+                
+                <div style="margin-top:15px;display:flex;gap:10px;justify-content:center;">
+                    <button onclick="processBulkImport()" style="background:#28a745;color:#fff;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;font-weight:bold;">
+                        ✅ معالجة واستيراد
+                    </button>
+                    <button onclick="validateBulkImport()" style="background:#17a2b8;color:#fff;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;">
+                        🔍 التحقق فقط
+                    </button>
+                    <button onclick="closeBulkImport()" style="background:#6c757d;color:#fff;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;">
+                        ❌ إلغاء
+                    </button>
+                </div>
+                
+                <div id="bulkImportStatus" style="margin-top:15px;padding:10px;border-radius:6px;font-weight:bold;"></div>
+            </div>
+            
+            <!-- Clone Section (Hidden by default) -->
+            <div id="cloneSection" style="display:none;margin-top:20px;padding:20px;background:#f8f9fa;border-radius:8px;border:1px solid #dee2e6;">
+                <h4 style="color:#17a2b8;margin:0 0 15px 0;">📑 نسخ خطة موجودة</h4>
+                <p style="margin:0 0 15px 0;color:#666;font-size:0.95em;">
+                    اختر خطة موجودة وانسخها بتواريخ مختلفة بسرعة
+                </p>
+                
+                <div style="margin-bottom:15px;">
+                    <label style="display:block;margin-bottom:8px;font-weight:bold;color:#333;">اختر المفتش:</label>
+                    <select id="cloneInspector" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;">
+                        <option value="">اختر مفتش</option>
+                    </select>
+                </div>
+                
+                <div style="margin-bottom:15px;">
+                    <label style="display:block;margin-bottom:8px;font-weight:bold;color:#333;">التاريخ الأصلي:</label>
+                    <select id="cloneSourceDate" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;">
+                        <option value="">اختر التاريخ</option>
+                    </select>
+                </div>
+                
+                <div style="margin-bottom:15px;">
+                    <label style="display:block;margin-bottom:8px;font-weight:bold;color:#333;">نسخ إلى التواريخ (مفصولة بفواصل):</label>
+                    <input type="text" id="cloneTargetDates" placeholder="2025-10-05, 2025-10-12, 2025-10-19" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;box-sizing:border-box;">
+                    <small style="color:#666;font-size:0.85em;">مثال: 2025-10-05, 2025-10-12, 2025-10-19</small>
+                </div>
+                
+                <div style="margin-top:15px;display:flex;gap:10px;justify-content:center;">
+                    <button onclick="processClone()" style="background:#17a2b8;color:#fff;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;font-weight:bold;">
+                        ✅ نسخ الخطة
+                    </button>
+                    <button onclick="closeClone()" style="background:#6c757d;color:#fff;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;">
+                        ❌ إلغاء
+                    </button>
+                </div>
+                
+                <div id="cloneStatus" style="margin-top:15px;padding:10px;border-radius:6px;font-weight:bold;"></div>
+            </div>
+            
+            <!-- Batch Operations Section (Hidden by default) -->
+            <div id="batchOperationsSection" style="display:none;margin-top:20px;padding:20px;background:#f8f9fa;border-radius:8px;border:1px solid #dee2e6;">
+                <h4 style="color:#ffc107;margin:0 0 15px 0;">🔄 عمليات دفعية على نطاق تاريخي</h4>
+                <p style="margin:0 0 15px 0;color:#666;font-size:0.95em;">
+                    نفذ عمليات على جميع الخطط في نطاق زمني محدد
+                </p>
+                
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px;">
+                    <div>
+                        <label style="display:block;margin-bottom:8px;font-weight:bold;color:#333;">من تاريخ:</label>
+                        <input type="date" id="batchFromDate" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:8px;font-weight:bold;color:#333;">إلى تاريخ:</label>
+                        <input type="date" id="batchToDate" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;">
+                    </div>
+                </div>
+                
+                <div style="margin-bottom:15px;">
+                    <label style="display:block;margin-bottom:8px;font-weight:bold;color:#333;">العملية:</label>
+                    <select id="batchOperation" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;">
+                        <option value="">اختر العملية</option>
+                        <option value="delete">حذف جميع الخطط في هذا النطاق</option>
+                        <option value="changeShift">تغيير المناوبة</option>
+                        <option value="changeInspector">تبديل المفتش</option>
+                        <option value="addShops">إضافة محلات</option>
+                    </select>
+                </div>
+                
+                <!-- Operation-specific fields (shown based on selection) -->
+                <div id="batchOperationFields" style="margin-bottom:15px;"></div>
+                
+                <div style="margin-top:15px;display:flex;gap:10px;justify-content:center;">
+                    <button onclick="processBatchOperation()" style="background:#ffc107;color:#000;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;font-weight:bold;">
+                        ✅ تنفيذ العملية
+                    </button>
+                    <button onclick="closeBatchOperations()" style="background:#6c757d;color:#fff;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;">
+                        ❌ إلغاء
+                    </button>
+                </div>
+                
+                <div id="batchOperationStatus" style="margin-top:15px;padding:10px;border-radius:6px;font-weight:bold;"></div>
+            </div>
+        </div>
     </div>
     <div id="planTableContainer" class="plan-table-container"></div>
     <!-- Main Quick Actions -->
@@ -15818,6 +15973,584 @@ if (typeof closeShopsManagementModal === 'undefined') {
     // Pause on any click anywhere on the screen
     window.addEventListener('click', pauseAndResumeAutoScroll, { passive: true });
 })();
+
+// ===== Enhanced Quick Data Entry Functions =====
+
+// Show/Hide Quick Bulk Import Section
+function showQuickBulkImport() {
+    if (!isDev) {
+        alert('هذه الميزة متاحة فقط للمطور');
+        return;
+    }
+    document.getElementById('bulkImportSection').style.display = 'block';
+    document.getElementById('cloneSection').style.display = 'none';
+    document.getElementById('batchOperationsSection').style.display = 'none';
+    document.getElementById('bulkImportData').focus();
+}
+
+function closeBulkImport() {
+    document.getElementById('bulkImportSection').style.display = 'none';
+    document.getElementById('bulkImportData').value = '';
+    document.getElementById('bulkImportStatus').innerHTML = '';
+}
+
+// Set bulk import format
+let bulkImportFormat = 'json';
+function setBulkImportFormat(format) {
+    bulkImportFormat = format;
+    
+    // Update button styles
+    document.getElementById('formatJsonBtn').style.background = format === 'json' ? '#007bff' : '#6c757d';
+    document.getElementById('formatCsvBtn').style.background = format === 'csv' ? '#007bff' : '#6c757d';
+    
+    // Update example
+    const exampleDiv = document.getElementById('formatExample');
+    if (format === 'csv') {
+        exampleDiv.innerHTML = `
+            <strong style="color:#007bff;">مثال CSV:</strong>
+            <pre style="margin:10px 0 0 0;padding:10px;background:#fff;border-radius:4px;overflow-x:auto;font-size:0.85em;">inspector,day,shift,area,shops
+د. علي عبدالعال,2025-10-01,صباحية,سوق الميناء,"محل 1|محل 2|محل 3"
+د. آمنه بن صرم,2025-10-01,مسائية,الحصن,"محل 4|محل 5"</pre>
+            <small style="color:#666;">ملاحظة: المحلات تفصل بـ | داخل الحقل</small>
+        `;
+    } else {
+        exampleDiv.innerHTML = `
+            <strong style="color:#007bff;">مثال JSON:</strong>
+            <pre style="margin:10px 0 0 0;padding:10px;background:#fff;border-radius:4px;overflow-x:auto;font-size:0.85em;">[
+  {
+    "inspector": "د. علي عبدالعال",
+    "day": "2025-10-01",
+    "shift": "صباحية",
+    "area": "سوق الميناء",
+    "shops": ["محل 1", "محل 2"]
+  }
+]</pre>
+        `;
+    }
+}
+
+// Validate bulk import data
+function validateBulkImport() {
+    const data = document.getElementById('bulkImportData').value.trim();
+    const statusDiv = document.getElementById('bulkImportStatus');
+    
+    if (!data) {
+        statusDiv.innerHTML = '<div style="background:#fff3cd;border:1px solid #ffc107;padding:10px;border-radius:6px;color:#856404;">⚠️ يرجى إدخال البيانات أولاً</div>';
+        return;
+    }
+    
+    try {
+        let entries = [];
+        
+        if (bulkImportFormat === 'json') {
+            entries = JSON.parse(data);
+            if (!Array.isArray(entries)) {
+                entries = [entries];
+            }
+        } else if (bulkImportFormat === 'csv') {
+            const lines = data.split('\n').filter(l => l.trim());
+            const headers = lines[0].split(',').map(h => h.trim());
+            
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].match(/(".*?"|[^,]+)(?=\s*,|\s*$)/g) || [];
+                const entry = {};
+                
+                headers.forEach((header, index) => {
+                    let value = values[index] ? values[index].trim().replace(/^"|"$/g, '') : '';
+                    
+                    if (header === 'shops') {
+                        entry[header] = value.split('|').map(s => s.trim()).filter(s => s);
+                    } else {
+                        entry[header] = value;
+                    }
+                });
+                
+                entries.push(entry);
+            }
+        }
+        
+        // Validate entries
+        const errors = [];
+        entries.forEach((entry, index) => {
+            if (!entry.inspector) errors.push(`السطر ${index + 1}: مفقود اسم المفتش`);
+            if (!entry.day) errors.push(`السطر ${index + 1}: مفقود التاريخ`);
+            if (!entry.shift) errors.push(`السطر ${index + 1}: مفقود المناوبة`);
+            if (!entry.area) errors.push(`السطر ${index + 1}: مفقود المنطقة`);
+            if (!entry.shops || entry.shops.length === 0) errors.push(`السطر ${index + 1}: مفقود المحلات`);
+        });
+        
+        if (errors.length > 0) {
+            statusDiv.innerHTML = `
+                <div style="background:#f8d7da;border:1px solid:#dc3545;padding:10px;border-radius:6px;color:#721c24;">
+                    ❌ أخطاء في البيانات:<br>
+                    ${errors.map(e => `• ${e}`).join('<br>')}
+                </div>
+            `;
+        } else {
+            statusDiv.innerHTML = `
+                <div style="background:#d4edda;border:1px solid:#28a745;padding:10px;border-radius:6px;color:#155724;">
+                    ✅ البيانات صحيحة! عدد السجلات: ${entries.length}
+                </div>
+            `;
+        }
+    } catch (error) {
+        statusDiv.innerHTML = `
+            <div style="background:#f8d7da;border:1px solid:#dc3545;padding:10px;border-radius:6px;color:#721c24;">
+                ❌ خطأ في تحليل البيانات: ${error.message}
+            </div>
+        `;
+    }
+}
+
+// Process and import bulk data
+function processBulkImport() {
+    const data = document.getElementById('bulkImportData').value.trim();
+    const statusDiv = document.getElementById('bulkImportStatus');
+    
+    if (!data) {
+        statusDiv.innerHTML = '<div style="background:#fff3cd;border:1px solid:#ffc107;padding:10px;border-radius:6px;color:#856404;">⚠️ يرجى إدخال البيانات أولاً</div>';
+        return;
+    }
+    
+    try {
+        let entries = [];
+        
+        if (bulkImportFormat === 'json') {
+            entries = JSON.parse(data);
+            if (!Array.isArray(entries)) {
+                entries = [entries];
+            }
+        } else if (bulkImportFormat === 'csv') {
+            const lines = data.split('\n').filter(l => l.trim());
+            const headers = lines[0].split(',').map(h => h.trim());
+            
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].match(/(".*?"|[^,]+)(?=\s*,|\s*$)/g) || [];
+                const entry = {};
+                
+                headers.forEach((header, index) => {
+                    let value = values[index] ? values[index].trim().replace(/^"|"$/g, '') : '';
+                    
+                    if (header === 'shops') {
+                        entry[header] = value.split('|').map(s => s.trim()).filter(s => s);
+                    } else {
+                        entry[header] = value;
+                    }
+                });
+                
+                entries.push(entry);
+            }
+        }
+        
+        // Validate and add entries
+        let added = 0;
+        let skipped = 0;
+        const errors = [];
+        
+        entries.forEach((entry, index) => {
+            // Validate entry
+            if (!entry.inspector || !entry.day || !entry.shift || !entry.area || !entry.shops || entry.shops.length === 0) {
+                errors.push(`السطر ${index + 1}: بيانات ناقصة`);
+                skipped++;
+                return;
+            }
+            
+            // Check if area exists
+            if (!areasData.find(ar => ar.name === entry.area)) {
+                errors.push(`السطر ${index + 1}: المنطقة "${entry.area}" غير موجودة`);
+                skipped++;
+                return;
+            }
+            
+            // Add new inspector if needed
+            if (!inspectorsData.find(insp => insp.name === entry.inspector)) {
+                const newId = 'insp_' + Date.now() + '_' + added;
+                inspectorsData.push({id: newId, name: entry.inspector});
+            }
+            
+            // Add entry
+            inspectionData.push(entry);
+            added++;
+        });
+        
+        // Save and update display
+        saveInspectionData();
+        fillInspectorsDropdowns();
+        renderPlanTable();
+        
+        // Show results
+        let resultHtml = `<div style="background:#d4edda;border:1px solid:#28a745;padding:10px;border-radius:6px;color:#155724;">
+            ✅ تم استيراد ${added} سجل بنجاح!`;
+        
+        if (skipped > 0) {
+            resultHtml += `<br>⚠️ تم تخطي ${skipped} سجل بسبب أخطاء`;
+        }
+        
+        if (errors.length > 0 && errors.length <= 10) {
+            resultHtml += `<br><br>أخطاء:<br>${errors.map(e => `• ${e}`).join('<br>')}`;
+        }
+        
+        resultHtml += '</div>';
+        statusDiv.innerHTML = resultHtml;
+        
+        // Clear input after 3 seconds
+        setTimeout(() => {
+            if (added > 0) {
+                closeBulkImport();
+            }
+        }, 3000);
+        
+    } catch (error) {
+        statusDiv.innerHTML = `
+            <div style="background:#f8d7da;border:1px solid:#dc3545;padding:10px;border-radius:6px;color:#721c24;">
+                ❌ خطأ في معالجة البيانات: ${error.message}
+            </div>
+        `;
+    }
+}
+
+// Show Clone Section
+function showQuickClone() {
+    if (!isDev) {
+        alert('هذه الميزة متاحة فقط للمطور');
+        return;
+    }
+    document.getElementById('bulkImportSection').style.display = 'none';
+    document.getElementById('cloneSection').style.display = 'block';
+    document.getElementById('batchOperationsSection').style.display = 'none';
+    
+    // Populate inspectors
+    const inspectorSelect = document.getElementById('cloneInspector');
+    inspectorSelect.innerHTML = '<option value="">اختر مفتش</option>';
+    inspectorsData.forEach(insp => {
+        inspectorSelect.innerHTML += `<option value="${insp.name}">${insp.name}</option>`;
+    });
+    
+    // Add change listener to populate dates
+    inspectorSelect.onchange = function() {
+        const dateSelect = document.getElementById('cloneSourceDate');
+        dateSelect.innerHTML = '<option value="">اختر التاريخ</option>';
+        
+        if (this.value) {
+            const inspectorEntries = inspectionData.filter(e => e.inspector === this.value);
+            const uniqueDates = [...new Set(inspectorEntries.map(e => e.day))].sort();
+            
+            uniqueDates.forEach(date => {
+                dateSelect.innerHTML += `<option value="${date}">${date}</option>`;
+            });
+        }
+    };
+}
+
+function closeClone() {
+    document.getElementById('cloneSection').style.display = 'none';
+    document.getElementById('cloneInspector').value = '';
+    document.getElementById('cloneSourceDate').value = '';
+    document.getElementById('cloneTargetDates').value = '';
+    document.getElementById('cloneStatus').innerHTML = '';
+}
+
+// Process clone operation
+function processClone() {
+    const inspector = document.getElementById('cloneInspector').value;
+    const sourceDate = document.getElementById('cloneSourceDate').value;
+    const targetDatesStr = document.getElementById('cloneTargetDates').value.trim();
+    const statusDiv = document.getElementById('cloneStatus');
+    
+    if (!inspector || !sourceDate || !targetDatesStr) {
+        statusDiv.innerHTML = '<div style="background:#fff3cd;border:1px solid:#ffc107;padding:10px;border-radius:6px;color:#856404;">⚠️ يرجى تعبئة جميع الحقول</div>';
+        return;
+    }
+    
+    // Parse target dates
+    const targetDates = targetDatesStr.split(',').map(d => d.trim()).filter(d => d);
+    
+    if (targetDates.length === 0) {
+        statusDiv.innerHTML = '<div style="background:#fff3cd;border:1px solid:#ffc107;padding:10px;border-radius:6px;color:#856404;">⚠️ يرجى إدخال تاريخ واحد على الأقل</div>';
+        return;
+    }
+    
+    // Find source entries
+    const sourceEntries = inspectionData.filter(e => e.inspector === inspector && e.day === sourceDate);
+    
+    if (sourceEntries.length === 0) {
+        statusDiv.innerHTML = '<div style="background:#f8d7da;border:1px solid:#dc3545;padding:10px;border-radius:6px;color:#721c24;">❌ لم يتم العثور على خطة للمفتش في هذا التاريخ</div>';
+        return;
+    }
+    
+    // Clone to target dates
+    let cloned = 0;
+    targetDates.forEach(targetDate => {
+        sourceEntries.forEach(sourceEntry => {
+            const newEntry = {
+                ...sourceEntry,
+                day: targetDate
+            };
+            inspectionData.push(newEntry);
+            cloned++;
+        });
+    });
+    
+    // Save and update
+    saveInspectionData();
+    renderPlanTable();
+    
+    statusDiv.innerHTML = `
+        <div style="background:#d4edda;border:1px solid:#28a745;padding:10px;border-radius:6px;color:#155724;">
+            ✅ تم نسخ ${sourceEntries.length} خطة إلى ${targetDates.length} تاريخ (إجمالي ${cloned} سجل جديد)
+        </div>
+    `;
+    
+    setTimeout(() => {
+        closeClone();
+    }, 3000);
+}
+
+// Show Batch Operations
+function showBatchOperations() {
+    if (!isDev) {
+        alert('هذه الميزة متاحة فقط للمطور');
+        return;
+    }
+    document.getElementById('bulkImportSection').style.display = 'none';
+    document.getElementById('cloneSection').style.display = 'none';
+    document.getElementById('batchOperationsSection').style.display = 'block';
+    
+    // Set default dates
+    const today = new Date();
+    const nextWeek = new Date(today);
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    
+    document.getElementById('batchFromDate').valueAsDate = today;
+    document.getElementById('batchToDate').valueAsDate = nextWeek;
+    
+    // Add operation selector change listener
+    document.getElementById('batchOperation').onchange = function() {
+        const fieldsDiv = document.getElementById('batchOperationFields');
+        fieldsDiv.innerHTML = '';
+        
+        switch(this.value) {
+            case 'changeShift':
+                fieldsDiv.innerHTML = `
+                    <label style="display:block;margin-bottom:8px;font-weight:bold;color:#333;">المناوبة الجديدة:</label>
+                    <select id="batchNewShift" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;">
+                        <option value="صباحية">صباحية</option>
+                        <option value="مسائية">مسائية</option>
+                    </select>
+                `;
+                break;
+            case 'changeInspector':
+                fieldsDiv.innerHTML = `
+                    <label style="display:block;margin-bottom:8px;font-weight:bold;color:#333;">المفتش القديم:</label>
+                    <select id="batchOldInspector" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin-bottom:10px;">
+                        <option value="">اختر مفتش</option>
+                        ${inspectorsData.map(i => `<option value="${i.name}">${i.name}</option>`).join('')}
+                    </select>
+                    <label style="display:block;margin-bottom:8px;font-weight:bold;color:#333;">المفتش الجديد:</label>
+                    <select id="batchNewInspector" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;">
+                        <option value="">اختر مفتش</option>
+                        ${inspectorsData.map(i => `<option value="${i.name}">${i.name}</option>`).join('')}
+                    </select>
+                `;
+                break;
+            case 'addShops':
+                fieldsDiv.innerHTML = `
+                    <label style="display:block;margin-bottom:8px;font-weight:bold;color:#333;">المحلات المراد إضافتها (مفصولة بفواصل):</label>
+                    <input type="text" id="batchShopsToAdd" placeholder="محل 1, محل 2, محل 3" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;">
+                `;
+                break;
+        }
+    };
+}
+
+function closeBatchOperations() {
+    document.getElementById('batchOperationsSection').style.display = 'none';
+    document.getElementById('batchOperation').value = '';
+    document.getElementById('batchOperationFields').innerHTML = '';
+    document.getElementById('batchOperationStatus').innerHTML = '';
+}
+
+// Process batch operation
+function processBatchOperation() {
+    const fromDate = document.getElementById('batchFromDate').value;
+    const toDate = document.getElementById('batchToDate').value;
+    const operation = document.getElementById('batchOperation').value;
+    const statusDiv = document.getElementById('batchOperationStatus');
+    
+    if (!fromDate || !toDate || !operation) {
+        statusDiv.innerHTML = '<div style="background:#fff3cd;border:1px solid:#ffc107;padding:10px;border-radius:6px;color:#856404;">⚠️ يرجى تعبئة جميع الحقول</div>';
+        return;
+    }
+    
+    // Get entries in date range
+    const entriesInRange = inspectionData.filter(e => e.day >= fromDate && e.day <= toDate);
+    
+    if (entriesInRange.length === 0) {
+        statusDiv.innerHTML = '<div style="background:#fff3cd;border:1px solid:#ffc107;padding:10px;border-radius:6px;color:#856404;">⚠️ لا توجد خطط في هذا النطاق الزمني</div>';
+        return;
+    }
+    
+    let affected = 0;
+    
+    switch(operation) {
+        case 'delete':
+            if (!confirm(`هل أنت متأكد من حذف ${entriesInRange.length} خطة في النطاق الزمني من ${fromDate} إلى ${toDate}؟`)) {
+                return;
+            }
+            inspectionData = inspectionData.filter(e => e.day < fromDate || e.day > toDate);
+            affected = entriesInRange.length;
+            break;
+            
+        case 'changeShift':
+            const newShift = document.getElementById('batchNewShift').value;
+            inspectionData.forEach(e => {
+                if (e.day >= fromDate && e.day <= toDate) {
+                    e.shift = newShift;
+                    affected++;
+                }
+            });
+            break;
+            
+        case 'changeInspector':
+            const oldInspector = document.getElementById('batchOldInspector').value;
+            const newInspector = document.getElementById('batchNewInspector').value;
+            
+            if (!oldInspector || !newInspector) {
+                statusDiv.innerHTML = '<div style="background:#fff3cd;border:1px solid:#ffc107;padding:10px;border-radius:6px;color:#856404;">⚠️ يرجى اختيار المفتشين</div>';
+                return;
+            }
+            
+            inspectionData.forEach(e => {
+                if (e.day >= fromDate && e.day <= toDate && e.inspector === oldInspector) {
+                    e.inspector = newInspector;
+                    affected++;
+                }
+            });
+            break;
+            
+        case 'addShops':
+            const shopsToAddStr = document.getElementById('batchShopsToAdd').value.trim();
+            
+            if (!shopsToAddStr) {
+                statusDiv.innerHTML = '<div style="background:#fff3cd;border:1px solid:#ffc107;padding:10px;border-radius:6px;color:#856404;">⚠️ يرجى إدخال المحلات</div>';
+                return;
+            }
+            
+            const shopsToAdd = shopsToAddStr.split(',').map(s => s.trim()).filter(s => s);
+            
+            inspectionData.forEach(e => {
+                if (e.day >= fromDate && e.day <= toDate) {
+                    shopsToAdd.forEach(shop => {
+                        if (!e.shops.includes(shop)) {
+                            e.shops.push(shop);
+                        }
+                    });
+                    affected++;
+                }
+            });
+            break;
+    }
+    
+    // Save and update
+    saveInspectionData();
+    renderPlanTable();
+    
+    statusDiv.innerHTML = `
+        <div style="background:#d4edda;border:1px solid:#28a745;padding:10px;border-radius:6px;color:#155724;">
+            ✅ تمت العملية بنجاح! تم تعديل ${affected} خطة
+        </div>
+    `;
+    
+    setTimeout(() => {
+        closeBatchOperations();
+    }, 3000);
+}
+
+// Save directly to GitHub
+async function saveDirectToGitHub() {
+    if (!isDev) {
+        alert('هذه الميزة متاحة فقط للمطور');
+        return;
+    }
+    
+    const token = localStorage.getItem('devToken');
+    if (!token) {
+        if (confirm('لم يتم العثور على توكن GitHub. هل تريد إدخاله الآن؟')) {
+            showTokenPopup();
+        }
+        return;
+    }
+    
+    if (!confirm('هل تريد حفظ البيانات الحالية مباشرة إلى GitHub؟\n\nسيتم تحديث ملف plan-data.json فوراً.')) {
+        return;
+    }
+    
+    try {
+        const planData = {
+            inspectionData: inspectionData,
+            inspectors: inspectorsData,
+            areas: areasData,
+            shops: shopsData,
+            bellNotes: bellNotesData,
+            lastUpdate: new Date().toISOString()
+        };
+        
+        // Show loading message
+        showUpdateMessage('⏳ جاري الحفظ إلى GitHub...');
+        
+        // Get current file SHA
+        const repo = "aliabdelaal-adm/Monthly_inspection_plan";
+        const path = "plan-data.json";
+        
+        const getResponse = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        });
+        
+        if (!getResponse.ok) {
+            throw new Error(`فشل في الحصول على ملف plan-data.json: ${getResponse.statusText}`);
+        }
+        
+        const fileData = await getResponse.json();
+        const sha = fileData.sha;
+        
+        // Update file
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(planData, null, 2))));
+        const updateResponse = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+            method: "PUT",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                message: "تحديث خطة التفتيش مباشرة من لوحة المطور",
+                content: content,
+                sha: sha
+            })
+        });
+        
+        if (updateResponse.status === 200 || updateResponse.status === 201) {
+            showUpdateMessage('✅ تم حفظ البيانات إلى GitHub بنجاح!');
+            console.log('✅ Data saved directly to GitHub');
+        } else {
+            const error = await updateResponse.json().catch(() => ({}));
+            throw new Error(error.message || `HTTP ${updateResponse.status}: ${updateResponse.statusText}`);
+        }
+        
+    } catch (error) {
+        console.error('Error saving to GitHub:', error);
+        showUpdateMessage(`❌ خطأ في الحفظ: ${error.message}`);
+        
+        if (error.message.includes('401') || error.message.includes('403')) {
+            if (confirm('توكن GitHub غير صالح أو انتهت صلاحيته. هل تريد إدخال توكن جديد؟')) {
+                localStorage.removeItem('devToken');
+                showTokenPopup();
+            }
+        }
+    }
+}
 
 </script>
 </body>

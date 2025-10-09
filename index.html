@@ -2948,13 +2948,14 @@
                 <option value="مسائية">مسائية</option>
             </select>
             
-            <!-- منطقة مع إمكانية الإضافة -->
+            <!-- منطقة - اختيار فقط من القائمة (لا يمكن إضافة مناطق جديدة من هنا) -->
             <div style="position:relative;">
                 <select id="formArea" required style="min-width:150px;">
                     <option value="">اختر منطقة</option>
                 </select>
                 <input type="text" id="newAreaInput" placeholder="أو أدخل منطقة جديدة" style="display:none;min-width:150px;">
-                <button type="button" id="toggleAreaInput" style="position:absolute;left:-30px;top:0;background:#007bff;color:#fff;border:none;padding:7px 8px;border-radius:4px;cursor:pointer;font-size:0.8em;">+</button>
+                <!-- Button hidden - areas can only be added through area management panel -->
+                <button type="button" id="toggleAreaInput" style="display:none;position:absolute;left:-30px;top:0;background:#007bff;color:#fff;border:none;padding:7px 8px;border-radius:4px;cursor:pointer;font-size:0.8em;">+</button>
             </div>
             
             <!-- محلات مع اختيار متعدد - Custom Dropdown with Overflow -->
@@ -6893,11 +6894,11 @@ document.getElementById("addEditForm").addEventListener("submit", function(e){
         fillInspectorsDropdowns();
     }
     
-    // If new area, add to areasData
+    // Check if area exists - do NOT auto-create new areas
+    // Areas must be added through the area management panel only
     if (!areasData.find(ar => ar.name === area)) {
-        const newId = 'area_' + Date.now();
-        areasData.push({id: newId, name: area});
-        fillAreasDropdowns();
+        alert("المنطقة غير موجودة. يرجى إضافة المنطقة من خلال لوحة إدارة المناطق أولاً.\n\nArea does not exist. Please add the area through the area management panel first.");
+        return;
     }
     
     let newPlan = {inspector, day, shift, area, shops};

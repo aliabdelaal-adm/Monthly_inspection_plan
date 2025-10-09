@@ -2793,24 +2793,24 @@
 <div class="token-popup-bg" id="tokenPopup" style="display:none;">
     <div class="token-popup-box">
         <button class="token-popup-close" onclick="hideTokenPopup()" title="إغلاق">×</button>
-        <h3>إدخال التوكن السري</h3>
-        <p style="font-size:0.9em;color:#666;margin:10px 0;">يرجى إدخال GitHub Personal Access Token للمستودع</p>
+        <h3 style="color:#2336a0;">🔑 إدخال التوكن السري</h3>
+        <p style="font-size:0.95em;color:#333;margin:10px 0;font-weight:bold;">التوكن مطلوب لحفظ وضع الصيانة على GitHub ومزامنته مع جميع الأجهزة</p>
         
         <!-- Instructions for creating token -->
         <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 10px; margin: 10px 0; text-align: right; font-size: 0.85em;">
-            <strong>كيفية إنشاء توكن جديد:</strong>
-            <ol style="margin: 8px 0; padding-right: 20px; line-height: 1.5;">
-                <li>اذهب إلى: <a href="https://github.com/settings/tokens" target="_blank" style="color: #0066cc;">GitHub Settings → Tokens</a></li>
-                <li>انقر "Generate new token (classic)"</li>
-                <li>اختر صلاحية <strong>repo</strong></li>
-                <li>انسخ التوكن وألصقه أدناه</li>
+            <strong>📋 كيفية إنشاء توكن جديد:</strong>
+            <ol style="margin: 8px 0; padding-right: 20px; line-height: 1.6;">
+                <li>اذهب إلى: <a href="https://github.com/settings/tokens" target="_blank" style="color: #0066cc;text-decoration:underline;">GitHub Settings → Tokens</a></li>
+                <li>انقر "<strong>Generate new token (classic)</strong>"</li>
+                <li><strong>مهم جداً:</strong> اختر صلاحية <code style="background:#f5f5f5;padding:2px 5px;border-radius:3px;color:#d63384;">repo</code></li>
+                <li>انسخ التوكن وألصقه في الحقل أدناه</li>
             </ol>
         </div>
         
-        <input id="tokenInput" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"><br>
-        <button onclick="saveTokenFromPopup()">حفظ</button>
-        <button onclick="useDefaultToken()" style="background:#666;">استخدام التوكن الافتراضي</button>
-        <div style="color:#c00;font-size:1em;margin-top:10px;" id="tokenError"></div>
+        <input id="tokenInput" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" style="width:100%;box-sizing:border-box;padding:8px;border:1px solid #ccc;border-radius:4px;margin:10px 0;"><br>
+        <button onclick="saveTokenFromPopup()" style="background:#28a745;color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-weight:bold;margin:5px;">💾 حفظ التوكن</button>
+        <button onclick="useDefaultToken()" style="background:#6c757d;color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;margin:5px;">استخدام التوكن الافتراضي</button>
+        <div style="color:#dc3545;font-size:0.95em;margin-top:10px;font-weight:bold;" id="tokenError"></div>
     </div>
 </div>
 
@@ -2931,11 +2931,15 @@
                     <button onclick="disableMaintenanceModeForAll()" style="background:#28a745;color:#fff;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-weight:bold;box-shadow:0 2px 5px rgba(0,0,0,0.2);min-height:44px;font-size:1em;">
                         ✅ إلغاء وضع الصيانة للجميع
                     </button>
+                    <button onclick="showTokenPopup()" style="background:#007bff;color:#fff;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-weight:bold;box-shadow:0 2px 5px rgba(0,0,0,0.2);min-height:44px;font-size:1em;">
+                        🔑 تحديث التوكن
+                    </button>
                 </div>
                 <p style="margin:8px 0 0 0;font-size:0.85em;color:#666;">
                     💡 عند تفعيل وضع الصيانة، سيرى جميع المستخدمين (عدا المطور) رسالة التحديث ولن يتمكنوا من استخدام النظام<br>
                     عند الخروج من حسابك كمطور، سيتم إلغاء وضع الصيانة تلقائياً<br>
-                    📱 يمكن استخدام هذه الميزة من أي جهاز (هاتف، تابلت، أو كمبيوتر)
+                    📱 يمكن استخدام هذه الميزة من أي جهاز (هاتف، تابلت، أو كمبيوتر)<br>
+                    🔑 إذا لم تعمل أزرار الصيانة، انقر على "تحديث التوكن" لإدخال توكن GitHub صالح
                 </p>
             </div>
         </div>
@@ -5300,10 +5304,81 @@ async function loadMaintenanceStatusFromGitHub() {
     }
 }
 
+// Validate and ensure token is available before maintenance operations
+async function validateTokenForMaintenance() {
+    const repo = "aliabdelaal-adm/Monthly_inspection_plan";
+    let token = localStorage.getItem("devToken");
+    
+    // Use default token if not set
+    if (!token && (isDev || window.isDev)) {
+        const defaultToken = "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";
+        token = defaultToken;
+        localStorage.setItem("devToken", defaultToken);
+        console.log('🔑 تم استخدام التوكن الافتراضي تلقائياً');
+    }
+    
+    if (!token) {
+        alert('❌ لا يوجد توكن GitHub!\n\n' +
+              'يرجى إدخال التوكن أولاً للتمكن من حفظ حالة الصيانة على GitHub\n' +
+              'سيتم فتح نافذة إدخال التوكن الآن...');
+        showTokenPopup();
+        return false;
+    }
+    
+    // Test token validity
+    try {
+        const testResponse = await fetch(`https://api.github.com/repos/${repo}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        if (!testResponse.ok) {
+            if (testResponse.status === 401) {
+                localStorage.removeItem("devToken");
+                alert('❌ التوكن غير صالح أو منتهي الصلاحية!\n\n' +
+                      'الحل:\n' +
+                      '1. سيتم فتح نافذة لإدخال توكن جديد\n' +
+                      '2. اذهب إلى GitHub: Settings → Developer settings → Personal access tokens\n' +
+                      '3. أنشئ توكن جديد مع صلاحية "repo"\n' +
+                      '4. أدخل التوكن الجديد في النافذة المنبثقة');
+                showTokenPopup();
+                return false;
+            } else if (testResponse.status === 403) {
+                alert('❌ التوكن ليس لديه صلاحيات كافية!\n\n' +
+                      'الحل:\n' +
+                      '1. اذهب إلى GitHub: Settings → Developer settings → Personal access tokens\n' +
+                      '2. تأكد من أن التوكن لديه صلاحية "repo"\n' +
+                      '3. إذا لم تكن موجودة، أنشئ توكن جديد\n' +
+                      '4. انقر "تغيير التوكن" وأدخل التوكن الجديد');
+                showTokenPopup();
+                return false;
+            }
+        }
+        
+        console.log('✅ التوكن صالح وجاهز للاستخدام');
+        return true;
+    } catch (error) {
+        console.error('❌ خطأ في التحقق من التوكن:', error);
+        alert('⚠️ تحذير: لم نتمكن من التحقق من التوكن\n\n' +
+              'قد يكون هناك مشكلة في الاتصال بالإنترنت.\n' +
+              'سنحاول المتابعة، لكن قد لا تنجح العملية.');
+        return true; // Continue anyway
+    }
+}
+
 // Enable maintenance mode for all users (called by developer)
 async function enableMaintenanceModeForAll() {
     if (!isDev && !window.isDev) {
         alert('❌ عذراً، هذه الميزة متاحة للمطور فقط');
+        return;
+    }
+    
+    // Validate token before proceeding
+    const tokenValid = await validateTokenForMaintenance();
+    if (!tokenValid) {
+        console.log('⚠️ إلغاء تفعيل وضع الصيانة - التوكن غير صالح');
         return;
     }
     
@@ -5333,7 +5408,7 @@ async function enableMaintenanceModeForAll() {
               '• تم التفعيل على هذا الجهاز فقط\n' +
               '• قد لا يظهر للمستخدمين على الأجهزة الأخرى\n' +
               '• يرجى التحقق من الاتصال بالإنترنت والمحاولة مرة أخرى\n\n' +
-              '💡 نصيحة: تحقق من صلاحية التوكن في لوحة المطور');
+              '💡 نصيحة: تحقق من صلاحية التوكن بالنقر على زر "🔑 تحديث التوكن"');
         console.error('⚠️ Maintenance mode activated locally only - GitHub sync failed');
     }
 }
@@ -5342,6 +5417,13 @@ async function enableMaintenanceModeForAll() {
 async function disableMaintenanceModeForAll() {
     if (!isDev && !window.isDev) {
         alert('❌ عذراً، هذه الميزة متاحة للمطور فقط');
+        return;
+    }
+    
+    // Validate token before proceeding
+    const tokenValid = await validateTokenForMaintenance();
+    if (!tokenValid) {
+        console.log('⚠️ إلغاء إيقاف وضع الصيانة - التوكن غير صالح');
         return;
     }
     
@@ -5370,7 +5452,7 @@ async function disableMaintenanceModeForAll() {
               '• تم الإلغاء على هذا الجهاز فقط\n' +
               '• قد لا يتم إلغاؤه للمستخدمين على الأجهزة الأخرى\n' +
               '• يرجى التحقق من الاتصال بالإنترنت والمحاولة مرة أخرى\n\n' +
-              '💡 نصيحة: تحقق من صلاحية التوكن في لوحة المطور');
+              '💡 نصيحة: تحقق من صلاحية التوكن بالنقر على زر "🔑 تحديث التوكن"');
         console.error('⚠️ Maintenance mode disabled locally only - GitHub sync failed');
     }
 }
@@ -10487,13 +10569,18 @@ function hideTokenPopup() {
 function saveTokenFromPopup() {
     const token = document.getElementById("tokenInput").value.trim();
     if (!token) {
-        document.getElementById("tokenError").textContent = "يرجى إدخال التوكن السري!";
+        document.getElementById("tokenError").textContent = "⚠️ يرجى إدخال التوكن السري!";
         return;
     }
     localStorage.setItem("devToken", token);
     hideTokenPopup();
     // إظهار رسالة نجاح
-    alert("✅ تم حفظ التوكن بنجاح!\n\nيمكنك الآن رفع الملفات.");
+    alert("✅ تم حفظ التوكن بنجاح!\n\n" +
+          "الآن يمكنك:\n" +
+          "• تفعيل/إلغاء وضع الصيانة للجميع\n" +
+          "• رفع الملفات إلى GitHub\n" +
+          "• حفظ التغييرات على GitHub\n\n" +
+          "جميع العمليات ستتم مزامنتها مع جميع الأجهزة!");
 }
 
 function useDefaultToken() {
@@ -10501,7 +10588,12 @@ function useDefaultToken() {
     const defaultToken = "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";
     localStorage.setItem("devToken", defaultToken);
     hideTokenPopup();
-    alert("✅ تم استخدام التوكن الافتراضي!");
+    alert("✅ تم استخدام التوكن الافتراضي بنجاح!\n\n" +
+          "الآن يمكنك:\n" +
+          "• تفعيل/إلغاء وضع الصيانة للجميع\n" +
+          "• رفع الملفات إلى GitHub\n" +
+          "• حفظ التغييرات على GitHub\n\n" +
+          "جميع العمليات ستتم مزامنتها مع جميع الأجهزة!");
 }
 
 // ===== وظائف رفع الملفات إلى GitHub =====

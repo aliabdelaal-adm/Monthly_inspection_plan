@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار الصوت الديناميكي - Dynamic Audio Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .test-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-width: 700px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+        
+        h2 {
+            color: #764ba2;
+            margin-top: 30px;
+            font-size: 22px;
+        }
+        
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: right;
+        }
+        
+        .test-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 30px;
+            cursor: pointer;
+            margin: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .test-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .stop-btn {
+            background: linear-gradient(135deg, #f56565 0%, #c53030 100%);
+        }
+        
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+        
+        .status.playing {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 2px solid #48bb78;
+        }
+        
+        .status.stopped {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 2px solid #f56565;
+        }
+        
+        .metrics {
+            background: #edf2f7;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: right;
+        }
+        
+        .metric-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 5px;
+        }
+        
+        .metric-label {
+            font-weight: bold;
+            color: #4a5568;
+        }
+        
+        .metric-value {
+            color: #667eea;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        ul {
+            text-align: right;
+            list-style-position: inside;
+        }
+        
+        ul li {
+            margin: 10px 0;
+            color: #4a5568;
+        }
+        
+        .timer {
+            font-size: 48px;
+            font-weight: bold;
+            color: #667eea;
+            margin: 20px 0;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🎵 اختبار الصوت الديناميكي المتغير</h1>
+        <h1>Dynamic Varying Audio Test</h1>
+        
+        <div class="info-box">
+            <h2>📋 الميزات الجديدة | New Features</h2>
+            <ul>
+                <li>✅ تغيير مستوى الصوت ديناميكيًا كل 5 ثوان</li>
+                <li>✅ Dynamic volume changes every 5 seconds</li>
+                <li>✅ تعديل تردد الفلتر للحصول على نغمات مختلفة</li>
+                <li>✅ Filter frequency modulation for tonal variation</li>
+                <li>✅ دورة كاملة تستغرق 20 دقيقة من التغييرات</li>
+                <li>✅ Complete 20-minute cycle of variations</li>
+                <li>✅ تأثير "تنفس" طبيعي في الصوت</li>
+                <li>✅ Natural "breathing" effect in audio</li>
+            </ul>
+        </div>
+        
+        <div class="timer" id="timer">00:00</div>
+        
+        <div class="status stopped" id="status">
+            ⏸️ الصوت متوقف | Audio Stopped
+        </div>
+        
+        <div class="metrics" id="metrics" style="display: none;">
+            <h3>📊 مقاييس الصوت الحالية | Current Audio Metrics</h3>
+            <div class="metric-item">
+                <span class="metric-label">مستوى الصوت | Volume:</span>
+                <span class="metric-value" id="volumeValue">0.15</span>
+            </div>
+            <div class="metric-item">
+                <span class="metric-label">تردد الفلتر | Filter Frequency:</span>
+                <span class="metric-value" id="filterValue">2000 Hz</span>
+            </div>
+            <div class="metric-item">
+                <span class="metric-label">جودة الفلتر | Filter Q:</span>
+                <span class="metric-value" id="qValue">1.0</span>
+            </div>
+            <div class="metric-item">
+                <span class="metric-label">التقدم في الدورة | Cycle Progress:</span>
+                <span class="metric-value" id="progressValue">0%</span>
+            </div>
+        </div>
+        
+        <button class="test-btn" onclick="startDynamicAudio()">
+            ▶️ تشغيل الصوت الديناميكي | Start Dynamic Audio
+        </button>
+        
+        <button class="test-btn stop-btn" onclick="stopDynamicAudio()">
+            ⏹️ إيقاف الصوت | Stop Audio
+        </button>
+        
+        <div class="info-box" style="margin-top: 30px;">
+            <h2>🎯 كيفية الاختبار | How to Test</h2>
+            <ul>
+                <li>اضغط "تشغيل الصوت الديناميكي" | Click "Start Dynamic Audio"</li>
+                <li>استمع للتغيرات كل 5 ثوان | Listen for changes every 5 seconds</li>
+                <li>لاحظ تغير مستوى الصوت والنغمة | Notice volume and tone variations</li>
+                <li>راقب المقاييس في الأسفل | Watch the metrics below</li>
+                <li>الدورة الكاملة: 20 دقيقة | Full cycle: 20 minutes</li>
+            </ul>
+        </div>
+        
+        <div class="info-box">
+            <h2>🔊 التغييرات التي ستسمعها | Changes You'll Hear</h2>
+            <ul>
+                <li>📈 مستوى الصوت يتراوح بين 10% و 20%</li>
+                <li>📈 Volume varies between 10% and 20%</li>
+                <li>🎼 النغمة تتغير بسلاسة (1500-3000 Hz)</li>
+                <li>🎼 Tone changes smoothly (1500-3000 Hz)</li>
+                <li>🌊 تأثير موجي طبيعي وغير مزعج</li>
+                <li>🌊 Natural wave-like effect, non-intrusive</li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Hidden Audio Element -->
+    <audio id="testAudio" loop preload="auto" style="display:none;">
+        <source src="whatsapp Audio.mp3" type="audio/mpeg">
+        متصفحك لا يدعم تشغيل الملفات الصوتية.
+    </audio>
+    
+    <script>
+        let audioContext = null;
+        let gainNode = null;
+        let filterNode = null;
+        let dynamicInterval = null;
+        let timerInterval = null;
+        let elapsedSeconds = 0;
+        
+        function startDynamicAudio() {
+            const audio = document.getElementById('testAudio');
+            const statusDiv = document.getElementById('status');
+            const metricsDiv = document.getElementById('metrics');
+            
+            // Reset audio
+            audio.currentTime = 0;
+            elapsedSeconds = 0;
+            
+            // Setup Web Audio API
+            try {
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    
+                    // Create source from audio element
+                    const source = audioContext.createMediaElementSource(audio);
+                    
+                    // Create gain node
+                    gainNode = audioContext.createGain();
+                    
+                    // Create filter node
+                    filterNode = audioContext.createBiquadFilter();
+                    filterNode.type = 'lowpass';
+                    filterNode.frequency.value = 2000;
+                    filterNode.Q.value = 1;
+                    
+                    // Connect: source -> filter -> gain -> destination
+                    source.connect(filterNode);
+                    filterNode.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    // Set initial volume
+                    gainNode.gain.value = 0.15;
+                }
+                
+                // Show metrics
+                metricsDiv.style.display = 'block';
+                statusDiv.className = 'status playing';
+                statusDiv.textContent = '▶️ الصوت يعمل مع تغييرات ديناميكية | Audio Playing with Dynamic Variations';
+                
+                // Start timer
+                timerInterval = setInterval(() => {
+                    elapsedSeconds++;
+                    const minutes = Math.floor(elapsedSeconds / 60);
+                    const seconds = elapsedSeconds % 60;
+                    document.getElementById('timer').textContent = 
+                        `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                }, 1000);
+                
+                // Clear existing interval
+                if (dynamicInterval) {
+                    clearInterval(dynamicInterval);
+                }
+                
+                const totalDuration = 20 * 60; // 20 minutes
+                let updateCount = 0;
+                
+                // Initial update
+                updateAudioParameters(0, totalDuration);
+                
+                // Update every 5 seconds
+                dynamicInterval = setInterval(() => {
+                    updateCount++;
+                    const currentElapsed = updateCount * 5;
+                    updateAudioParameters(currentElapsed % totalDuration, totalDuration);
+                }, 5000);
+                
+                // Play audio
+                audio.muted = false;
+                audio.play().then(() => {
+                    console.log('✅ Audio started successfully');
+                }).catch(err => {
+                    console.log('Trying alternative method...');
+                    audio.muted = true;
+                    audio.play().then(() => {
+                        setTimeout(() => {
+                            audio.muted = false;
+                        }, 100);
+                    });
+                });
+                
+            } catch (error) {
+                console.error('Error setting up audio:', error);
+                statusDiv.className = 'status stopped';
+                statusDiv.textContent = '❌ خطأ في إعداد الصوت | Error Setting Up Audio';
+            }
+        }
+        
+        function updateAudioParameters(elapsed, total) {
+            if (!audioContext || !gainNode || !filterNode) return;
+            
+            const progress = elapsed / total;
+            
+            // Volume variation: wave between 0.10 and 0.20
+            const volumeWave = 0.15 + 0.05 * Math.sin(progress * Math.PI * 4);
+            gainNode.gain.linearRampToValueAtTime(
+                volumeWave,
+                audioContext.currentTime + 5
+            );
+            
+            // Filter frequency: smooth changes between 1500Hz and 3000Hz
+            const filterFreq = 2000 + 500 * Math.sin(progress * Math.PI * 6);
+            filterNode.frequency.linearRampToValueAtTime(
+                filterFreq,
+                audioContext.currentTime + 5
+            );
+            
+            // Filter Q: subtle resonance changes
+            const filterQ = 1 + 0.5 * Math.sin(progress * Math.PI * 3);
+            filterNode.Q.linearRampToValueAtTime(
+                filterQ,
+                audioContext.currentTime + 5
+            );
+            
+            // Update display
+            document.getElementById('volumeValue').textContent = volumeWave.toFixed(3);
+            document.getElementById('filterValue').textContent = Math.floor(filterFreq) + ' Hz';
+            document.getElementById('qValue').textContent = filterQ.toFixed(2);
+            document.getElementById('progressValue').textContent = Math.floor(progress * 100) + '%';
+            
+            console.log(`🎵 Update: Volume=${volumeWave.toFixed(2)}, Freq=${Math.floor(filterFreq)}Hz, Q=${filterQ.toFixed(2)}, Progress=${Math.floor(progress*100)}%`);
+        }
+        
+        function stopDynamicAudio() {
+            const audio = document.getElementById('testAudio');
+            const statusDiv = document.getElementById('status');
+            const metricsDiv = document.getElementById('metrics');
+            
+            // Stop audio
+            audio.pause();
+            audio.currentTime = 0;
+            audio.muted = true;
+            
+            // Clear intervals
+            if (dynamicInterval) {
+                clearInterval(dynamicInterval);
+                dynamicInterval = null;
+            }
+            
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            
+            // Reset timer
+            elapsedSeconds = 0;
+            document.getElementById('timer').textContent = '00:00';
+            
+            // Update status
+            statusDiv.className = 'status stopped';
+            statusDiv.textContent = '⏸️ الصوت متوقف | Audio Stopped';
+            metricsDiv.style.display = 'none';
+            
+            console.log('🎵 Audio stopped');
+        }
+    </script>
+</body>
+</html>

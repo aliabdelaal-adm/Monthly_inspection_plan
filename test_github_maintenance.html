@@ -231,7 +231,17 @@
         async function loadMaintenanceStatus() {
             try {
                 log('📥 جاري تحميل حالة الصيانة من GitHub...');
-                const response = await fetch(`https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/maintenance-status.json?t=${Date.now()}`);
+                // Using advanced cache-busting to ensure fresh data
+                const cacheBuster = `${Date.now()}_${Math.random().toString(36).substring(7)}`;
+                const response = await fetch(`https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/maintenance-status.json?t=${cacheBuster}`, {
+                    method: 'GET',
+                    headers: {
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    },
+                    cache: 'no-store'
+                });
                 
                 if (!response.ok) {
                     log(`⚠️ لم يتم العثور على ملف حالة الصيانة (${response.status})`);

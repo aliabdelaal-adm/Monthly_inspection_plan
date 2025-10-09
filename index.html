@@ -5,11 +5,6 @@
     <title>خطة التفتيش الشهرية</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- Cache Control Meta Tags - Prevent browser caching for instant updates -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    
     <!-- SEO Optimization Meta Tags -->
     <meta name="robots" content="index, follow">
     <meta name="googlebot" content="index, follow">
@@ -4662,9 +4657,7 @@ function showSecurityWarning(issues) {
 function startAutoRefresh() {
     setInterval(async () => {
         try {
-            // Use aggressive cache-busting with timestamp and random component
-            const cacheBuster = Date.now() + '_' + Math.random().toString(36).substring(7);
-            const response = await fetch('./plan-data.json?t=' + cacheBuster);
+            const response = await fetch('./plan-data.json?t=' + Date.now());
             if (response.ok) {
                 const data = await response.json();
                 
@@ -5279,22 +5272,11 @@ async function saveMaintenanceStatusToGitHub(isEnabled, messages = [], retryCoun
 async function loadMaintenanceStatusFromGitHub(retries = 3, delayMs = 1000) {
     for (let attempt = 1; attempt <= retries; attempt++) {
         try {
-            // Try to fetch from GitHub with aggressive cache busting to ensure all devices get updates
-            // Using timestamp + random to bypass all caching layers (CDN, browser, proxies)
-            const cacheBuster = `${Date.now()}_${Math.random().toString(36).substring(7)}`;
-            const url = `https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/maintenance-status.json?t=${cacheBuster}`;
+            const url = `https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/maintenance-status.json?t=${Date.now()}`;
             
             console.log(`📡 Fetching maintenance status (attempt ${attempt}/${retries})...`);
             
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: {
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache',
-                    'Expires': '0'
-                },
-                cache: 'no-store' // Force fetch to bypass browser cache
-            });
+            const response = await fetch(url);
             
             if (!response.ok) {
                 console.log(`⚠️ Could not load maintenance status from GitHub (attempt ${attempt}/${retries}): ${response.status}`);
@@ -5729,9 +5711,7 @@ async function loadInspectionData() {
             statusDiv.style.display = 'block';
         }
         
-        // Use aggressive cache-busting to ensure fresh data
-        const cacheBuster = Date.now() + '_' + Math.random().toString(36).substring(7);
-        const response = await fetch('./plan-data.json?t=' + cacheBuster);
+        const response = await fetch('./plan-data.json?t=' + Date.now());
         if (response.ok) {
             const data = await response.json();
             

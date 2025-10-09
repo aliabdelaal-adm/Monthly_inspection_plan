@@ -5337,8 +5337,20 @@ async function saveMaintenanceStatusToGitHub(isEnabled, messages = [], retryCoun
 // Load maintenance status from GitHub (server-side storage)
 async function loadMaintenanceStatusFromGitHub() {
     try {
-        // Try to fetch from GitHub with cache busting
-        const response = await fetch(`https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/maintenance-status.json?t=${Date.now()}`);
+        // Try to fetch from GitHub with aggressive cache busting to ensure all devices get updates
+        // Using timestamp + random to bypass all caching layers (CDN, browser, proxies)
+        const cacheBuster = `${Date.now()}_${Math.random().toString(36).substring(7)}`;
+        const url = `https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/maintenance-status.json?t=${cacheBuster}`;
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            },
+            cache: 'no-store' // Force fetch to bypass browser cache
+        });
         
         if (!response.ok) {
             console.log('⚠️ Could not load maintenance status from GitHub');

@@ -5589,41 +5589,18 @@ async function forceMaintenanceCheck() {
     console.log('✅ Forced check completed');
 }
 
-// Periodically check maintenance status with adaptive intervals
+// Periodically check maintenance status with constant 10-second intervals
 function startMaintenanceStatusChecker() {
-    let checkCount = 0;
-    
     // Check immediately
     checkMaintenanceMode();
     
-    // Function to determine check interval based on how long page has been open
-    const getCheckInterval = () => {
-        if (checkCount < 6) {
-            // First 30 seconds: check every 5 seconds (faster detection)
-            return 5000;
-        } else if (checkCount < 12) {
-            // Next 30 seconds: check every 10 seconds
-            return 10000;
-        } else {
-            // After 1 minute: check every 15 seconds (reduce server load)
-            return 15000;
-        }
-    };
+    // Check every 10 seconds for consistent and fast updates across all devices
+    setInterval(async () => {
+        await checkMaintenanceMode();
+    }, 10000); // Constant 10-second interval - proven optimal in PR#307
     
-    // Schedule next check with adaptive interval
-    const scheduleNextCheck = () => {
-        const interval = getCheckInterval();
-        setTimeout(async () => {
-            await checkMaintenanceMode();
-            checkCount++;
-            scheduleNextCheck(); // Schedule the next one
-        }, interval);
-    };
-    
-    // Start the adaptive checking
-    scheduleNextCheck();
-    
-    console.log('✅ Maintenance status checker started (adaptive intervals: 5s → 10s → 15s)');
+    console.log('✅ Maintenance status checker started (constant 10s interval)');
+    console.log('⚡ Fast Sync Mode: Updates will appear on all devices within 10-20 seconds');
     console.log('💡 Tip: Run forceMaintenanceCheck() in console to check immediately');
 }
 

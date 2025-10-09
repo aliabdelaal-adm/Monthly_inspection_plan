@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test: Dynamic Audio Persistence Fix</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .info-box {
+            background: #e8f5e9;
+            border-left: 4px solid #4CAF50;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #fafafa;
+            border-radius: 5px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .status {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .metrics {
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            direction: ltr;
+            text-align: left;
+        }
+        .log {
+            max-height: 300px;
+            overflow-y: auto;
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            direction: ltr;
+            text-align: left;
+        }
+        .log-entry {
+            padding: 2px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 اختبار: استمرارية الصوت الديناميكي</h1>
+        <h2>Test: Dynamic Audio Persistence Fix</h2>
+        
+        <div class="info-box">
+            <strong>الهدف من الاختبار | Test Objective:</strong><br>
+            التحقق من أن الصوت الديناميكي يستمر في التقدم عبر دورة 20 دقيقة حتى عند استدعاء showMaintenanceMode() عدة مرات<br>
+            Verify that dynamic audio continues progressing through the 20-minute cycle even when showMaintenanceMode() is called multiple times
+        </div>
+
+        <div class="test-section">
+            <h3>📊 معلومات الاختبار | Test Info</h3>
+            <p><strong>المشكلة الأصلية | Original Problem:</strong><br>
+            كان المتغير elapsedSeconds محليًا، فيتم إعادة تعيينه إلى 0 في كل مرة يتم فيها استدعاء showMaintenanceMode()<br>
+            elapsedSeconds was local, so it reset to 0 every time showMaintenanceMode() was called</p>
+            
+            <p><strong>الحل | Solution:</strong><br>
+            نقل elapsedSeconds إلى النطاق العام كـ maintenanceElapsedSeconds<br>
+            Move elapsedSeconds to global scope as maintenanceElapsedSeconds</p>
+        </div>
+
+        <div class="test-section">
+            <h3>🎮 التحكم | Controls</h3>
+            <button onclick="simulateShowMaintenanceMode()">محاكاة showMaintenanceMode() | Simulate Call</button>
+            <button onclick="checkElapsedTime()">فحص الوقت المنقضي | Check Elapsed Time</button>
+            <button onclick="resetTest()">إعادة تعيين | Reset</button>
+            
+            <div class="status info" id="status">
+                جاهز للاختبار | Ready to test
+            </div>
+            
+            <div class="metrics" id="metrics">
+                <div>الوقت المنقضي | Elapsed Time: <strong id="elapsedTime">0:00</strong></div>
+                <div>عدد المرات المستدعاة | Call Count: <strong id="callCount">0</strong></div>
+                <div>مستوى الصوت الحالي | Current Volume: <strong id="currentVolume">-</strong></div>
+                <div>التردد الحالي | Current Freq: <strong id="currentFreq">-</strong></div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>📝 السجل | Log</h3>
+            <div class="log" id="log"></div>
+        </div>
+
+        <div class="info-box">
+            <strong>✅ معايير النجاح | Success Criteria:</strong><br>
+            1. يجب أن يستمر maintenanceElapsedSeconds في الزيادة حتى بعد استدعاءات متعددة<br>
+            &nbsp;&nbsp;&nbsp;maintenanceElapsedSeconds should continue increasing even after multiple calls<br>
+            2. يجب ألا يتم إعادة تعيين الوقت إلى 0 عند كل استدعاء<br>
+            &nbsp;&nbsp;&nbsp;Time should NOT reset to 0 on each call<br>
+            3. يجب أن تتغير قيم الصوت والتردد بشكل مستمر<br>
+            &nbsp;&nbsp;&nbsp;Volume and frequency values should continuously change
+        </div>
+    </div>
+
+    <script>
+        // Simulated global variables from index.html
+        let maintenanceAudioContext = null;
+        let maintenanceGainNode = null;
+        let maintenanceFilterNode = null;
+        let maintenanceDynamicInterval = null;
+        let maintenanceElapsedSeconds = 0; // THIS IS THE FIX - now global!
+
+        let callCount = 0;
+        let logEntries = [];
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = `[${timestamp}] ${message}`;
+            logEntries.push(entry);
+            
+            const logDiv = document.getElementById('log');
+            const entryDiv = document.createElement('div');
+            entryDiv.className = 'log-entry';
+            entryDiv.textContent = entry;
+            logDiv.appendChild(entryDiv);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            
+            console.log(entry);
+        }
+
+        function simulateShowMaintenanceMode() {
+            callCount++;
+            document.getElementById('callCount').textContent = callCount;
+            
+            log(`🔧 Calling showMaintenanceMode() - Call #${callCount}`, 'info');
+            
+            // Simulate the key parts of showMaintenanceMode()
+            const totalDuration = 20 * 60; // 20 minutes in seconds
+            
+            // Clear any existing interval (this happens in real code)
+            if (maintenanceDynamicInterval) {
+                clearInterval(maintenanceDynamicInterval);
+                log('⏸️  Cleared existing interval');
+            }
+            
+            // IMPORTANT: With the fix, maintenanceElapsedSeconds is NOT reset here
+            // It continues from where it was
+            
+            // Start the interval
+            maintenanceDynamicInterval = setInterval(() => {
+                maintenanceElapsedSeconds += 5;
+                
+                if (maintenanceElapsedSeconds >= totalDuration) {
+                    maintenanceElapsedSeconds = 0;
+                    log('🔄 Completed 20-minute cycle, resetting to 0');
+                }
+                
+                const progress = maintenanceElapsedSeconds / totalDuration;
+                
+                // Calculate volume and frequency (same formulas as in index.html)
+                const volumeWave = 0.15 + 0.05 * Math.sin(progress * Math.PI * 4);
+                const filterFreq = 2000 + 500 * Math.sin(progress * Math.PI * 6);
+                
+                // Update display
+                updateMetrics(maintenanceElapsedSeconds, volumeWave, filterFreq);
+                
+                log(`🎵 Audio variation at ${formatTime(maintenanceElapsedSeconds)} - Volume: ${volumeWave.toFixed(2)}, Filter: ${Math.floor(filterFreq)}Hz`);
+            }, 5000); // Update every 5 seconds
+            
+            log(`✅ Interval started. Current elapsed time: ${formatTime(maintenanceElapsedSeconds)}`);
+            updateStatus('success', `showMaintenanceMode() called ${callCount} times. Elapsed time continues from ${formatTime(maintenanceElapsedSeconds)}`);
+        }
+
+        function checkElapsedTime() {
+            const minutes = Math.floor(maintenanceElapsedSeconds / 60);
+            const seconds = maintenanceElapsedSeconds % 60;
+            const timeStr = `${minutes}:${String(seconds).padStart(2, '0')}`;
+            
+            log(`⏱️  Current elapsed time: ${timeStr} (${maintenanceElapsedSeconds} seconds)`);
+            updateStatus('info', `Current elapsed time: ${timeStr}`);
+        }
+
+        function resetTest() {
+            if (maintenanceDynamicInterval) {
+                clearInterval(maintenanceDynamicInterval);
+                maintenanceDynamicInterval = null;
+            }
+            
+            maintenanceElapsedSeconds = 0;
+            callCount = 0;
+            logEntries = [];
+            
+            document.getElementById('log').innerHTML = '';
+            document.getElementById('callCount').textContent = '0';
+            document.getElementById('elapsedTime').textContent = '0:00';
+            document.getElementById('currentVolume').textContent = '-';
+            document.getElementById('currentFreq').textContent = '-';
+            
+            log('🔄 Test reset');
+            updateStatus('info', 'Test reset. Ready to start again.');
+        }
+
+        function updateMetrics(elapsed, volume, freq) {
+            document.getElementById('elapsedTime').textContent = formatTime(elapsed);
+            document.getElementById('currentVolume').textContent = volume.toFixed(3);
+            document.getElementById('currentFreq').textContent = Math.floor(freq) + ' Hz';
+        }
+
+        function updateStatus(type, message) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+        }
+
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${minutes}:${String(secs).padStart(2, '0')}`;
+        }
+
+        // Initial log
+        log('🚀 Test page loaded. Ready to test dynamic audio persistence fix.');
+        log('📌 Key fix: maintenanceElapsedSeconds is now a global variable');
+        log('📌 This ensures elapsed time persists across multiple showMaintenanceMode() calls');
+    </script>
+</body>
+</html>

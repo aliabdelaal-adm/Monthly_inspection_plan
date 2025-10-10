@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار التشغيل التلقائي للموسيقى | Music Autoplay Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            direction: rtl;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        h2 {
+            color: #764ba2;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 20px;
+            font-weight: normal;
+        }
+        
+        .info-box {
+            background: #f0f4ff;
+            border-right: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        
+        .info-box p {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+        
+        .status-display {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            direction: ltr;
+            text-align: left;
+        }
+        
+        .status-item {
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 5px;
+            background: white;
+        }
+        
+        .status-item.success {
+            background: #d4edda;
+            border-right: 3px solid #28a745;
+        }
+        
+        .status-item.warning {
+            background: #fff3cd;
+            border-right: 3px solid #ffc107;
+        }
+        
+        .status-item.error {
+            background: #f8d7da;
+            border-right: 3px solid #dc3545;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-group {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        #maintenanceOverlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+        
+        .maintenance-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 500px;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        .maintenance-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+        
+        .maintenance-title {
+            font-size: 24px;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .maintenance-message {
+            font-size: 16px;
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .audio-info {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .audio-info p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        .legend {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+        
+        .legend-item {
+            display: inline-block;
+            margin: 5px 10px;
+        }
+        
+        .legend-color {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            margin-left: 5px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 اختبار التشغيل التلقائي للموسيقى</h1>
+        <h2>Music Autoplay Fix Test</h2>
+        
+        <div class="info-box">
+            <p><strong>📋 الهدف | Objective:</strong></p>
+            <p>التأكد من أن ملف الموسيقى يعمل تلقائياً عند ظهور رسالة "جاري التحديث" على جميع الأجهزة والمتصفحات</p>
+            <p>Ensure music file plays automatically when "Update in Progress" message appears on all phones and computers</p>
+        </div>
+        
+        <div class="info-box">
+            <p><strong>🔧 الإصلاح المطبق | Applied Fix:</strong></p>
+            <p>✅ إزالة خاصية <code>autoplay</code> من عنصر الصوت</p>
+            <p>✅ Removed <code>autoplay</code> attribute from audio element</p>
+            <p>✅ تحسين منطق التشغيل: بدء مكتوم ثم إلغاء الكتم</p>
+            <p>✅ Improved playback logic: start muted then unmute</p>
+            <p>✅ احتياطي: تشغيل عند أول تفاعل للمستخدم</p>
+            <p>✅ Fallback: play on first user interaction</p>
+        </div>
+        
+        <div class="status-display" id="statusDisplay">
+            <div class="status-item">⏳ جاهز للاختبار | Ready for testing...</div>
+        </div>
+        
+        <div class="btn-group">
+            <button class="btn" onclick="checkAudioState()">🔍 فحص حالة الصوت<br>Check Audio State</button>
+            <button class="btn" onclick="showMaintenanceMode()">⚠️ إظهار رسالة التحديث<br>Show Update Message</button>
+            <button class="btn" onclick="hideMaintenanceMode()">✅ إخفاء الرسالة<br>Hide Message</button>
+        </div>
+        
+        <div class="legend">
+            <strong>الرموز | Legend:</strong><br>
+            <span class="legend-item">
+                <span class="legend-color" style="background: #d4edda;"></span>
+                ✅ نجح | Success
+            </span>
+            <span class="legend-item">
+                <span class="legend-color" style="background: #fff3cd;"></span>
+                ⚠️ تحذير | Warning
+            </span>
+            <span class="legend-item">
+                <span class="legend-color" style="background: #f8d7da;"></span>
+                ❌ خطأ | Error
+            </span>
+        </div>
+        
+        <div class="audio-info">
+            <p><strong>💡 ملاحظات | Notes:</strong></p>
+            <p>• يجب أن يبدأ الصوت تلقائياً عند ظهور الرسالة</p>
+            <p>• Audio should start automatically when message appears</p>
+            <p>• إذا لم يبدأ، انقر في أي مكان لتشغيله</p>
+            <p>• If it doesn't start, click anywhere to play it</p>
+            <p>• الصوت بمستوى منخفض (15%) للراحة</p>
+            <p>• Audio at low volume (15%) for comfort</p>
+        </div>
+    </div>
+    
+    <!-- Maintenance Overlay -->
+    <div id="maintenanceOverlay">
+        <div class="maintenance-content">
+            <div class="maintenance-icon">🔧</div>
+            <div class="maintenance-title">جاري التحديث...</div>
+            <div class="maintenance-message" id="maintenanceDetails">
+                النظام قيد التحديث لتحسين الأداء والأمان.<br>
+                يرجى الانتظار...
+            </div>
+            <button class="btn" onclick="hideMaintenanceMode()">إغلاق | Close</button>
+        </div>
+    </div>
+    
+    <!-- Audio Element (without autoplay) -->
+    <audio id="maintenanceAudio" loop preload="auto" style="display:none;">
+        <source src="whatsapp Audio.mp3" type="audio/mpeg">
+        متصفحك لا يدعم تشغيل الملفات الصوتية.
+    </audio>
+    
+    <script>
+        const statusDisplay = document.getElementById('statusDisplay');
+        const audio = document.getElementById('maintenanceAudio');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString('ar-EG');
+            const statusClass = type === 'success' ? 'success' : type === 'error' ? 'error' : type === 'warning' ? 'warning' : '';
+            const emoji = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+            
+            const div = document.createElement('div');
+            div.className = 'status-item ' + statusClass;
+            div.innerHTML = `${emoji} [${timestamp}] ${message}`;
+            statusDisplay.appendChild(div);
+            statusDisplay.scrollTop = statusDisplay.scrollHeight;
+            
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        function checkAudioState() {
+            log('--- فحص حالة الصوت | Checking Audio State ---', 'info');
+            log(`Paused: ${audio.paused ? '✅ Yes (Not Playing)' : '❌ No (Playing)'}`, audio.paused ? 'success' : 'warning');
+            log(`Muted: ${audio.muted ? '🔇 Yes' : '🔊 No'}`, audio.muted ? 'warning' : 'success');
+            log(`Volume: ${(audio.volume * 100).toFixed(0)}%`, 'info');
+            log(`Current Time: ${audio.currentTime.toFixed(2)}s`, 'info');
+            log(`Duration: ${audio.duration ? audio.duration.toFixed(2) + 's' : 'Not loaded'}`, 'info');
+            log(`Ready State: ${audio.readyState} (0=nothing, 1=metadata, 2=currentData, 3=futureData, 4=enoughData)`, 'info');
+            log('--- نهاية الفحص | End Check ---', 'info');
+        }
+        
+        function showMaintenanceMode() {
+            log('=== إظهار وضع الصيانة | Showing Maintenance Mode ===', 'warning');
+            
+            const overlay = document.getElementById('maintenanceOverlay');
+            overlay.style.display = 'flex';
+            
+            log('Overlay displayed', 'success');
+            
+            // Reset audio to start
+            audio.currentTime = 0;
+            audio.volume = 0.15;
+            log('Audio reset: currentTime=0, volume=15%', 'info');
+            
+            // Start playing (muted first, then unmute)
+            log('Attempting to play audio (muted first)...', 'info');
+            audio.muted = true;
+            
+            audio.play().then(() => {
+                log('✅ Audio started playing (muted)', 'success');
+                
+                // Try to unmute after a short delay
+                setTimeout(() => {
+                    audio.muted = false;
+                    log('✅ Audio unmuted successfully - YOU SHOULD HEAR MUSIC NOW!', 'success');
+                }, 50);
+            }).catch(err => {
+                log(`❌ Audio play failed even when muted: ${err.message}`, 'error');
+                
+                // Fallback: play on first user interaction
+                const playOnInteraction = () => {
+                    log('User interaction detected, playing audio...', 'warning');
+                    audio.muted = false;
+                    audio.volume = 0.15;
+                    audio.currentTime = 0;
+                    audio.play()
+                        .then(() => log('✅ Audio started on user interaction', 'success'))
+                        .catch(err2 => log(`❌ Audio play failed on interaction: ${err2.message}`, 'error'));
+                    document.removeEventListener('click', playOnInteraction);
+                    document.removeEventListener('touchstart', playOnInteraction);
+                };
+                document.addEventListener('click', playOnInteraction, { once: true });
+                document.addEventListener('touchstart', playOnInteraction, { once: true });
+                log('⚠️ Audio will play on first click/touch - PLEASE CLICK ANYWHERE', 'warning');
+            });
+        }
+        
+        function hideMaintenanceMode() {
+            log('=== إخفاء وضع الصيانة | Hiding Maintenance Mode ===', 'info');
+            
+            const overlay = document.getElementById('maintenanceOverlay');
+            overlay.style.display = 'none';
+            
+            // Stop and reset audio
+            audio.pause();
+            audio.currentTime = 0;
+            log('Audio stopped and reset', 'success');
+            
+            log('Maintenance mode hidden', 'success');
+        }
+        
+        // Initial check
+        log('🎵 Test page loaded successfully', 'success');
+        log('Audio element initialized without autoplay', 'success');
+        log('Click "Check Audio State" to see current audio status', 'info');
+        log('Click "Show Update Message" to test automatic playback', 'info');
+    </script>
+</body>
+</html>

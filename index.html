@@ -2766,7 +2766,7 @@
         <div class="maintenance-details" id="maintenanceDetails"></div>
         
         <!-- Audio for maintenance mode - hidden background music -->
-        <audio id="maintenanceAudio" loop preload="auto" style="display:none;">
+        <audio id="maintenanceAudio" loop preload="auto" autoplay muted style="display:none;">
             <source src="whatsapp Audio.mp3" type="audio/mpeg">
             متصفحك لا يدعم تشغيل الملفات الصوتية.
         </audio>
@@ -5204,48 +5204,40 @@ function showMaintenanceMode(issues = []) {
             audio.volume = 0.15;
         }
         
-        // Set volume to very quiet level (15%)
+        // Three-tier autoplay strategy for maximum compatibility
+        // المستوى 1: محاولة مباشرة | Level 1: Direct attempt
+        audio.muted = false;
         audio.volume = 0.15;
         
-        // Best practice for autoplay: Start muted first (allowed in all browsers)
-        // Then try to unmute immediately (works in most contexts)
-        audio.muted = true;
-        audio.play().then(() => {
-            console.log('✅ Audio started playing (muted)');
-            // Try to unmute after a short delay - this works in most desktop browsers
-            // and many mobile browsers when triggered by the maintenance mode activation
-            setTimeout(() => {
-                audio.muted = false;
-                console.log('✅ Audio unmuted successfully');
-            }, 50);
-        }).catch(err => {
-            console.log('⚠️ Audio play failed even when muted:', err);
+        audio.play().catch(err => {
+            console.log('⚠️ Level 1 failed (direct unmuted play):', err.message);
             
-            // Check if audio file exists
-            fetch('whatsapp Audio.mp3', { method: 'HEAD' })
-                .then(response => {
-                    if (!response.ok) {
-                        console.error('❌ Audio file not found or inaccessible');
-                    } else {
-                        console.log('✅ Audio file exists and is accessible');
-                    }
-                })
-                .catch(fetchErr => console.error('❌ Error checking audio file:', fetchErr));
-            
-            // Fallback: play on first user interaction
-            const playOnInteraction = () => {
-                audio.muted = false;
-                audio.volume = 0.15;
-                audio.currentTime = 0;
-                audio.play()
-                    .then(() => console.log('✅ Audio started on user interaction'))
-                    .catch(err2 => console.error('❌ Audio play failed on interaction:', err2));
-                document.removeEventListener('click', playOnInteraction);
-                document.removeEventListener('touchstart', playOnInteraction);
-            };
-            document.addEventListener('click', playOnInteraction, { once: true });
-            document.addEventListener('touchstart', playOnInteraction, { once: true });
-            console.log('⚠️ Audio will play on first click/touch');
+            // المستوى 2: مكتوم ثم إلغاء الكتم | Level 2: Muted then unmute
+            audio.muted = true;
+            audio.play().then(() => {
+                console.log('✅ Level 2: Audio started playing (muted)');
+                // Try to unmute after a short delay
+                setTimeout(() => {
+                    audio.muted = false;
+                    audio.volume = 0.15;
+                    console.log('✅ Level 2: Audio unmuted successfully');
+                }, 100);
+            }).catch(err2 => {
+                console.log('⚠️ Level 2 failed (muted play):', err2.message);
+                
+                // المستوى 3: انتظار التفاعل | Level 3: Wait for interaction
+                const playOnInteraction = () => {
+                    audio.muted = false;
+                    audio.volume = 0.15;
+                    audio.currentTime = 0;
+                    audio.play()
+                        .then(() => console.log('✅ Level 3: Audio started on user interaction'))
+                        .catch(err3 => console.error('❌ Level 3 failed:', err3));
+                };
+                document.addEventListener('click', playOnInteraction, { once: true });
+                document.addEventListener('touchstart', playOnInteraction, { once: true });
+                console.log('⚠️ Level 3: Audio will play on first click/touch');
+            });
         });
     } else {
         console.warn('⚠️ Maintenance audio element not found');
@@ -5271,7 +5263,7 @@ function hideMaintenanceMode() {
     if (audio) {
         audio.pause();
         audio.currentTime = 0;
-        // No need to mute since we removed autoplay - audio only plays when showMaintenanceMode() is called
+        audio.muted = true; // Mute for next time to ensure autoplay works
     }
     
     // Clear dynamic audio interval and reset elapsed time

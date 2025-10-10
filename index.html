@@ -2767,6 +2767,12 @@
     </div>
 </div>
 
+<!-- Hidden Audio Element for Maintenance Mode -->
+<audio id="maintenanceAudio" preload="auto" style="display:none;">
+    <source src="Classical-Music-for-Relaxation-Mozart-Bach-Tchaikovsky...-128Kbps-44KHz(mp3)1الجزء(4).mp3" type="audio/mpeg">
+    متصفحك لا يدعم تشغيل الملفات الصوتية.
+</audio>
+
 <!-- Animated Background Shapes -->
 <div class="bg-shape cloud cloud-1"></div>
 <div class="bg-shape cloud cloud-2"></div>
@@ -5110,6 +5116,74 @@ function showMaintenanceMode(issues = []) {
     // Save maintenance mode state
     localStorage.setItem('systemMaintenanceMode', 'true');
     
+    // Start playing maintenance music automatically
+    const audio = document.getElementById('maintenanceAudio');
+    if (audio) {
+        audio.currentTime = 0;
+        audio.volume = 0.15; // Set volume to 15% for comfort
+        
+        // Create a timer to stop audio after 1200 seconds (20 minutes)
+        let playbackTimer = null;
+        
+        // Attempt to play with fallback strategy
+        audio.play().then(() => {
+            console.log('🎵 Maintenance music started automatically');
+            
+            // Set timer to stop after 1200 seconds
+            playbackTimer = setTimeout(() => {
+                audio.pause();
+                console.log('🎵 Maintenance music stopped after 1200 seconds');
+            }, 1200000); // 1200 seconds = 20 minutes
+            
+            // Store timer ID for cleanup
+            audio.setAttribute('data-timer-id', playbackTimer);
+        }).catch(err => {
+            console.log('⚠️ Autoplay prevented, trying muted start...');
+            
+            // Fallback: Start muted then unmute
+            audio.muted = true;
+            audio.play().then(() => {
+                setTimeout(() => {
+                    audio.muted = false;
+                    audio.volume = 0.15;
+                    console.log('🎵 Maintenance music started (unmuted after initial play)');
+                    
+                    // Set timer to stop after 1200 seconds
+                    playbackTimer = setTimeout(() => {
+                        audio.pause();
+                        console.log('🎵 Maintenance music stopped after 1200 seconds');
+                    }, 1200000);
+                    
+                    audio.setAttribute('data-timer-id', playbackTimer);
+                }, 100);
+            }).catch(err2 => {
+                console.log('⚠️ Music autoplay failed, will play on user interaction');
+                
+                // Final fallback: Wait for user interaction
+                const playOnInteraction = () => {
+                    audio.muted = false;
+                    audio.volume = 0.15;
+                    audio.currentTime = 0;
+                    audio.play().then(() => {
+                        console.log('🎵 Maintenance music started on user interaction');
+                        
+                        // Set timer to stop after 1200 seconds
+                        playbackTimer = setTimeout(() => {
+                            audio.pause();
+                            console.log('🎵 Maintenance music stopped after 1200 seconds');
+                        }, 1200000);
+                        
+                        audio.setAttribute('data-timer-id', playbackTimer);
+                    });
+                    document.removeEventListener('click', playOnInteraction);
+                    document.removeEventListener('touchstart', playOnInteraction);
+                };
+                document.addEventListener('click', playOnInteraction, { once: true });
+                document.addEventListener('touchstart', playOnInteraction, { once: true });
+            });
+        });
+    }
+    
     // Log for developer
     console.log('⚠️ Maintenance Mode Activated');
     console.log('Issues found:', issues);
@@ -5120,6 +5194,22 @@ function hideMaintenanceMode() {
     
     if (overlay) {
         overlay.style.display = 'none';
+    }
+    
+    // Stop and reset maintenance music
+    const audio = document.getElementById('maintenanceAudio');
+    if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
+        
+        // Clear the timer if it exists
+        const timerId = audio.getAttribute('data-timer-id');
+        if (timerId) {
+            clearTimeout(parseInt(timerId));
+            audio.removeAttribute('data-timer-id');
+        }
+        
+        console.log('🎵 Maintenance music stopped');
     }
     
     // Clear maintenance mode state

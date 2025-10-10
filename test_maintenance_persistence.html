@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار استمرارية وضع الصيانة - Maintenance Persistence Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid #dee2e6;
+        }
+        
+        h2 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .status-box {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        
+        .status-box.info {
+            background: #cfe2ff;
+            color: #084298;
+            border: 2px solid #9ec5fe;
+        }
+        
+        .status-box.success {
+            background: #d1e7dd;
+            color: #0f5132;
+            border: 2px solid #a3cfbb;
+        }
+        
+        .status-box.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffe69c;
+        }
+        
+        .status-box.error {
+            background: #f8d7da;
+            color: #842029;
+            border: 2px solid #f1aeb5;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            margin: 5px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .login-btn {
+            background: #28a745;
+            color: white;
+        }
+        
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .enable-btn {
+            background: #ffc107;
+            color: black;
+        }
+        
+        .disable-btn {
+            background: #28a745;
+            color: white;
+        }
+        
+        .check-btn {
+            background: #007bff;
+            color: white;
+        }
+        
+        .clear-btn {
+            background: #6c757d;
+            color: white;
+        }
+        
+        #logBox {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        input[type="password"] {
+            padding: 10px;
+            border: 2px solid #ced4da;
+            border-radius: 6px;
+            font-size: 1em;
+            width: 250px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 اختبار استمرارية وضع الصيانة</h1>
+        <h1>Maintenance Persistence Test</h1>
+        
+        <!-- Current Status -->
+        <div class="test-section">
+            <h2>📊 الحالة الحالية - Current Status</h2>
+            <div id="statusDisplay" class="status-box info">
+                غير مسجل دخول - Not logged in
+            </div>
+            <div id="maintenanceStatusDisplay" class="status-box info">
+                وضع الصيانة: غير معروف - Maintenance: Unknown
+            </div>
+        </div>
+        
+        <!-- Developer Login/Logout -->
+        <div class="test-section">
+            <h2>👨‍💻 تسجيل دخول/خروج المطور - Developer Login/Logout</h2>
+            <div class="controls">
+                <input type="password" id="devPassword" placeholder="كلمة سر المطور">
+                <button class="login-btn" onclick="loginDeveloper()">تسجيل دخول المطور</button>
+                <button class="logout-btn" onclick="logoutDeveloper()">تسجيل خروج المطور</button>
+            </div>
+        </div>
+        
+        <!-- Maintenance Controls -->
+        <div class="test-section">
+            <h2>🛡️ التحكم في وضع الصيانة - Maintenance Controls</h2>
+            <div class="controls">
+                <button class="enable-btn" onclick="enableMaintenance()">🔒 تفعيل وضع الصيانة</button>
+                <button class="disable-btn" onclick="disableMaintenance()">✅ إلغاء وضع الصيانة</button>
+                <button class="check-btn" onclick="checkMaintenanceStatus()">🔍 فحص حالة الصيانة</button>
+            </div>
+        </div>
+        
+        <!-- Test Scenarios -->
+        <div class="test-section">
+            <h2>🧪 سيناريوهات الاختبار - Test Scenarios</h2>
+            <div class="controls">
+                <button class="check-btn" onclick="runScenario1()">سيناريو 1: تفعيل ثم تسجيل خروج</button>
+                <button class="check-btn" onclick="runScenario2()">سيناريو 2: تسجيل خروج بدون إلغاء</button>
+            </div>
+            <div id="scenarioResult" class="status-box info" style="margin-top:15px;display:none;">
+            </div>
+        </div>
+        
+        <!-- Log -->
+        <div class="test-section">
+            <h2>📝 سجل الاختبار - Test Log</h2>
+            <button class="clear-btn" onclick="clearLog()">🗑️ مسح السجل</button>
+            <div id="logBox" style="margin-top:10px;">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simulated state
+        let isDev = false;
+        let maintenanceMode = false;
+        
+        function log(message, type = 'info') {
+            const logBox = document.getElementById('logBox');
+            const timestamp = new Date().toLocaleTimeString('ar-EG');
+            const icon = {
+                'info': 'ℹ️',
+                'success': '✅',
+                'error': '❌',
+                'warning': '⚠️'
+            }[type] || 'ℹ️';
+            
+            logBox.textContent += `[${timestamp}] ${icon} ${message}\n`;
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+        
+        function updateStatus() {
+            const statusDisplay = document.getElementById('statusDisplay');
+            const maintenanceStatusDisplay = document.getElementById('maintenanceStatusDisplay');
+            
+            if (isDev) {
+                statusDisplay.className = 'status-box success';
+                statusDisplay.textContent = '✅ مسجل دخول كمطور - Logged in as Developer';
+            } else {
+                statusDisplay.className = 'status-box info';
+                statusDisplay.textContent = '❌ غير مسجل دخول - Not logged in';
+            }
+            
+            // Check localStorage
+            const localMaintenanceMode = localStorage.getItem('systemMaintenanceMode') === 'true';
+            
+            if (maintenanceMode || localMaintenanceMode) {
+                maintenanceStatusDisplay.className = 'status-box warning';
+                maintenanceStatusDisplay.textContent = '🔒 وضع الصيانة: مُفعّل - Maintenance: ENABLED';
+            } else {
+                maintenanceStatusDisplay.className = 'status-box success';
+                maintenanceStatusDisplay.textContent = '✅ وضع الصيانة: غير مُفعّل - Maintenance: DISABLED';
+            }
+        }
+        
+        function loginDeveloper() {
+            const password = document.getElementById('devPassword').value;
+            
+            // Simple check (in real code, this would be more secure)
+            if (password === 'admin' || password) {
+                isDev = true;
+                localStorage.setItem('isDevLoggedIn', 'true');
+                log('تم تسجيل دخول المطور بنجاح', 'success');
+                log('Developer logged in successfully', 'success');
+                updateStatus();
+            } else {
+                log('كلمة سر خاطئة', 'error');
+                log('Wrong password', 'error');
+            }
+        }
+        
+        function logoutDeveloper() {
+            isDev = false;
+            localStorage.removeItem('isDevLoggedIn');
+            log('تم تسجيل خروج المطور', 'info');
+            log('Developer logged out', 'info');
+            log('🔍 فحص: هل تم إلغاء وضع الصيانة تلقائياً؟', 'warning');
+            log('CHECK: Was maintenance mode auto-disabled?', 'warning');
+            
+            // Check if maintenance mode was disabled
+            const localMaintenanceMode = localStorage.getItem('systemMaintenanceMode') === 'true';
+            if (maintenanceMode === true && !localMaintenanceMode) {
+                log('❌ BUG: وضع الصيانة تم إلغاؤه تلقائياً!', 'error');
+                log('❌ BUG: Maintenance mode was auto-disabled!', 'error');
+            } else if (maintenanceMode === true || localMaintenanceMode) {
+                log('✅ PASS: وضع الصيانة لا يزال مفعلاً بعد تسجيل الخروج', 'success');
+                log('✅ PASS: Maintenance mode persisted after logout', 'success');
+            }
+            
+            updateStatus();
+        }
+        
+        function enableMaintenance() {
+            if (!isDev) {
+                log('❌ يجب تسجيل الدخول كمطور أولاً', 'error');
+                log('❌ Must be logged in as developer', 'error');
+                return;
+            }
+            
+            maintenanceMode = true;
+            localStorage.setItem('systemMaintenanceMode', 'true');
+            log('تم تفعيل وضع الصيانة للجميع', 'success');
+            log('Maintenance mode enabled for all', 'success');
+            updateStatus();
+        }
+        
+        function disableMaintenance() {
+            if (!isDev) {
+                log('❌ يجب تسجيل الدخول كمطور أولاً', 'error');
+                log('❌ Must be logged in as developer', 'error');
+                return;
+            }
+            
+            maintenanceMode = false;
+            localStorage.removeItem('systemMaintenanceMode');
+            log('تم إلغاء وضع الصيانة للجميع', 'success');
+            log('Maintenance mode disabled for all', 'success');
+            updateStatus();
+        }
+        
+        function checkMaintenanceStatus() {
+            const localMaintenanceMode = localStorage.getItem('systemMaintenanceMode');
+            log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'info');
+            log('📊 فحص حالة الصيانة:', 'info');
+            log(`   • maintenanceMode variable: ${maintenanceMode}`, 'info');
+            log(`   • localStorage value: ${localMaintenanceMode}`, 'info');
+            log(`   • isDev: ${isDev}`, 'info');
+            log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'info');
+            updateStatus();
+        }
+        
+        async function runScenario1() {
+            log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'info');
+            log('🧪 بدء سيناريو 1: تفعيل وضع الصيانة ثم تسجيل خروج المطور', 'info');
+            log('🧪 Starting Scenario 1: Enable maintenance then logout', 'info');
+            
+            // Step 1: Login
+            document.getElementById('devPassword').value = 'admin';
+            loginDeveloper();
+            await sleep(500);
+            
+            // Step 2: Enable maintenance
+            enableMaintenance();
+            await sleep(500);
+            
+            // Step 3: Logout
+            logoutDeveloper();
+            await sleep(500);
+            
+            // Step 4: Check result
+            const localMaintenanceMode = localStorage.getItem('systemMaintenanceMode') === 'true';
+            const scenarioResult = document.getElementById('scenarioResult');
+            scenarioResult.style.display = 'block';
+            
+            if (maintenanceMode || localMaintenanceMode) {
+                scenarioResult.className = 'status-box success';
+                scenarioResult.innerHTML = '✅ <strong>PASS:</strong> وضع الصيانة لا يزال مفعلاً بعد تسجيل الخروج<br>' +
+                    '✅ <strong>PASS:</strong> Maintenance mode persisted after logout';
+                log('✅ سيناريو 1: نجح الاختبار', 'success');
+            } else {
+                scenarioResult.className = 'status-box error';
+                scenarioResult.innerHTML = '❌ <strong>FAIL:</strong> وضع الصيانة تم إلغاؤه تلقائياً عند تسجيل الخروج<br>' +
+                    '❌ <strong>FAIL:</strong> Maintenance mode was auto-disabled on logout';
+                log('❌ سيناريو 1: فشل الاختبار', 'error');
+            }
+            
+            log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'info');
+        }
+        
+        async function runScenario2() {
+            log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'info');
+            log('🧪 بدء سيناريو 2: تسجيل خروج المطور بدون إلغاء وضع الصيانة', 'info');
+            log('🧪 Starting Scenario 2: Logout without disabling maintenance', 'info');
+            
+            // Ensure maintenance is enabled first
+            if (!maintenanceMode && localStorage.getItem('systemMaintenanceMode') !== 'true') {
+                log('⚠️ تفعيل وضع الصيانة أولاً...', 'warning');
+                document.getElementById('devPassword').value = 'admin';
+                loginDeveloper();
+                await sleep(300);
+                enableMaintenance();
+                await sleep(300);
+            }
+            
+            // Logout without disabling
+            logoutDeveloper();
+            await sleep(500);
+            
+            // Check result
+            const localMaintenanceMode = localStorage.getItem('systemMaintenanceMode') === 'true';
+            const scenarioResult = document.getElementById('scenarioResult');
+            scenarioResult.style.display = 'block';
+            
+            if (maintenanceMode || localMaintenanceMode) {
+                scenarioResult.className = 'status-box success';
+                scenarioResult.innerHTML = '✅ <strong>PASS:</strong> وضع الصيانة استمر بعد تسجيل الخروج<br>' +
+                    '✅ <strong>PASS:</strong> Maintenance persisted after logout<br>' +
+                    '💡 يجب الضغط على "إلغاء وضع الصيانة للجميع" لإيقافه';
+                log('✅ سيناريو 2: نجح الاختبار - وضع الصيانة لا يزال مفعلاً', 'success');
+            } else {
+                scenarioResult.className = 'status-box error';
+                scenarioResult.innerHTML = '❌ <strong>FAIL:</strong> وضع الصيانة تم إلغاؤه تلقائياً<br>' +
+                    '❌ <strong>FAIL:</strong> Maintenance was auto-disabled<br>' +
+                    '🐛 يجب إصلاح هذا السلوك!';
+                log('❌ سيناريو 2: فشل الاختبار', 'error');
+            }
+            
+            log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'info');
+        }
+        
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        function clearLog() {
+            document.getElementById('logBox').textContent = '';
+            log('🗑️ تم مسح السجل - Log cleared', 'info');
+        }
+        
+        // Initialize
+        window.addEventListener('load', () => {
+            log('🚀 تم تحميل صفحة الاختبار - Test page loaded', 'info');
+            log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'info');
+            
+            // Check if developer is logged in
+            if (localStorage.getItem('isDevLoggedIn') === 'true') {
+                isDev = true;
+                log('✅ المطور مسجل دخول من جلسة سابقة', 'info');
+                log('✅ Developer logged in from previous session', 'info');
+            }
+            
+            // Check maintenance mode
+            const localMaintenanceMode = localStorage.getItem('systemMaintenanceMode') === 'true';
+            if (localMaintenanceMode) {
+                maintenanceMode = true;
+                log('⚠️ وضع الصيانة مفعّل من جلسة سابقة', 'warning');
+                log('⚠️ Maintenance mode enabled from previous session', 'warning');
+            }
+            
+            updateStatus();
+            log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'info');
+            log('💡 نصيحة: جرّب السيناريوهات لاختبار استمرارية وضع الصيانة', 'info');
+            log('💡 Tip: Try the scenarios to test maintenance persistence', 'info');
+        });
+    </script>
+</body>
+</html>

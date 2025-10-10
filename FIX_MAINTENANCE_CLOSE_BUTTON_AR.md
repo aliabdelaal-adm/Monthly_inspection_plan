@@ -1,6 +1,10 @@
 # إصلاح زر إغلاق وضع الصيانة للمطور
 ## Fix: Developer Can Now Close Maintenance Mode Message
 
+> **📌 ملاحظة هامة:** وضع الصيانة مصمم للبقاء مفعلاً حتى بعد تسجيل خروج المطور. يجب إلغاؤه يدوياً باستخدام زر "إلغاء وضع الصيانة للجميع".
+>
+> **📌 Important Note:** Maintenance mode is designed to persist even after developer logout. It must be manually disabled using the "Cancel maintenance mode for all" button.
+
 ---
 
 ## 📋 المشكلة - The Problem
@@ -90,8 +94,10 @@ console.log('✅ Developer logged in - maintenance close button now visible');
 // في دالة devLogoutBtn.onclick
 isDev = false;
 updateMaintenanceCloseButton();  // ✅ جديد
-disableMaintenanceModeForAll();
+// ملاحظة: لا يتم إلغاء وضع الصيانة تلقائياً
+// وضع الصيانة يبقى مفعلاً حتى يتم إلغاؤه يدوياً
 console.log('🚪 Developer logged out - maintenance close button hidden');
+console.log('⚠️ Maintenance mode remains active - must be disabled manually');
 ```
 
 ---

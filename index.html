@@ -5614,6 +5614,9 @@ async function enableMaintenanceModeForAll() {
             // Clear all possible caches to ensure instant propagation
             await clearAllCaches();
             
+            // Clear the notification flag so users see the update message
+            sessionStorage.removeItem('maintenanceNotificationShown');
+            
             // Show immediate success alert
             hideMaintenanceProgress();
             alert('✅ تم تفعيل وضع الصيانة للجميع بنجاح!\n\n' +
@@ -5621,6 +5624,7 @@ async function enableMaintenanceModeForAll() {
                   '• ✓ تم الحفظ على GitHub بنجاح\n' +
                   '• ✓ تم التفعيل على هذا الجهاز فوراً\n' +
                   '• ✓ تم مسح جميع الكاش لضمان التحديث الفوري\n' +
+                  '• ✓ سيظهر رسالة "جاري التحديث" لجميع المستخدمين فوراً\n' +
                   '• ✓ سيظهر على جميع الأجهزة خلال 5-10 ثواني\n' +
                   '• ✓ جميع المستخدمين سيرون رسالة الصيانة');
             console.log('✅ Maintenance mode enabled for all users on all devices');
@@ -5712,6 +5716,7 @@ async function disableMaintenanceModeForAll() {
         // Step 3: Remove from localStorage immediately for instant effect on current device
         showMaintenanceProgress('💾 جاري الإلغاء على هذا الجهاز...', 'loading');
         localStorage.removeItem('systemMaintenanceMode');
+        sessionStorage.removeItem('maintenanceNotificationShown');
         hideMaintenanceMode();
         console.log('✅ Disabled locally');
         
@@ -5779,12 +5784,30 @@ async function checkMaintenanceMode() {
         const githubStatus = await loadMaintenanceStatusFromGitHub();
         
         if (githubStatus && githubStatus.isMaintenanceMode) {
+            // Check if this is a NEW maintenance activation (wasn't active before)
+            const wasAlreadyActive = localStorage.getItem('systemMaintenanceMode') === 'true';
+            const wasAlreadyNotified = sessionStorage.getItem('maintenanceNotificationShown') === 'true';
+            
             // Sync with localStorage
             localStorage.setItem('systemMaintenanceMode', 'true');
             
             // If user is not a developer, show maintenance overlay
             if (!isDev && !window.isDev) {
                 console.log('⚠️ System is in maintenance mode (from GitHub) - showing overlay for non-developer');
+                
+                // Show instant update notification for ALL users (not just developers)
+                // This appears briefly before the full overlay
+                if (!wasAlreadyActive || !wasAlreadyNotified) {
+                    // First show a quick "جاري التحديث" message
+                    showMaintenanceProgress('🔄 جاري التحديث...\n⏳ يرجى الانتظار', 'warning');
+                    sessionStorage.setItem('maintenanceNotificationShown', 'true');
+                    console.log('📢 Showing "جاري التحديث" notification to user');
+                    
+                    // Show the notification for 2.5 seconds before showing full overlay
+                    await new Promise(resolve => setTimeout(resolve, 2500));
+                    hideMaintenanceProgress();
+                }
+                
                 const messages = githubStatus.messages && githubStatus.messages.length > 0 
                     ? githubStatus.messages 
                     : ['جاري تحديث النظام', 'يقوم المطور بإجراء تعديلات', 'شكراً على الانتظار'];
@@ -5797,9 +5820,12 @@ async function checkMaintenanceMode() {
             const localMode = localStorage.getItem('systemMaintenanceMode') === 'true';
             if (!githubStatus || !githubStatus.isMaintenanceMode) {
                 localStorage.removeItem('systemMaintenanceMode');
+                sessionStorage.removeItem('maintenanceNotificationShown');
                 // If overlay was shown, hide it
                 if (localMode) {
                     hideMaintenanceMode();
+                    // Also hide any lingering progress messages
+                    hideMaintenanceProgress();
                 }
             }
         }
@@ -5823,18 +5849,18 @@ async function forceMaintenanceCheck() {
 
 // Periodically check maintenance status with adaptive intervals for instant updates
 function startMaintenanceStatusChecker() {
-    // Check immediately on startup
+    // Check immediately on startup - this ensures instant notification on page load
     checkMaintenanceMode();
     
     let checkCount = 0;
-    const maxFastChecks = 6; // Fast checks for first 30 seconds (6 x 5 seconds)
+    const maxFastChecks = 12; // Fast checks for first 60 seconds (12 x 5 seconds)
     
-    // Start with fast 5-second checks for immediate updates
+    // Start with ultra-fast 5-second checks for immediate updates
     const checkInterval = setInterval(async () => {
         await checkMaintenanceMode();
         checkCount++;
         
-        // After 6 fast checks (30 seconds), switch to standard 10-second interval
+        // After 12 fast checks (60 seconds), switch to standard 10-second interval
         if (checkCount === maxFastChecks) {
             clearInterval(checkInterval);
             // Continue with 10-second checks
@@ -5843,11 +5869,11 @@ function startMaintenanceStatusChecker() {
             }, 10000);
             console.log('🔄 Switched to standard 10-second maintenance check interval');
         }
-    }, 5000); // Ultra-fast 5-second interval for first 30 seconds
+    }, 5000); // Ultra-fast 5-second interval for first 60 seconds
     
     console.log('✅ Maintenance status checker started');
-    console.log('⚡ ULTRA FAST MODE: First 30 seconds with 5s interval');
-    console.log('🚀 Standard mode: After 30s with 10s interval');
+    console.log('⚡ ULTRA FAST MODE: First 60 seconds with 5s interval');
+    console.log('🚀 Standard mode: After 60s with 10s interval');
     console.log('💡 Updates will appear within 5-15 seconds on all devices');
     console.log('💡 Tip: Run forceMaintenanceCheck() in console to check immediately');
 }

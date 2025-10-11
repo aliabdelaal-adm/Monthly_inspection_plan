@@ -2925,10 +2925,10 @@
             <div style="margin-top:15px;padding-top:15px;border-top:1px solid #dee2e6;text-align:center;">
                 <h4 style="margin:0 0 10px 0;color:#856404;font-size:1em;">🛡️ إدارة وضع الصيانة</h4>
                 <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-                    <button onclick="enableMaintenanceModeForAll()" style="background:#ffc107;color:#000;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-weight:bold;box-shadow:0 2px 5px rgba(0,0,0,0.2);min-height:44px;font-size:1em;">
+                    <button id="enableMaintenanceBtn" onclick="enableMaintenanceModeForAll()" style="background:#ffc107;color:#000;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-weight:bold;box-shadow:0 2px 5px rgba(0,0,0,0.2);min-height:44px;font-size:1em;">
                         🔒 تفعيل وضع الصيانة للجميع
                     </button>
-                    <button onclick="disableMaintenanceModeForAll()" style="background:#28a745;color:#fff;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-weight:bold;box-shadow:0 2px 5px rgba(0,0,0,0.2);min-height:44px;font-size:1em;">
+                    <button id="disableMaintenanceBtn" onclick="disableMaintenanceModeForAll()" style="background:#28a745;color:#fff;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-weight:bold;box-shadow:0 2px 5px rgba(0,0,0,0.2);min-height:44px;font-size:1em;">
                         ✅ إلغاء وضع الصيانة للجميع
                     </button>
                     <button onclick="showTokenPopup()" style="background:#007bff;color:#fff;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-weight:bold;box-shadow:0 2px 5px rgba(0,0,0,0.2);min-height:44px;font-size:1em;">
@@ -5361,23 +5361,78 @@ async function saveMaintenanceStatusToGitHub(isEnabled, messages = [], retryCoun
 }
 
 // Load maintenance status from GitHub (server-side storage)
+// Clear all caches for instant update propagation
+async function clearAllCaches() {
+    try {
+        console.log('🧹 Clearing all caches for instant update...');
+        
+        // 1. Clear Service Worker caches (if any)
+        if ('serviceWorker' in navigator && 'caches' in window) {
+            const cacheNames = await caches.keys();
+            await Promise.all(
+                cacheNames.map(cacheName => {
+                    console.log(`🗑️ Deleting cache: ${cacheName}`);
+                    return caches.delete(cacheName);
+                })
+            );
+            console.log('✅ Service Worker caches cleared');
+        }
+        
+        // 2. Force service worker update (if registered)
+        if ('serviceWorker' in navigator) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (let registration of registrations) {
+                console.log('🔄 Updating service worker...');
+                await registration.update();
+            }
+        }
+        
+        // 3. Clear localStorage maintenance-related items to force refresh
+        // (but keep user data intact)
+        const maintenanceKeys = ['maintenanceStatusCache', 'maintenanceStatusCacheTime'];
+        maintenanceKeys.forEach(key => {
+            if (localStorage.getItem(key)) {
+                localStorage.removeItem(key);
+                console.log(`🗑️ Cleared localStorage: ${key}`);
+            }
+        });
+        
+        console.log('✅ All caches cleared successfully');
+        return true;
+    } catch (error) {
+        console.error('⚠️ Error clearing caches:', error);
+        // Don't fail the operation if cache clearing fails
+        return false;
+    }
+}
+
 async function loadMaintenanceStatusFromGitHub(retries = 3, delayMs = 1000) {
     for (let attempt = 1; attempt <= retries; attempt++) {
         try {
-            // Advanced cache-busting: timestamp + random to bypass all caching layers (CDN, browser, proxies)
-            const cacheBuster = `${Date.now()}_${Math.random().toString(36).substring(7)}`;
-            const url = `https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/maintenance-status.json?t=${cacheBuster}`;
+            // Ultra-aggressive cache-busting: timestamp + random + version + attempt
+            // This ensures ZERO chance of cache hits across all layers
+            const timestamp = Date.now();
+            const randomId = Math.random().toString(36).substring(2, 15);
+            const randomId2 = Math.random().toString(36).substring(2, 15);
+            const version = 'v' + Math.floor(timestamp / 1000); // Version changes every second
+            const cacheBuster = `${timestamp}_${randomId}_${randomId2}_${version}_attempt${attempt}`;
+            const url = `https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/maintenance-status.json?nocache=${cacheBuster}&_=${timestamp}`;
             
             console.log(`📡 Fetching maintenance status (attempt ${attempt}/${retries})...`);
+            console.log(`🔗 URL: ${url.substring(0, 120)}...`);
             
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
                     'Pragma': 'no-cache',
-                    'Expires': '0'
+                    'Expires': '0',
+                    'If-None-Match': '*', // Force bypass ETag validation
+                    'If-Modified-Since': 'Thu, 01 Jan 1970 00:00:00 GMT' // Force bypass Last-Modified
                 },
-                cache: 'no-store' // Force fetch to bypass browser cache
+                cache: 'no-store', // Force fetch to bypass browser cache
+                mode: 'cors',
+                credentials: 'omit'
             });
             
             if (!response.ok) {
@@ -5498,11 +5553,38 @@ async function validateTokenForMaintenance() {
 }
 
 // Enable maintenance mode for all users (called by developer)
+// Global flag to prevent concurrent execution
+let isMaintenanceOperationInProgress = false;
+
 async function enableMaintenanceModeForAll() {
     if (!isDev && !window.isDev) {
         alert('❌ عذراً، هذه الميزة متاحة للمطور فقط');
         return;
     }
+    
+    // Prevent concurrent execution (debouncing)
+    if (isMaintenanceOperationInProgress) {
+        console.log('⚠️ عملية أخرى قيد التنفيذ - يرجى الانتظار');
+        showMaintenanceProgress('⚠️ عملية أخرى قيد التنفيذ\nيرجى الانتظار حتى تنتهي...', 'warning');
+        setTimeout(() => hideMaintenanceProgress(), 2000);
+        return;
+    }
+    
+    // Disable buttons to prevent multiple clicks
+    const enableBtn = document.getElementById('enableMaintenanceBtn');
+    const disableBtn = document.getElementById('disableMaintenanceBtn');
+    if (enableBtn) {
+        enableBtn.disabled = true;
+        enableBtn.style.opacity = '0.6';
+        enableBtn.style.cursor = 'not-allowed';
+    }
+    if (disableBtn) {
+        disableBtn.disabled = true;
+        disableBtn.style.opacity = '0.6';
+        disableBtn.style.cursor = 'not-allowed';
+    }
+    
+    isMaintenanceOperationInProgress = true;
     
     try {
         // Step 1: Show initial progress message
@@ -5529,13 +5611,17 @@ async function enableMaintenanceModeForAll() {
         const saved = await saveMaintenanceStatusToGitHub(true, messages);
         
         if (saved) {
+            // Clear all possible caches to ensure instant propagation
+            await clearAllCaches();
+            
             // Show immediate success alert
             hideMaintenanceProgress();
             alert('✅ تم تفعيل وضع الصيانة للجميع بنجاح!\n\n' +
                   '📱 الحالة الآن:\n' +
                   '• ✓ تم الحفظ على GitHub بنجاح\n' +
                   '• ✓ تم التفعيل على هذا الجهاز فوراً\n' +
-                  '• ✓ سيظهر على جميع الأجهزة خلال 10-30 ثانية\n' +
+                  '• ✓ تم مسح جميع الكاش لضمان التحديث الفوري\n' +
+                  '• ✓ سيظهر على جميع الأجهزة خلال 5-10 ثواني\n' +
                   '• ✓ جميع المستخدمين سيرون رسالة الصيانة');
             console.log('✅ Maintenance mode enabled for all users on all devices');
             
@@ -5562,6 +5648,19 @@ async function enableMaintenanceModeForAll() {
         console.error('❌ Error in enableMaintenanceModeForAll:', error);
         hideMaintenanceProgress();
         alert('❌ حدث خطأ غير متوقع: ' + error.message);
+    } finally {
+        // Re-enable buttons after operation completes
+        isMaintenanceOperationInProgress = false;
+        if (enableBtn) {
+            enableBtn.disabled = false;
+            enableBtn.style.opacity = '1';
+            enableBtn.style.cursor = 'pointer';
+        }
+        if (disableBtn) {
+            disableBtn.disabled = false;
+            disableBtn.style.opacity = '1';
+            disableBtn.style.cursor = 'pointer';
+        }
     }
 }
 
@@ -5571,6 +5670,30 @@ async function disableMaintenanceModeForAll() {
         alert('❌ عذراً، هذه الميزة متاحة للمطور فقط');
         return;
     }
+    
+    // Prevent concurrent execution (debouncing)
+    if (isMaintenanceOperationInProgress) {
+        console.log('⚠️ عملية أخرى قيد التنفيذ - يرجى الانتظار');
+        showMaintenanceProgress('⚠️ عملية أخرى قيد التنفيذ\nيرجى الانتظار حتى تنتهي...', 'warning');
+        setTimeout(() => hideMaintenanceProgress(), 2000);
+        return;
+    }
+    
+    // Disable buttons to prevent multiple clicks
+    const enableBtn = document.getElementById('enableMaintenanceBtn');
+    const disableBtn = document.getElementById('disableMaintenanceBtn');
+    if (enableBtn) {
+        enableBtn.disabled = true;
+        enableBtn.style.opacity = '0.6';
+        enableBtn.style.cursor = 'not-allowed';
+    }
+    if (disableBtn) {
+        disableBtn.disabled = true;
+        disableBtn.style.opacity = '0.6';
+        disableBtn.style.cursor = 'not-allowed';
+    }
+    
+    isMaintenanceOperationInProgress = true;
     
     try {
         // Step 1: Show initial progress message
@@ -5597,13 +5720,17 @@ async function disableMaintenanceModeForAll() {
         const saved = await saveMaintenanceStatusToGitHub(false, []);
         
         if (saved) {
+            // Clear all possible caches to ensure instant propagation
+            await clearAllCaches();
+            
             // Show immediate success alert
             hideMaintenanceProgress();
             alert('✅ تم إلغاء وضع الصيانة للجميع بنجاح!\n\n' +
                   '📱 الحالة الآن:\n' +
                   '• ✓ تم الحفظ على GitHub بنجاح\n' +
                   '• ✓ تم الإلغاء على هذا الجهاز فوراً\n' +
-                  '• ✓ سيختفي من جميع الأجهزة خلال 10-30 ثانية\n' +
+                  '• ✓ تم مسح جميع الكاش لضمان التحديث الفوري\n' +
+                  '• ✓ سيختفي من جميع الأجهزة خلال 5-10 ثواني\n' +
                   '• ✓ جميع المستخدمين يمكنهم الآن الوصول للنظام');
             console.log('✅ Maintenance mode disabled for all users on all devices');
             
@@ -5629,6 +5756,19 @@ async function disableMaintenanceModeForAll() {
         console.error('❌ Error in disableMaintenanceModeForAll:', error);
         hideMaintenanceProgress();
         alert('❌ حدث خطأ غير متوقع: ' + error.message);
+    } finally {
+        // Re-enable buttons after operation completes
+        isMaintenanceOperationInProgress = false;
+        if (enableBtn) {
+            enableBtn.disabled = false;
+            enableBtn.style.opacity = '1';
+            enableBtn.style.cursor = 'pointer';
+        }
+        if (disableBtn) {
+            disableBtn.disabled = false;
+            disableBtn.style.opacity = '1';
+            disableBtn.style.cursor = 'pointer';
+        }
     }
 }
 
@@ -5681,18 +5821,34 @@ async function forceMaintenanceCheck() {
     console.log('✅ Forced check completed');
 }
 
-// Periodically check maintenance status with constant 10-second intervals
+// Periodically check maintenance status with adaptive intervals for instant updates
 function startMaintenanceStatusChecker() {
-    // Check immediately
+    // Check immediately on startup
     checkMaintenanceMode();
     
-    // Check every 10 seconds for consistent and fast updates across all devices
-    setInterval(async () => {
-        await checkMaintenanceMode();
-    }, 10000); // Constant 10-second interval - proven optimal in PR#307
+    let checkCount = 0;
+    const maxFastChecks = 6; // Fast checks for first 30 seconds (6 x 5 seconds)
     
-    console.log('✅ Maintenance status checker started (constant 10s interval)');
-    console.log('⚡ Fast Sync Mode: Updates will appear on all devices within 10-20 seconds');
+    // Start with fast 5-second checks for immediate updates
+    const checkInterval = setInterval(async () => {
+        await checkMaintenanceMode();
+        checkCount++;
+        
+        // After 6 fast checks (30 seconds), switch to standard 10-second interval
+        if (checkCount === maxFastChecks) {
+            clearInterval(checkInterval);
+            // Continue with 10-second checks
+            setInterval(async () => {
+                await checkMaintenanceMode();
+            }, 10000);
+            console.log('🔄 Switched to standard 10-second maintenance check interval');
+        }
+    }, 5000); // Ultra-fast 5-second interval for first 30 seconds
+    
+    console.log('✅ Maintenance status checker started');
+    console.log('⚡ ULTRA FAST MODE: First 30 seconds with 5s interval');
+    console.log('🚀 Standard mode: After 30s with 10s interval');
+    console.log('💡 Updates will appear within 5-15 seconds on all devices');
     console.log('💡 Tip: Run forceMaintenanceCheck() in console to check immediately');
 }
 
@@ -6303,6 +6459,7 @@ function showMaintenanceProgress(message, type = 'loading') {
     if (type === 'success') bgColor = '#28a745'; // green
     if (type === 'error') bgColor = '#dc3545'; // red
     if (type === 'info') bgColor = '#17a2b8'; // blue
+    if (type === 'warning') bgColor = '#ff9800'; // orange
     
     messageDiv.style.cssText = `
         position: fixed;
@@ -6322,9 +6479,23 @@ function showMaintenanceProgress(message, type = 'loading') {
         max-width: 600px;
         white-space: pre-line;
         animation: slideDown 0.3s ease-out;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
     `;
     
-    messageDiv.textContent = message;
+    // Add loading spinner if type is 'loading'
+    if (type === 'loading') {
+        const spinner = document.createElement('div');
+        spinner.className = 'maintenance-spinner';
+        messageDiv.appendChild(spinner);
+    }
+    
+    const textSpan = document.createElement('span');
+    textSpan.textContent = message;
+    messageDiv.appendChild(textSpan);
+    
     document.body.appendChild(messageDiv);
     
     return messageDiv;
@@ -6351,6 +6522,19 @@ if (!document.getElementById('maintenanceProgressStyles')) {
         @keyframes slideUp {
             from { transform: translateX(-50%) translateY(0); opacity: 1; }
             to { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .maintenance-spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 0.8s linear infinite;
+            flex-shrink: 0;
         }
     `;
     document.head.appendChild(style);

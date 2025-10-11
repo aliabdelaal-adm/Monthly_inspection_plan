@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>اختبار رسالة التحديث الفوري - Instant Update Message Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Cache Control Meta Tags - Prevent browser caching for instant updates -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .info-box {
+            background: #e8f4fd;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        
+        .info-box h3 {
+            margin-top: 0;
+            color: #1976D2;
+        }
+        
+        .test-section {
+            background: #f9f9f9;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        
+        .test-section h2 {
+            color: #333;
+            margin-top: 0;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-success {
+            background: #28a745;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+        }
+        
+        .btn-clear {
+            background: #dc3545;
+        }
+        
+        .btn-clear:hover {
+            background: #c82333;
+        }
+        
+        .log-container {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 5px;
+            max-height: 500px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        
+        .log-success {
+            color: #4ec9b0;
+        }
+        
+        .log-error {
+            color: #f48771;
+        }
+        
+        .log-warning {
+            color: #ce9178;
+        }
+        
+        .log-info {
+            color: #9cdcfe;
+        }
+        
+        .status-display {
+            background: #fff;
+            border: 2px solid #667eea;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .status-display.active {
+            background: #ffe5e5;
+            border-color: #dc3545;
+        }
+        
+        .status-display h3 {
+            margin: 0;
+            color: #333;
+        }
+        
+        .highlight {
+            background: #ffeb3b;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 اختبار رسالة التحديث الفوري</h1>
+        <p class="subtitle">Instant Update Message Test - Cache Busting Verification</p>
+        
+        <div class="info-box">
+            <h3>📋 عن هذا الاختبار - About This Test</h3>
+            <p><strong>الغرض:</strong> التحقق من أن رسالة "جاري التحديث الآن" تظهر فوراً على جميع الأجهزة دون تأخير بسبب الكاش.</p>
+            <p><strong>Purpose:</strong> Verify that the "Updating now" message appears instantly on all devices without delay due to caching.</p>
+            <p><strong>التحسينات المطبقة:</strong></p>
+            <ul>
+                <li>✅ Cache-Busting المتقدم: timestamp + random string</li>
+                <li>✅ HTTP Headers: Cache-Control, Pragma, Expires</li>
+                <li>✅ Fetch API: cache: 'no-store'</li>
+                <li>✅ HTML Meta Tags: Cache control headers</li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <h2>🧪 الاختبار 1: تحميل حالة الصيانة</h2>
+            <p>يختبر تحميل حالة الصيانة مع cache-busting متقدم</p>
+            <div class="btn-group">
+                <button onclick="testLoadMaintenanceStatus()">▶️ تشغيل الاختبار</button>
+                <button onclick="testMultipleLoads()">🔄 تحميل متعدد (5 مرات)</button>
+            </div>
+            <div id="statusDisplay" class="status-display">
+                <h3>⏳ في انتظار الاختبار...</h3>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🧪 الاختبار 2: التحقق من Cache-Busting</h2>
+            <p>يتحقق من أن كل طلب يستخدم معامل فريد</p>
+            <div class="btn-group">
+                <button onclick="testCacheBusting()">▶️ تشغيل الاختبار</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📝 سجل الاختبارات - Test Log</h2>
+            <div class="btn-group">
+                <button class="btn-clear" onclick="clearLog()">🗑️ مسح السجل</button>
+                <button class="btn-success" onclick="runAllTests()">▶️ تشغيل جميع الاختبارات</button>
+            </div>
+            <div class="log-container" id="logContainer">
+                <div class="log-entry log-info">📝 سجل الاختبارات - Test Log</div>
+                <div class="log-entry log-info">جاهز للاختبار - Ready for testing</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Implementation of the improved loadMaintenanceStatusFromGitHub function
+        async function loadMaintenanceStatusFromGitHub(retries = 3, delayMs = 1000) {
+            for (let attempt = 1; attempt <= retries; attempt++) {
+                try {
+                    // Advanced cache-busting: timestamp + random to bypass all caching layers (CDN, browser, proxies)
+                    const cacheBuster = `${Date.now()}_${Math.random().toString(36).substring(7)}`;
+                    const url = `https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/maintenance-status.json?t=${cacheBuster}`;
+                    
+                    log(`🌐 Fetching from: ${url}`, 'info');
+                    
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Cache-Control': 'no-cache, no-store, must-revalidate',
+                            'Pragma': 'no-cache',
+                            'Expires': '0'
+                        },
+                        cache: 'no-store' // Force fetch to bypass browser cache
+                    });
+                    
+                    if (!response.ok) {
+                        log(`⚠️ Could not load maintenance status from GitHub (attempt ${attempt}/${retries}): ${response.status}`, 'warning');
+                        if (attempt < retries) {
+                            await new Promise(resolve => setTimeout(resolve, delayMs * attempt));
+                            continue;
+                        }
+                        return null;
+                    }
+                    
+                    const status = await response.json();
+                    log('📥 Loaded maintenance status from GitHub: ' + JSON.stringify(status, null, 2), 'success');
+                    return status;
+                } catch (error) {
+                    log(`❌ Error loading maintenance status from GitHub (attempt ${attempt}/${retries}): ${error.message}`, 'error');
+                    if (attempt < retries) {
+                        await new Promise(resolve => setTimeout(resolve, delayMs * attempt));
+                    }
+                }
+            }
+            
+            log('❌ Failed to load maintenance status after all retries', 'error');
+            return null;
+        }
+        
+        // Test function 1: Load maintenance status
+        async function testLoadMaintenanceStatus() {
+            log('=== 🧪 بدء الاختبار 1: تحميل حالة الصيانة ===', 'info');
+            const status = await loadMaintenanceStatusFromGitHub();
+            
+            if (status !== null) {
+                log('✅ الاختبار نجح: تم تحميل البيانات بنجاح', 'success');
+                log(`📊 الحالة: isMaintenanceMode = ${status.isMaintenanceMode}`, 'info');
+                updateStatusDisplay(status);
+            } else {
+                log('❌ الاختبار فشل: لم يتم تحميل البيانات', 'error');
+                updateStatusDisplay(null);
+            }
+        }
+        
+        // Test function 2: Multiple loads
+        async function testMultipleLoads() {
+            log('=== 🧪 بدء الاختبار 2: تحميل متعدد (5 مرات) ===', 'info');
+            
+            for (let i = 1; i <= 5; i++) {
+                log(`\n🔄 المحاولة ${i} من 5...`, 'info');
+                const status = await loadMaintenanceStatusFromGitHub(1, 500);
+                
+                if (status !== null) {
+                    log(`✅ المحاولة ${i}: نجح التحميل`, 'success');
+                } else {
+                    log(`❌ المحاولة ${i}: فشل التحميل`, 'error');
+                }
+                
+                // Small delay between loads
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            log('\n✅ اكتمل الاختبار: تم تحميل البيانات 5 مرات', 'success');
+        }
+        
+        // Test function 3: Verify cache busting
+        async function testCacheBusting() {
+            log('=== 🧪 بدء الاختبار 3: التحقق من Cache-Busting ===', 'info');
+            
+            const urls = [];
+            
+            for (let i = 1; i <= 5; i++) {
+                const cacheBuster = `${Date.now()}_${Math.random().toString(36).substring(7)}`;
+                const url = `https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/maintenance-status.json?t=${cacheBuster}`;
+                urls.push(cacheBuster);
+                log(`🔢 Cache buster ${i}: ${cacheBuster}`, 'info');
+                
+                // Small delay to ensure different timestamps
+                await new Promise(resolve => setTimeout(resolve, 10));
+            }
+            
+            // Check uniqueness
+            const uniqueUrls = new Set(urls);
+            if (uniqueUrls.size === urls.length) {
+                log(`✅ الاختبار نجح: جميع المعاملات فريدة (${urls.length}/${urls.length})`, 'success');
+            } else {
+                log(`❌ الاختبار فشل: وجدت معاملات مكررة (${uniqueUrls.size}/${urls.length})`, 'error');
+            }
+        }
+        
+        // Run all tests
+        async function runAllTests() {
+            clearLog();
+            log('🚀 بدء تشغيل جميع الاختبارات...', 'info');
+            log('', 'info');
+            
+            await testLoadMaintenanceStatus();
+            log('\n', 'info');
+            
+            await testCacheBusting();
+            log('\n', 'info');
+            
+            await testMultipleLoads();
+            log('\n', 'info');
+            
+            log('🎉 اكتملت جميع الاختبارات!', 'success');
+        }
+        
+        // Update status display
+        function updateStatusDisplay(status) {
+            const display = document.getElementById('statusDisplay');
+            
+            if (status === null) {
+                display.innerHTML = '<h3>❌ فشل تحميل الحالة</h3>';
+                display.className = 'status-display';
+            } else if (status.isMaintenanceMode) {
+                display.innerHTML = `
+                    <h3>🔴 وضع الصيانة نشط</h3>
+                    <p>Maintenance Mode Active</p>
+                    <p>آخر تحديث: ${new Date(status.lastUpdated).toLocaleString('ar-EG')}</p>
+                `;
+                display.className = 'status-display active';
+            } else {
+                display.innerHTML = `
+                    <h3>✅ النظام يعمل بشكل طبيعي</h3>
+                    <p>System Operating Normally</p>
+                    <p>آخر تحديث: ${new Date(status.lastUpdated).toLocaleString('ar-EG')}</p>
+                `;
+                display.className = 'status-display';
+            }
+        }
+        
+        // Logging function
+        function log(message, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = message;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        // Clear log
+        function clearLog() {
+            const logContainer = document.getElementById('logContainer');
+            logContainer.innerHTML = '';
+            log('🗑️ تم مسح السجل - Log cleared', 'info');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار: رسالة التحديث عند إعادة التحميل</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            direction: rtl;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-right: 5px solid #667eea;
+        }
+        
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .test-status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .test-status.pass {
+            background: #28a745;
+            color: white;
+        }
+        
+        .test-status.fail {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .test-status.pending {
+            background: #ffc107;
+            color: #000;
+        }
+        
+        .info-box {
+            background: #e7f3ff;
+            border-right: 4px solid #2196F3;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        
+        .success-box {
+            background: #e8f5e9;
+            border-right: 4px solid #4caf50;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        
+        .warning-box {
+            background: #fff3e0;
+            border-right: 4px solid #ff9800;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .btn.success {
+            background: #28a745;
+        }
+        
+        .btn.danger {
+            background: #dc3545;
+        }
+        
+        .log {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px 0;
+        }
+        
+        .log-entry.success { color: #4dff88; }
+        .log-entry.error { color: #ff6b6b; }
+        .log-entry.warning { color: #ffd93d; }
+        .log-entry.info { color: #6bcfff; }
+        
+        .counter {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .instructions {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        .instructions ol {
+            padding-right: 25px;
+        }
+        
+        .instructions li {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+        
+        #maintenanceProgressMsg {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+            background: #ff9800;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            text-align: center;
+            min-width: 300px;
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateX(-50%) translateY(0); opacity: 1; }
+            to { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 اختبار إصلاح رسالة التحديث</h1>
+        <p class="subtitle">Test: Update Message on Page Reload Fix</p>
+        
+        <div class="section">
+            <h2>📊 حالة الاختبار - Test Status</h2>
+            <div id="testStatus">
+                <span class="test-status pending">⏳ في انتظار الاختبار</span>
+            </div>
+            <div class="counter" id="reloadCounter">
+                عدد مرات إعادة التحميل: <span id="reloadCount">0</span>
+            </div>
+            <div class="counter" id="messageCounter">
+                عدد مرات ظهور الرسالة: <span id="messageCount">0</span>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 كيفية الاختبار - How to Test</h2>
+            <div class="instructions">
+                <ol>
+                    <li><strong>تفعيل وضع الصيانة:</strong> اضغط زر "تفعيل الصيانة"</li>
+                    <li><strong>إعادة تحميل الصفحة:</strong> اضغط F5 أو Ctrl+R</li>
+                    <li><strong>راقب الرسالة:</strong> يجب أن تظهر رسالة "🔄 جاري التحديث..." في الأعلى</li>
+                    <li><strong>كرر:</strong> أعد التحميل عدة مرات وتحقق من ظهور الرسالة في كل مرة</li>
+                    <li><strong>النتيجة المتوقعة:</strong> الرسالة تظهر في كل إعادة تحميل ✅</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>🎮 أدوات التحكم - Controls</h2>
+            <button class="btn success" onclick="enableMaintenance()">
+                🔒 تفعيل الصيانة
+            </button>
+            <button class="btn danger" onclick="disableMaintenance()">
+                ✅ إلغاء الصيانة
+            </button>
+            <button class="btn" onclick="simulateReload()">
+                🔄 محاكاة إعادة التحميل
+            </button>
+            <button class="btn" onclick="checkStatus()">
+                📊 فحص الحالة
+            </button>
+            <button class="btn" onclick="clearLogs()">
+                🗑️ مسح السجل
+            </button>
+        </div>
+        
+        <div class="section">
+            <h2>💾 حالة التخزين - Storage State</h2>
+            <div id="storageStatus">
+                <p><strong>localStorage.systemMaintenanceMode:</strong> <span id="lsStatus">-</span></p>
+                <p><strong>sessionStorage.maintenanceNotificationShown:</strong> <span id="ssStatus">-</span></p>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 سجل الأحداث - Event Log</h2>
+            <div class="log" id="logContainer">
+                <div class="log-entry info">⏳ في انتظار الاختبار...</div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>✅ معايير النجاح - Success Criteria</h2>
+            <div class="success-box">
+                <strong>الاختبار ناجح إذا:</strong>
+                <ul style="margin-top: 10px; padding-right: 20px;">
+                    <li>رسالة "جاري التحديث" تظهر عند كل إعادة تحميل</li>
+                    <li>عدد مرات إعادة التحميل = عدد مرات ظهور الرسالة</li>
+                    <li>الرسالة تظهر لمدة ~2.5 ثانية ثم تختفي</li>
+                    <li>لا تظهر رسائل مكررة في نفس التحميل</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="info-box">
+            <strong>💡 ملاحظة:</strong> هذا الاختبار يحاكي سلوك index.html الفعلي. للاختبار الكامل، افتح index.html مباشرة وأعد تحميله.
+        </div>
+    </div>
+    
+    <script>
+        // Initialize counters from sessionStorage
+        let reloadCount = parseInt(sessionStorage.getItem('testReloadCount') || '0');
+        let messageCount = parseInt(sessionStorage.getItem('testMessageCount') || '0');
+        
+        // Increment reload counter on page load
+        reloadCount++;
+        sessionStorage.setItem('testReloadCount', reloadCount.toString());
+        
+        function log(message, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString('ar-EG');
+            entry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        function updateDisplay() {
+            document.getElementById('reloadCount').textContent = reloadCount;
+            document.getElementById('messageCount').textContent = messageCount;
+            
+            const lsValue = localStorage.getItem('systemMaintenanceMode');
+            const ssValue = sessionStorage.getItem('maintenanceNotificationShown');
+            
+            document.getElementById('lsStatus').textContent = lsValue || 'null';
+            document.getElementById('ssStatus').textContent = ssValue || 'null';
+            
+            // Update test status
+            const statusDiv = document.getElementById('testStatus');
+            if (messageCount === 0) {
+                statusDiv.innerHTML = '<span class="test-status pending">⏳ لم يتم الاختبار بعد</span>';
+            } else if (messageCount === reloadCount) {
+                statusDiv.innerHTML = '<span class="test-status pass">✅ الاختبار ناجح - الرسالة تظهر في كل إعادة تحميل</span>';
+            } else {
+                statusDiv.innerHTML = '<span class="test-status fail">❌ الاختبار فشل - الرسالة لا تظهر في بعض الحالات</span>';
+            }
+        }
+        
+        function showMaintenanceProgress(message, duration = 2500) {
+            // Remove existing
+            const existing = document.getElementById('maintenanceProgressMsg');
+            if (existing) {
+                existing.remove();
+            }
+            
+            // Create new
+            const div = document.createElement('div');
+            div.id = 'maintenanceProgressMsg';
+            div.textContent = message;
+            document.body.appendChild(div);
+            
+            // Increment message counter
+            messageCount++;
+            sessionStorage.setItem('testMessageCount', messageCount.toString());
+            
+            log(`📢 عرض رسالة: "${message}"`, 'success');
+            
+            // Auto remove after duration
+            setTimeout(() => {
+                div.style.animation = 'slideUp 0.3s ease-in';
+                setTimeout(() => div.remove(), 300);
+                log('✅ تم إخفاء الرسالة', 'info');
+                updateDisplay();
+            }, duration);
+        }
+        
+        function simulateMaintenanceCheck() {
+            log('🔍 محاكاة فحص حالة الصيانة...', 'info');
+            
+            const isMaintenanceActive = localStorage.getItem('systemMaintenanceMode') === 'true';
+            const wasNotified = sessionStorage.getItem('maintenanceNotificationShown') === 'true';
+            
+            if (isMaintenanceActive) {
+                log('⚠️ الصيانة نشطة', 'warning');
+                
+                if (!wasNotified) {
+                    log('📢 لم يتم الإشعار بعد - سيتم عرض الرسالة', 'info');
+                    showMaintenanceProgress('🔄 جاري التحديث...\n⏳ يرجى الانتظار');
+                    sessionStorage.setItem('maintenanceNotificationShown', 'true');
+                } else {
+                    log('ℹ️ تم الإشعار مسبقاً - لن تظهر الرسالة مرة أخرى', 'info');
+                }
+            } else {
+                log('✅ الصيانة غير نشطة', 'success');
+            }
+            
+            updateDisplay();
+        }
+        
+        function enableMaintenance() {
+            log('🔒 تفعيل وضع الصيانة...', 'warning');
+            localStorage.setItem('systemMaintenanceMode', 'true');
+            sessionStorage.removeItem('maintenanceNotificationShown');
+            log('✅ تم التفعيل', 'success');
+            updateDisplay();
+            
+            // Simulate check after short delay
+            setTimeout(() => simulateMaintenanceCheck(), 500);
+        }
+        
+        function disableMaintenance() {
+            log('✅ إلغاء وضع الصيانة...', 'info');
+            localStorage.removeItem('systemMaintenanceMode');
+            sessionStorage.removeItem('maintenanceNotificationShown');
+            log('✅ تم الإلغاء', 'success');
+            updateDisplay();
+        }
+        
+        function simulateReload() {
+            log('🔄 محاكاة إعادة تحميل الصفحة...', 'warning');
+            log('⚠️ سيتم مسح علامة الإشعار (كما في DOMContentLoaded)', 'info');
+            
+            // Simulate clearing the flag on page load
+            sessionStorage.removeItem('maintenanceNotificationShown');
+            log('✅ تم مسح علامة maintenanceNotificationShown', 'success');
+            
+            // Increment reload counter
+            reloadCount++;
+            sessionStorage.setItem('testReloadCount', reloadCount.toString());
+            
+            // Simulate maintenance check
+            setTimeout(() => simulateMaintenanceCheck(), 100);
+        }
+        
+        function checkStatus() {
+            log('📊 فحص الحالة الحالية...', 'info');
+            updateDisplay();
+            log(`📈 عدد مرات إعادة التحميل: ${reloadCount}`, 'info');
+            log(`📈 عدد مرات ظهور الرسالة: ${messageCount}`, 'info');
+            
+            if (messageCount === reloadCount) {
+                log('✅ الاختبار ناجح! الرسالة تظهر في كل مرة', 'success');
+            } else if (messageCount === 0) {
+                log('⏳ لم يتم اختبار الرسالة بعد', 'warning');
+            } else {
+                log('❌ الاختبار فشل! الرسالة لا تظهر في كل مرة', 'error');
+            }
+        }
+        
+        function clearLogs() {
+            const logContainer = document.getElementById('logContainer');
+            logContainer.innerHTML = '';
+            log('🗑️ تم مسح السجل', 'info');
+            
+            // Reset counters
+            reloadCount = 0;
+            messageCount = 0;
+            sessionStorage.setItem('testReloadCount', '0');
+            sessionStorage.setItem('testMessageCount', '0');
+            updateDisplay();
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🚀 تم تحميل صفحة الاختبار', 'success');
+            log(`📊 هذه هي إعادة التحميل رقم: ${reloadCount}`, 'info');
+            
+            // Simulate the fix: clear notification flag on page load
+            const hadFlag = sessionStorage.getItem('maintenanceNotificationShown') === 'true';
+            if (hadFlag) {
+                log('🔄 تم مسح علامة maintenanceNotificationShown (محاكاة DOMContentLoaded)', 'info');
+            }
+            sessionStorage.removeItem('maintenanceNotificationShown');
+            
+            updateDisplay();
+            
+            // Auto-check if maintenance is active
+            if (localStorage.getItem('systemMaintenanceMode') === 'true') {
+                log('⚠️ تم اكتشاف وضع صيانة نشط', 'warning');
+                setTimeout(() => simulateMaintenanceCheck(), 1000);
+            }
+        });
+    </script>
+</body>
+</html>

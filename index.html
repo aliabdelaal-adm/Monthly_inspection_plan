@@ -5292,7 +5292,26 @@ async function saveMaintenanceStatusToGitHub(isEnabled, messages = [], retryCoun
             
             if (!updateResponse.ok) {
                 const errorText = await updateResponse.text();
-                console.error(`❌ Failed to save maintenance status to GitHub (${updateResponse.status}):`, errorText);
+                let errorDetails = '';
+                try {
+                    const errorJson = JSON.parse(errorText);
+                    errorDetails = errorJson.message || errorText;
+                } catch {
+                    errorDetails = errorText;
+                }
+                
+                console.error(`❌ Failed to save maintenance status to GitHub (${updateResponse.status}):`, errorDetails);
+                
+                // Provide specific error messages for common issues
+                if (updateResponse.status === 401) {
+                    console.error('🔑 Token is invalid or expired. Please update your GitHub token.');
+                } else if (updateResponse.status === 403) {
+                    console.error('🔑 Token does not have sufficient permissions. Ensure "repo" scope is enabled.');
+                } else if (updateResponse.status === 404) {
+                    console.error('📂 Repository or file not found. Check repository name and file path.');
+                } else if (updateResponse.status >= 500) {
+                    console.error('🌐 GitHub server error. Please try again later.');
+                }
                 
                 // If this is not the last attempt, continue to retry
                 if (attempt < retryCount) {
@@ -5566,20 +5585,22 @@ async function enableMaintenanceModeForAll() {
         const messages = ['جاري تحديث النظام', 'يقوم المطور بإجراء تعديلات', 'شكراً على الانتظار'];
         const saved = await saveMaintenanceStatusToGitHub(true, messages);
         
+        // Always show the message locally and trigger broadcast, regardless of GitHub sync status
+        // Clear all possible caches to ensure instant propagation
+        await clearAllCaches();
+        
+        // Clear the notification flag so users see the update message
+        sessionStorage.removeItem('maintenanceNotificationShown');
+        
+        // 🔥 Trigger a broadcast signal to notify all tabs/devices immediately
+        // This uses localStorage events to sync across tabs instantly
+        localStorage.setItem('maintenanceBroadcast', Date.now().toString());
+        console.log('📡 Broadcast signal sent to all tabs');
+        
+        hideMaintenanceProgress();
+        
         if (saved) {
-            // Clear all possible caches to ensure instant propagation
-            await clearAllCaches();
-            
-            // Clear the notification flag so users see the update message
-            sessionStorage.removeItem('maintenanceNotificationShown');
-            
-            // 🔥 NEW: Trigger a broadcast signal to notify all tabs/devices immediately
-            // This uses localStorage events to sync across tabs instantly
-            localStorage.setItem('maintenanceBroadcast', Date.now().toString());
-            console.log('📡 Broadcast signal sent to all tabs');
-            
             // Show immediate success alert
-            hideMaintenanceProgress();
             alert('✅ تم تفعيل وضع الصيانة للجميع بنجاح!\n\n' +
                   '📱 الحالة الآن:\n' +
                   '• ✓ تم الحفظ على GitHub بنجاح\n' +
@@ -5587,7 +5608,7 @@ async function enableMaintenanceModeForAll() {
                   '• ✓ تم إرسال إشارة فورية لجميع التبويبات المفتوحة\n' +
                   '• ✓ تم مسح جميع الكاش لضمان التحديث الفوري\n' +
                   '• ✓ سيظهر رسالة "جاري التحديث" لجميع المستخدمين فوراً\n' +
-                  '• ✓ سيظهر على جميع الأجهزة خلال 3-5 ثواني (تحسّن!)\n' +
+                  '• ✓ سيظهر على جميع الأجهزة خلال 3-5 ثواني\n' +
                   '• ✓ جميع المستخدمين سيرون رسالة الصيانة');
             console.log('✅ Maintenance mode enabled for all users on all devices');
             
@@ -5600,14 +5621,21 @@ async function enableMaintenanceModeForAll() {
                 }
             });
         } else {
-            // Even if GitHub save failed, keep local mode active and show appropriate message
-            hideMaintenanceProgress();
-            alert('⚠️ تحذير: حدث خطأ في حفظ حالة الصيانة على GitHub\n\n' +
+            // Even if GitHub save failed, local mode is active and message will show
+            alert('⚠️ تم التفعيل محلياً بنجاح!\n\n' +
                   '📱 الحالة الحالية:\n' +
-                  '• تم التفعيل على هذا الجهاز فقط\n' +
-                  '• قد لا يظهر للمستخدمين على الأجهزة الأخرى\n' +
-                  '• يرجى التحقق من الاتصال بالإنترنت والمحاولة مرة أخرى\n\n' +
-                  '💡 نصيحة: تحقق من صلاحية التوكن بالنقر على زر "🔑 تحديث التوكن"');
+                  '• ✓ تم التفعيل على هذا الجهاز فوراً\n' +
+                  '• ✓ رسالة "جاري التحديث" ستظهر على الشاشة الرئيسية\n' +
+                  '• ✓ تم إرسال إشارة لجميع التبويبات المفتوحة\n' +
+                  '• ⚠️ لم يتم الحفظ على GitHub (قد لا يظهر للأجهزة الأخرى)\n\n' +
+                  '💡 السبب المحتمل:\n' +
+                  '• التوكن منتهي الصلاحية أو غير صالح\n' +
+                  '• مشكلة في الاتصال بالإنترنت\n' +
+                  '• خطأ في GitHub API\n\n' +
+                  '🔧 الحل:\n' +
+                  '1. تحقق من الاتصال بالإنترنت\n' +
+                  '2. انقر على زر "🔑 تحديث التوكن" لتحديث توكن GitHub\n' +
+                  '3. حاول مرة أخرى بعد تحديث التوكن');
             console.error('⚠️ Maintenance mode activated locally only - GitHub sync failed');
         }
     } catch (error) {
@@ -5686,24 +5714,26 @@ async function disableMaintenanceModeForAll() {
         showMaintenanceProgress('☁️ جاري حفظ الحالة على GitHub...\n⏳ هذا قد يستغرق بضع ثوان...', 'loading');
         const saved = await saveMaintenanceStatusToGitHub(false, []);
         
+        // Always clear caches and trigger broadcast, regardless of GitHub sync status
+        // Clear all possible caches to ensure instant propagation
+        await clearAllCaches();
+        
+        // 🔥 Trigger a broadcast signal to notify all tabs/devices immediately
+        // This uses localStorage events to sync across tabs instantly
+        localStorage.setItem('maintenanceBroadcast', Date.now().toString());
+        console.log('📡 Broadcast signal sent to all tabs');
+        
+        hideMaintenanceProgress();
+        
         if (saved) {
-            // Clear all possible caches to ensure instant propagation
-            await clearAllCaches();
-            
-            // 🔥 NEW: Trigger a broadcast signal to notify all tabs/devices immediately
-            // This uses localStorage events to sync across tabs instantly
-            localStorage.setItem('maintenanceBroadcast', Date.now().toString());
-            console.log('📡 Broadcast signal sent to all tabs');
-            
             // Show immediate success alert
-            hideMaintenanceProgress();
             alert('✅ تم إلغاء وضع الصيانة للجميع بنجاح!\n\n' +
                   '📱 الحالة الآن:\n' +
                   '• ✓ تم الحفظ على GitHub بنجاح\n' +
                   '• ✓ تم الإلغاء على هذا الجهاز فوراً\n' +
                   '• ✓ تم إرسال إشارة فورية لجميع التبويبات المفتوحة\n' +
                   '• ✓ تم مسح جميع الكاش لضمان التحديث الفوري\n' +
-                  '• ✓ سيختفي من جميع الأجهزة خلال 3-5 ثواني (تحسّن!)\n' +
+                  '• ✓ سيختفي من جميع الأجهزة خلال 3-5 ثواني\n' +
                   '• ✓ جميع المستخدمين يمكنهم الآن الوصول للنظام');
             console.log('✅ Maintenance mode disabled for all users on all devices');
             
@@ -5716,13 +5746,20 @@ async function disableMaintenanceModeForAll() {
                 }
             });
         } else {
-            hideMaintenanceProgress();
-            alert('⚠️ تحذير: حدث خطأ في حفظ حالة الصيانة على GitHub\n\n' +
+            alert('⚠️ تم الإلغاء محلياً بنجاح!\n\n' +
                   '📱 الحالة الحالية:\n' +
-                  '• تم الإلغاء على هذا الجهاز فقط\n' +
-                  '• قد لا يتم إلغاؤه للمستخدمين على الأجهزة الأخرى\n' +
-                  '• يرجى التحقق من الاتصال بالإنترنت والمحاولة مرة أخرى\n\n' +
-                  '💡 نصيحة: تحقق من صلاحية التوكن بالنقر على زر "🔑 تحديث التوكن"');
+                  '• ✓ تم الإلغاء على هذا الجهاز فوراً\n' +
+                  '• ✓ رسالة الصيانة لن تظهر على هذا الجهاز\n' +
+                  '• ✓ تم إرسال إشارة لجميع التبويبات المفتوحة\n' +
+                  '• ⚠️ لم يتم الحفظ على GitHub (قد لا يتم الإلغاء للأجهزة الأخرى)\n\n' +
+                  '💡 السبب المحتمل:\n' +
+                  '• التوكن منتهي الصلاحية أو غير صالح\n' +
+                  '• مشكلة في الاتصال بالإنترنت\n' +
+                  '• خطأ في GitHub API\n\n' +
+                  '🔧 الحل:\n' +
+                  '1. تحقق من الاتصال بالإنترنت\n' +
+                  '2. انقر على زر "🔑 تحديث التوكن" لتحديث توكن GitHub\n' +
+                  '3. حاول مرة أخرى بعد تحديث التوكن');
             console.error('⚠️ Maintenance mode disabled locally only - GitHub sync failed');
         }
     } catch (error) {

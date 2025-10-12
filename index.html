@@ -4546,6 +4546,12 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('click', playClickSound);
     });
     
+    // Clear the maintenance notification flag on page load
+    // This ensures the "جاري التحديث" message appears on every page reload
+    // when maintenance is active, not just the first time
+    sessionStorage.removeItem('maintenanceNotificationShown');
+    console.log('🔄 Cleared maintenance notification flag for fresh page load');
+    
     // Restore developer UI state if logged in
     if (isDev) {
         console.log('✅ Developer session restored from localStorage');
@@ -5897,27 +5903,17 @@ async function checkMaintenanceMode() {
             // Sync with localStorage
             localStorage.setItem('systemMaintenanceMode', 'true');
             
-            // If user is not a developer, show maintenance overlay
+            // If user is not a developer, show maintenance overlay with notification
             if (!isDev && !window.isDev) {
                 console.log('⚠️ System is in maintenance mode (from GitHub) - showing overlay for non-developer');
-                
-                // Show instant update notification for ALL users (not just developers)
-                // This appears briefly before the full overlay
-                if (!wasAlreadyActive || !wasAlreadyNotified) {
-                    // First show a quick "جاري التحديث" message
-                    showMaintenanceProgress('🔄 جاري التحديث...\n⏳ يرجى الانتظار', 'warning');
-                    sessionStorage.setItem('maintenanceNotificationShown', 'true');
-                    console.log('📢 Showing "جاري التحديث" notification to user');
-                    
-                    // Show the notification for 2.5 seconds before showing full overlay
-                    await new Promise(resolve => setTimeout(resolve, 2500));
-                    hideMaintenanceProgress();
-                }
                 
                 const messages = githubStatus.messages && githubStatus.messages.length > 0 
                     ? githubStatus.messages 
                     : ['جاري تحديث النظام', 'يقوم المطور بإجراء تعديلات', 'شكراً على الانتظار'];
-                showMaintenanceMode(messages);
+                
+                // Use the wrapper function which handles the notification consistently
+                // It will show "جاري التحديث" notification first, then the maintenance overlay
+                showMaintenanceModeWithNotification(messages);
             } else {
                 console.log('⚠️ System is in maintenance mode (from GitHub) - developer has access');
             }

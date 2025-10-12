@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار: رسالة التحديث في جميع السيناريوهات</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            direction: rtl;
+            text-align: right;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-right: 5px solid #667eea;
+        }
+        
+        .section h2 {
+            color: #667eea;
+            margin-top: 0;
+            font-size: 1.4em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .test-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            margin: 8px 5px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            min-width: 200px;
+        }
+        
+        .test-button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        
+        .test-button:active {
+            transform: translateY(0);
+        }
+        
+        .test-button.success {
+            background: #28a745;
+        }
+        
+        .test-button.success:hover {
+            background: #218838;
+        }
+        
+        .test-button.warning {
+            background: #ffc107;
+            color: #000;
+        }
+        
+        .test-button.warning:hover {
+            background: #e0a800;
+        }
+        
+        .test-button.danger {
+            background: #dc3545;
+        }
+        
+        .test-button.danger:hover {
+            background: #c82333;
+        }
+        
+        .test-button.info {
+            background: #17a2b8;
+        }
+        
+        .test-button.info:hover {
+            background: #138496;
+        }
+        
+        .log-container {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+        
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-right: 3px solid #667eea;
+            padding-right: 10px;
+        }
+        
+        .log-entry.success {
+            border-right-color: #28a745;
+            color: #4dff88;
+        }
+        
+        .log-entry.error {
+            border-right-color: #dc3545;
+            color: #ff6b6b;
+        }
+        
+        .log-entry.warning {
+            border-right-color: #ffc107;
+            color: #ffd93d;
+        }
+        
+        .log-entry.info {
+            border-right-color: #17a2b8;
+            color: #6dd5ed;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        
+        .status-badge.active {
+            background: #28a745;
+            color: white;
+        }
+        
+        .status-badge.inactive {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .status-badge.waiting {
+            background: #ffc107;
+            color: #000;
+        }
+        
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+        }
+        
+        .highlight-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .highlight-box strong {
+            color: #856404;
+        }
+        
+        @keyframes slideDown {
+            from {
+                transform: translateX(-50%) translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(-50%) translateY(-20px);
+                opacity: 0;
+            }
+        }
+        
+        .maintenance-spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 اختبار شامل: رسالة التحديث</h1>
+        <p class="subtitle">Test: Update Message in All Scenarios</p>
+        
+        <div class="highlight-box">
+            <strong>📌 الهدف من الاختبار:</strong><br>
+            التحقق من ظهور رسالة "🔄 جاري التحديث..." في جميع السيناريوهات التي يتم فيها عرض شاشة الصيانة.
+            <br><br>
+            <strong>📌 Test Objective:</strong><br>
+            Verify that "🔄 Updating..." message appears in ALL scenarios where maintenance screen is shown.
+        </div>
+        
+        <div class="section">
+            <h2>
+                <span>1️⃣</span>
+                سيناريوهات الاختبار - Test Scenarios
+            </h2>
+            <p style="margin-bottom: 15px;">
+                اختبر كل سيناريو للتأكد من ظهور رسالة "جاري التحديث" قبل شاشة الصيانة:
+            </p>
+            <div class="test-grid">
+                <button class="test-button success" onclick="testScenario1()">
+                    ✅ السيناريو 1: فحص صيانة ناجح
+                </button>
+                <button class="test-button danger" onclick="testScenario2()">
+                    ❌ السيناريو 2: خطأ في فحص الصيانة
+                </button>
+                <button class="test-button warning" onclick="testScenario3()">
+                    🛡️ السيناريو 3: مشكلة في سلامة البيانات
+                </button>
+                <button class="test-button info" onclick="testScenario4()">
+                    📊 السيناريو 4: تحديث البيانات
+                </button>
+                <button class="test-button danger" onclick="testScenario5()">
+                    🔍 السيناريو 5: فشل التحقق
+                </button>
+                <button class="test-button warning" onclick="testScenario6()">
+                    🛡️ السيناريو 6: فشل الحماية
+                </button>
+                <button class="test-button danger" onclick="testScenario7()">
+                    📡 السيناريو 7: خطأ في تحميل البيانات
+                </button>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>
+                <span>2️⃣</span>
+                الحالة الحالية - Current Status
+            </h2>
+            <p>
+                <strong>حالة الصيانة:</strong>
+                <span class="status-badge inactive" id="maintenanceStatus">غير نشط</span>
+            </p>
+            <p>
+                <strong>تم عرض الإشعار:</strong>
+                <span class="status-badge inactive" id="notificationStatus">لا</span>
+            </p>
+            <p>
+                <strong>آخر سيناريو تم اختباره:</strong>
+                <span id="lastScenario">لا يوجد</span>
+            </p>
+        </div>
+        
+        <div class="section">
+            <h2>
+                <span>3️⃣</span>
+                سجل الأحداث - Event Log
+            </h2>
+            <button class="test-button" onclick="clearLogs()" style="min-width: 150px;">
+                🗑️ مسح السجل
+            </button>
+            <div class="log-container" id="logContainer">
+                <div class="log-entry info">⏳ جاهز للاختبار - Ready for testing...</div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>
+                <span>✅</span>
+                معايير النجاح - Success Criteria
+            </h2>
+            <ul style="line-height: 2;">
+                <li>✅ رسالة "🔄 جاري التحديث..." يجب أن تظهر في <strong>جميع</strong> السيناريوهات السبعة</li>
+                <li>✅ الرسالة تظهر لمدة 2.5 ثانية قبل شاشة الصيانة</li>
+                <li>✅ الرسالة لا تتكرر في نفس جلسة المستخدم (sessionStorage)</li>
+                <li>✅ الرسالة ذات لون برتقالي (warning) لجذب الانتباه</li>
+                <li>✅ تظهر الرسالة حتى للمستخدمين غير المطورين</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        let isDev = false; // Simulate non-developer user
+        
+        function log(message, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString('ar-EG');
+            entry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        function clearLogs() {
+            const logContainer = document.getElementById('logContainer');
+            logContainer.innerHTML = '<div class="log-entry info">⏳ تم مسح السجل - Log cleared...</div>';
+        }
+        
+        function updateStatus(scenario) {
+            document.getElementById('lastScenario').textContent = scenario;
+            document.getElementById('maintenanceStatus').textContent = 'نشط';
+            document.getElementById('maintenanceStatus').className = 'status-badge active';
+            
+            const notified = sessionStorage.getItem('maintenanceNotificationShown') === 'true';
+            document.getElementById('notificationStatus').textContent = notified ? 'نعم' : 'لا';
+            document.getElementById('notificationStatus').className = 'status-badge ' + (notified ? 'active' : 'inactive');
+        }
+        
+        function showMaintenanceProgress(message, type = 'loading') {
+            log(`📢 إظهار رسالة: ${message}`, type);
+            
+            const existing = document.getElementById('maintenanceProgressMsg');
+            if (existing) {
+                existing.remove();
+            }
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.id = 'maintenanceProgressMsg';
+            
+            let bgColor = '#ffc107';
+            if (type === 'success') bgColor = '#28a745';
+            if (type === 'error') bgColor = '#dc3545';
+            if (type === 'info') bgColor = '#17a2b8';
+            if (type === 'warning') bgColor = '#ff9800';
+            
+            messageDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: ${bgColor};
+                color: white;
+                padding: 15px 25px;
+                border-radius: 8px;
+                z-index: 10000;
+                font-size: 16px;
+                font-weight: bold;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                text-align: center;
+                min-width: 300px;
+                max-width: 600px;
+                white-space: pre-line;
+                animation: slideDown 0.3s ease-out;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+            `;
+            
+            if (type === 'loading' || type === 'warning') {
+                const spinner = document.createElement('div');
+                spinner.className = 'maintenance-spinner';
+                messageDiv.appendChild(spinner);
+            }
+            
+            const textSpan = document.createElement('span');
+            textSpan.textContent = message;
+            messageDiv.appendChild(textSpan);
+            
+            document.body.appendChild(messageDiv);
+        }
+        
+        function hideMaintenanceProgress() {
+            const existing = document.getElementById('maintenanceProgressMsg');
+            if (existing) {
+                existing.style.animation = 'slideUp 0.3s ease-in';
+                setTimeout(() => {
+                    existing.remove();
+                    log('✅ تم إخفاء رسالة التحديث', 'success');
+                }, 300);
+            }
+        }
+        
+        function showMaintenanceMode(issues = []) {
+            log('🔒 عرض شاشة الصيانة الكاملة', 'warning');
+            alert('🔒 شاشة الصيانة الكاملة\n\n' + issues.join('\n'));
+        }
+        
+        // Wrapper function that shows notification first
+        async function showMaintenanceModeWithNotification(issues = [], skipNotification = false) {
+            if (!skipNotification) {
+                const wasAlreadyNotified = sessionStorage.getItem('maintenanceNotificationShown') === 'true';
+                if (!wasAlreadyNotified) {
+                    showMaintenanceProgress('🔄 جاري التحديث...\n⏳ يرجى الانتظار', 'warning');
+                    sessionStorage.setItem('maintenanceNotificationShown', 'true');
+                    log('✅ تم عرض رسالة "جاري التحديث" للمستخدم', 'success');
+                    
+                    await new Promise(resolve => setTimeout(resolve, 2500));
+                    hideMaintenanceProgress();
+                } else {
+                    log('ℹ️ تم تخطي رسالة التحديث (تم عرضها مسبقاً في هذه الجلسة)', 'info');
+                }
+            }
+            
+            showMaintenanceMode(issues);
+        }
+        
+        // Test Scenarios
+        async function testScenario1() {
+            log('=== بدء اختبار السيناريو 1: فحص صيانة ناجح ===', 'info');
+            updateStatus('السيناريو 1: فحص صيانة ناجح');
+            
+            // Simulate successful maintenance check
+            await showMaintenanceModeWithNotification([
+                'جاري تحديث النظام',
+                'يقوم المطور بإجراء تعديلات',
+                'شكراً على الانتظار'
+            ]);
+        }
+        
+        async function testScenario2() {
+            log('=== بدء اختبار السيناريو 2: خطأ في فحص الصيانة ===', 'error');
+            updateStatus('السيناريو 2: خطأ في فحص الصيانة');
+            
+            // Simulate error in checkMaintenanceMode
+            await showMaintenanceModeWithNotification([
+                'جاري تحديث النظام',
+                'يقوم المطور بإجراء تعديلات',
+                'شكراً على الانتظار'
+            ]);
+        }
+        
+        async function testScenario3() {
+            log('=== بدء اختبار السيناريو 3: مشكلة في سلامة البيانات ===', 'warning');
+            updateStatus('السيناريو 3: مشكلة في سلامة البيانات');
+            
+            // Simulate data integrity issue
+            await showMaintenanceModeWithNotification([
+                'تم اكتشاف مشاكل في البيانات',
+                'جاري التحقق من سلامة البيانات',
+                'شكراً على الانتظار'
+            ]);
+        }
+        
+        async function testScenario4() {
+            log('=== بدء اختبار السيناريو 4: تحديث البيانات ===', 'info');
+            updateStatus('السيناريو 4: تحديث البيانات');
+            
+            // Simulate data update
+            await showMaintenanceModeWithNotification([
+                'تم اكتشاف تحديثات في البيانات',
+                'إضافة 3 عمليات تفتيش جديدة',
+                'جاري تحديث الصفحة...'
+            ]);
+        }
+        
+        async function testScenario5() {
+            log('=== بدء اختبار السيناريو 5: فشل التحقق ===', 'error');
+            updateStatus('السيناريو 5: فشل التحقق');
+            
+            // Simulate validation failure
+            await showMaintenanceModeWithNotification([
+                'فشل التحقق من البيانات',
+                'تم العثور على بيانات غير صالحة'
+            ]);
+        }
+        
+        async function testScenario6() {
+            log('=== بدء اختبار السيناريو 6: فشل الحماية ===', 'warning');
+            updateStatus('السيناريو 6: فشل الحماية');
+            
+            // Simulate firewall check failure
+            await showMaintenanceModeWithNotification([
+                '🛡️ تم اكتشاف بيانات مشبوهة!',
+                'جاري تفعيل الحماية',
+                'شكراً على الانتظار'
+            ]);
+        }
+        
+        async function testScenario7() {
+            log('=== بدء اختبار السيناريو 7: خطأ في تحميل البيانات ===', 'error');
+            updateStatus('السيناريو 7: خطأ في تحميل البيانات');
+            
+            // Simulate data load error
+            await showMaintenanceModeWithNotification([
+                'تعذر تحميل البيانات من الخادم',
+                'جاري استخدام البيانات المحفوظة',
+                'سيتم تحديث البيانات تلقائياً'
+            ]);
+        }
+        
+        // Reset button
+        window.addEventListener('load', function() {
+            const resetBtn = document.createElement('button');
+            resetBtn.className = 'test-button danger';
+            resetBtn.textContent = '🔄 إعادة تعيين الجلسة';
+            resetBtn.onclick = function() {
+                sessionStorage.clear();
+                localStorage.clear();
+                log('🔄 تم مسح sessionStorage و localStorage', 'info');
+                document.getElementById('notificationStatus').textContent = 'لا';
+                document.getElementById('notificationStatus').className = 'status-badge inactive';
+                document.getElementById('maintenanceStatus').textContent = 'غير نشط';
+                document.getElementById('maintenanceStatus').className = 'status-badge inactive';
+            };
+            
+            const section = document.querySelector('.section:nth-child(3)');
+            section.querySelector('h2').insertAdjacentElement('afterend', resetBtn);
+        });
+    </script>
+</body>
+</html>

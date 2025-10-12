@@ -5763,18 +5763,54 @@ async function checkMaintenanceMode() {
             if (!isDev && !window.isDev) {
                 console.log('⚠️ System is in maintenance mode (from GitHub) - showing overlay for non-developer');
                 
-                // Show instant update notification for ALL users (not just developers)
-                // This appears briefly before the full overlay
-                if (!wasAlreadyActive || !wasAlreadyNotified) {
-                    // First show a quick "جاري التحديث" message
-                    showMaintenanceProgress('🔄 جاري التحديث...\n⏳ يرجى الانتظار', 'warning');
-                    sessionStorage.setItem('maintenanceNotificationShown', 'true');
-                    console.log('📢 Showing "جاري التحديث" notification to user');
-                    
-                    // Show the notification for 2.5 seconds before showing full overlay
-                    await new Promise(resolve => setTimeout(resolve, 2500));
-                    hideMaintenanceProgress();
+                // 🔥 ENHANCED: Show instant update notification for ALL users EVERY TIME
+                // This ensures the message is visible in all scenarios
+                console.log('📢 Starting "جاري التحديث" notification sequence...');
+                console.log('🔍 wasAlreadyActive:', wasAlreadyActive, '| wasAlreadyNotified:', wasAlreadyNotified);
+                
+                // Strategy 1: Always show the progress message (removed conditional check)
+                // Show a quick "جاري التحديث" message
+                showMaintenanceProgress('🔄 جاري التحديث...\n⏳ يرجى الانتظار', 'warning');
+                sessionStorage.setItem('maintenanceNotificationShown', 'true');
+                console.log('✅ "جاري التحديث" message displayed successfully');
+                
+                // Strategy 2: Add console message that's always visible
+                console.log('%c🔄 جاري التحديث - النظام قيد الصيانة', 'font-size: 20px; color: #ff9800; font-weight: bold; background: #fff3cd; padding: 10px;');
+                
+                // Strategy 3: Show title notification in browser tab
+                if (document.title && !document.title.includes('🔄')) {
+                    document.title = '🔄 جاري التحديث | ' + document.title;
                 }
+                
+                // Strategy 4: Create a persistent top banner (stays during the 2.5 seconds)
+                const topBanner = document.createElement('div');
+                topBanner.id = 'maintenanceTopBanner';
+                topBanner.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    background: linear-gradient(135deg, #ff9800 0%, #ff5722 100%);
+                    color: white;
+                    padding: 10px;
+                    text-align: center;
+                    font-size: 16px;
+                    font-weight: bold;
+                    z-index: 9999;
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+                `;
+                topBanner.innerHTML = '🔄 جاري التحديث... يرجى الانتظار ⏳';
+                document.body.insertBefore(topBanner, document.body.firstChild);
+                console.log('✅ Top banner added for extra visibility');
+                
+                // Show the notification for 2.5 seconds before showing full overlay
+                await new Promise(resolve => setTimeout(resolve, 2500));
+                
+                // Remove the top banner
+                if (topBanner && topBanner.parentNode) {
+                    topBanner.remove();
+                }
+                hideMaintenanceProgress();
                 
                 const messages = githubStatus.messages && githubStatus.messages.length > 0 
                     ? githubStatus.messages 
@@ -5813,6 +5849,56 @@ async function forceMaintenanceCheck() {
     console.log('🔄 Forcing immediate maintenance status check...');
     await checkMaintenanceMode();
     console.log('✅ Forced check completed');
+}
+
+// 🔥 NEW: Manual test function to show update message (for testing/debugging)
+// Usage: Open browser console and type: testShowUpdateMessage()
+function testShowUpdateMessage() {
+    console.log('🧪 Testing update message display...');
+    console.log('🎯 This will show the message using ALL strategies');
+    
+    // Strategy 1: Progress message
+    showMaintenanceProgress('🔄 جاري التحديث...\n⏳ يرجى الانتظار', 'warning');
+    
+    // Strategy 2: Console message
+    console.log('%c🔄 جاري التحديث - النظام قيد الصيانة', 'font-size: 20px; color: #ff9800; font-weight: bold; background: #fff3cd; padding: 10px;');
+    
+    // Strategy 3: Browser title
+    const originalTitle = document.title;
+    document.title = '🔄 جاري التحديث | ' + originalTitle;
+    
+    // Strategy 4: Top banner
+    const topBanner = document.createElement('div');
+    topBanner.id = 'testMaintenanceTopBanner';
+    topBanner.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(135deg, #ff9800 0%, #ff5722 100%);
+        color: white;
+        padding: 10px;
+        text-align: center;
+        font-size: 16px;
+        font-weight: bold;
+        z-index: 9999;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    `;
+    topBanner.innerHTML = '🔄 جاري التحديث... يرجى الانتظار ⏳ (اختبار)';
+    document.body.insertBefore(topBanner, document.body.firstChild);
+    
+    console.log('✅ All update message strategies activated!');
+    console.log('⏱️ Messages will auto-hide in 3 seconds...');
+    
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+        hideMaintenanceProgress();
+        if (topBanner && topBanner.parentNode) {
+            topBanner.remove();
+        }
+        document.title = originalTitle;
+        console.log('✅ Test complete - messages hidden');
+    }, 3000);
 }
 
 // Periodically check maintenance status with adaptive intervals for instant updates
@@ -6467,7 +6553,10 @@ function showUpdateMessage(message) {
 }
 
 // Show persistent progress message for maintenance mode operations
+// 🔥 ENHANCED: Multiple display strategies to ensure message is always visible
 function showMaintenanceProgress(message, type = 'loading') {
+    console.log('🎨 showMaintenanceProgress called with:', { message, type });
+    
     // Remove any existing maintenance progress message
     const existing = document.getElementById('maintenanceProgressMsg');
     if (existing) {
@@ -6485,6 +6574,7 @@ function showMaintenanceProgress(message, type = 'loading') {
     if (type === 'info') bgColor = '#17a2b8'; // blue
     if (type === 'warning') bgColor = '#ff9800'; // orange
     
+    // 🔥 ENHANCED: More visible styling with pulse animation
     messageDiv.style.cssText = `
         position: fixed;
         top: 20px;
@@ -6492,25 +6582,26 @@ function showMaintenanceProgress(message, type = 'loading') {
         transform: translateX(-50%);
         background: ${bgColor};
         color: white;
-        padding: 15px 25px;
-        border-radius: 8px;
+        padding: 20px 30px;
+        border-radius: 12px;
         z-index: 10000;
-        font-size: 16px;
+        font-size: 18px;
         font-weight: bold;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.4), 0 0 0 3px rgba(255,255,255,0.3);
         text-align: center;
-        min-width: 300px;
+        min-width: 350px;
         max-width: 600px;
         white-space: pre-line;
-        animation: slideDown 0.3s ease-out;
+        animation: slideDown 0.3s ease-out, pulse 2s ease-in-out infinite;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 10px;
+        gap: 12px;
+        border: 3px solid white;
     `;
     
-    // Add loading spinner if type is 'loading'
-    if (type === 'loading') {
+    // Add loading spinner if type is 'loading' or 'warning'
+    if (type === 'loading' || type === 'warning') {
         const spinner = document.createElement('div');
         spinner.className = 'maintenance-spinner';
         messageDiv.appendChild(spinner);
@@ -6521,6 +6612,27 @@ function showMaintenanceProgress(message, type = 'loading') {
     messageDiv.appendChild(textSpan);
     
     document.body.appendChild(messageDiv);
+    console.log('✅ Message element added to DOM successfully');
+    
+    // 🔥 NEW: Add audio notification (beep) if available
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        gainNode.gain.value = 0.1;
+        
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.1);
+        console.log('🔔 Audio notification played');
+    } catch (e) {
+        console.log('🔇 Audio notification not available:', e.message);
+    }
     
     return messageDiv;
 }
@@ -6535,6 +6647,7 @@ function hideMaintenanceProgress() {
 }
 
 // Add CSS animation for progress messages
+// 🔥 ENHANCED: Added pulse animation for better visibility
 if (!document.getElementById('maintenanceProgressStyles')) {
     const style = document.createElement('style');
     style.id = 'maintenanceProgressStyles';
@@ -6551,17 +6664,28 @@ if (!document.getElementById('maintenanceProgressStyles')) {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        @keyframes pulse {
+            0%, 100% { 
+                transform: translateX(-50%) scale(1); 
+                box-shadow: 0 8px 24px rgba(0,0,0,0.4), 0 0 0 3px rgba(255,255,255,0.3);
+            }
+            50% { 
+                transform: translateX(-50%) scale(1.05); 
+                box-shadow: 0 12px 32px rgba(0,0,0,0.5), 0 0 0 5px rgba(255,255,255,0.5);
+            }
+        }
         .maintenance-spinner {
             border: 3px solid rgba(255, 255, 255, 0.3);
             border-top: 3px solid white;
             border-radius: 50%;
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             animation: spin 0.8s linear infinite;
             flex-shrink: 0;
         }
     `;
     document.head.appendChild(style);
+    console.log('✅ Maintenance progress styles added to DOM');
 }
 function setLastUpdateDate() {
     // Only update the date/time dynamically if user is a developer making changes

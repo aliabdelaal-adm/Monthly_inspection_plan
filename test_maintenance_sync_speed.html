@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 اختبار سرعة مزامنة وضع الصيانة - Maintenance Sync Speed Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .success-box {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .warning-box {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .test-section {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border: 2px solid #ddd;
+        }
+
+        h2 {
+            color: #333;
+            margin: 20px 0 15px 0;
+            font-size: 1.5em;
+        }
+
+        h3 {
+            color: #555;
+            margin: 15px 0 10px 0;
+            font-size: 1.2em;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+
+        button {
+            padding: 15px 25px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: #2196f3;
+            color: white;
+        }
+
+        .btn-success {
+            background: #4caf50;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ff9800;
+            color: white;
+        }
+
+        #logContainer {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-bottom: 1px solid #333;
+        }
+
+        .log-success {
+            color: #4caf50;
+        }
+
+        .log-error {
+            color: #f44336;
+        }
+
+        .log-warning {
+            color: #ff9800;
+        }
+
+        .log-info {
+            color: #2196f3;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 8px;
+        }
+
+        .status-active {
+            background: #4caf50;
+            box-shadow: 0 0 10px #4caf50;
+        }
+
+        .status-inactive {
+            background: #f44336;
+        }
+
+        .timer {
+            font-size: 2em;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            color: #333;
+        }
+
+        .improvements-list {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .improvements-list li {
+            margin: 10px 0;
+            padding-left: 10px;
+            line-height: 1.6;
+        }
+
+        .code-block {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 اختبار سرعة مزامنة وضع الصيانة</h1>
+        <p class="subtitle">Maintenance Mode Sync Speed Test</p>
+
+        <div class="success-box">
+            <h3>✅ التحسينات المُنفذة - Improvements Implemented</h3>
+            <ul class="improvements-list">
+                <li><strong>🚀 تقليل فترة الفحص:</strong> من 5 ثوانٍ إلى 3 ثوانٍ في أول دقيقة (تحسّن بنسبة 40%)</li>
+                <li><strong>📡 مزامنة فورية بين التبويبات:</strong> إضافة آلية بث (broadcast) لإشعار جميع التبويبات المفتوحة فوراً</li>
+                <li><strong>🔄 فحوصات إضافية:</strong> عند استقبال إشارة البث، يتم إجراء 4 فحوصات متتالية (0.1s, 1s, 2s, 3s)</li>
+                <li><strong>⚡ استماع للأحداث:</strong> استخدام Storage Events للمزامنة الفورية عبر التبويبات</li>
+            </ul>
+        </div>
+
+        <div class="info-box">
+            <h3>📝 كيفية الاختبار - How to Test</h3>
+            <ol style="padding-right: 20px; line-height: 1.8;">
+                <li>افتح هذه الصفحة في تبويبات متعددة (Ctrl+Shift+T أو Cmd+T)</li>
+                <li>انقر على "🔐 محاكاة تفعيل وضع الصيانة" في تبويب واحد</li>
+                <li>شاهد السرعة التي تظهر بها الرسائل في التبويبات الأخرى</li>
+                <li>تحقق من السجل (Log) لرؤية التفاصيل الدقيقة</li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h3>🎮 أدوات التحكم - Controls</h3>
+            <div class="button-group">
+                <button class="btn-success" onclick="simulateMaintenanceActivation()">
+                    🔐 محاكاة تفعيل وضع الصيانة
+                </button>
+                <button class="btn-danger" onclick="simulateMaintenanceDeactivation()">
+                    🔓 محاكاة إلغاء وضع الصيانة
+                </button>
+                <button class="btn-warning" onclick="triggerManualCheck()">
+                    🔄 فحص يدوي الآن
+                </button>
+                <button class="btn-primary" onclick="clearLog()">
+                    🗑️ مسح السجل
+                </button>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>⏱️ مؤقت الاستجابة - Response Timer</h3>
+            <div class="timer" id="timer">⏸️ في انتظار الاختبار...</div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 حالة النظام - System Status</h3>
+            <div>
+                <strong>حالة الصيانة:</strong> 
+                <span id="maintenanceStatus">غير مفعل</span>
+                <span class="status-indicator status-inactive" id="statusIndicator"></span>
+            </div>
+            <div style="margin-top: 10px;">
+                <strong>عدد التبويبات المفتوحة:</strong> 
+                <span id="tabCount">1</span>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>📋 سجل الأحداث - Event Log</h3>
+            <div id="logContainer"></div>
+        </div>
+
+        <div class="warning-box">
+            <h3>⚠️ ملاحظات مهمة - Important Notes</h3>
+            <ul style="padding-right: 20px; line-height: 1.8;">
+                <li>هذا الاختبار يحاكي سلوك النظام المحسّن دون الاتصال بـ GitHub الفعلي</li>
+                <li>في البيئة الفعلية، قد يستغرق التحديث 3-5 ثوانٍ بدلاً من الفوري بسبب تأخر GitHub CDN</li>
+                <li>المزامنة بين التبويبات تحدث فوراً (< 100ms) عبر Storage Events</li>
+                <li>الأجهزة المختلفة تحتاج 3-10 ثوانٍ حسب سرعة الاتصال وكاش GitHub</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let startTime = null;
+        let checkInterval = null;
+        let checkCount = 0;
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', function() {
+            log('🚀 تم تحميل صفحة الاختبار', 'success');
+            log('📝 النظام جاهز للاختبار', 'info');
+            log('---', 'info');
+            
+            // Start the improved checker
+            startImprovedMaintenanceChecker();
+            
+            // Listen for storage events from other tabs
+            setupStorageListener();
+            
+            // Update tab count
+            updateTabCount();
+        });
+
+        function log(message, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const timestamp = new Date().toLocaleTimeString('ar-EG', { 
+                hour12: false, 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit',
+                fractionalSecondDigits: 3
+            });
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('logContainer').innerHTML = '';
+            log('🗑️ تم مسح السجل', 'info');
+        }
+
+        function updateStatus(isActive) {
+            const statusEl = document.getElementById('maintenanceStatus');
+            const indicatorEl = document.getElementById('statusIndicator');
+            
+            if (isActive) {
+                statusEl.textContent = 'مفعّل ✓';
+                statusEl.style.color = '#4caf50';
+                indicatorEl.className = 'status-indicator status-active';
+            } else {
+                statusEl.textContent = 'غير مفعل ✗';
+                statusEl.style.color = '#f44336';
+                indicatorEl.className = 'status-indicator status-inactive';
+            }
+        }
+
+        function updateTimer(elapsed) {
+            const timerEl = document.getElementById('timer');
+            if (elapsed === null) {
+                timerEl.textContent = '⏸️ في انتظار الاختبار...';
+                timerEl.style.color = '#999';
+            } else {
+                timerEl.textContent = `⏱️ ${elapsed.toFixed(3)} ثانية`;
+                timerEl.style.color = elapsed < 1 ? '#4caf50' : elapsed < 3 ? '#ff9800' : '#f44336';
+            }
+        }
+
+        function updateTabCount() {
+            // Simulate tab counting (in real scenario, this would use BroadcastChannel or shared storage)
+            const tabCount = parseInt(localStorage.getItem('activeTabCount') || '1');
+            document.getElementById('tabCount').textContent = tabCount;
+        }
+
+        function simulateMaintenanceActivation() {
+            log('🔐 بدء محاكاة تفعيل وضع الصيانة...', 'warning');
+            log('📡 حفظ الحالة في localStorage...', 'info');
+            
+            // Start timer
+            startTime = Date.now();
+            updateTimer(0);
+            
+            // Simulate saving to localStorage (this triggers storage events in other tabs)
+            localStorage.setItem('systemMaintenanceMode', 'true');
+            localStorage.setItem('maintenanceBroadcast', Date.now().toString());
+            
+            log('✅ تم الحفظ - إرسال إشارة البث لجميع التبويبات', 'success');
+            log('⏳ في انتظار استجابة التبويبات الأخرى...', 'info');
+            
+            // Update UI immediately
+            updateStatus(true);
+        }
+
+        function simulateMaintenanceDeactivation() {
+            log('🔓 بدء محاكاة إلغاء وضع الصيانة...', 'warning');
+            log('📡 حذف الحالة من localStorage...', 'info');
+            
+            // Start timer
+            startTime = Date.now();
+            updateTimer(0);
+            
+            // Simulate removing from localStorage
+            localStorage.removeItem('systemMaintenanceMode');
+            localStorage.setItem('maintenanceBroadcast', Date.now().toString());
+            
+            log('✅ تم الحذف - إرسال إشارة البث لجميع التبويبات', 'success');
+            log('⏳ في انتظار استجابة التبويبات الأخرى...', 'info');
+            
+            // Update UI immediately
+            updateStatus(false);
+        }
+
+        function triggerManualCheck() {
+            log('🔄 بدء فحص يدوي...', 'info');
+            checkMaintenanceStatus();
+        }
+
+        function checkMaintenanceStatus() {
+            const isActive = localStorage.getItem('systemMaintenanceMode') === 'true';
+            
+            if (startTime) {
+                const elapsed = (Date.now() - startTime) / 1000;
+                log(`📊 تم الفحص - الحالة: ${isActive ? 'مفعّل' : 'غير مفعل'} (بعد ${elapsed.toFixed(3)}s)`, 
+                    isActive ? 'success' : 'info');
+                updateTimer(elapsed);
+            } else {
+                log(`📊 تم الفحص - الحالة: ${isActive ? 'مفعّل' : 'غير مفعل'}`, 'info');
+            }
+            
+            updateStatus(isActive);
+        }
+
+        function startImprovedMaintenanceChecker() {
+            log('✅ بدء نظام الفحص المحسّن', 'success');
+            log('⚡ وضع الفحص السريع: 3 ثوانٍ للدقيقة الأولى', 'success');
+            
+            // Check immediately
+            checkMaintenanceStatus();
+            
+            let count = 0;
+            const maxFastChecks = 20; // 20 checks x 3 seconds = 60 seconds
+            
+            // Start with 3-second intervals
+            checkInterval = setInterval(() => {
+                checkMaintenanceStatus();
+                count++;
+                
+                if (count === maxFastChecks) {
+                    clearInterval(checkInterval);
+                    // Switch to 10-second interval
+                    checkInterval = setInterval(checkMaintenanceStatus, 10000);
+                    log('🔄 التبديل إلى وضع الفحص القياسي: 10 ثوانٍ', 'info');
+                }
+            }, 3000); // 3-second interval for first 60 seconds
+        }
+
+        function setupStorageListener() {
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'systemMaintenanceMode') {
+                    log('📡 تم اكتشاف تغيير في حالة الصيانة من تبويب آخر!', 'warning');
+                    log(`📝 القيمة الجديدة: ${e.newValue}`, 'info');
+                    
+                    // Calculate response time
+                    if (startTime) {
+                        const elapsed = (Date.now() - startTime) / 1000;
+                        log(`⚡ زمن الاستجابة: ${elapsed.toFixed(3)} ثانية`, 
+                            elapsed < 0.5 ? 'success' : 'warning');
+                        updateTimer(elapsed);
+                    }
+                    
+                    // Immediate check
+                    setTimeout(() => checkMaintenanceStatus(), 100);
+                }
+                
+                if (e.key === 'maintenanceBroadcast') {
+                    log('📡 استقبال إشارة البث من التبويب الآخر!', 'warning');
+                    log('⚡ تنفيذ فحوصات متعددة فورية...', 'info');
+                    
+                    // Multiple immediate checks as per the improvement
+                    setTimeout(() => {
+                        log('🔍 فحص فوري #1 (100ms)', 'info');
+                        checkMaintenanceStatus();
+                    }, 100);
+                    
+                    setTimeout(() => {
+                        log('🔍 فحص فوري #2 (1s)', 'info');
+                        checkMaintenanceStatus();
+                    }, 1000);
+                    
+                    setTimeout(() => {
+                        log('🔍 فحص فوري #3 (2s)', 'info');
+                        checkMaintenanceStatus();
+                    }, 2000);
+                    
+                    setTimeout(() => {
+                        log('🔍 فحص فوري #4 (3s)', 'info');
+                        checkMaintenanceStatus();
+                    }, 3000);
+                }
+            });
+            
+            log('👂 بدء الاستماع لأحداث Storage من التبويبات الأخرى', 'success');
+        }
+    </script>
+</body>
+</html>

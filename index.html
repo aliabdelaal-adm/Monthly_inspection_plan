@@ -2773,8 +2773,8 @@
 </div>
 
 <!-- Hidden Audio Element for Maintenance Mode -->
-<audio id="maintenanceAudio" autoplay muted loop preload="auto" style="display:none;">
-    <source src="Classical-Music-for-Relaxation-Mozart-Bach-Tchaikovsky...-128Kbps-44KHz(mp3)1الجزء(4).mp3" type="audio/mpeg">
+<audio id="maintenanceAudio" loop preload="auto" style="display:none;">
+    <source src="music.mp3" type="audio/mpeg">
     متصفحك لا يدعم تشغيل الملفات الصوتية.
 </audio>
 
@@ -5121,16 +5121,35 @@ function showMaintenanceMode(issues = []) {
     // Save maintenance mode state
     localStorage.setItem('systemMaintenanceMode', 'true');
     
-    // Unmute and adjust volume of maintenance music (audio is already autoplaying due to autoplay attribute)
+    // Play maintenance music (PR 305 approach)
     const audio = document.getElementById('maintenanceAudio');
     if (audio) {
-        // Audio is already playing muted due to autoplay attribute
-        // Simply unmute it and set appropriate volume
-        audio.muted = false;
         audio.volume = 0.15; // Set volume to 15% for comfort
-        audio.currentTime = 0; // Restart from beginning
         
-        console.log('🎵 Maintenance music unmuted and playing automatically');
+        // Start muted first (best practice for autoplay)
+        audio.muted = true;
+        audio.currentTime = 0; // Start from beginning
+        audio.play().then(() => {
+            console.log('✅ Audio started playing (muted)');
+            
+            // Unmute after 50ms
+            setTimeout(() => {
+                audio.muted = false;
+                console.log('✅ Audio unmuted successfully');
+            }, 50);
+        }).catch(err => {
+            console.log('⚠️ Audio autoplay blocked. Waiting for user interaction...');
+            
+            // Strong fallback: play on user interaction
+            const playOnInteraction = () => {
+                audio.muted = false;
+                audio.volume = 0.15;
+                audio.currentTime = 0;
+                audio.play().catch(e => console.log('Audio play failed:', e));
+            };
+            document.addEventListener('click', playOnInteraction, { once: true });
+            document.addEventListener('touchstart', playOnInteraction, { once: true });
+        });
     }
     
     // Log for developer
@@ -5150,9 +5169,8 @@ function hideMaintenanceMode() {
     if (audio) {
         audio.pause();
         audio.currentTime = 0;
-        audio.muted = true; // Mute for next time to allow autoplay
         
-        console.log('🎵 Maintenance music stopped and muted');
+        console.log('🎵 Maintenance music stopped and reset');
     }
     
     // Clear maintenance mode state

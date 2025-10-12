@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار إصلاح رسالة الصيانة - Maintenance Fix Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-right: 4px solid #667eea;
+        }
+        
+        .section h2 {
+            color: #764ba2;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        
+        .problem-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .problem-box h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        
+        .solution-box {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .solution-box h3 {
+            color: #155724;
+            margin-bottom: 10px;
+        }
+        
+        .info-list {
+            list-style: none;
+            padding-right: 0;
+        }
+        
+        .info-list li {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 5px;
+            border-right: 3px solid #667eea;
+        }
+        
+        .info-list li::before {
+            content: '✓ ';
+            color: #28a745;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+        
+        .error-list li::before {
+            content: '✗ ';
+            color: #dc3545;
+        }
+        
+        .test-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin: 10px;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        .test-button:active {
+            transform: translateY(0);
+        }
+        
+        .test-button.success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+        
+        .test-button.warning {
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+        }
+        
+        .test-button.danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+        
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .log-console {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 3px;
+        }
+        
+        .log-entry.info {
+            color: #17a2b8;
+        }
+        
+        .log-entry.success {
+            color: #28a745;
+        }
+        
+        .log-entry.warning {
+            color: #ffc107;
+        }
+        
+        .log-entry.error {
+            color: #dc3545;
+        }
+        
+        .code-block {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            overflow-x: auto;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 8px;
+        }
+        
+        .status-indicator.active {
+            background: #28a745;
+            box-shadow: 0 0 10px #28a745;
+        }
+        
+        .status-indicator.inactive {
+            background: #6c757d;
+        }
+        
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        
+        .steps-list {
+            counter-reset: step-counter;
+            list-style: none;
+            padding-right: 0;
+        }
+        
+        .steps-list li {
+            counter-increment: step-counter;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: white;
+            border-radius: 5px;
+            border-right: 4px solid #667eea;
+            position: relative;
+            padding-right: 50px;
+        }
+        
+        .steps-list li::before {
+            content: counter(step-counter);
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 اختبار إصلاح رسالة الصيانة</h1>
+        <p class="subtitle">Maintenance Message Fix Test</p>
+        
+        <!-- Problem Description -->
+        <div class="problem-box">
+            <h3>❌ المشكلة - The Problem</h3>
+            <p><strong>الوصف بالعربي:</strong></p>
+            <p>عند تشغيل رسالة "جاري التحديث" للجميع، يصل إيميل "run canceled" ولا تظهر الرسالة على الشاشة الرئيسية.</p>
+            <br>
+            <p><strong>English Description:</strong></p>
+            <p>When activating the "updating" message for everyone, a "run canceled" email is received and the message doesn't appear on the main screen.</p>
+        </div>
+        
+        <!-- Root Cause -->
+        <div class="section">
+            <h2>🔍 السبب الجذري - Root Cause</h2>
+            <ul class="info-list error-list">
+                <li><strong>توكن GitHub منتهي الصلاحية:</strong> التوكن المستخدم لحفظ الحالة على GitHub قد يكون منتهي أو غير صالح</li>
+                <li><strong>فشل مزامنة GitHub:</strong> عند فشل الحفظ على GitHub، كانت الرسالة لا تظهر محلياً</li>
+                <li><strong>رسائل خطأ غير واضحة:</strong> لم تكن رسائل الخطأ توضح المشكلة بشكل كافٍ</li>
+            </ul>
+            <br>
+            <p><strong>Technical Details:</strong></p>
+            <ul class="info-list error-list">
+                <li><strong>Expired GitHub Token:</strong> The token used to save status to GitHub may be expired or invalid</li>
+                <li><strong>GitHub Sync Failure:</strong> When GitHub save failed, the message didn't show locally</li>
+                <li><strong>Unclear Error Messages:</strong> Error messages didn't clearly explain the issue</li>
+            </ul>
+        </div>
+        
+        <!-- Solution -->
+        <div class="solution-box">
+            <h3>✅ الحل المنفذ - Implemented Solution</h3>
+            <ol class="steps-list">
+                <li>
+                    <strong>عرض الرسالة محلياً دائماً:</strong> الآن تظهر رسالة "جاري التحديث" على الشاشة الرئيسية حتى لو فشل الحفظ على GitHub
+                    <br><em>The "updating" message now shows locally even if GitHub sync fails</em>
+                </li>
+                <li>
+                    <strong>رسائل خطأ محسّنة:</strong> إضافة رسائل خطأ تفصيلية توضح السبب والحل
+                    <br><em>Enhanced error messages that explain the cause and solution</em>
+                </li>
+                <li>
+                    <strong>تفاصيل أخطاء GitHub API:</strong> تسجيل أخطاء API بشكل أفضل (401، 403، 404، 500+)
+                    <br><em>Better GitHub API error logging (401, 403, 404, 500+)</em>
+                </li>
+                <li>
+                    <strong>إشعارات واضحة:</strong> رسائل تنبيه محسّنة توضح حالة العملية
+                    <br><em>Clear notifications that explain the operation status</em>
+                </li>
+            </ol>
+        </div>
+        
+        <!-- What Changed -->
+        <div class="section">
+            <h2>📝 التغييرات الرئيسية - Key Changes</h2>
+            
+            <h3 style="color: #667eea; margin-top: 20px;">1️⃣ تحسين عملية التفعيل - Improved Activation</h3>
+            <div class="code-block">
+// قبل - Before: الرسالة لا تظهر إذا فشل الحفظ على GitHub
+if (saved) {
+    alert('✅ تم التفعيل بنجاح');
+} else {
+    alert('⚠️ فشل الحفظ على GitHub');
+    // الرسالة لا تظهر محلياً
+}
+
+// بعد - After: الرسالة تظهر دائماً
+// Always show locally first
+localStorage.setItem('systemMaintenanceMode', 'true');
+localStorage.setItem('maintenanceBroadcast', Date.now());
+
+if (saved) {
+    alert('✅ تم التفعيل والحفظ على GitHub');
+} else {
+    alert('⚠️ تم التفعيل محلياً فقط\n' +
+          'الرسالة ستظهر على هذا الجهاز\n' +
+          'يرجى تحديث التوكن للمزامنة');
+}
+            </div>
+            
+            <h3 style="color: #667eea; margin-top: 20px;">2️⃣ تحسين معالجة الأخطاء - Enhanced Error Handling</h3>
+            <div class="code-block">
+// إضافة تفاصيل أخطاء GitHub API
+if (updateResponse.status === 401) {
+    console.error('🔑 Token expired or invalid');
+} else if (updateResponse.status === 403) {
+    console.error('🔑 Insufficient permissions');
+} else if (updateResponse.status === 404) {
+    console.error('📂 Repository/file not found');
+} else if (updateResponse.status >= 500) {
+    console.error('🌐 GitHub server error');
+}
+            </div>
+        </div>
+        
+        <!-- How to Test -->
+        <div class="section">
+            <h2>🧪 كيفية الاختبار - How to Test</h2>
+            <p><strong>اختبر الإصلاح باستخدام الأزرار أدناه:</strong></p>
+            <p><em>Test the fix using the buttons below:</em></p>
+            
+            <div class="button-group">
+                <button class="test-button success" onclick="simulateSuccessfulActivation()">
+                    ✅ محاكاة تفعيل ناجح<br>
+                    <small>Simulate Successful Activation</small>
+                </button>
+                <button class="test-button warning" onclick="simulateFailedGithubSync()">
+                    ⚠️ محاكاة فشل GitHub<br>
+                    <small>Simulate GitHub Sync Failure</small>
+                </button>
+                <button class="test-button danger" onclick="simulateExpiredToken()">
+                    🔑 محاكاة توكن منتهي<br>
+                    <small>Simulate Expired Token</small>
+                </button>
+                <button class="test-button" onclick="clearLog()">
+                    🗑️ مسح السجل<br>
+                    <small>Clear Log</small>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Test Results -->
+        <div class="section">
+            <h2>📊 سجل الاختبار - Test Log</h2>
+            <div id="logConsole" class="log-console">
+                <div class="log-entry info">🎯 جاهز للاختبار... / Ready for testing...</div>
+            </div>
+        </div>
+        
+        <!-- Instructions -->
+        <div class="section">
+            <h2>📖 التعليمات - Instructions</h2>
+            <ol class="steps-list">
+                <li>
+                    <strong>للمطور:</strong> افتح <code>index.html</code> وانقر على زر "🔐 تفعيل وضع الصيانة"
+                    <br><em>For Developer: Open index.html and click "🔐 Enable Maintenance Mode"</em>
+                </li>
+                <li>
+                    <strong>إذا ظهرت رسالة نجاح:</strong> تم الحفظ على GitHub بنجاح والرسالة ستظهر لجميع المستخدمين
+                    <br><em>If success message appears: GitHub sync succeeded, message shows to all users</em>
+                </li>
+                <li>
+                    <strong>إذا ظهرت رسالة تحذير:</strong> تم التفعيل محلياً فقط، يرجى تحديث التوكن
+                    <br><em>If warning appears: Activated locally only, please update token</em>
+                </li>
+                <li>
+                    <strong>لتحديث التوكن:</strong> انقر على "🔑 تحديث التوكن" وأدخل توكن GitHub جديد
+                    <br><em>To update token: Click "🔑 Update Token" and enter a new GitHub token</em>
+                </li>
+            </ol>
+        </div>
+        
+        <!-- Benefits -->
+        <div class="section">
+            <h2>🎯 الفوائد - Benefits</h2>
+            <ul class="info-list">
+                <li>الرسالة تظهر فوراً على الشاشة الرئيسية حتى مع فشل GitHub / Message shows immediately even if GitHub fails</li>
+                <li>رسائل خطأ واضحة تشرح المشكلة والحل / Clear error messages explain problem and solution</li>
+                <li>التفعيل المحلي يعمل دائماً / Local activation always works</li>
+                <li>سهولة تحديث التوكن عند انتهاء صلاحيته / Easy token update when expired</li>
+                <li>تسجيل أفضل للأخطاء لتسهيل التشخيص / Better error logging for easier diagnosis</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        function log(message, type = 'info') {
+            const console = document.getElementById('logConsole');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString('ar-EG');
+            entry.textContent = `[${timestamp}] ${message}`;
+            console.appendChild(entry);
+            console.scrollTop = console.scrollHeight;
+        }
+        
+        function clearLog() {
+            const console = document.getElementById('logConsole');
+            console.innerHTML = '<div class="log-entry info">🎯 جاهز للاختبار... / Ready for testing...</div>';
+        }
+        
+        function simulateSuccessfulActivation() {
+            log('🔄 بدء عملية التفعيل... / Starting activation...', 'info');
+            setTimeout(() => {
+                log('💾 حفظ الحالة محلياً... / Saving locally...', 'info');
+            }, 500);
+            setTimeout(() => {
+                log('☁️ مزامنة مع GitHub... / Syncing with GitHub...', 'info');
+            }, 1000);
+            setTimeout(() => {
+                log('✅ تم الحفظ على GitHub بنجاح! / GitHub sync successful!', 'success');
+                log('📡 إرسال إشارة لجميع الأجهزة... / Broadcasting to all devices...', 'success');
+                log('📱 الرسالة تظهر الآن على الشاشة الرئيسية / Message now showing on main screen', 'success');
+                alert('✅ تم التفعيل بنجاح!\n\n' +
+                      '• ✓ تم الحفظ على GitHub\n' +
+                      '• ✓ رسالة "جاري التحديث" تظهر للجميع\n' +
+                      '• ✓ جميع الأجهزة ستتزامن خلال 3-5 ثواني');
+            }, 1500);
+        }
+        
+        function simulateFailedGithubSync() {
+            log('🔄 بدء عملية التفعيل... / Starting activation...', 'info');
+            setTimeout(() => {
+                log('💾 حفظ الحالة محلياً... / Saving locally...', 'info');
+                log('✅ تم الحفظ محلياً بنجاح / Local save successful', 'success');
+            }, 500);
+            setTimeout(() => {
+                log('☁️ محاولة المزامنة مع GitHub... / Attempting GitHub sync...', 'info');
+            }, 1000);
+            setTimeout(() => {
+                log('⚠️ فشل الحفظ على GitHub / GitHub sync failed', 'warning');
+                log('⚠️ السبب المحتمل: توكن منتهي أو مشكلة اتصال', 'warning');
+                log('✅ لكن الرسالة تظهر محلياً على هذا الجهاز! / But message shows locally on this device!', 'success');
+                log('📱 رسالة "جاري التحديث" ظهرت على الشاشة الرئيسية / "Updating" message shown on main screen', 'success');
+                alert('⚠️ تم التفعيل محلياً بنجاح!\n\n' +
+                      '• ✓ تم التفعيل على هذا الجهاز\n' +
+                      '• ✓ رسالة "جاري التحديث" تظهر على الشاشة\n' +
+                      '• ⚠️ لم يتم الحفظ على GitHub\n' +
+                      '• 🔧 يرجى تحديث التوكن للمزامنة مع الأجهزة الأخرى');
+            }, 1500);
+        }
+        
+        function simulateExpiredToken() {
+            log('🔄 بدء عملية التفعيل... / Starting activation...', 'info');
+            setTimeout(() => {
+                log('🔑 التحقق من صلاحية التوكن... / Validating token...', 'info');
+            }, 500);
+            setTimeout(() => {
+                log('❌ التوكن منتهي الصلاحية! / Token expired!', 'error');
+                log('📝 رمز الخطأ: 401 Unauthorized', 'error');
+                log('💡 الحل: تحديث التوكن من إعدادات GitHub', 'warning');
+                log('✅ لكن التفعيل المحلي نجح! / But local activation succeeded!', 'success');
+                log('📱 رسالة "جاري التحديث" تظهر على هذا الجهاز / Message shows on this device', 'success');
+                alert('⚠️ التوكن منتهي الصلاحية!\n\n' +
+                      '• ✓ تم التفعيل محلياً بنجاح\n' +
+                      '• ✓ الرسالة تظهر على هذا الجهاز\n' +
+                      '• ❌ التوكن منتهي (401)\n\n' +
+                      '🔧 الحل:\n' +
+                      '1. اذهب إلى GitHub Settings\n' +
+                      '2. Developer settings → Tokens\n' +
+                      '3. أنشئ توكن جديد مع صلاحية "repo"\n' +
+                      '4. انقر "🔑 تحديث التوكن" وأدخل التوكن الجديد');
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

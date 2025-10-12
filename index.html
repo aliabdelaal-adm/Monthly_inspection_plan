@@ -4826,7 +4826,7 @@ function startAutoRefresh() {
                 if (!integrityCheck.isValid) {
                     // Automatically show maintenance mode with issues
                     console.log('🔴 Data integrity issues detected - showing maintenance mode automatically');
-                    showMaintenanceMode(integrityCheck.issues);
+                    showMaintenanceModeWithNotification(integrityCheck.issues);
                     showSecurityWarning(integrityCheck.issues);
                     return; // Don't proceed with invalid data
                 }
@@ -4846,7 +4846,7 @@ function startAutoRefresh() {
                     
                     // Show maintenance mode with change details
                     if (changeDetails.length > 0) {
-                        showMaintenanceMode([
+                        showMaintenanceModeWithNotification([
                             'تم اكتشاف تحديثات في البيانات',
                             ...changeDetails,
                             'جاري تحديث الصفحة...'
@@ -5085,6 +5085,32 @@ function validateDataIntegrity(data) {
         isValid: issues.length === 0,
         issues: issues
     };
+}
+
+// Wrapper function that shows update notification before maintenance overlay
+async function showMaintenanceModeWithNotification(issues = [], skipNotification = false) {
+    // Don't show maintenance overlay for developers - they should always have access
+    if (isDev || window.isDev) {
+        console.log('⚠️ Maintenance mode active, but developer has access - overlay not shown');
+        return;
+    }
+    
+    // Show "جاري التحديث" notification first (unless explicitly skipped)
+    if (!skipNotification) {
+        const wasAlreadyNotified = sessionStorage.getItem('maintenanceNotificationShown') === 'true';
+        if (!wasAlreadyNotified) {
+            showMaintenanceProgress('🔄 جاري التحديث...\n⏳ يرجى الانتظار', 'warning');
+            sessionStorage.setItem('maintenanceNotificationShown', 'true');
+            console.log('📢 Showing "جاري التحديث" notification to user (from wrapper)');
+            
+            // Show the notification for 2.5 seconds before showing full overlay
+            await new Promise(resolve => setTimeout(resolve, 2500));
+            hideMaintenanceProgress();
+        }
+    }
+    
+    // Now show the actual maintenance mode overlay
+    showMaintenanceMode(issues);
 }
 
 function showMaintenanceMode(issues = []) {
@@ -5840,7 +5866,8 @@ async function checkMaintenanceMode() {
         const localMode = localStorage.getItem('systemMaintenanceMode') === 'true';
         if (localMode && !isDev && !window.isDev) {
             console.log('⚠️ Using local maintenance status as fallback');
-            showMaintenanceMode(['جاري تحديث النظام', 'يقوم المطور بإجراء تعديلات', 'شكراً على الانتظار']);
+            // Use wrapper function to show notification first
+            showMaintenanceModeWithNotification(['جاري تحديث النظام', 'يقوم المطور بإجراء تعديلات', 'شكراً على الانتظار']);
         }
     }
 }
@@ -5891,7 +5918,7 @@ function performDataValidation(data) {
     
     if (!validation.isValid) {
         console.error('❌ Data validation failed:', validation.issues);
-        showMaintenanceMode(validation.issues);
+        showMaintenanceModeWithNotification(validation.issues);
         return false;
     }
     
@@ -5914,7 +5941,7 @@ function firewallCheck() {
     const validation = validateDataIntegrity(currentData);
     if (!validation.isValid) {
         console.error('🛡️ Firewall: Suspicious data detected!', validation.issues);
-        showMaintenanceMode(validation.issues);
+        showMaintenanceModeWithNotification(validation.issues);
         return false;
     }
     
@@ -5946,7 +5973,7 @@ async function loadInspectionData() {
             
             if (!validation.isValid) {
                 console.error('🛡️ Firewall: Data validation failed!', validation.issues);
-                showMaintenanceMode(validation.issues);
+                showMaintenanceModeWithNotification(validation.issues);
                 
                 // Use cached data from localStorage instead
                 const allLocalData = localStorage.getItem('allPlanData');
@@ -6030,7 +6057,7 @@ async function loadInspectionData() {
         console.warn('Failed to load plan data, using fallback data:', error);
         
         // Show maintenance mode message to inform users about the update
-        showMaintenanceMode([
+        showMaintenanceModeWithNotification([
             'تعذر تحميل البيانات من الخادم',
             'جاري استخدام البيانات المحفوظة',
             'سيتم تحديث البيانات تلقائياً'

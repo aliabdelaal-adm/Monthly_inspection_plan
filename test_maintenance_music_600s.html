@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎵 اختبار موسيقى الصيانة - 600 ثانية</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .test-container {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            max-width: 700px;
+            width: 100%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+        
+        .info {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        
+        .info p {
+            margin: 10px 0;
+            color: #333;
+            font-size: 1.1em;
+        }
+        
+        .info strong {
+            color: #667eea;
+        }
+        
+        .features {
+            background: #e8f5e9;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .features h3 {
+            color: #2e7d32;
+            margin-bottom: 15px;
+        }
+        
+        .features ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .features li {
+            padding: 8px 0;
+            color: #333;
+            font-size: 1.05em;
+        }
+        
+        .test-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            border-radius: 50px;
+            cursor: pointer;
+            width: 100%;
+            margin: 20px 0;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: bold;
+        }
+        
+        .test-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .test-btn:active {
+            transform: translateY(0);
+        }
+        
+        .timer-display {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            margin: 20px 0;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #856404;
+            display: none;
+        }
+        
+        .timer-display.active {
+            display: block;
+        }
+        
+        .log-container {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .log-container h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .log-entry {
+            padding: 5px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .log-entry.success {
+            color: #28a745;
+        }
+        
+        .log-entry.info {
+            color: #007bff;
+        }
+        
+        .log-entry.warning {
+            color: #ffc107;
+        }
+        
+        .log-entry.error {
+            color: #dc3545;
+        }
+        
+        /* Maintenance Overlay Styles */
+        .maintenance-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .maintenance-overlay.active {
+            display: flex;
+        }
+        
+        .maintenance-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 50px;
+            text-align: center;
+            color: white;
+            max-width: 600px;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.5);
+        }
+        
+        .maintenance-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+        
+        .maintenance-title {
+            font-size: 2em;
+            margin-bottom: 15px;
+        }
+        
+        .maintenance-message {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+        
+        .maintenance-submessage {
+            font-size: 1.2em;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .close-btn {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1em;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        
+        .close-btn:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🎵 اختبار موسيقى الصيانة - 600 ثانية</h1>
+        
+        <div class="info">
+            <p><strong>الملف الصوتي:</strong> music.mp3</p>
+            <p><strong>مدة التشغيل:</strong> 600 ثانية (10 دقائق)</p>
+            <p><strong>الحجم:</strong> 1.8 MB</p>
+            <p><strong>التشغيل:</strong> تلقائي عند ظهور رسالة الصيانة</p>
+        </div>
+        
+        <div class="features">
+            <h3>✨ مميزات الدمج:</h3>
+            <ul>
+                <li>✅ الملف الصوتي مدمج ومخفي تماماً</li>
+                <li>✅ التشغيل التلقائي عند ظهور رسالة "جاري التحديث"</li>
+                <li>✅ مدة التشغيل: 600 ثانية (10 دقائق)</li>
+                <li>✅ توقف تلقائي بعد 600 ثانية</li>
+                <li>✅ لا يوجد أزرار ظاهرة أو عناصر تحكم</li>
+                <li>✅ مستوى الصوت: 25%</li>
+                <li>✅ يعمل على جميع المتصفحات (3 مستويات احتياطية)</li>
+                <li>✅ إيقاف تلقائي عند إغلاق الرسالة</li>
+            </ul>
+        </div>
+        
+        <button class="test-btn" onclick="showMaintenance()">
+            🧪 اختبار عرض رسالة الصيانة مع الموسيقى
+        </button>
+        
+        <div class="timer-display" id="timerDisplay">
+            ⏱️ الوقت المتبقي: <span id="timeRemaining">10:00</span>
+        </div>
+        
+        <div class="log-container">
+            <h3>📝 سجل الأحداث:</h3>
+            <div id="log"></div>
+        </div>
+    </div>
+    
+    <!-- Maintenance Overlay -->
+    <div class="maintenance-overlay" id="maintenanceOverlay">
+        <div class="maintenance-content">
+            <div class="maintenance-icon">🛡️ 🔒</div>
+            <h2 class="maintenance-title">الزملاء الأعزاء</h2>
+            <p class="maintenance-message">جاري تحديث البيانات</p>
+            <p class="maintenance-submessage">شكراً على الانتظار</p>
+            <div class="spinner"></div>
+            <p style="margin-top: 20px; font-size: 0.9em; opacity: 0.8;">
+                🎵 الموسيقى تعمل تلقائياً في الخلفية
+            </p>
+            <button class="close-btn" onclick="hideMaintenance()">إغلاق الاختبار</button>
+        </div>
+    </div>
+    
+    <!-- Hidden Audio Element -->
+    <audio id="maintenanceAudio" preload="auto" style="display:none;">
+        <source src="music.mp3" type="audio/mpeg">
+        متصفحك لا يدعم تشغيل الملفات الصوتية.
+    </audio>
+    
+    <script>
+        let maintenanceMusicTimer = null;
+        let startTime = null;
+        let timerInterval = null;
+        
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString('ar-EG');
+            entry.textContent = `[${timestamp}] ${message}`;
+            logDiv.insertBefore(entry, logDiv.firstChild);
+        }
+        
+        function updateTimer() {
+            if (!startTime) return;
+            
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const remaining = 600 - elapsed;
+            
+            if (remaining <= 0) {
+                document.getElementById('timeRemaining').textContent = '0:00';
+                document.getElementById('timerDisplay').classList.remove('active');
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+                return;
+            }
+            
+            const minutes = Math.floor(remaining / 60);
+            const seconds = remaining % 60;
+            document.getElementById('timeRemaining').textContent = 
+                `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        function startMaintenanceMusic() {
+            const audio = document.getElementById('maintenanceAudio');
+            
+            if (!audio) {
+                log('⚠️ عنصر الصوت غير موجود', 'error');
+                return;
+            }
+            
+            // Reset audio
+            audio.currentTime = 0;
+            audio.volume = 0.25;
+            
+            // Clear any existing timer
+            if (maintenanceMusicTimer) {
+                clearTimeout(maintenanceMusicTimer);
+                maintenanceMusicTimer = null;
+            }
+            
+            // Clear any existing interval
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            
+            // Start timer display
+            startTime = Date.now();
+            document.getElementById('timerDisplay').classList.add('active');
+            timerInterval = setInterval(updateTimer, 1000);
+            updateTimer();
+            
+            // Level 1: Try direct play
+            audio.play().then(() => {
+                log('✅ المستوى 1: نجح التشغيل المباشر', 'success');
+                log('🎵 الموسيقى تعمل الآن - ستتوقف بعد 600 ثانية', 'info');
+                
+                // Set timer to stop after 600 seconds
+                maintenanceMusicTimer = setTimeout(() => {
+                    audio.pause();
+                    audio.currentTime = 0;
+                    log('⏹️ تم إيقاف الموسيقى بعد 600 ثانية', 'info');
+                    document.getElementById('timerDisplay').classList.remove('active');
+                    if (timerInterval) {
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                    }
+                }, 600000); // 600 seconds = 10 minutes
+                
+            }).catch(err => {
+                log(`⚠️ المستوى 1: فشل (${err.message})`, 'warning');
+                log('🔄 المستوى 2: محاولة التشغيل مكتوماً ثم إلغاء الكتم...', 'info');
+                
+                // Level 2: Start muted then unmute
+                audio.muted = true;
+                audio.play().then(() => {
+                    setTimeout(() => {
+                        audio.muted = false;
+                        audio.volume = 0.25;
+                        log('✅ المستوى 2: نجح التشغيل بعد إلغاء الكتم', 'success');
+                        log('🎵 الموسيقى تعمل الآن - ستتوقف بعد 600 ثانية', 'info');
+                        
+                        // Set timer to stop after 600 seconds
+                        maintenanceMusicTimer = setTimeout(() => {
+                            audio.pause();
+                            audio.currentTime = 0;
+                            log('⏹️ تم إيقاف الموسيقى بعد 600 ثانية', 'info');
+                            document.getElementById('timerDisplay').classList.remove('active');
+                            if (timerInterval) {
+                                clearInterval(timerInterval);
+                                timerInterval = null;
+                            }
+                        }, 600000);
+                        
+                    }, 100);
+                }).catch(err2 => {
+                    log(`⚠️ المستوى 2: فشل (${err2.message})`, 'warning');
+                    log('🔄 المستوى 3: انتظار تفاعل المستخدم...', 'info');
+                    
+                    // Level 3: Wait for user interaction
+                    const playOnInteraction = () => {
+                        audio.muted = false;
+                        audio.volume = 0.25;
+                        audio.currentTime = 0;
+                        audio.play().then(() => {
+                            log('✅ المستوى 3: نجح التشغيل بعد تفاعل المستخدم', 'success');
+                            log('🎵 الموسيقى تعمل الآن - ستتوقف بعد 600 ثانية', 'info');
+                            
+                            // Set timer to stop after 600 seconds
+                            maintenanceMusicTimer = setTimeout(() => {
+                                audio.pause();
+                                audio.currentTime = 0;
+                                log('⏹️ تم إيقاف الموسيقى بعد 600 ثانية', 'info');
+                                document.getElementById('timerDisplay').classList.remove('active');
+                                if (timerInterval) {
+                                    clearInterval(timerInterval);
+                                    timerInterval = null;
+                                }
+                            }, 600000);
+                            
+                        }).catch(err3 => {
+                            log(`❌ فشل التشغيل: ${err3.message}`, 'error');
+                        });
+                        
+                        document.removeEventListener('click', playOnInteraction);
+                        document.removeEventListener('touchstart', playOnInteraction);
+                    };
+                    
+                    document.addEventListener('click', playOnInteraction);
+                    document.addEventListener('touchstart', playOnInteraction);
+                });
+            });
+        }
+        
+        function stopMaintenanceMusic() {
+            const audio = document.getElementById('maintenanceAudio');
+            
+            if (audio) {
+                audio.pause();
+                audio.currentTime = 0;
+                log('⏹️ تم إيقاف الموسيقى يدوياً', 'info');
+            }
+            
+            if (maintenanceMusicTimer) {
+                clearTimeout(maintenanceMusicTimer);
+                maintenanceMusicTimer = null;
+                log('⏱️ تم إلغاء مؤقت الإيقاف', 'info');
+            }
+            
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            
+            document.getElementById('timerDisplay').classList.remove('active');
+            startTime = null;
+        }
+        
+        function showMaintenance() {
+            const overlay = document.getElementById('maintenanceOverlay');
+            overlay.classList.add('active');
+            log('📢 تم عرض رسالة الصيانة', 'info');
+            
+            // Start music
+            startMaintenanceMusic();
+        }
+        
+        function hideMaintenance() {
+            const overlay = document.getElementById('maintenanceOverlay');
+            overlay.classList.remove('active');
+            log('✅ تم إخفاء رسالة الصيانة', 'success');
+            
+            // Stop music
+            stopMaintenanceMusic();
+        }
+        
+        // Initialize log
+        log('🚀 اختبار تم تحميله بنجاح', 'success');
+        log('📁 الملف الصوتي: music.mp3', 'info');
+        log('⏱️ مدة التشغيل: 600 ثانية (10 دقائق)', 'info');
+        log('🔇 مخفي تماماً بدون أزرار', 'info');
+    </script>
+</body>
+</html>

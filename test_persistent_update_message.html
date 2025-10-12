@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار رسالة التحديث المستمرة</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 2em;
+        }
+        
+        .section {
+            margin: 25px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            padding: 8px 0;
+            padding-right: 25px;
+            position: relative;
+        }
+        
+        .feature-list li:before {
+            content: "✓";
+            position: absolute;
+            right: 0;
+            color: #28a745;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        
+        .test-button {
+            padding: 15px 30px;
+            margin: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+        }
+        
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .test-button.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .test-button.warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .test-button.success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        
+        .test-button.danger {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+        
+        .log-area {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+        
+        .log-entry {
+            margin: 5px 0;
+            padding: 3px;
+        }
+        
+        .log-entry.info {
+            color: #17a2b8;
+        }
+        
+        .log-entry.success {
+            color: #28a745;
+        }
+        
+        .log-entry.warning {
+            color: #ffc107;
+        }
+        
+        .log-entry.error {
+            color: #dc3545;
+        }
+        
+        .status-box {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: bold;
+            margin: 5px;
+        }
+        
+        .status-box.visible {
+            background: #28a745;
+            color: white;
+        }
+        
+        .status-box.hidden {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .status-box.persistent {
+            background: #ff9800;
+            color: white;
+        }
+        
+        @keyframes slideDown {
+            from { 
+                transform: translateX(-50%) translateY(-100%); 
+                opacity: 0; 
+            }
+            to { 
+                transform: translateX(-50%) translateY(0); 
+                opacity: 1; 
+            }
+        }
+        
+        @keyframes slideUp {
+            from { 
+                transform: translateX(-50%) translateY(0); 
+                opacity: 1; 
+            }
+            to { 
+                transform: translateX(-50%) translateY(-100%); 
+                opacity: 0; 
+            }
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .maintenance-spinner {
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 0.8s linear infinite;
+            flex-shrink: 0;
+        }
+        
+        .info-box {
+            background: #e3f2fd;
+            border: 2px solid #2196f3;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #1565c0;
+        }
+        
+        .buttons-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 اختبار رسالة التحديث المستمرة</h1>
+        
+        <div class="section">
+            <h2>📋 ملخص الميزة الجديدة</h2>
+            <ul class="feature-list">
+                <li>رسالة التحديث الآن <strong>مستمرة</strong> ولا تختفي تلقائياً</li>
+                <li>المطور يتحكم في إخفاء الرسالة يدوياً</li>
+                <li>إضافة زر "إخفاء رسالة التحديث" في لوحة المطور</li>
+                <li>الرسالة تبقى ظاهرة حتى يقرر المطور إخفاءها</li>
+                <li>تحسين التحكم في تدفق عرض رسائل الصيانة</li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2>🔍 الحالة الحالية</h2>
+            <div style="text-align: center;">
+                <div id="messageStatus" class="status-box hidden">الرسالة: مخفية</div>
+                <div id="persistStatus" class="status-box hidden">نوع الرسالة: عادية</div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>🧪 اختبارات تفاعلية</h2>
+            <p>استخدم الأزرار أدناه لاختبار الميزة الجديدة:</p>
+            
+            <div class="buttons-row">
+                <button class="test-button primary" onclick="testPersistentMessage()">
+                    ✅ عرض رسالة مستمرة
+                </button>
+                
+                <button class="test-button warning" onclick="testNonPersistentMessage()">
+                    ⏱️ عرض رسالة عادية (تختفي بعد 3 ثوان)
+                </button>
+                
+                <button class="test-button success" onclick="testShowUpdateMessage()">
+                    🔄 محاكاة رسالة "جاري التحديث"
+                </button>
+                
+                <button class="test-button danger" onclick="hideMaintenanceProgress()">
+                    ❌ إخفاء الرسالة يدوياً
+                </button>
+            </div>
+            
+            <div class="buttons-row">
+                <button class="test-button primary" onclick="testMultiplePersistentMessages()">
+                    📢 اختبار رسائل متعددة
+                </button>
+                
+                <button class="test-button warning" onclick="clearLogs()">
+                    🗑️ مسح السجل
+                </button>
+                
+                <button class="test-button success" onclick="checkMessageStatus()">
+                    📊 فحص حالة الرسالة
+                </button>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 سجل الأحداث</h2>
+            <div class="log-area" id="logArea">
+                <div class="log-entry info">📌 نظام الاختبار جاهز...</div>
+            </div>
+        </div>
+        
+        <div class="info-box">
+            <strong>💡 ملاحظات:</strong>
+            <ul style="margin-top: 10px; padding-right: 20px;">
+                <li>الرسالة المستمرة ستبقى ظاهرة حتى تضغط على "إخفاء الرسالة يدوياً"</li>
+                <li>الرسالة العادية تختفي تلقائياً بعد 3 ثوان</li>
+                <li>في النظام الفعلي، الزر موجود في لوحة المطور</li>
+                <li>هذا يعطي المطور تحكماً كاملاً في عرض وإخفاء الرسائل</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        // Log function
+        function log(message, type = 'info') {
+            const logArea = document.getElementById('logArea');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString('ar-EG');
+            entry.textContent = `[${timestamp}] ${message}`;
+            logArea.appendChild(entry);
+            logArea.scrollTop = logArea.scrollHeight;
+        }
+        
+        // Update status display
+        function updateStatus() {
+            const messageDiv = document.getElementById('maintenanceProgressMsg');
+            const messageStatus = document.getElementById('messageStatus');
+            const persistStatus = document.getElementById('persistStatus');
+            
+            if (messageDiv) {
+                const isPersistent = messageDiv.getAttribute('data-persist') === 'true';
+                messageStatus.className = 'status-box visible';
+                messageStatus.textContent = 'الرسالة: ظاهرة';
+                
+                persistStatus.className = isPersistent ? 'status-box persistent' : 'status-box hidden';
+                persistStatus.textContent = isPersistent ? 'نوع الرسالة: مستمرة' : 'نوع الرسالة: عادية';
+            } else {
+                messageStatus.className = 'status-box hidden';
+                messageStatus.textContent = 'الرسالة: مخفية';
+                persistStatus.className = 'status-box hidden';
+                persistStatus.textContent = 'نوع الرسالة: عادية';
+            }
+        }
+        
+        // Modified showMaintenanceProgress function (from index.html)
+        function showMaintenanceProgress(message, type = 'loading', persist = false) {
+            // Remove any existing maintenance progress message
+            const existing = document.getElementById('maintenanceProgressMsg');
+            if (existing) {
+                existing.remove();
+            }
+            
+            // Create new progress message
+            const messageDiv = document.createElement('div');
+            messageDiv.id = 'maintenanceProgressMsg';
+            
+            // Store persist flag as data attribute
+            messageDiv.setAttribute('data-persist', persist.toString());
+            
+            // Choose background color based on type
+            let bgColor = '#ffc107'; // warning/loading color (yellow)
+            if (type === 'success') bgColor = '#28a745'; // green
+            if (type === 'error') bgColor = '#dc3545'; // red
+            if (type === 'info') bgColor = '#17a2b8'; // blue
+            if (type === 'warning') bgColor = '#ff9800'; // orange
+            
+            messageDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: ${bgColor};
+                color: white;
+                padding: 15px 25px;
+                border-radius: 8px;
+                z-index: 10000;
+                font-size: 16px;
+                font-weight: bold;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                text-align: center;
+                min-width: 300px;
+                max-width: 500px;
+                white-space: pre-line;
+                animation: slideDown 0.3s ease-out;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+            `;
+            
+            // Add loading spinner if type is 'loading' or 'warning'
+            if (type === 'loading' || type === 'warning') {
+                const spinner = document.createElement('div');
+                spinner.className = 'maintenance-spinner';
+                messageDiv.appendChild(spinner);
+            }
+            
+            const textSpan = document.createElement('span');
+            textSpan.textContent = message;
+            messageDiv.appendChild(textSpan);
+            
+            document.body.appendChild(messageDiv);
+            
+            log(`📢 عرض رسالة: "${message}" | مستمرة: ${persist ? 'نعم' : 'لا'}`, 'success');
+            updateStatus();
+            
+            return messageDiv;
+        }
+        
+        // Modified hideMaintenanceProgress function (from index.html)
+        function hideMaintenanceProgress() {
+            const existing = document.getElementById('maintenanceProgressMsg');
+            if (existing) {
+                const isPersistent = existing.getAttribute('data-persist') === 'true';
+                log(`🗑️ إخفاء رسالة التحديث (كانت مستمرة: ${isPersistent ? 'نعم' : 'لا'})`, 'warning');
+                existing.style.animation = 'slideUp 0.3s ease-in';
+                setTimeout(() => {
+                    existing.remove();
+                    updateStatus();
+                }, 300);
+            } else {
+                log('ℹ️ لا توجد رسالة لإخفائها', 'info');
+            }
+        }
+        
+        // Test: Show persistent message
+        function testPersistentMessage() {
+            log('🧪 اختبار: عرض رسالة مستمرة...', 'info');
+            showMaintenanceProgress('🔔 هذه رسالة مستمرة\n✅ لن تختفي تلقائياً', 'warning', true);
+            log('✅ الرسالة ستبقى ظاهرة حتى تخفيها يدوياً', 'success');
+        }
+        
+        // Test: Show non-persistent message
+        function testNonPersistentMessage() {
+            log('🧪 اختبار: عرض رسالة عادية...', 'info');
+            showMaintenanceProgress('⏱️ هذه رسالة عادية\n⏳ ستختفي بعد 3 ثوان', 'info', false);
+            log('⏳ الرسالة ستختفي تلقائياً بعد 3 ثوان...', 'warning');
+            
+            setTimeout(() => {
+                hideMaintenanceProgress();
+                log('✅ تم إخفاء الرسالة تلقائياً', 'success');
+            }, 3000);
+        }
+        
+        // Test: Show update message (like in real system)
+        function testShowUpdateMessage() {
+            log('🧪 محاكاة رسالة "جاري التحديث" الفعلية...', 'info');
+            showMaintenanceProgress('🔄 جاري التحديث...\n⏳ يرجى الانتظار', 'warning', true);
+            log('📢 هذه هي الرسالة التي يراها المستخدمون عند تفعيل الصيانة', 'success');
+            log('💡 الرسالة الآن مستمرة - استخدم زر "إخفاء الرسالة يدوياً" لإخفائها', 'info');
+        }
+        
+        // Test: Multiple messages
+        async function testMultiplePersistentMessages() {
+            log('🧪 اختبار: عرض رسائل متعددة...', 'info');
+            
+            showMaintenanceProgress('1️⃣ الرسالة الأولى', 'info', true);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            showMaintenanceProgress('2️⃣ الرسالة الثانية', 'warning', true);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            showMaintenanceProgress('3️⃣ الرسالة الثالثة', 'success', true);
+            log('✅ تم عرض 3 رسائل متتالية', 'success');
+        }
+        
+        // Check message status
+        function checkMessageStatus() {
+            const messageDiv = document.getElementById('maintenanceProgressMsg');
+            
+            if (messageDiv) {
+                const isPersistent = messageDiv.getAttribute('data-persist') === 'true';
+                const text = messageDiv.textContent.trim();
+                log(`📊 حالة الرسالة:`, 'info');
+                log(`   - الحالة: ظاهرة`, 'success');
+                log(`   - النوع: ${isPersistent ? 'مستمرة' : 'عادية'}`, 'info');
+                log(`   - النص: "${text}"`, 'info');
+            } else {
+                log(`📊 حالة الرسالة: مخفية`, 'warning');
+            }
+            
+            updateStatus();
+        }
+        
+        // Clear logs
+        function clearLogs() {
+            const logArea = document.getElementById('logArea');
+            logArea.innerHTML = '<div class="log-entry info">📌 تم مسح السجل - نظام جاهز...</div>';
+            log('🗑️ تم مسح سجل الأحداث', 'info');
+        }
+        
+        // Initial status check
+        updateStatus();
+        log('✅ نظام الاختبار جاهز للاستخدام', 'success');
+        log('💡 جرب الأزرار لاختبار الميزة الجديدة', 'info');
+    </script>
+</body>
+</html>

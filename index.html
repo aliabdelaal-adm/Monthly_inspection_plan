@@ -2953,6 +2953,9 @@
                     <button onclick="showTokenPopup()" style="background:#007bff;color:#fff;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-weight:bold;box-shadow:0 2px 5px rgba(0,0,0,0.2);min-height:44px;font-size:1em;">
                         🔑 تحديث التوكن
                     </button>
+                    <button id="hideUpdateMessageBtn" onclick="hideMaintenanceProgress()" style="background:#dc3545;color:#fff;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-weight:bold;box-shadow:0 2px 5px rgba(0,0,0,0.2);min-height:44px;font-size:1em;">
+                        ❌ إخفاء رسالة التحديث
+                    </button>
                 </div>
                 <p style="margin:8px 0 0 0;font-size:0.85em;color:#666;">
                     💡 عند تفعيل وضع الصيانة، سيرى جميع المستخدمين (عدا المطور) رسالة التحديث ولن يتمكنوا من استخدام النظام<br>
@@ -5124,13 +5127,9 @@ async function showMaintenanceModeWithNotification(issues = [], skipNotification
     if (!skipNotification) {
         const wasAlreadyNotified = sessionStorage.getItem('maintenanceNotificationShown') === 'true';
         if (!wasAlreadyNotified) {
-            showMaintenanceProgress('🔄 جاري التحديث...\n⏳ يرجى الانتظار', 'warning');
+            showMaintenanceProgress('🔄 جاري التحديث...\n⏳ يرجى الانتظار', 'warning', true); // true = persist (don't auto-hide)
             sessionStorage.setItem('maintenanceNotificationShown', 'true');
-            console.log('📢 Showing "جاري التحديث" notification to user (from wrapper)');
-            
-            // Show the notification for 2.5 seconds before showing full overlay
-            await new Promise(resolve => setTimeout(resolve, 2500));
-            hideMaintenanceProgress();
+            console.log('📢 Showing "جاري التحديث" notification to user (from wrapper) - will persist until developer closes it');
         }
     }
     
@@ -6588,7 +6587,7 @@ function showUpdateMessage(message) {
 }
 
 // Show persistent progress message for maintenance mode operations
-function showMaintenanceProgress(message, type = 'loading') {
+function showMaintenanceProgress(message, type = 'loading', persist = false) {
     // Remove any existing maintenance progress message
     const existing = document.getElementById('maintenanceProgressMsg');
     if (existing) {
@@ -6598,6 +6597,9 @@ function showMaintenanceProgress(message, type = 'loading') {
     // Create new progress message
     const messageDiv = document.createElement('div');
     messageDiv.id = 'maintenanceProgressMsg';
+    
+    // Store persist flag as data attribute
+    messageDiv.setAttribute('data-persist', persist.toString());
     
     // Choose background color based on type
     let bgColor = '#ffc107'; // warning/loading color (yellow)
@@ -6643,6 +6645,8 @@ function showMaintenanceProgress(message, type = 'loading') {
     
     document.body.appendChild(messageDiv);
     
+    console.log(`📢 Maintenance progress message shown - persist: ${persist}`);
+    
     return messageDiv;
 }
 
@@ -6650,8 +6654,12 @@ function showMaintenanceProgress(message, type = 'loading') {
 function hideMaintenanceProgress() {
     const existing = document.getElementById('maintenanceProgressMsg');
     if (existing) {
+        const isPersistent = existing.getAttribute('data-persist') === 'true';
+        console.log(`🗑️ Hiding maintenance progress message (was persistent: ${isPersistent})`);
         existing.style.animation = 'slideUp 0.3s ease-in';
         setTimeout(() => existing.remove(), 300);
+    } else {
+        console.log('ℹ️ No maintenance progress message to hide');
     }
 }
 

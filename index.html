@@ -2909,9 +2909,61 @@
     </div>
     <!-- قسم المطور: إضافة/تعديل خطة -->
     <div id="devSection" class="dev-section" style="display:none;">
+        <!-- Enhanced Developer Dashboard Header -->
+        <div style="margin-bottom:25px;padding:25px;background:linear-gradient(135deg, #234085 0%, #3b82f6 100%);border-radius:12px;box-shadow:0 8px 20px rgba(35,64,133,0.3);color:white;text-align:center;">
+            <div style="display:flex;align-items:center;justify-content:center;gap:15px;margin-bottom:15px;">
+                <span style="font-size:3em;">🎛️</span>
+                <h2 style="margin:0;font-size:2em;font-weight:700;">لوحة تحكم المطور الذكية</h2>
+            </div>
+            <p style="margin:0;font-size:1.1em;opacity:0.95;">تحكم كامل وفوري في جميع بيانات النظام مع تحديثات لحظية لجميع المستخدمين</p>
+            <div style="display:flex;justify-content:center;gap:30px;margin-top:20px;font-size:0.95em;">
+                <div style="background:rgba(255,255,255,0.15);padding:12px 20px;border-radius:8px;backdrop-filter:blur(10px);">
+                    <div style="font-weight:600;font-size:1.2em;" id="totalInspectionsCount">0</div>
+                    <div style="opacity:0.9;">إجمالي الخطط</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.15);padding:12px 20px;border-radius:8px;backdrop-filter:blur(10px);">
+                    <div style="font-weight:600;font-size:1.2em;" id="totalInspectorsCount">0</div>
+                    <div style="opacity:0.9;">المفتشين النشطين</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.15);padding:12px 20px;border-radius:8px;backdrop-filter:blur(10px);">
+                    <div style="font-weight:600;font-size:1.2em;" id="totalShopsCount">0</div>
+                    <div style="opacity:0.9;">المحلات المسجلة</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions Bar -->
+        <div style="margin-bottom:20px;padding:20px;background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);border-radius:10px;border:2px solid #dee2e6;">
+            <h3 style="margin:0 0 15px 0;color:#234085;text-align:center;display:flex;align-items:center;justify-content:center;gap:10px;">
+                <span style="font-size:1.3em;">⚡</span>
+                <span>إجراءات سريعة</span>
+            </h3>
+            <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+                <button onclick="quickAddInspection()" style="background:linear-gradient(135deg, #28a745 0%, #20c997 100%);color:#fff;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-weight:bold;box-shadow:0 4px 8px rgba(0,0,0,0.15);transition:all 0.3s ease;display:flex;align-items:center;gap:8px;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 12px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 8px rgba(0,0,0,0.15)'">
+                    <span style="font-size:1.2em;">➕</span>
+                    <span>إضافة خطة سريعة</span>
+                </button>
+                <button onclick="showInlineEditor()" style="background:linear-gradient(135deg, #17a2b8 0%, #138496 100%);color:#fff;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-weight:bold;box-shadow:0 4px 8px rgba(0,0,0,0.15);transition:all 0.3s ease;display:flex;align-items:center;gap:8px;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 12px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 8px rgba(0,0,0,0.15)'">
+                    <span style="font-size:1.2em;">✏️</span>
+                    <span>تعديل مباشر بالجدول</span>
+                </button>
+                <button onclick="showBatchOperations()" style="background:linear-gradient(135deg, #ffc107 0%, #ff9800 100%);color:#000;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-weight:bold;box-shadow:0 4px 8px rgba(0,0,0,0.15);transition:all 0.3s ease;display:flex;align-items:center;gap:8px;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 12px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 8px rgba(0,0,0,0.15)'">
+                    <span style="font-size:1.2em;">🔄</span>
+                    <span>عمليات جماعية</span>
+                </button>
+                <button onclick="refreshDashboardStats()" style="background:linear-gradient(135deg, #6610f2 0%, #9b4dca 100%);color:#fff;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-weight:bold;box-shadow:0 4px 8px rgba(0,0,0,0.15);transition:all 0.3s ease;display:flex;align-items:center;gap:8px;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 12px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 8px rgba(0,0,0,0.15)'">
+                    <span style="font-size:1.2em;">🔄</span>
+                    <span>تحديث الإحصائيات</span>
+                </button>
+            </div>
+        </div>
+        
         <!-- إدارة البيانات الأساسية -->
-        <div id="dataManagementSection" style="margin-bottom:20px;padding:15px;background:#f8f9fa;border-radius:8px;border:1px solid #dee2e6;">
-            <h3 style="margin:0 0 15px 0;color:#234085;text-align:center;">إدارة البيانات الأساسية</h3>
+        <div id="dataManagementSection" style="margin-bottom:20px;padding:20px;background:#ffffff;border-radius:10px;border:2px solid #dee2e6;box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+            <h3 style="margin:0 0 15px 0;color:#234085;text-align:center;display:flex;align-items:center;justify-content:center;gap:10px;">
+                <span style="font-size:1.3em;">🎯</span>
+                <span>إدارة البيانات الأساسية</span>
+            </h3>
             <div style="display:flex;gap:15px;justify-content:center;flex-wrap:wrap;">
                 <button id="manageInspectorsBtn" class="management-btn" style="background:#17a2b8;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">إدارة المفتشين</button>
                 <button id="manageAreasBtn" class="management-btn" style="background:#fd7e14;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">إدارة المناطق</button>
@@ -4560,6 +4612,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Update maintenance close button visibility
         updateMaintenanceCloseButton();
+        
+        // Refresh dashboard statistics
+        setTimeout(() => {
+            if (typeof refreshDashboardStats === 'function') {
+                refreshDashboardStats();
+            }
+        }, 500);
     }
     
     // Start periodic maintenance mode checker
@@ -7449,7 +7508,10 @@ document.getElementById("devLoginBtn").onclick = async function() {
         fillInspectorsDropdowns();
         renderPlanTable();
         // Force table refresh to show edit/delete buttons
-        setTimeout(function() { renderPlanTable(); }, 100);
+        setTimeout(function() { 
+            renderPlanTable();
+            refreshDashboardStats();
+        }, 100);
         
         // تحديث مكتبة الملفات إذا كانت مفتوحة لإظهار أزرار التحرير والحذف
         const fileSectionLogin = document.getElementById('fileManagementSection');
@@ -7688,11 +7750,14 @@ document.getElementById("addEditForm").addEventListener("submit", function(e){
     // If validation passed, save the data
     if(editingIdx==="") {
         inspectionData.push(newPlan);
+        showSmartNotification('✅ تمت إضافة الخطة بنجاح - سيراها جميع المفتشين فوراً', 'success');
     } else {
         inspectionData[editingIdx] = newPlan;
+        showSmartNotification('✅ تم تحديث الخطة بنجاح - التعديلات ستظهر فوراً لجميع المستخدمين', 'success');
     }
     saveInspectionData();
     renderPlanTable();
+    refreshDashboardStats();
     this.reset();
     document.getElementById("formEditingIndex").value = "";
     
@@ -7872,7 +7937,8 @@ function renderPlanTable() {
             '<span style="color:#666;font-style:italic;">لا توجد محلات</span>';
         
         html += `
-            <tr style="border-bottom:1px solid #e0e6f0;">
+            <tr style="border-bottom:1px solid #e0e6f0;${isDev ? 'cursor:pointer;transition:all 0.3s ease;' : ''}" 
+                ${isDev ? `onmouseover="this.style.backgroundColor='#f0f8ff';this.style.transform='scale(1.01)'" onmouseout="this.style.backgroundColor='';this.style.transform='scale(1)'" ondblclick="editPlan(${realIdx})" title="انقر مرتين للتعديل السريع"` : ''}>
                 <td style="padding:12px 8px;font-weight:600;color:#234085;background:#f8faff;">${row.inspector}</td>
                 <td style="padding:12px 8px;text-align:center;font-family:monospace;background:#fff;">${row.day}</td>
                 <td style="padding:12px 8px;text-align:center;background:#f8faff;">
@@ -7884,8 +7950,8 @@ function renderPlanTable() {
                 <td style="padding:12px 8px;background:#f8faff;max-width:300px;">${shopsDisplay}</td>
                 ${isDev?`
                 <td style="padding:8px;text-align:center;background:#fff;">
-                    <button class="edit-btn" onclick="editPlan(${realIdx})" style="margin:2px;">تعديل</button>
-                    <button class="delete-btn" onclick="deletePlan(${realIdx})" style="margin:2px;">حذف</button>
+                    <button class="edit-btn" onclick="editPlan(${realIdx})" style="margin:2px;transition:all 0.3s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">✏️ تعديل</button>
+                    <button class="delete-btn" onclick="deletePlan(${realIdx})" style="margin:2px;transition:all 0.3s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">🗑️ حذف</button>
                 </td>
                 `:``}
             </tr>
@@ -7961,7 +8027,170 @@ function deletePlan(idx) {
     inspectionData.splice(idx,1);
     saveInspectionData();
     renderPlanTable();
+    refreshDashboardStats();
+    showSmartNotification('✅ تم حذف الخطة بنجاح', 'success');
 }
+
+// ===== Enhanced Developer Dashboard Functions =====
+
+// Refresh dashboard statistics
+function refreshDashboardStats() {
+    if (!isDev) return;
+    
+    // Count total inspections
+    const totalInspections = inspectionData.length;
+    document.getElementById('totalInspectionsCount').textContent = totalInspections;
+    
+    // Count unique inspectors
+    const uniqueInspectors = [...new Set(inspectionData.map(plan => plan.inspector))];
+    document.getElementById('totalInspectorsCount').textContent = uniqueInspectors.length;
+    
+    // Count total shops
+    const totalShops = shopsData.length;
+    document.getElementById('totalShopsCount').textContent = totalShops;
+    
+    // Add animation effect
+    ['totalInspectionsCount', 'totalInspectorsCount', 'totalShopsCount'].forEach(id => {
+        const elem = document.getElementById(id);
+        if (elem) {
+            elem.style.animation = 'pulse 0.5s ease';
+            setTimeout(() => elem.style.animation = '', 500);
+        }
+    });
+}
+
+// Quick add inspection function
+function quickAddInspection() {
+    if (!isDev) return;
+    
+    // Scroll to form
+    document.getElementById('formEditingIndex').value = '';
+    window.scrollTo({
+        top: document.getElementById('addEditForm').offsetTop - 100,
+        behavior: 'smooth'
+    });
+    
+    // Focus on first input
+    setTimeout(() => {
+        document.getElementById('formInspector').focus();
+    }, 500);
+    
+    showSmartNotification('📝 املأ النموذج أدناه لإضافة خطة جديدة', 'info');
+}
+
+// Show inline editor mode
+function showInlineEditor() {
+    if (!isDev) return;
+    
+    showSmartNotification('✏️ وضع التعديل المباشر: انقر على أي خطة في الجدول للتعديل', 'info');
+    
+    // Add highlight effect to table
+    const table = document.querySelector('#plansTableContainer table');
+    if (table) {
+        table.style.boxShadow = '0 0 20px rgba(23, 162, 184, 0.5)';
+        setTimeout(() => {
+            table.style.boxShadow = '';
+        }, 2000);
+    }
+}
+
+// Smart notification system
+function showSmartNotification(message, type = 'info') {
+    // Remove existing notification
+    const existing = document.getElementById('smartNotification');
+    if (existing) existing.remove();
+    
+    // Color scheme based on type
+    const colors = {
+        success: { bg: '#d4edda', border: '#c3e6cb', text: '#155724' },
+        error: { bg: '#f8d7da', border: '#f5c6cb', text: '#721c24' },
+        warning: { bg: '#fff3cd', border: '#ffeaa7', text: '#856404' },
+        info: { bg: '#d1ecf1', border: '#bee5eb', text: '#0c5460' }
+    };
+    
+    const color = colors[type] || colors.info;
+    
+    // Create notification
+    const notification = document.createElement('div');
+    notification.id = 'smartNotification';
+    notification.style.cssText = `
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        background: ${color.bg};
+        border: 2px solid ${color.border};
+        color: ${color.text};
+        padding: 15px 25px;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        z-index: 10000;
+        font-weight: 600;
+        font-size: 1.1em;
+        animation: slideInRight 0.3s ease;
+        max-width: 400px;
+        direction: rtl;
+    `;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 4 seconds
+    setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 4000);
+}
+
+// Enhanced save with notification
+const originalSaveInspectionData = saveInspectionData;
+saveInspectionData = function() {
+    originalSaveInspectionData();
+    if (isDev) {
+        refreshDashboardStats();
+        showSmartNotification('💾 تم حفظ البيانات بنجاح - التحديثات ستظهر فوراً لجميع المستخدمين', 'success');
+    }
+};
+
+// Add CSS animation for notifications
+if (!document.getElementById('smartNotificationStyles')) {
+    const style = document.createElement('style');
+    style.id = 'smartNotificationStyles';
+    style.textContent = `
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+// ===== End Enhanced Developer Dashboard Functions =====
 
 // --- وظيفة إظهار/إخفاء قائمة المحلات المنسدلة - محدثة ---
 function toggleShopsDropdown(rowIndex) {

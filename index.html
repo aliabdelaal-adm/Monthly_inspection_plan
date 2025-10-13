@@ -2935,6 +2935,7 @@
                 <button id="manageInspectorsBtn" class="management-btn" style="background:#17a2b8;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">إدارة المفتشين</button>
                 <button id="manageAreasBtn" class="management-btn" style="background:#fd7e14;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">إدارة المناطق</button>
                 <button id="manageShopsBtn" class="management-btn" style="background:#20c997;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">إدارة المحلات</button>
+                <button id="shopPriorityBtn" onclick="showShopPriorityModal()" class="management-btn" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:bold;box-shadow:0 2px 5px rgba(0,0,0,0.15);">📊 أولوية المحلات في التفتيش</button>
             </div>
             <div style="margin-top:15px;padding-top:15px;border-top:1px solid #dee2e6;text-align:center;">
                 <button id="exportDataBtn" onclick="saveToExternalFile()" style="background:#dc3545;color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-weight:bold;">تصدير البيانات إلى ملف JSON</button>
@@ -14290,6 +14291,414 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// ===== وظائف أولوية المحلات في التفتيش =====
+// Shop Priority Recommendation System
+
+/**
+ * تحليل المحلات حسب عدد التفتيشات في فترة زمنية محددة
+ * Analyze shops by inspection count in a specific time period
+ * @param {Date} startDate - تاريخ البداية / Start date
+ * @param {Date} endDate - تاريخ النهاية / End date
+ * @returns {Array} - قائمة المحلات مع عدد التفتيشات / List of shops with inspection counts
+ */
+function analyzeShopInspectionPriority(startDate, endDate) {
+    const startDateStr = startDate.toISOString().split('T')[0];
+    const endDateStr = endDate.toISOString().split('T')[0];
+    
+    // إنشاء خريطة لعدد التفتيشات لكل محل / Create map of inspection counts per shop
+    const shopInspectionMap = {};
+    
+    // تهيئة جميع المحلات بعدد صفر / Initialize all shops with zero count
+    shopsData.forEach(shop => {
+        shopInspectionMap[shop.name] = {
+            shopName: shop.name,
+            shopId: shop.id,
+            areaId: shop.areaId,
+            areaName: getAreaName(shop.areaId),
+            inspectionCount: 0,
+            lastInspectionDate: null,
+            inspectors: []
+        };
+    });
+    
+    // حساب عدد التفتيشات لكل محل في الفترة المحددة / Count inspections per shop in the period
+    inspectionData.forEach(inspection => {
+        const inspectionDate = inspection.day;
+        
+        // التحقق من أن التفتيش في الفترة المحددة / Check if inspection is in the period
+        if (inspectionDate >= startDateStr && inspectionDate <= endDateStr) {
+            if (inspection.shops && Array.isArray(inspection.shops)) {
+                inspection.shops.forEach(shopName => {
+                    if (shopInspectionMap[shopName]) {
+                        shopInspectionMap[shopName].inspectionCount++;
+                        
+                        // تحديث آخر تاريخ تفتيش / Update last inspection date
+                        if (!shopInspectionMap[shopName].lastInspectionDate || 
+                            inspectionDate > shopInspectionMap[shopName].lastInspectionDate) {
+                            shopInspectionMap[shopName].lastInspectionDate = inspectionDate;
+                        }
+                        
+                        // إضافة المفتش إلى القائمة / Add inspector to list
+                        if (!shopInspectionMap[shopName].inspectors.includes(inspection.inspector)) {
+                            shopInspectionMap[shopName].inspectors.push(inspection.inspector);
+                        }
+                    }
+                });
+            }
+        }
+    });
+    
+    // تحويل الخريطة إلى مصفوفة وترتيبها / Convert map to array and sort
+    const priorityList = Object.values(shopInspectionMap)
+        .sort((a, b) => {
+            // ترتيب حسب عدد التفتيشات (الأقل أولاً) / Sort by inspection count (least first)
+            if (a.inspectionCount !== b.inspectionCount) {
+                return a.inspectionCount - b.inspectionCount;
+            }
+            // إذا كان العدد متساوياً، رتب حسب آخر تاريخ تفتيش (الأقدم أولاً) / If equal, sort by last inspection (oldest first)
+            if (a.lastInspectionDate && b.lastInspectionDate) {
+                return a.lastInspectionDate.localeCompare(b.lastInspectionDate);
+            }
+            if (!a.lastInspectionDate) return -1;
+            if (!b.lastInspectionDate) return 1;
+            return 0;
+        });
+    
+    return priorityList;
+}
+
+/**
+ * الحصول على المحلات ذات الأولوية في التفتيش للشهر السابق
+ * Get priority shops for previous month
+ * @returns {Object} - معلومات التحليل / Analysis information
+ */
+function getPreviousMonthPriorityShops() {
+    const now = new Date();
+    const firstDayOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDayOfPreviousMonth = new Date(firstDayOfCurrentMonth);
+    lastDayOfPreviousMonth.setDate(lastDayOfPreviousMonth.getDate() - 1);
+    const firstDayOfPreviousMonth = new Date(lastDayOfPreviousMonth.getFullYear(), lastDayOfPreviousMonth.getMonth(), 1);
+    
+    const priorityList = analyzeShopInspectionPriority(firstDayOfPreviousMonth, lastDayOfPreviousMonth);
+    
+    return {
+        period: 'previous_month',
+        periodName: 'الشهر السابق',
+        startDate: firstDayOfPreviousMonth.toISOString().split('T')[0],
+        endDate: lastDayOfPreviousMonth.toISOString().split('T')[0],
+        monthName: lastDayOfPreviousMonth.toLocaleDateString('ar-EG', { month: 'long', year: 'numeric' }),
+        shops: priorityList,
+        totalShops: priorityList.length,
+        uninspectedCount: priorityList.filter(s => s.inspectionCount === 0).length,
+        leastInspectedCount: priorityList.filter(s => s.inspectionCount > 0 && s.inspectionCount <= 2).length
+    };
+}
+
+/**
+ * الحصول على المحلات ذات الأولوية في النصف الأول من الشهر الحالي
+ * Get priority shops for first half of current month
+ * @returns {Object} - معلومات التحليل / Analysis information
+ */
+function getCurrentMonthFirstHalfPriorityShops() {
+    const now = new Date();
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const fifteenthDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 15);
+    
+    const priorityList = analyzeShopInspectionPriority(firstDayOfMonth, fifteenthDayOfMonth);
+    
+    return {
+        period: 'current_month_first_half',
+        periodName: 'النصف الأول من الشهر الحالي',
+        startDate: firstDayOfMonth.toISOString().split('T')[0],
+        endDate: fifteenthDayOfMonth.toISOString().split('T')[0],
+        monthName: now.toLocaleDateString('ar-EG', { month: 'long', year: 'numeric' }),
+        shops: priorityList,
+        totalShops: priorityList.length,
+        uninspectedCount: priorityList.filter(s => s.inspectionCount === 0).length,
+        leastInspectedCount: priorityList.filter(s => s.inspectionCount > 0 && s.inspectionCount <= 1).length
+    };
+}
+
+/**
+ * عرض نافذة أولوية المحلات للمطور
+ * Show shop priority modal for developer
+ */
+function showShopPriorityModal() {
+    // التحقق من أن المستخدم مطور / Check if user is developer
+    if (!isDev) {
+        alert('هذه الميزة متاحة للمطورين فقط');
+        return;
+    }
+    
+    // إنشاء أو الحصول على عنصر المودال / Create or get modal element
+    let modal = document.getElementById('shopPriorityModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'shopPriorityModal';
+        modal.style.cssText = `
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6);
+            padding: 20px;
+        `;
+        document.body.appendChild(modal);
+    }
+    
+    // تحليل البيانات / Analyze data
+    const previousMonthAnalysis = getPreviousMonthPriorityShops();
+    const currentMonthFirstHalfAnalysis = getCurrentMonthFirstHalfPriorityShops();
+    
+    // بناء محتوى المودال / Build modal content
+    const modalContent = `
+        <div style="background: white; margin: auto; max-width: 1200px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); position: relative; max-height: 90vh; overflow-y: auto;">
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px 30px; border-radius: 12px 12px 0 0; position: sticky; top: 0; z-index: 100;">
+                <h2 style="margin: 0; font-size: 1.8em; display: flex; align-items: center; gap: 10px;">
+                    <span>📊</span>
+                    <span>أولوية المحلات في التفتيش</span>
+                </h2>
+                <p style="margin: 8px 0 0 0; font-size: 0.95em; opacity: 0.95;">
+                    تحليل ذكي للمحلات التي تحتاج أولوية في خطة التفتيش
+                </p>
+                <button onclick="closeShopPriorityModal()" style="position: absolute; top: 15px; left: 15px; background: rgba(255,255,255,0.2); border: none; color: white; font-size: 1.5em; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">×</button>
+            </div>
+            
+            <!-- Content -->
+            <div style="padding: 30px;">
+                <!-- Previous Month Analysis -->
+                <div style="margin-bottom: 40px;">
+                    <h3 style="color: #667eea; font-size: 1.5em; margin: 0 0 15px 0; display: flex; align-items: center; gap: 10px;">
+                        <span>📅</span>
+                        <span>الشهر السابق: ${previousMonthAnalysis.monthName}</span>
+                    </h3>
+                    <div style="background: #f7fafc; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                            <div style="background: white; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <div style="font-size: 2em; color: #dc3545; font-weight: bold;">${previousMonthAnalysis.uninspectedCount}</div>
+                                <div style="color: #666; font-size: 0.9em; margin-top: 5px;">محلات لم يتم تفتيشها</div>
+                            </div>
+                            <div style="background: white; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <div style="font-size: 2em; color: #ffc107; font-weight: bold;">${previousMonthAnalysis.leastInspectedCount}</div>
+                                <div style="color: #666; font-size: 0.9em; margin-top: 5px;">محلات قليلة التفتيش (1-2)</div>
+                            </div>
+                            <div style="background: white; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <div style="font-size: 2em; color: #28a745; font-weight: bold;">${previousMonthAnalysis.totalShops - previousMonthAnalysis.uninspectedCount - previousMonthAnalysis.leastInspectedCount}</div>
+                                <div style="color: #666; font-size: 0.9em; margin-top: 5px;">محلات تم تفتيشها بشكل كافٍ</div>
+                            </div>
+                        </div>
+                    </div>
+                    ${generatePriorityTable(previousMonthAnalysis, 'previousMonth')}
+                </div>
+                
+                <!-- Current Month First Half Analysis -->
+                <div style="margin-bottom: 20px;">
+                    <h3 style="color: #764ba2; font-size: 1.5em; margin: 0 0 15px 0; display: flex; align-items: center; gap: 10px;">
+                        <span>📆</span>
+                        <span>النصف الأول من الشهر الحالي: ${currentMonthFirstHalfAnalysis.monthName}</span>
+                    </h3>
+                    <div style="background: #f7fafc; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                            <div style="background: white; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <div style="font-size: 2em; color: #dc3545; font-weight: bold;">${currentMonthFirstHalfAnalysis.uninspectedCount}</div>
+                                <div style="color: #666; font-size: 0.9em; margin-top: 5px;">محلات لم يتم تفتيشها</div>
+                            </div>
+                            <div style="background: white; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <div style="font-size: 2em; color: #ffc107; font-weight: bold;">${currentMonthFirstHalfAnalysis.leastInspectedCount}</div>
+                                <div style="color: #666; font-size: 0.9em; margin-top: 5px;">محلات قليلة التفتيش (1)</div>
+                            </div>
+                            <div style="background: white; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <div style="font-size: 2em; color: #28a745; font-weight: bold;">${currentMonthFirstHalfAnalysis.totalShops - currentMonthFirstHalfAnalysis.uninspectedCount - currentMonthFirstHalfAnalysis.leastInspectedCount}</div>
+                                <div style="color: #666; font-size: 0.9em; margin-top: 5px;">محلات تم تفتيشها بشكل كافٍ</div>
+                            </div>
+                        </div>
+                    </div>
+                    ${generatePriorityTable(currentMonthFirstHalfAnalysis, 'currentMonth')}
+                </div>
+                
+                <!-- Instructions -->
+                <div style="background: #e7f3ff; border-left: 4px solid #667eea; padding: 15px; border-radius: 8px; margin-top: 30px;">
+                    <h4 style="margin: 0 0 10px 0; color: #667eea; font-size: 1.1em;">💡 كيفية الاستخدام:</h4>
+                    <ul style="margin: 0; padding-right: 20px; line-height: 1.8;">
+                        <li>المحلات مرتبة حسب الأولوية (الأقل تفتيشاً أولاً)</li>
+                        <li><strong style="color: #dc3545;">الأحمر:</strong> لم يتم تفتيش المحل - أولوية عالية جداً</li>
+                        <li><strong style="color: #ffc107;">الأصفر:</strong> تم تفتيش المحل مرة أو مرتين فقط - أولوية متوسطة</li>
+                        <li><strong style="color: #28a745;">الأخضر:</strong> تم تفتيش المحل بشكل كافٍ</li>
+                        <li>استخدم هذه القائمة لتحديد أولويات خطة التفتيش القادمة</li>
+                        <li>يمكنك تصدير النتائج بالنقر على زر "تصدير النتائج"</li>
+                    </ul>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div style="margin-top: 25px; text-align: center; display: flex; gap: 15px; justify-content: center;">
+                    <button onclick="exportShopPriorityResults()" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+                        📥 تصدير النتائج (Excel)
+                    </button>
+                    <button onclick="closeShopPriorityModal()" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%); color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+                        إغلاق
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    modal.innerHTML = modalContent;
+    modal.style.display = 'block';
+}
+
+/**
+ * توليد جدول الأولويات
+ * Generate priority table
+ */
+function generatePriorityTable(analysis, prefix) {
+    // عرض أول 50 محل فقط (الأكثر أولوية) / Show only first 50 shops (highest priority)
+    const shopsToShow = analysis.shops.slice(0, 50);
+    
+    let tableHTML = `
+        <div style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+                    <thead>
+                        <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                            <th style="padding: 12px; text-align: center; font-weight: bold;">#</th>
+                            <th style="padding: 12px; text-align: right; font-weight: bold;">اسم المحل</th>
+                            <th style="padding: 12px; text-align: center; font-weight: bold;">المنطقة</th>
+                            <th style="padding: 12px; text-align: center; font-weight: bold;">عدد التفتيشات</th>
+                            <th style="padding: 12px; text-align: center; font-weight: bold;">آخر تفتيش</th>
+                            <th style="padding: 12px; text-align: center; font-weight: bold;">الأولوية</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+    `;
+    
+    shopsToShow.forEach((shop, index) => {
+        let priorityLabel = '';
+        let priorityColor = '';
+        let bgColor = '';
+        
+        if (shop.inspectionCount === 0) {
+            priorityLabel = 'عالية جداً 🔴';
+            priorityColor = '#dc3545';
+            bgColor = index % 2 === 0 ? '#fff5f5' : '#ffe5e5';
+        } else if (shop.inspectionCount <= 2 && analysis.period === 'previous_month') {
+            priorityLabel = 'متوسطة 🟡';
+            priorityColor = '#ffc107';
+            bgColor = index % 2 === 0 ? '#fffdf0' : '#fff9e6';
+        } else if (shop.inspectionCount <= 1 && analysis.period === 'current_month_first_half') {
+            priorityLabel = 'متوسطة 🟡';
+            priorityColor = '#ffc107';
+            bgColor = index % 2 === 0 ? '#fffdf0' : '#fff9e6';
+        } else {
+            priorityLabel = 'منخفضة 🟢';
+            priorityColor = '#28a745';
+            bgColor = index % 2 === 0 ? '#f0fff4' : '#e6f9ec';
+        }
+        
+        tableHTML += `
+            <tr style="background: ${bgColor}; border-bottom: 1px solid #e0e0e0;">
+                <td style="padding: 10px; text-align: center; font-weight: bold; color: #666;">${index + 1}</td>
+                <td style="padding: 10px; text-align: right; font-weight: 600; color: #333;">${shop.shopName}</td>
+                <td style="padding: 10px; text-align: center; color: #666;">${shop.areaName || 'غير محدد'}</td>
+                <td style="padding: 10px; text-align: center;">
+                    <span style="background: ${priorityColor}; color: white; padding: 4px 12px; border-radius: 12px; font-weight: bold; font-size: 0.95em;">
+                        ${shop.inspectionCount}
+                    </span>
+                </td>
+                <td style="padding: 10px; text-align: center; color: ${shop.lastInspectionDate ? '#666' : '#dc3545'}; font-size: 0.9em;">
+                    ${shop.lastInspectionDate ? new Date(shop.lastInspectionDate).toLocaleDateString('ar-EG') : 'لم يتم بعد'}
+                </td>
+                <td style="padding: 10px; text-align: center; color: ${priorityColor}; font-weight: bold;">
+                    ${priorityLabel}
+                </td>
+            </tr>
+        `;
+    });
+    
+    tableHTML += `
+                    </tbody>
+                </table>
+            </div>
+            ${analysis.shops.length > 50 ? `
+                <div style="padding: 15px; text-align: center; background: #f7fafc; border-top: 1px solid #e0e0e0; color: #666;">
+                    عرض أول 50 محل من أصل ${analysis.shops.length} محل. للحصول على القائمة الكاملة، قم بتصدير النتائج.
+                </div>
+            ` : ''}
+        </div>
+    `;
+    
+    return tableHTML;
+}
+
+/**
+ * إغلاق نافذة الأولويات
+ * Close priority modal
+ */
+function closeShopPriorityModal() {
+    const modal = document.getElementById('shopPriorityModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+/**
+ * تصدير نتائج الأولويات إلى Excel
+ * Export priority results to Excel
+ */
+function exportShopPriorityResults() {
+    const previousMonthAnalysis = getPreviousMonthPriorityShops();
+    const currentMonthFirstHalfAnalysis = getCurrentMonthFirstHalfPriorityShops();
+    
+    // بناء بيانات Excel / Build Excel data
+    let csvContent = '\uFEFF'; // UTF-8 BOM for Arabic support
+    
+    // الشهر السابق / Previous Month
+    csvContent += `تقرير أولوية المحلات في التفتيش\n`;
+    csvContent += `\n`;
+    csvContent += `القسم الأول: الشهر السابق - ${previousMonthAnalysis.monthName}\n`;
+    csvContent += `الفترة: من ${previousMonthAnalysis.startDate} إلى ${previousMonthAnalysis.endDate}\n`;
+    csvContent += `\n`;
+    csvContent += `#,اسم المحل,المنطقة,عدد التفتيشات,آخر تفتيش,الأولوية\n`;
+    
+    previousMonthAnalysis.shops.forEach((shop, index) => {
+        let priorityLabel = shop.inspectionCount === 0 ? 'عالية جداً' : 
+                           shop.inspectionCount <= 2 ? 'متوسطة' : 'منخفضة';
+        csvContent += `${index + 1},"${shop.shopName}","${shop.areaName || 'غير محدد'}",${shop.inspectionCount},"${shop.lastInspectionDate ? new Date(shop.lastInspectionDate).toLocaleDateString('ar-EG') : 'لم يتم بعد'}","${priorityLabel}"\n`;
+    });
+    
+    // النصف الأول من الشهر الحالي / Current Month First Half
+    csvContent += `\n\n`;
+    csvContent += `القسم الثاني: النصف الأول من الشهر الحالي - ${currentMonthFirstHalfAnalysis.monthName}\n`;
+    csvContent += `الفترة: من ${currentMonthFirstHalfAnalysis.startDate} إلى ${currentMonthFirstHalfAnalysis.endDate}\n`;
+    csvContent += `\n`;
+    csvContent += `#,اسم المحل,المنطقة,عدد التفتيشات,آخر تفتيش,الأولوية\n`;
+    
+    currentMonthFirstHalfAnalysis.shops.forEach((shop, index) => {
+        let priorityLabel = shop.inspectionCount === 0 ? 'عالية جداً' : 
+                           shop.inspectionCount <= 1 ? 'متوسطة' : 'منخفضة';
+        csvContent += `${index + 1},"${shop.shopName}","${shop.areaName || 'غير محدد'}",${shop.inspectionCount},"${shop.lastInspectionDate ? new Date(shop.lastInspectionDate).toLocaleDateString('ar-EG') : 'لم يتم بعد'}","${priorityLabel}"\n`;
+    });
+    
+    // إنشاء وتنزيل الملف / Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    const timestamp = new Date().toISOString().split('T')[0];
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `تقرير_أولوية_المحلات_${timestamp}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    alert('✅ تم تصدير التقرير بنجاح!\n\nيمكنك فتح الملف في Excel لمراجعة القائمة الكاملة.');
+}
 
 // ===== وظائف التدوير الذكي للمحلات على المفتشين =====
 

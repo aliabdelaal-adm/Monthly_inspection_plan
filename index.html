@@ -3253,6 +3253,11 @@
                             <span class="icon">📊</span>
                             <span class="label">التقارير المتقدمة</span>
                         </button>
+                        
+                        <button class="icon-btn smart-stats-btn tooltip" onclick="showSmartMonthlyStatsReport()" data-tooltip="إحصائيات شهرية ذكية ومبتكرة">
+                            <span class="icon">🎯</span>
+                            <span class="label">الإحصائيات الذكية</span>
+                        </button>
                     </div>
                 </div>
 
@@ -3348,6 +3353,52 @@
             <button class="excel-btn" onclick="exportMonthlyReportToExcel()">حفظ التقرير كـ Excel</button>
         </div>
         <div id="monthlyReportContent"></div>
+      </div>
+    </div>
+
+    <!-- مودال الإحصائيات الذكية -->
+    <div id="smartStatsModal" class="modal-overlay" style="display:none;">
+      <div class="modal-content" style="max-width: 1200px;">
+        <button class="close-btn" onclick="closeSmartStatsModal()">×</button>
+        <div class="stats-title">📊 الإحصائيات الشهرية الذكية</div>
+        <div class="modal-actions">
+            <button class="pdf-btn" onclick="exportSmartStatsToPDF()">حفظ التقرير كـ PDF</button>
+            <button class="excel-btn" onclick="exportSmartStatsToExcel()">حفظ التقرير كـ Excel</button>
+        </div>
+        
+        <!-- خيارات الشهر -->
+        <div style="margin-bottom:20px;padding:15px;background:#f8f9fa;border-radius:8px;">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;">
+                <div>
+                    <label style="display:block;margin-bottom:5px;font-weight:bold;">الشهر:</label>
+                    <select id="smartStatsMonth" onchange="refreshSmartStats()" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;">
+                        <option value="">-- جميع الأشهر --</option>
+                        <option value="1">يناير</option>
+                        <option value="2">فبراير</option>
+                        <option value="3">مارس</option>
+                        <option value="4">أبريل</option>
+                        <option value="5">مايو</option>
+                        <option value="6">يونيو</option>
+                        <option value="7">يوليو</option>
+                        <option value="8">أغسطس</option>
+                        <option value="9">سبتمبر</option>
+                        <option value="10">أكتوبر</option>
+                        <option value="11">نوفمبر</option>
+                        <option value="12">ديسمبر</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display:block;margin-bottom:5px;font-weight:bold;">السنة:</label>
+                    <select id="smartStatsYear" onchange="refreshSmartStats()" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;">
+                        <option value="2025">2025</option>
+                        <option value="2024" selected>2024</option>
+                        <option value="2023">2023</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div id="smartStatsContent"></div>
       </div>
     </div>
 
@@ -10302,6 +10353,767 @@ function exportMonthlyReportToExcel() {
     
     XLSX.utils.book_append_sheet(wb, ws, "التقرير الشهري");
     XLSX.writeFile(wb, `التقرير_الشهري_${new Date().toISOString().split('T')[0]}.xlsx`);
+}
+
+// --- Smart Monthly Statistics Functions ---
+function showSmartMonthlyStatsReport() {
+    // Set current month and year as default
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth() + 1;
+    const currentYear = currentDate.getFullYear();
+    
+    document.getElementById('smartStatsMonth').value = currentMonth;
+    document.getElementById('smartStatsYear').value = currentYear;
+    
+    // Generate and display the report
+    refreshSmartStats();
+    
+    // Show the modal
+    document.getElementById('smartStatsModal').style.display = 'flex';
+}
+
+function closeSmartStatsModal() {
+    document.getElementById('smartStatsModal').style.display = 'none';
+}
+
+function refreshSmartStats() {
+    const selectedMonth = document.getElementById('smartStatsMonth').value;
+    const selectedYear = document.getElementById('smartStatsYear').value;
+    
+    // Filter data by selected month and year
+    let filteredData = inspectionData;
+    
+    if (selectedMonth || selectedYear) {
+        filteredData = inspectionData.filter(item => {
+            const itemDate = new Date(item.day);
+            const itemMonth = itemDate.getMonth() + 1;
+            const itemYear = itemDate.getFullYear();
+            
+            if (selectedMonth && selectedYear) {
+                return itemMonth == selectedMonth && itemYear == selectedYear;
+            } else if (selectedMonth) {
+                return itemMonth == selectedMonth;
+            } else if (selectedYear) {
+                return itemYear == selectedYear;
+            }
+            return true;
+        });
+    }
+    
+    const stats = generateSmartMonthlyStats(filteredData);
+    displaySmartStats(stats, selectedMonth, selectedYear);
+}
+
+function generateSmartMonthlyStats(data) {
+    const stats = {
+        totalInspections: data.length,
+        totalShops: 0,
+        uniqueShops: new Set(),
+        inspectorStats: {},
+        areaStats: {},
+        shopStats: {},
+        shiftStats: { morning: 0, evening: 0 },
+        dayOfWeekStats: {},
+        vacationDays: {},
+        weekendInspections: 0,
+        averageShopsPerDay: 0,
+        mostProductiveDay: null,
+        leastProductiveDay: null
+    };
+    
+    // Initialize day of week stats
+    const daysAr = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    daysAr.forEach(day => stats.dayOfWeekStats[day] = 0);
+    
+    // Process each inspection
+    data.forEach(item => {
+        // Inspector stats
+        if (!stats.inspectorStats[item.inspector]) {
+            stats.inspectorStats[item.inspector] = {
+                inspections: 0,
+                shops: 0,
+                areas: new Set(),
+                morningShifts: 0,
+                eveningShifts: 0,
+                weekendDays: 0,
+                workDays: new Set()
+            };
+        }
+        
+        const inspectorStat = stats.inspectorStats[item.inspector];
+        inspectorStat.inspections++;
+        inspectorStat.workDays.add(item.day);
+        
+        if (item.shift === 'صباحية') {
+            inspectorStat.morningShifts++;
+            stats.shiftStats.morning++;
+        } else if (item.shift === 'مسائية') {
+            inspectorStat.eveningShifts++;
+            stats.shiftStats.evening++;
+        }
+        
+        inspectorStat.areas.add(item.area);
+        
+        // Area stats
+        if (!stats.areaStats[item.area]) {
+            stats.areaStats[item.area] = { visits: 0, shops: 0, inspectors: new Set() };
+        }
+        stats.areaStats[item.area].visits++;
+        stats.areaStats[item.area].inspectors.add(item.inspector);
+        
+        // Shop stats
+        if (item.shops) {
+            item.shops.forEach(shop => {
+                stats.uniqueShops.add(shop);
+                stats.totalShops++;
+                inspectorStat.shops++;
+                stats.areaStats[item.area].shops++;
+                
+                if (!stats.shopStats[shop]) {
+                    stats.shopStats[shop] = { count: 0, inspectors: new Set(), areas: new Set() };
+                }
+                stats.shopStats[shop].count++;
+                stats.shopStats[shop].inspectors.add(item.inspector);
+                stats.shopStats[shop].areas.add(item.area);
+            });
+        }
+        
+        // Day of week stats
+        const dayOfWeek = new Date(item.day).getDay();
+        const dayNameAr = daysAr[dayOfWeek];
+        stats.dayOfWeekStats[dayNameAr] += (item.shops ? item.shops.length : 0);
+        
+        // Weekend stats
+        if ([5, 6, 0].includes(dayOfWeek)) {
+            stats.weekendInspections++;
+            inspectorStat.weekendDays++;
+        }
+    });
+    
+    // Calculate vacation days (days not worked in the period)
+    if (data.length > 0) {
+        const allDays = Array.from(new Set(data.map(r => r.day))).sort();
+        const totalDays = allDays.length;
+        
+        Object.keys(stats.inspectorStats).forEach(inspector => {
+            const workDays = stats.inspectorStats[inspector].workDays.size;
+            stats.vacationDays[inspector] = totalDays - workDays;
+        });
+    }
+    
+    // Calculate daily shop counts
+    const dailyShopCounts = {};
+    data.forEach(item => {
+        if (!dailyShopCounts[item.day]) {
+            dailyShopCounts[item.day] = 0;
+        }
+        dailyShopCounts[item.day] += (item.shops ? item.shops.length : 0);
+    });
+    
+    // Find most and least productive days
+    if (Object.keys(dailyShopCounts).length > 0) {
+        const days = Object.keys(dailyShopCounts);
+        stats.mostProductiveDay = days.reduce((a, b) => dailyShopCounts[a] > dailyShopCounts[b] ? a : b);
+        stats.leastProductiveDay = days.reduce((a, b) => dailyShopCounts[a] < dailyShopCounts[b] ? a : b);
+        stats.averageShopsPerDay = stats.totalShops / days.length;
+    }
+    
+    return stats;
+}
+
+function displaySmartStats(stats, selectedMonth, selectedYear) {
+    let monthName = '';
+    if (selectedMonth) {
+        const monthNames = ['', 'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+        monthName = monthNames[parseInt(selectedMonth)];
+    }
+    
+    let periodTitle = '';
+    if (selectedMonth && selectedYear) {
+        periodTitle = `${monthName} ${selectedYear}`;
+    } else if (selectedMonth) {
+        periodTitle = `شهر ${monthName}`;
+    } else if (selectedYear) {
+        periodTitle = `سنة ${selectedYear}`;
+    } else {
+        periodTitle = 'جميع الفترات';
+    }
+    
+    let html = `
+    <div class="pdf-title-arabic" id="smartStatsTitle">
+        📊 الإحصائيات الشهرية الذكية - ${periodTitle}
+    </div>`;
+    
+    // === 1. Overall Summary Cards ===
+    html += `
+    <div style="margin-bottom: 25px;">
+        <h3 style="color: #234085; margin-bottom: 15px; border-bottom: 3px solid #234085; padding-bottom: 10px;">
+            📈 نظرة عامة
+        </h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 12px; text-align: center; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="font-size: 2.5em; font-weight: bold; margin-bottom: 5px;">${stats.totalInspections}</div>
+                <div style="font-size: 0.9em; opacity: 0.9;">إجمالي الزيارات التفتيشية</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 12px; text-align: center; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="font-size: 2.5em; font-weight: bold; margin-bottom: 5px;">${stats.totalShops}</div>
+                <div style="font-size: 0.9em; opacity: 0.9;">تفتيش محل</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 20px; border-radius: 12px; text-align: center; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="font-size: 2.5em; font-weight: bold; margin-bottom: 5px;">${stats.uniqueShops.size}</div>
+                <div style="font-size: 0.9em; opacity: 0.9;">محل فريد</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); padding: 20px; border-radius: 12px; text-align: center; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="font-size: 2.5em; font-weight: bold; margin-bottom: 5px;">${Object.keys(stats.areaStats).length}</div>
+                <div style="font-size: 0.9em; opacity: 0.9;">منطقة مغطاة</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); padding: 20px; border-radius: 12px; text-align: center; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="font-size: 2.5em; font-weight: bold; margin-bottom: 5px;">${Object.keys(stats.inspectorStats).length}</div>
+                <div style="font-size: 0.9em; opacity: 0.9;">مفتش نشط</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); padding: 20px; border-radius: 12px; text-align: center; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="font-size: 2.5em; font-weight: bold; margin-bottom: 5px;">${stats.averageShopsPerDay.toFixed(1)}</div>
+                <div style="font-size: 0.9em; opacity: 0.9;">متوسط التفتيش اليومي</div>
+            </div>
+        </div>
+    </div>`;
+    
+    // === 2. Top Performers - Most Active Inspector ===
+    const inspectorsList = Object.entries(stats.inspectorStats)
+        .sort((a, b) => b[1].shops - a[1].shops);
+    
+    if (inspectorsList.length > 0) {
+        const topInspector = inspectorsList[0];
+        html += `
+        <div style="margin-bottom: 25px;">
+            <h3 style="color: #234085; margin-bottom: 15px; border-bottom: 3px solid #234085; padding-bottom: 10px;">
+                🏆 المفتش الأكثر نشاطاً وتفتيشاً
+            </h3>
+            <div style="background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%); padding: 25px; border-radius: 12px; color: white; box-shadow: 0 6px 12px rgba(0,0,0,0.15);">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; align-items: center;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 3em; margin-bottom: 10px;">👨‍⚕️</div>
+                        <div style="font-size: 1.4em; font-weight: bold;">${topInspector[0]}</div>
+                        <div style="font-size: 0.9em; opacity: 0.9; margin-top: 5px;">المفتش الأكثر إنجازاً</div>
+                    </div>
+                    <div>
+                        <div style="margin-bottom: 10px;"><strong>🏪 عدد المحلات المفتشة:</strong> ${topInspector[1].shops} محل</div>
+                        <div style="margin-bottom: 10px;"><strong>📍 المناطق المغطاة:</strong> ${topInspector[1].areas.size} منطقة</div>
+                        <div style="margin-bottom: 10px;"><strong>📅 أيام العمل:</strong> ${topInspector[1].workDays.size} يوم</div>
+                    </div>
+                    <div>
+                        <div style="margin-bottom: 10px;"><strong>☀️ مناوبات صباحية:</strong> ${topInspector[1].morningShifts}</div>
+                        <div style="margin-bottom: 10px;"><strong>🌙 مناوبات مسائية:</strong> ${topInspector[1].eveningShifts}</div>
+                        <div style="margin-bottom: 10px;"><strong>🎯 متوسط التفتيش اليومي:</strong> ${(topInspector[1].shops / topInspector[1].workDays.size).toFixed(1)} محل/يوم</div>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }
+    
+    // === 3. All Inspectors Performance Table ===
+    html += `
+    <div style="margin-bottom: 25px;">
+        <h3 style="color: #234085; margin-bottom: 15px; border-bottom: 3px solid #234085; padding-bottom: 10px;">
+            👥 أداء جميع المفتشين
+        </h3>
+        <div style="overflow-x: auto;">
+            <table class="stats-table" style="width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <thead>
+                    <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        <th style="padding: 12px; text-align: right; border: 1px solid #ddd;">المفتش</th>
+                        <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">المحلات</th>
+                        <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">المناطق</th>
+                        <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">أيام العمل</th>
+                        <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">أيام الإجازة</th>
+                        <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">صباحية</th>
+                        <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">مسائية</th>
+                        <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">عطلة</th>
+                        <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">الكفاءة</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+    
+    inspectorsList.forEach(([inspector, data], index) => {
+        const bgColor = index % 2 === 0 ? '#f8f9fa' : 'white';
+        const efficiency = (data.shops / data.workDays.size).toFixed(1);
+        html += `
+                    <tr style="background: ${bgColor};">
+                        <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">${inspector}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #667eea; font-weight: bold;">${data.shops}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #4facfe;">${data.areas.size}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #43e97b;">${data.workDays.size}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #f5576c;">${stats.vacationDays[inspector] || 0}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #ffd700;">${data.morningShifts}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #ff8c00;">${data.eveningShifts}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #9c27b0;">${data.weekendDays}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; font-weight: bold; color: #19547b;">${efficiency}</td>
+                    </tr>`;
+    });
+    
+    html += `
+                </tbody>
+            </table>
+        </div>
+    </div>`;
+    
+    // === 4. Most Inspected Shops ===
+    const topShops = Object.entries(stats.shopStats)
+        .sort((a, b) => b[1].count - a[1].count)
+        .slice(0, 10);
+    
+    if (topShops.length > 0) {
+        html += `
+        <div style="margin-bottom: 25px;">
+            <h3 style="color: #234085; margin-bottom: 15px; border-bottom: 3px solid #234085; padding-bottom: 10px;">
+                🏪 المحلات الأكثر تفتيشاً (أعلى 10)
+            </h3>
+            <div style="overflow-x: auto;">
+                <table class="stats-table" style="width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <thead>
+                        <tr style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                            <th style="padding: 12px; text-align: right; border: 1px solid #ddd;">المحل</th>
+                            <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">عدد الزيارات</th>
+                            <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">عدد المفتشين</th>
+                            <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">المناطق</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+        
+        topShops.forEach(([shop, data], index) => {
+            const bgColor = index % 2 === 0 ? '#f8f9fa' : 'white';
+            const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+            html += `
+                        <tr style="background: ${bgColor};">
+                            <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">${medal} ${shop}</td>
+                            <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #f5576c; font-weight: bold;">${data.count}</td>
+                            <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #4facfe;">${data.inspectors.size}</td>
+                            <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #43e97b;">${Array.from(data.areas).join(', ')}</td>
+                        </tr>`;
+        });
+        
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        </div>`;
+    }
+    
+    // === 5. Most Visited Areas ===
+    const topAreas = Object.entries(stats.areaStats)
+        .sort((a, b) => b[1].visits - a[1].visits)
+        .slice(0, 10);
+    
+    if (topAreas.length > 0) {
+        html += `
+        <div style="margin-bottom: 25px;">
+            <h3 style="color: #234085; margin-bottom: 15px; border-bottom: 3px solid #234085; padding-bottom: 10px;">
+                📍 المناطق الأكثر زيارة (أعلى 10)
+            </h3>
+            <div style="overflow-x: auto;">
+                <table class="stats-table" style="width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <thead>
+                        <tr style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+                            <th style="padding: 12px; text-align: right; border: 1px solid #ddd;">المنطقة</th>
+                            <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">عدد الزيارات</th>
+                            <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">المحلات المفتشة</th>
+                            <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">عدد المفتشين</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+        
+        topAreas.forEach(([area, data], index) => {
+            const bgColor = index % 2 === 0 ? '#f8f9fa' : 'white';
+            const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+            html += `
+                        <tr style="background: ${bgColor};">
+                            <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">${medal} ${area}</td>
+                            <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #43e97b; font-weight: bold;">${data.visits}</td>
+                            <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #f5576c;">${data.shops}</td>
+                            <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #4facfe;">${data.inspectors.size}</td>
+                        </tr>`;
+        });
+        
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        </div>`;
+    }
+    
+    // === 6. Shift and Weekend Analysis ===
+    html += `
+    <div style="margin-bottom: 25px;">
+        <h3 style="color: #234085; margin-bottom: 15px; border-bottom: 3px solid #234085; padding-bottom: 10px;">
+            ⏰ تحليل المناوبات والعطلات
+        </h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+            <div style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="text-align: center; margin-bottom: 15px; font-size: 2.5em;">☀️</div>
+                <div style="font-size: 1.8em; font-weight: bold; text-align: center; color: #d35400; margin-bottom: 5px;">${stats.shiftStats.morning}</div>
+                <div style="text-align: center; color: #666; font-size: 0.95em;">مناوبة صباحية</div>
+                <div style="text-align: center; color: #666; font-size: 0.85em; margin-top: 5px;">
+                    (${stats.totalInspections > 0 ? ((stats.shiftStats.morning / stats.totalInspections) * 100).toFixed(1) : 0}%)
+                </div>
+            </div>
+            <div style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="text-align: center; margin-bottom: 15px; font-size: 2.5em;">🌙</div>
+                <div style="font-size: 1.8em; font-weight: bold; text-align: center; color: #8e44ad; margin-bottom: 5px;">${stats.shiftStats.evening}</div>
+                <div style="text-align: center; color: #666; font-size: 0.95em;">مناوبة مسائية</div>
+                <div style="text-align: center; color: #666; font-size: 0.85em; margin-top: 5px;">
+                    (${stats.totalInspections > 0 ? ((stats.shiftStats.evening / stats.totalInspections) * 100).toFixed(1) : 0}%)
+                </div>
+            </div>
+            <div style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="text-align: center; margin-bottom: 15px; font-size: 2.5em;">🏖️</div>
+                <div style="font-size: 1.8em; font-weight: bold; text-align: center; color: #c0392b; margin-bottom: 5px;">${stats.weekendInspections}</div>
+                <div style="text-align: center; color: #666; font-size: 0.95em;">زيارة في العطلة</div>
+                <div style="text-align: center; color: #666; font-size: 0.85em; margin-top: 5px;">
+                    (${stats.totalInspections > 0 ? ((stats.weekendInspections / stats.totalInspections) * 100).toFixed(1) : 0}%)
+                </div>
+            </div>
+        </div>
+    </div>`;
+    
+    // === 7. Day of Week Analysis ===
+    html += `
+    <div style="margin-bottom: 25px;">
+        <h3 style="color: #234085; margin-bottom: 15px; border-bottom: 3px solid #234085; padding-bottom: 10px;">
+            📅 التوزيع الأسبوعي للتفتيش
+        </h3>
+        <div style="overflow-x: auto;">
+            <table class="stats-table" style="width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <thead>
+                    <tr style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white;">
+                        <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">اليوم</th>
+                        <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">عدد التفتيشات</th>
+                        <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">النسبة</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+    
+    const daysOrder = ['السبت', 'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
+    daysOrder.forEach((day, index) => {
+        const count = stats.dayOfWeekStats[day] || 0;
+        const percentage = stats.totalShops > 0 ? ((count / stats.totalShops) * 100).toFixed(1) : 0;
+        const bgColor = index % 2 === 0 ? '#f8f9fa' : 'white';
+        const isWeekend = ['الجمعة', 'السبت'].includes(day);
+        const dayStyle = isWeekend ? 'color: #e91e63; font-weight: bold;' : '';
+        
+        html += `
+                    <tr style="background: ${bgColor};">
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; ${dayStyle}">${day}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #667eea; font-weight: bold;">${count}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #43e97b;">${percentage}%</td>
+                    </tr>`;
+    });
+    
+    html += `
+                </tbody>
+            </table>
+        </div>
+    </div>`;
+    
+    // === 8. Productivity Insights ===
+    if (stats.mostProductiveDay && stats.leastProductiveDay) {
+        const mostDate = new Date(stats.mostProductiveDay);
+        const leastDate = new Date(stats.leastProductiveDay);
+        const mostDayName = mostDate.toLocaleDateString('ar', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        const leastDayName = leastDate.toLocaleDateString('ar', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        
+        const dailyShopCounts = {};
+        stats.totalShops > 0 && Object.keys(stats.inspectorStats).length > 0 && Object.entries(stats.inspectorStats).forEach(([inspector, data]) => {
+            data.workDays.forEach(day => {
+                if (!dailyShopCounts[day]) dailyShopCounts[day] = 0;
+            });
+        });
+        
+        html += `
+        <div style="margin-bottom: 25px;">
+            <h3 style="color: #234085; margin-bottom: 15px; border-bottom: 3px solid #234085; padding-bottom: 10px;">
+                💡 رؤى ذكية حول الإنتاجية
+            </h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                <div style="background: linear-gradient(135deg, #c2e9fb 0%, #a1c4fd 100%); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <div style="font-size: 1.5em; margin-bottom: 10px;">📈</div>
+                    <div style="font-weight: bold; color: #1e3a8a; margin-bottom: 10px; font-size: 1.1em;">اليوم الأكثر إنتاجية</div>
+                    <div style="color: #374151; font-size: 0.9em; line-height: 1.6;">
+                        ${mostDayName}<br>
+                        <strong style="color: #2563eb; font-size: 1.3em;">${Object.values(stats.dayOfWeekStats).length > 0 ? Math.max(...Object.values(stats.dayOfWeekStats)) : 0}</strong> تفتيش
+                    </div>
+                </div>
+                <div style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <div style="font-size: 1.5em; margin-bottom: 10px;">📉</div>
+                    <div style="font-weight: bold; color: #7c2d12; margin-bottom: 10px; font-size: 1.1em;">اليوم الأقل إنتاجية</div>
+                    <div style="color: #374151; font-size: 0.9em; line-height: 1.6;">
+                        ${leastDayName}<br>
+                        <strong style="color: #dc2626; font-size: 1.3em;">${Object.values(stats.dayOfWeekStats).length > 0 ? Math.min(...Object.values(stats.dayOfWeekStats).filter(v => v > 0)) : 0}</strong> تفتيش
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }
+    
+    // === 9. Key Performance Indicators ===
+    const totalWorkDays = new Set();
+    Object.values(stats.inspectorStats).forEach(data => {
+        data.workDays.forEach(day => totalWorkDays.add(day));
+    });
+    
+    html += `
+    <div style="margin-bottom: 25px;">
+        <h3 style="color: #234085; margin-bottom: 15px; border-bottom: 3px solid #234085; padding-bottom: 10px;">
+            🎯 مؤشرات الأداء الرئيسية
+        </h3>
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 12px; color: white; box-shadow: 0 6px 12px rgba(0,0,0,0.15);">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
+                <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
+                    <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">متوسط المحلات لكل مفتش</div>
+                    <div style="font-size: 2em; font-weight: bold;">${(stats.totalShops / Object.keys(stats.inspectorStats).length).toFixed(1)}</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
+                    <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">متوسط المناطق لكل مفتش</div>
+                    <div style="font-size: 2em; font-weight: bold;">${(Object.values(stats.inspectorStats).reduce((sum, data) => sum + data.areas.size, 0) / Object.keys(stats.inspectorStats).length).toFixed(1)}</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
+                    <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">معدل إعادة التفتيش</div>
+                    <div style="font-size: 2em; font-weight: bold;">${((stats.totalShops / stats.uniqueShops.size) - 1).toFixed(2)}x</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
+                    <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">متوسط المحلات لكل منطقة</div>
+                    <div style="font-size: 2em; font-weight: bold;">${(stats.uniqueShops.size / Object.keys(stats.areaStats).length).toFixed(1)}</div>
+                </div>
+            </div>
+        </div>
+    </div>`;
+    
+    // Final note
+    html += `
+    <div style="margin-top: 30px; padding: 20px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); border-radius: 12px; text-align: center; color: #334155;">
+        <div style="font-size: 0.95em; margin-bottom: 8px;">📊 تم إنشاء هذا التقرير تلقائياً بواسطة نظام الإحصائيات الذكية</div>
+        <div style="font-size: 0.85em; opacity: 0.8;">${new Date().toLocaleDateString('ar', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+    </div>`;
+    
+    document.getElementById('smartStatsContent').innerHTML = html;
+}
+
+function exportSmartStatsToPDF() {
+    let reportContent = document.getElementById('smartStatsContent');
+    if (!reportContent) return;
+    
+    let wrap = document.createElement('div');
+    wrap.style.background = '#fff';
+    wrap.style.padding = '20px';
+    wrap.style.fontFamily = 'Cairo, Arial, sans-serif';
+    wrap.style.width = 'auto';
+    wrap.style.minWidth = '1000px';
+    wrap.style.maxWidth = '1400px';
+    
+    let contentClone = reportContent.cloneNode(true);
+    
+    // Style tables for better PDF rendering
+    const tables = contentClone.querySelectorAll('table');
+    tables.forEach(table => {
+        table.style.fontSize = '9px';
+        table.style.marginBottom = '15px';
+        
+        const ths = table.querySelectorAll('th');
+        ths.forEach(th => {
+            th.style.padding = '8px 5px';
+            th.style.fontSize = '9px';
+        });
+        
+        const tds = table.querySelectorAll('td');
+        tds.forEach(td => {
+            td.style.padding = '6px 4px';
+            td.style.fontSize = '8px';
+        });
+    });
+    
+    wrap.appendChild(contentClone);
+    document.body.appendChild(wrap);
+    
+    html2canvas(wrap, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false
+    }).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF.jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const imgWidth = pdfWidth - 20;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        let heightLeft = imgHeight;
+        let position = 10;
+        
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+        
+        while (heightLeft > 0) {
+            position = heightLeft - imgHeight + 10;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+            heightLeft -= pdfHeight;
+        }
+        
+        const fileName = `الإحصائيات_الذكية_${new Date().toISOString().split('T')[0]}.pdf`;
+        pdf.save(fileName);
+        
+        document.body.removeChild(wrap);
+        alert('✅ تم تصدير التقرير بنجاح كملف PDF');
+    }).catch(err => {
+        console.error('Error generating PDF:', err);
+        document.body.removeChild(wrap);
+        alert('حدث خطأ في تصدير ملف PDF');
+    });
+}
+
+function exportSmartStatsToExcel() {
+    const selectedMonth = document.getElementById('smartStatsMonth').value;
+    const selectedYear = document.getElementById('smartStatsYear').value;
+    
+    // Filter data by selected month and year
+    let filteredData = inspectionData;
+    
+    if (selectedMonth || selectedYear) {
+        filteredData = inspectionData.filter(item => {
+            const itemDate = new Date(item.day);
+            const itemMonth = itemDate.getMonth() + 1;
+            const itemYear = itemDate.getFullYear();
+            
+            if (selectedMonth && selectedYear) {
+                return itemMonth == selectedMonth && itemYear == selectedYear;
+            } else if (selectedMonth) {
+                return itemMonth == selectedMonth;
+            } else if (selectedYear) {
+                return itemYear == selectedYear;
+            }
+            return true;
+        });
+    }
+    
+    const stats = generateSmartMonthlyStats(filteredData);
+    
+    let ws_data = [];
+    
+    // Title
+    const monthNames = ['', 'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+    let periodTitle = 'الإحصائيات الشهرية الذكية';
+    if (selectedMonth && selectedYear) {
+        periodTitle += ` - ${monthNames[parseInt(selectedMonth)]} ${selectedYear}`;
+    }
+    ws_data.push([periodTitle]);
+    ws_data.push([]);
+    
+    // Overall statistics
+    ws_data.push(['الإحصائيات العامة']);
+    ws_data.push(['إجمالي الزيارات التفتيشية', stats.totalInspections]);
+    ws_data.push(['تفتيش محل', stats.totalShops]);
+    ws_data.push(['محل فريد', stats.uniqueShops.size]);
+    ws_data.push(['منطقة مغطاة', Object.keys(stats.areaStats).length]);
+    ws_data.push(['مفتش نشط', Object.keys(stats.inspectorStats).length]);
+    ws_data.push(['متوسط التفتيش اليومي', stats.averageShopsPerDay.toFixed(1)]);
+    ws_data.push([]);
+    
+    // Inspector statistics
+    ws_data.push(['أداء المفتشين']);
+    ws_data.push(['المفتش', 'المحلات', 'المناطق', 'أيام العمل', 'أيام الإجازة', 'صباحية', 'مسائية', 'عطلة', 'الكفاءة']);
+    
+    const inspectorsList = Object.entries(stats.inspectorStats)
+        .sort((a, b) => b[1].shops - a[1].shops);
+    
+    inspectorsList.forEach(([inspector, data]) => {
+        const efficiency = (data.shops / data.workDays.size).toFixed(1);
+        ws_data.push([
+            inspector,
+            data.shops,
+            data.areas.size,
+            data.workDays.size,
+            stats.vacationDays[inspector] || 0,
+            data.morningShifts,
+            data.eveningShifts,
+            data.weekendDays,
+            efficiency
+        ]);
+    });
+    ws_data.push([]);
+    
+    // Top shops
+    ws_data.push(['المحلات الأكثر تفتيشاً (أعلى 10)']);
+    ws_data.push(['المحل', 'عدد الزيارات', 'عدد المفتشين', 'المناطق']);
+    
+    const topShops = Object.entries(stats.shopStats)
+        .sort((a, b) => b[1].count - a[1].count)
+        .slice(0, 10);
+    
+    topShops.forEach(([shop, data]) => {
+        ws_data.push([
+            shop,
+            data.count,
+            data.inspectors.size,
+            Array.from(data.areas).join(', ')
+        ]);
+    });
+    ws_data.push([]);
+    
+    // Top areas
+    ws_data.push(['المناطق الأكثر زيارة (أعلى 10)']);
+    ws_data.push(['المنطقة', 'عدد الزيارات', 'المحلات المفتشة', 'عدد المفتشين']);
+    
+    const topAreas = Object.entries(stats.areaStats)
+        .sort((a, b) => b[1].visits - a[1].visits)
+        .slice(0, 10);
+    
+    topAreas.forEach(([area, data]) => {
+        ws_data.push([
+            area,
+            data.visits,
+            data.shops,
+            data.inspectors.size
+        ]);
+    });
+    ws_data.push([]);
+    
+    // Shift analysis
+    ws_data.push(['تحليل المناوبات']);
+    ws_data.push(['النوع', 'العدد', 'النسبة']);
+    ws_data.push(['مناوبات صباحية', stats.shiftStats.morning, `${stats.totalInspections > 0 ? ((stats.shiftStats.morning / stats.totalInspections) * 100).toFixed(1) : 0}%`]);
+    ws_data.push(['مناوبات مسائية', stats.shiftStats.evening, `${stats.totalInspections > 0 ? ((stats.shiftStats.evening / stats.totalInspections) * 100).toFixed(1) : 0}%`]);
+    ws_data.push(['زيارات العطلة', stats.weekendInspections, `${stats.totalInspections > 0 ? ((stats.weekendInspections / stats.totalInspections) * 100).toFixed(1) : 0}%`]);
+    ws_data.push([]);
+    
+    // Day of week analysis
+    ws_data.push(['التوزيع الأسبوعي']);
+    ws_data.push(['اليوم', 'عدد التفتيشات', 'النسبة']);
+    
+    const daysOrder = ['السبت', 'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
+    daysOrder.forEach(day => {
+        const count = stats.dayOfWeekStats[day] || 0;
+        const percentage = stats.totalShops > 0 ? ((count / stats.totalShops) * 100).toFixed(1) : 0;
+        ws_data.push([day, count, `${percentage}%`]);
+    });
+    
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(ws_data);
+    
+    // Set column widths
+    ws['!cols'] = [
+        { wch: 30 },
+        { wch: 15 },
+        { wch: 15 },
+        { wch: 15 },
+        { wch: 15 },
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 12 }
+    ];
+    
+    XLSX.utils.book_append_sheet(wb, ws, "الإحصائيات الذكية");
+    XLSX.writeFile(wb, `الإحصائيات_الذكية_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
 // --- Enhanced Reporting Functions ---

@@ -5120,6 +5120,7 @@ async function showMaintenanceModeWithNotification(issues = [], skipNotification
     // Don't show maintenance overlay for developers - they should always have access
     if (isDev || window.isDev) {
         console.log('⚠️ Maintenance mode active, but developer has access - overlay not shown');
+        console.log('💡 To test the update message, call: window.testShowUpdateMessage()');
         return;
     }
     
@@ -5127,15 +5128,52 @@ async function showMaintenanceModeWithNotification(issues = [], skipNotification
     if (!skipNotification) {
         const wasAlreadyNotified = sessionStorage.getItem('maintenanceNotificationShown') === 'true';
         if (!wasAlreadyNotified) {
+            console.log('📢 About to show "جاري التحديث" notification to user...');
             showMaintenanceProgress('🔄 جاري التحديث...\n⏳ يرجى الانتظار', 'warning', true); // true = persist (don't auto-hide)
             sessionStorage.setItem('maintenanceNotificationShown', 'true');
-            console.log('📢 Showing "جاري التحديث" notification to user (from wrapper) - will persist until developer closes it');
+            console.log('✅ "جاري التحديث" notification shown successfully (from wrapper) - will persist until developer closes it');
+        } else {
+            console.log('ℹ️ Update notification already shown in this session - skipping to prevent duplicate');
         }
+    } else {
+        console.log('ℹ️ Update notification skipped (skipNotification = true)');
     }
     
     // Now show the actual maintenance mode overlay
     showMaintenanceMode(issues);
 }
+
+// Testing function for developers to manually trigger the update message
+// Can be called from browser console: window.testShowUpdateMessage()
+window.testShowUpdateMessage = function(duration = 0) {
+    console.log('🧪 Test: Forcing update message to show (bypassing developer check)...');
+    
+    // Clear the notification flag to allow showing
+    sessionStorage.removeItem('maintenanceNotificationShown');
+    
+    // Show the message
+    showMaintenanceProgress('🔄 جاري التحديث...\n⏳ يرجى الانتظار (وضع الاختبار)', 'warning', true);
+    
+    console.log('✅ Test message shown! It will persist until manually closed.');
+    console.log('💡 To hide it, call: hideMaintenanceProgress()');
+    
+    // Auto-hide after duration if specified
+    if (duration > 0) {
+        console.log(`⏱️ Message will auto-hide after ${duration} seconds`);
+        setTimeout(() => {
+            hideMaintenanceProgress();
+            console.log('🗑️ Test message auto-hidden');
+        }, duration * 1000);
+    }
+};
+
+// Force re-check maintenance status and clear session cache
+window.forceCheckMaintenance = function() {
+    console.log('🔄 Force checking maintenance status...');
+    sessionStorage.removeItem('maintenanceNotificationShown');
+    console.log('✅ Cleared notification flag');
+    checkMaintenanceMode();
+};
 
 function showMaintenanceMode(issues = []) {
     // Don't show maintenance overlay for developers - they should always have access
@@ -6615,21 +6653,22 @@ function showMaintenanceProgress(message, type = 'loading', persist = false) {
         transform: translateX(-50%);
         background: ${bgColor};
         color: white;
-        padding: 15px 25px;
-        border-radius: 8px;
-        z-index: 10000;
-        font-size: 16px;
+        padding: 18px 30px;
+        border-radius: 10px;
+        z-index: 10001;
+        font-size: 18px;
         font-weight: bold;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.4);
         text-align: center;
-        min-width: 300px;
-        max-width: 500px;
+        min-width: 350px;
+        max-width: 550px;
         white-space: pre-line;
-        animation: slideDown 0.3s ease-out;
+        animation: slideDown 0.3s ease-out, ${persist ? 'pulse 2s ease-in-out infinite' : 'none'};
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 10px;
+        gap: 12px;
+        border: 3px solid rgba(255,255,255,0.3);
     `;
     
     // Add loading spinner if type is 'loading' or 'warning'
@@ -6646,6 +6685,19 @@ function showMaintenanceProgress(message, type = 'loading', persist = false) {
     document.body.appendChild(messageDiv);
     
     console.log(`📢 Maintenance progress message shown - persist: ${persist}`);
+    console.log(`📍 Message position: top: 20px, z-index: 10001`);
+    console.log(`🎨 Message style: ${type} (${bgColor})`);
+    console.log(`📝 Message text: ${message}`);
+    
+    // Verify the message is actually in the DOM
+    setTimeout(() => {
+        const check = document.getElementById('maintenanceProgressMsg');
+        if (check) {
+            console.log('✅ Message confirmed in DOM');
+        } else {
+            console.error('❌ WARNING: Message not found in DOM after creation!');
+        }
+    }, 100);
     
     return messageDiv;
 }
@@ -6679,6 +6731,16 @@ if (!document.getElementById('maintenanceProgressStyles')) {
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+        @keyframes pulse {
+            0%, 100% { 
+                box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+                transform: translateX(-50%) scale(1);
+            }
+            50% { 
+                box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+                transform: translateX(-50%) scale(1.02);
+            }
         }
         .maintenance-spinner {
             border: 2px solid rgba(255, 255, 255, 0.3);

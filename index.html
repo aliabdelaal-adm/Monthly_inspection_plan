@@ -1060,6 +1060,14 @@
             background: linear-gradient(135deg, #138496 0%, #1ba085 100%);
         }
         
+        .shop-priority-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+        .shop-priority-btn:hover {
+            background: linear-gradient(135deg, #5568d3 0%, #6a3f92 100%);
+        }
+        
         .monthly-schedule-btn {
             background: linear-gradient(135deg, #6f42c1 0%, #8e44ad 100%);
             color: #fff;
@@ -3364,6 +3372,11 @@
                         <button class="icon-btn smart-stats-btn tooltip" onclick="showSmartMonthlyStatsReport()" data-tooltip="إحصائيات شهرية ذكية ومبتكرة">
                             <span class="icon">🎯</span>
                             <span class="label">الإحصائيات الذكية</span>
+                        </button>
+                        
+                        <button class="icon-btn shop-priority-btn tooltip" onclick="showShopPriorityModal()" data-tooltip="عرض أولوية المحلات في التفتيش (للعرض فقط)">
+                            <span class="icon">📊</span>
+                            <span class="label">أولوية المحلات</span>
                         </button>
                     </div>
                 </div>
@@ -15339,15 +15352,12 @@ function getCurrentMonthFirstHalfPriorityShops() {
 }
 
 /**
- * عرض نافذة أولوية المحلات للمطور
- * Show shop priority modal for developer
+ * عرض نافذة أولوية المحلات للمطور والمفتشين
+ * Show shop priority modal for developer and inspectors (read-only for inspectors)
  */
 function showShopPriorityModal() {
-    // التحقق من أن المستخدم مطور / Check if user is developer
-    if (!isDev) {
-        alert('هذه الميزة متاحة للمطورين فقط');
-        return;
-    }
+    // لا يوجد تحقق من صلاحيات - متاح للجميع للعرض
+    // No permission check - available for all users to view
     
     // إنشاء أو الحصول على عنصر المودال / Create or get modal element
     let modal = document.getElementById('shopPriorityModal');
@@ -15455,9 +15465,15 @@ function showShopPriorityModal() {
                 
                 <!-- Action Buttons -->
                 <div style="margin-top: 25px; text-align: center; display: flex; gap: 15px; justify-content: center;">
+                    ${isDev ? `
                     <button onclick="exportShopPriorityResults()" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
                         📥 تصدير النتائج (Excel)
                     </button>
+                    ` : `
+                    <div style="padding: 10px 20px; background: #e9ecef; border-radius: 8px; color: #495057; font-size: 0.9em;">
+                        ℹ️ وضع العرض فقط - التصدير متاح للمطور فقط
+                    </div>
+                    `}
                     <button onclick="closeShopPriorityModal()" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%); color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
                         إغلاق
                     </button>

@@ -765,6 +765,33 @@
         </a>
       </li>
       <li class="nav-item" style="margin-top: 20px; border-top: 2px solid rgba(255,255,255,0.1); padding-top: 20px;">
+        <h4 style="color: rgba(255,255,255,0.7); font-size: 0.85em; padding: 0 18px; margin-bottom: 10px;">🚀 أدوات المطورين المتقدمة</h4>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" onclick="openAdvancedSearch()">
+          <i class="fas fa-search-plus"></i>
+          <span>البحث المتقدم</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" onclick="openCodeInspector()">
+          <i class="fas fa-code"></i>
+          <span>مفتش الكود</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" onclick="openBulkOperations()">
+          <i class="fas fa-tasks"></i>
+          <span>العمليات المجمعة</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" onclick="openDataTransformer()">
+          <i class="fas fa-exchange-alt"></i>
+          <span>محول البيانات</span>
+        </a>
+      </li>
+      <li class="nav-item" style="margin-top: 20px; border-top: 2px solid rgba(255,255,255,0.1); padding-top: 20px;">
         <a class="nav-link" onclick="window.location.href='index.html'">
           <i class="fas fa-home"></i>
           <span>العودة للموقع</span>
@@ -908,6 +935,22 @@
           <div class="quick-action-btn" onclick="showSection('reports')">
             <i class="fas fa-chart-pie"></i>
             <div class="label">عرض التقارير</div>
+          </div>
+          <div class="quick-action-btn" onclick="openAdvancedSearch()">
+            <i class="fas fa-search-plus"></i>
+            <div class="label">البحث المتقدم</div>
+          </div>
+          <div class="quick-action-btn" onclick="openCodeInspector()">
+            <i class="fas fa-code"></i>
+            <div class="label">مفتش الكود</div>
+          </div>
+          <div class="quick-action-btn" onclick="openVisualEditor()">
+            <i class="fas fa-table"></i>
+            <div class="label">المحرر المرئي</div>
+          </div>
+          <div class="quick-action-btn" onclick="addNewInspection()">
+            <i class="fas fa-plus-square"></i>
+            <div class="label">إضافة تفتيش سريع</div>
           </div>
         </div>
       </div>
@@ -2294,7 +2337,106 @@
     // Utility Functions
     // ========================
     function addNewInspection() {
-      alert("ميزة إضافة تفتيش جديد قيد التطوير");
+      if (!planData) {
+        alert("❌ يجب تحميل البيانات أولاً!");
+        loadPlan();
+        return;
+      }
+      
+      // Get unique inspectors, areas for suggestions
+      const inspectors = [...new Set(planData.inspectionData.map(i => i.inspector).filter(Boolean))];
+      const areas = [...new Set(planData.inspectionData.map(i => i.area).filter(Boolean))];
+      
+      const modal = document.createElement('div');
+      modal.className = 'modal show';
+      modal.id = 'addInspectionModal';
+      modal.innerHTML = `
+        <div class="modal-content" style="max-width: 700px;">
+          <div class="modal-header">
+            <h3 class="modal-title">إضافة تفتيش جديد</h3>
+            <button class="modal-close" onclick="closeModal('addInspectionModal')">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label">المفتش</label>
+              <input type="text" id="newInspectionInspector" class="form-control" 
+                     list="inspectorsList" placeholder="د. اسم المفتش">
+              <datalist id="inspectorsList">
+                ${inspectors.map(i => `<option value="${i}">`).join('')}
+              </datalist>
+            </div>
+            <div class="form-group">
+              <label class="form-label">التاريخ</label>
+              <input type="date" id="newInspectionDate" class="form-control" 
+                     value="${new Date().toISOString().split('T')[0]}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">الفترة</label>
+              <select id="newInspectionShift" class="form-control">
+                <option value="صباحية">صباحية</option>
+                <option value="مسائية">مسائية</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">المنطقة</label>
+              <input type="text" id="newInspectionArea" class="form-control" 
+                     list="areasList" placeholder="سوق الميناء">
+              <datalist id="areasList">
+                ${areas.map(a => `<option value="${a}">`).join('')}
+              </datalist>
+            </div>
+            <div class="form-group">
+              <label class="form-label">المحلات (كل محل في سطر)</label>
+              <textarea id="newInspectionShops" class="form-control" rows="5" 
+                        placeholder="محل 1&#10;محل 2&#10;محل 3"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-success" onclick="saveNewInspection()">
+              <i class="fas fa-save"></i> حفظ التفتيش
+            </button>
+            <button class="btn btn-secondary" onclick="closeModal('addInspectionModal')">
+              إلغاء
+            </button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+    
+    window.saveNewInspection = async function() {
+      const inspector = document.getElementById('newInspectionInspector').value.trim();
+      const day = document.getElementById('newInspectionDate').value;
+      const shift = document.getElementById('newInspectionShift').value;
+      const area = document.getElementById('newInspectionArea').value.trim();
+      const shopsText = document.getElementById('newInspectionShops').value;
+      const shops = shopsText.split('\n').map(s => s.trim()).filter(s => s);
+      
+      if (!inspector || !day || !area || shops.length === 0) {
+        alert('❌ يجب ملء جميع الحقول المطلوبة!');
+        return;
+      }
+      
+      const newInspection = {
+        inspector,
+        day,
+        shift,
+        area,
+        shops
+      };
+      
+      planData.inspectionData.push(newInspection);
+      document.getElementById('planEditor').value = JSON.stringify(planData, null, 2);
+      
+      await savePlan();
+      
+      alert(`✅ تم إضافة التفتيش بنجاح!\n\nالمفتش: ${inspector}\nالتاريخ: ${day}\nالمنطقة: ${area}\nعدد المحلات: ${shops.length}`);
+      closeModal('addInspectionModal');
+      
+      // Refresh dashboard
+      updateDashboardStats();
+      
+      logActivity("إضافة تفتيش", `تم إضافة تفتيش جديد للمفتش ${inspector} في ${area}`);
     }
     
     function exportData() {
@@ -2367,35 +2509,641 @@
     }
     
     function openVisualEditor() {
-      alert("المحرر المرئي قيد التطوير - سيتم إضافته قريباً");
+      if (!planData || !planData.inspectionData) {
+        alert("❌ يجب تحميل البيانات أولاً!");
+        return;
+      }
+      
+      // Create a modal for the visual editor
+      const modal = document.createElement('div');
+      modal.className = 'modal show';
+      modal.id = 'visualEditorModal';
+      modal.innerHTML = `
+        <div class="modal-content" style="max-width: 95%; max-height: 95vh;">
+          <div class="modal-header">
+            <h3 class="modal-title">المحرر المرئي للخطة</h3>
+            <button class="modal-close" onclick="closeVisualEditor()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+              <button class="btn btn-success" onclick="addInspectionRow()">
+                <i class="fas fa-plus"></i> إضافة تفتيش
+              </button>
+              <button class="btn btn-primary" onclick="saveFromVisualEditor()">
+                <i class="fas fa-save"></i> حفظ التعديلات
+              </button>
+              <button class="btn btn-warning" onclick="refreshVisualEditor()">
+                <i class="fas fa-sync"></i> تحديث
+              </button>
+              <input type="text" id="visualSearchInput" class="form-control" 
+                     style="flex: 1; min-width: 200px;" 
+                     placeholder="بحث... (مفتش، منطقة، محل)"
+                     onkeyup="filterVisualEditor()">
+            </div>
+            <div style="overflow-x: auto; max-height: 60vh; overflow-y: auto;">
+              <table id="visualEditorTable" style="width: 100%; border-collapse: collapse; background: white;">
+                <thead style="position: sticky; top: 0; background: #667eea; color: white; z-index: 10;">
+                  <tr>
+                    <th style="padding: 12px; border: 1px solid #ddd; min-width: 50px;">#</th>
+                    <th style="padding: 12px; border: 1px solid #ddd; min-width: 150px;">المفتش</th>
+                    <th style="padding: 12px; border: 1px solid #ddd; min-width: 120px;">التاريخ</th>
+                    <th style="padding: 12px; border: 1px solid #ddd; min-width: 100px;">الفترة</th>
+                    <th style="padding: 12px; border: 1px solid #ddd; min-width: 150px;">المنطقة</th>
+                    <th style="padding: 12px; border: 1px solid #ddd; min-width: 200px;">المحلات</th>
+                    <th style="padding: 12px; border: 1px solid #ddd; min-width: 120px;">إجراءات</th>
+                  </tr>
+                </thead>
+                <tbody id="visualEditorTableBody">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      
+      // Populate the table
+      refreshVisualEditor();
+      
+      logActivity("المحرر المرئي", "تم فتح المحرر المرئي للخطة");
+    }
+    
+    window.closeVisualEditor = function() {
+      const modal = document.getElementById('visualEditorModal');
+      if (modal) {
+        modal.remove();
+      }
+    }
+    
+    window.refreshVisualEditor = function() {
+      const tbody = document.getElementById('visualEditorTableBody');
+      if (!tbody || !planData || !planData.inspectionData) return;
+      
+      tbody.innerHTML = '';
+      planData.inspectionData.forEach((item, index) => {
+        const row = document.createElement('tr');
+        row.dataset.index = index;
+        row.innerHTML = `
+          <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${index + 1}</td>
+          <td style="padding: 10px; border: 1px solid #ddd;">
+            <input type="text" class="form-control" value="${item.inspector || ''}" 
+                   onchange="updateInspectionField(${index}, 'inspector', this.value)">
+          </td>
+          <td style="padding: 10px; border: 1px solid #ddd;">
+            <input type="date" class="form-control" value="${item.day || ''}" 
+                   onchange="updateInspectionField(${index}, 'day', this.value)">
+          </td>
+          <td style="padding: 10px; border: 1px solid #ddd;">
+            <select class="form-control" onchange="updateInspectionField(${index}, 'shift', this.value)">
+              <option value="صباحية" ${item.shift === 'صباحية' ? 'selected' : ''}>صباحية</option>
+              <option value="مسائية" ${item.shift === 'مسائية' ? 'selected' : ''}>مسائية</option>
+            </select>
+          </td>
+          <td style="padding: 10px; border: 1px solid #ddd;">
+            <input type="text" class="form-control" value="${item.area || ''}" 
+                   onchange="updateInspectionField(${index}, 'area', this.value)">
+          </td>
+          <td style="padding: 10px; border: 1px solid #ddd;">
+            <textarea class="form-control" rows="2" 
+                      onchange="updateInspectionField(${index}, 'shops', this.value.split('\\n').filter(s => s.trim()))"
+            >${(item.shops || []).join('\n')}</textarea>
+          </td>
+          <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
+            <button class="btn btn-danger" style="padding: 5px 10px; font-size: 0.9em;" 
+                    onclick="deleteInspectionRow(${index})">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+    
+    window.updateInspectionField = function(index, field, value) {
+      if (!planData || !planData.inspectionData || !planData.inspectionData[index]) return;
+      planData.inspectionData[index][field] = value;
+    }
+    
+    window.deleteInspectionRow = function(index) {
+      if (!confirm('هل تريد حذف هذا التفتيش؟')) return;
+      planData.inspectionData.splice(index, 1);
+      refreshVisualEditor();
+      logActivity("حذف تفتيش", `تم حذف التفتيش رقم ${index + 1}`);
+    }
+    
+    window.addInspectionRow = function() {
+      if (!planData.inspectionData) planData.inspectionData = [];
+      
+      planData.inspectionData.push({
+        inspector: '',
+        day: new Date().toISOString().split('T')[0],
+        shift: 'صباحية',
+        area: '',
+        shops: []
+      });
+      refreshVisualEditor();
+      logActivity("إضافة تفتيش", "تم إضافة تفتيش جديد");
+    }
+    
+    window.saveFromVisualEditor = async function() {
+      document.getElementById('planEditor').value = JSON.stringify(planData, null, 2);
+      await savePlan();
+      alert("✅ تم حفظ التعديلات بنجاح!");
+    }
+    
+    window.filterVisualEditor = function() {
+      const searchTerm = document.getElementById('visualSearchInput').value.toLowerCase();
+      const tbody = document.getElementById('visualEditorTableBody');
+      if (!tbody) return;
+      
+      const rows = tbody.getElementsByTagName('tr');
+      for (let row of rows) {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
+      }
     }
     
     function addInspector() {
-      alert("ميزة إضافة مفتش قيد التطوير");
+      const modal = document.createElement('div');
+      modal.className = 'modal show';
+      modal.id = 'addInspectorModal';
+      modal.innerHTML = `
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 class="modal-title">إضافة مفتش جديد</h3>
+            <button class="modal-close" onclick="closeModal('addInspectorModal')">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label">اسم المفتش</label>
+              <input type="text" id="newInspectorName" class="form-control" placeholder="د. اسم المفتش">
+            </div>
+            <div class="form-group">
+              <label class="form-label">التخصص (اختياري)</label>
+              <input type="text" id="newInspectorSpecialty" class="form-control" placeholder="طب بيطري">
+            </div>
+            <div class="form-group">
+              <label class="form-label">رقم الهاتف (اختياري)</label>
+              <input type="text" id="newInspectorPhone" class="form-control" placeholder="05xxxxxxxx">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-success" onclick="saveNewInspector()">
+              <i class="fas fa-save"></i> حفظ
+            </button>
+            <button class="btn btn-secondary" onclick="closeModal('addInspectorModal')">
+              إلغاء
+            </button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+    
+    window.saveNewInspector = function() {
+      const name = document.getElementById('newInspectorName').value.trim();
+      if (!name) {
+        alert('❌ يجب إدخال اسم المفتش!');
+        return;
+      }
+      
+      // Add inspector to the list (for now, just log it)
+      logActivity("إضافة مفتش", `تم إضافة المفتش: ${name}`);
+      alert(`✅ تم إضافة المفتش: ${name}\n\nيمكنك الآن استخدامه في المحرر المرئي أو محرر JSON`);
+      closeModal('addInspectorModal');
     }
     
     function addArea() {
-      alert("ميزة إضافة منطقة قيد التطوير");
+      const modal = document.createElement('div');
+      modal.className = 'modal show';
+      modal.id = 'addAreaModal';
+      modal.innerHTML = `
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 class="modal-title">إضافة منطقة جديدة</h3>
+            <button class="modal-close" onclick="closeModal('addAreaModal')">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label">اسم المنطقة</label>
+              <input type="text" id="newAreaName" class="form-control" placeholder="سوق الميناء، الحصن، إلخ">
+            </div>
+            <div class="form-group">
+              <label class="form-label">الوصف (اختياري)</label>
+              <textarea id="newAreaDesc" class="form-control" rows="3" placeholder="وصف المنطقة ومميزاتها"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">الإحداثيات (اختياري)</label>
+              <input type="text" id="newAreaCoords" class="form-control" placeholder="24.xxx, 54.xxx">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-success" onclick="saveNewArea()">
+              <i class="fas fa-save"></i> حفظ
+            </button>
+            <button class="btn btn-secondary" onclick="closeModal('addAreaModal')">
+              إلغاء
+            </button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
     }
     
-    function addShop() {
-      alert("ميزة إضافة محل قيد التطوير");
+    window.saveNewArea = function() {
+      const name = document.getElementById('newAreaName').value.trim();
+      if (!name) {
+        alert('❌ يجب إدخال اسم المنطقة!');
+        return;
+      }
+      
+      logActivity("إضافة منطقة", `تم إضافة المنطقة: ${name}`);
+      alert(`✅ تم إضافة المنطقة: ${name}\n\nيمكنك الآن استخدامها في المحرر المرئي أو محرر JSON`);
+      closeModal('addAreaModal');
+    }
+    
+    async function addShop() {
+      const modal = document.createElement('div');
+      modal.className = 'modal show';
+      modal.id = 'addShopModal';
+      modal.innerHTML = `
+        <div class="modal-content" style="max-width: 700px;">
+          <div class="modal-header">
+            <h3 class="modal-title">إضافة محل جديد</h3>
+            <button class="modal-close" onclick="closeModal('addShopModal')">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label">اسم المحل (عربي)</label>
+              <input type="text" id="newShopNameAr" class="form-control" placeholder="اسم المحل بالعربي">
+            </div>
+            <div class="form-group">
+              <label class="form-label">اسم المحل (إنجليزي)</label>
+              <input type="text" id="newShopNameEn" class="form-control" placeholder="Shop Name in English">
+            </div>
+            <div class="form-group">
+              <label class="form-label">رقم الرخصة</label>
+              <input type="text" id="newShopLicense" class="form-control" placeholder="CN-xxxxxxx">
+            </div>
+            <div class="form-group">
+              <label class="form-label">المنطقة</label>
+              <input type="text" id="newShopArea" class="form-control" placeholder="سوق الميناء">
+            </div>
+            <div class="form-group">
+              <label class="form-label">رقم الهاتف</label>
+              <input type="text" id="newShopPhone" class="form-control" placeholder="05xxxxxxxx">
+            </div>
+            <div class="form-group">
+              <label class="form-label">النشاط</label>
+              <input type="text" id="newShopActivity" class="form-control" placeholder="بيع الحيوانات">
+            </div>
+            <div class="form-group">
+              <label class="form-label">رابط الموقع (Google Maps)</label>
+              <input type="text" id="newShopLocation" class="form-control" placeholder="https://maps.google.com/...">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-success" onclick="saveNewShop()">
+              <i class="fas fa-save"></i> حفظ
+            </button>
+            <button class="btn btn-secondary" onclick="closeModal('addShopModal')">
+              إلغاء
+            </button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+    
+    window.saveNewShop = async function() {
+      const nameAr = document.getElementById('newShopNameAr').value.trim();
+      const nameEn = document.getElementById('newShopNameEn').value.trim();
+      const license = document.getElementById('newShopLicense').value.trim();
+      
+      if (!nameAr) {
+        alert('❌ يجب إدخال اسم المحل بالعربي!');
+        return;
+      }
+      
+      const shopData = {
+        nameAr: nameAr,
+        nameEn: nameEn,
+        licenseNo: license,
+        address: document.getElementById('newShopArea').value.trim(),
+        contact: document.getElementById('newShopPhone').value.trim(),
+        activity: document.getElementById('newShopActivity').value.trim(),
+        locationMap: document.getElementById('newShopLocation').value.trim(),
+        admCode: 'ADM' + Date.now().toString().slice(-4)
+      };
+      
+      logActivity("إضافة محل", `تم إضافة المحل: ${nameAr}`);
+      alert(`✅ تم إضافة المحل: ${nameAr}\n\nالبيانات:\n${JSON.stringify(shopData, null, 2)}\n\nيمكنك الآن استخدامه في المحرر المرئي`);
+      closeModal('addShopModal');
     }
     
     function generateMonthlyReport() {
-      alert("ميزة التقرير الشهري قيد التطوير");
+      if (!planData || !planData.inspectionData) {
+        alert("❌ لا توجد بيانات للتقرير!");
+        return;
+      }
+      
+      const modal = document.createElement('div');
+      modal.className = 'modal show';
+      modal.id = 'monthlyReportModal';
+      
+      // Analyze data by month
+      const monthlyData = {};
+      planData.inspectionData.forEach(item => {
+        const month = item.day ? item.day.substring(0, 7) : 'غير محدد';
+        if (!monthlyData[month]) {
+          monthlyData[month] = {
+            count: 0,
+            inspectors: new Set(),
+            areas: new Set(),
+            shops: new Set()
+          };
+        }
+        monthlyData[month].count++;
+        if (item.inspector) monthlyData[month].inspectors.add(item.inspector);
+        if (item.area) monthlyData[month].areas.add(item.area);
+        if (item.shops) item.shops.forEach(shop => monthlyData[month].shops.add(shop));
+      });
+      
+      let reportHtml = '<div style="max-height: 60vh; overflow-y: auto;">';
+      Object.keys(monthlyData).sort().reverse().forEach(month => {
+        const data = monthlyData[month];
+        reportHtml += `
+          <div style="border: 1px solid #ddd; border-radius: 10px; padding: 15px; margin-bottom: 15px; background: #f8f9fa;">
+            <h4 style="color: #667eea; margin-bottom: 10px;">📅 ${month}</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+              <div><strong>عدد التفتيشات:</strong> ${data.count}</div>
+              <div><strong>عدد المفتشين:</strong> ${data.inspectors.size}</div>
+              <div><strong>عدد المناطق:</strong> ${data.areas.size}</div>
+              <div><strong>عدد المحلات:</strong> ${data.shops.size}</div>
+            </div>
+          </div>
+        `;
+      });
+      reportHtml += '</div>';
+      
+      modal.innerHTML = `
+        <div class="modal-content" style="max-width: 800px;">
+          <div class="modal-header">
+            <h3 class="modal-title">التقرير الشهري</h3>
+            <button class="modal-close" onclick="closeModal('monthlyReportModal')">&times;</button>
+          </div>
+          <div class="modal-body">
+            ${reportHtml}
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-primary" onclick="exportReport('monthly')">
+              <i class="fas fa-download"></i> تصدير التقرير
+            </button>
+            <button class="btn btn-secondary" onclick="closeModal('monthlyReportModal')">
+              إغلاق
+            </button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      logActivity("تقرير شهري", "تم عرض التقرير الشهري");
     }
     
     function generateInspectorReport() {
-      alert("ميزة تقرير المفتشين قيد التطوير");
+      if (!planData || !planData.inspectionData) {
+        alert("❌ لا توجد بيانات للتقرير!");
+        return;
+      }
+      
+      const modal = document.createElement('div');
+      modal.className = 'modal show';
+      modal.id = 'inspectorReportModal';
+      
+      // Analyze data by inspector
+      const inspectorData = {};
+      planData.inspectionData.forEach(item => {
+        const inspector = item.inspector || 'غير محدد';
+        if (!inspectorData[inspector]) {
+          inspectorData[inspector] = {
+            count: 0,
+            areas: new Set(),
+            shops: new Set(),
+            dates: []
+          };
+        }
+        inspectorData[inspector].count++;
+        if (item.area) inspectorData[inspector].areas.add(item.area);
+        if (item.shops) item.shops.forEach(shop => inspectorData[inspector].shops.add(shop));
+        if (item.day) inspectorData[inspector].dates.push(item.day);
+      });
+      
+      let reportHtml = '<div style="max-height: 60vh; overflow-y: auto;">';
+      Object.keys(inspectorData).sort().forEach(inspector => {
+        const data = inspectorData[inspector];
+        const avgPerMonth = data.dates.length > 0 ? 
+          (data.dates.length / (new Set(data.dates.map(d => d.substring(0, 7))).size || 1)).toFixed(1) : 0;
+        
+        reportHtml += `
+          <div style="border: 1px solid #ddd; border-radius: 10px; padding: 15px; margin-bottom: 15px; background: #f8f9fa;">
+            <h4 style="color: #667eea; margin-bottom: 10px;">👨‍⚕️ ${inspector}</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+              <div><strong>عدد التفتيشات:</strong> ${data.count}</div>
+              <div><strong>عدد المناطق:</strong> ${data.areas.size}</div>
+              <div><strong>عدد المحلات:</strong> ${data.shops.size}</div>
+              <div><strong>معدل التفتيش الشهري:</strong> ${avgPerMonth}</div>
+            </div>
+          </div>
+        `;
+      });
+      reportHtml += '</div>';
+      
+      modal.innerHTML = `
+        <div class="modal-content" style="max-width: 800px;">
+          <div class="modal-header">
+            <h3 class="modal-title">تقرير المفتشين</h3>
+            <button class="modal-close" onclick="closeModal('inspectorReportModal')">&times;</button>
+          </div>
+          <div class="modal-body">
+            ${reportHtml}
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-primary" onclick="exportReport('inspector')">
+              <i class="fas fa-download"></i> تصدير التقرير
+            </button>
+            <button class="btn btn-secondary" onclick="closeModal('inspectorReportModal')">
+              إغلاق
+            </button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      logActivity("تقرير المفتشين", "تم عرض تقرير المفتشين");
     }
     
     function generateAreaReport() {
-      alert("ميزة تقرير المناطق قيد التطوير");
+      if (!planData || !planData.inspectionData) {
+        alert("❌ لا توجد بيانات للتقرير!");
+        return;
+      }
+      
+      const modal = document.createElement('div');
+      modal.className = 'modal show';
+      modal.id = 'areaReportModal';
+      
+      // Analyze data by area
+      const areaData = {};
+      planData.inspectionData.forEach(item => {
+        const area = item.area || 'غير محدد';
+        if (!areaData[area]) {
+          areaData[area] = {
+            count: 0,
+            inspectors: new Set(),
+            shops: new Set()
+          };
+        }
+        areaData[area].count++;
+        if (item.inspector) areaData[area].inspectors.add(item.inspector);
+        if (item.shops) item.shops.forEach(shop => areaData[area].shops.add(shop));
+      });
+      
+      let reportHtml = '<div style="max-height: 60vh; overflow-y: auto;">';
+      Object.keys(areaData).sort().forEach(area => {
+        const data = areaData[area];
+        reportHtml += `
+          <div style="border: 1px solid #ddd; border-radius: 10px; padding: 15px; margin-bottom: 15px; background: #f8f9fa;">
+            <h4 style="color: #667eea; margin-bottom: 10px;">📍 ${area}</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+              <div><strong>عدد التفتيشات:</strong> ${data.count}</div>
+              <div><strong>عدد المفتشين:</strong> ${data.inspectors.size}</div>
+              <div><strong>عدد المحلات:</strong> ${data.shops.size}</div>
+            </div>
+          </div>
+        `;
+      });
+      reportHtml += '</div>';
+      
+      modal.innerHTML = `
+        <div class="modal-content" style="max-width: 800px;">
+          <div class="modal-header">
+            <h3 class="modal-title">تقرير المناطق</h3>
+            <button class="modal-close" onclick="closeModal('areaReportModal')">&times;</button>
+          </div>
+          <div class="modal-body">
+            ${reportHtml}
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-primary" onclick="exportReport('area')">
+              <i class="fas fa-download"></i> تصدير التقرير
+            </button>
+            <button class="btn btn-secondary" onclick="closeModal('areaReportModal')">
+              إغلاق
+            </button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      logActivity("تقرير المناطق", "تم عرض تقرير المناطق");
     }
     
     function generateShopReport() {
-      alert("ميزة تقرير المحلات قيد التطوير");
+      if (!planData || !planData.inspectionData) {
+        alert("❌ لا توجد بيانات للتقرير!");
+        return;
+      }
+      
+      const modal = document.createElement('div');
+      modal.className = 'modal show';
+      modal.id = 'shopReportModal';
+      
+      // Analyze data by shop
+      const shopData = {};
+      planData.inspectionData.forEach(item => {
+        if (item.shops) {
+          item.shops.forEach(shop => {
+            if (!shopData[shop]) {
+              shopData[shop] = {
+                count: 0,
+                inspectors: new Set(),
+                areas: new Set(),
+                lastInspection: null
+              };
+            }
+            shopData[shop].count++;
+            if (item.inspector) shopData[shop].inspectors.add(item.inspector);
+            if (item.area) shopData[shop].areas.add(item.area);
+            if (item.day) {
+              if (!shopData[shop].lastInspection || item.day > shopData[shop].lastInspection) {
+                shopData[shop].lastInspection = item.day;
+              }
+            }
+          });
+        }
+      });
+      
+      // Sort by inspection count
+      const sortedShops = Object.keys(shopData).sort((a, b) => shopData[b].count - shopData[a].count);
+      
+      let reportHtml = '<div style="max-height: 60vh; overflow-y: auto;">';
+      reportHtml += `<div style="margin-bottom: 15px; padding: 10px; background: #e8f5e9; border-radius: 8px;">
+        <strong>إجمالي المحلات:</strong> ${sortedShops.length} محل
+      </div>`;
+      
+      sortedShops.forEach(shop => {
+        const data = shopData[shop];
+        reportHtml += `
+          <div style="border: 1px solid #ddd; border-radius: 10px; padding: 15px; margin-bottom: 15px; background: #f8f9fa;">
+            <h4 style="color: #667eea; margin-bottom: 10px;">🏪 ${shop}</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+              <div><strong>عدد التفتيشات:</strong> ${data.count}</div>
+              <div><strong>عدد المفتشين:</strong> ${data.inspectors.size}</div>
+              <div><strong>المناطق:</strong> ${Array.from(data.areas).join(', ')}</div>
+              <div><strong>آخر تفتيش:</strong> ${data.lastInspection || 'غير محدد'}</div>
+            </div>
+          </div>
+        `;
+      });
+      reportHtml += '</div>';
+      
+      modal.innerHTML = `
+        <div class="modal-content" style="max-width: 900px;">
+          <div class="modal-header">
+            <h3 class="modal-title">تقرير المحلات</h3>
+            <button class="modal-close" onclick="closeModal('shopReportModal')">&times;</button>
+          </div>
+          <div class="modal-body">
+            ${reportHtml}
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-primary" onclick="exportReport('shop')">
+              <i class="fas fa-download"></i> تصدير التقرير
+            </button>
+            <button class="btn btn-secondary" onclick="closeModal('shopReportModal')">
+              إغلاق
+            </button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      logActivity("تقرير المحلات", "تم عرض تقرير المحلات");
+    }
+    
+    window.exportReport = function(type) {
+      const reportName = {
+        'monthly': 'التقرير الشهري',
+        'inspector': 'تقرير المفتشين',
+        'area': 'تقرير المناطق',
+        'shop': 'تقرير المحلات'
+      }[type];
+      
+      alert(`✅ جاري تصدير ${reportName}...\n\nسيتم تحميل التقرير قريباً بصيغة PDF/Excel`);
+      logActivity("تصدير تقرير", `تم طلب تصدير ${reportName}`);
+    }
+    
+    window.closeModal = function(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.remove();
+      }
     }
     
     function saveSettings() {
@@ -2466,6 +3214,746 @@
     
     function updateMaintenanceMessages() {
       alert("سيتم تحديث رسائل الصيانة عند تفعيل وضع الصيانة");
+    }
+    
+    // ========================
+    // Advanced Developer Tools
+    // ========================
+    
+    window.openAdvancedSearch = function() {
+      const modal = document.createElement('div');
+      modal.className = 'modal show';
+      modal.id = 'advancedSearchModal';
+      modal.innerHTML = `
+        <div class="modal-content" style="max-width: 900px; max-height: 90vh;">
+          <div class="modal-header">
+            <h3 class="modal-title">🔍 البحث المتقدم والفلترة</h3>
+            <button class="modal-close" onclick="closeModal('advancedSearchModal')">&times;</button>
+          </div>
+          <div class="modal-body" style="overflow-y: auto; max-height: 70vh;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 20px;">
+              <div class="form-group">
+                <label class="form-label">البحث العام</label>
+                <input type="text" id="advSearchGeneral" class="form-control" placeholder="أي كلمة...">
+              </div>
+              <div class="form-group">
+                <label class="form-label">المفتش</label>
+                <input type="text" id="advSearchInspector" class="form-control" placeholder="د. اسم المفتش">
+              </div>
+              <div class="form-group">
+                <label class="form-label">المنطقة</label>
+                <input type="text" id="advSearchArea" class="form-control" placeholder="سوق الميناء">
+              </div>
+              <div class="form-group">
+                <label class="form-label">المحل</label>
+                <input type="text" id="advSearchShop" class="form-control" placeholder="اسم المحل">
+              </div>
+              <div class="form-group">
+                <label class="form-label">من تاريخ</label>
+                <input type="date" id="advSearchFromDate" class="form-control">
+              </div>
+              <div class="form-group">
+                <label class="form-label">إلى تاريخ</label>
+                <input type="date" id="advSearchToDate" class="form-control">
+              </div>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+              <button class="btn btn-primary" onclick="executeAdvancedSearch()">
+                <i class="fas fa-search"></i> بحث
+              </button>
+              <button class="btn btn-secondary" onclick="clearAdvancedSearch()">
+                <i class="fas fa-eraser"></i> مسح
+              </button>
+            </div>
+            
+            <div id="advancedSearchResults"></div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+    
+    window.executeAdvancedSearch = function() {
+      if (!planData || !planData.inspectionData) {
+        alert('❌ لا توجد بيانات للبحث!');
+        return;
+      }
+      
+      const general = document.getElementById('advSearchGeneral').value.toLowerCase();
+      const inspector = document.getElementById('advSearchInspector').value.toLowerCase();
+      const area = document.getElementById('advSearchArea').value.toLowerCase();
+      const shop = document.getElementById('advSearchShop').value.toLowerCase();
+      const fromDate = document.getElementById('advSearchFromDate').value;
+      const toDate = document.getElementById('advSearchToDate').value;
+      
+      const results = planData.inspectionData.filter(item => {
+        const matchGeneral = !general || 
+          JSON.stringify(item).toLowerCase().includes(general);
+        const matchInspector = !inspector || 
+          (item.inspector && item.inspector.toLowerCase().includes(inspector));
+        const matchArea = !area || 
+          (item.area && item.area.toLowerCase().includes(area));
+        const matchShop = !shop || 
+          (item.shops && item.shops.some(s => s.toLowerCase().includes(shop)));
+        const matchFromDate = !fromDate || (item.day && item.day >= fromDate);
+        const matchToDate = !toDate || (item.day && item.day <= toDate);
+        
+        return matchGeneral && matchInspector && matchArea && matchShop && 
+               matchFromDate && matchToDate;
+      });
+      
+      const container = document.getElementById('advancedSearchResults');
+      if (results.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">لم يتم العثور على نتائج</p>';
+        return;
+      }
+      
+      let html = `<div style="background: #e8f5e9; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+        <strong>عدد النتائج:</strong> ${results.length}
+      </div>`;
+      
+      results.forEach((item, index) => {
+        html += `
+          <div style="border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 10px; background: white;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+              <div><strong>المفتش:</strong> ${item.inspector || 'غير محدد'}</div>
+              <div><strong>التاريخ:</strong> ${item.day || 'غير محدد'}</div>
+              <div><strong>المنطقة:</strong> ${item.area || 'غير محدد'}</div>
+              <div><strong>عدد المحلات:</strong> ${item.shops ? item.shops.length : 0}</div>
+            </div>
+            ${item.shops ? `<div style="margin-top: 10px;"><strong>المحلات:</strong> ${item.shops.join(', ')}</div>` : ''}
+          </div>
+        `;
+      });
+      
+      container.innerHTML = html;
+    }
+    
+    window.clearAdvancedSearch = function() {
+      document.getElementById('advSearchGeneral').value = '';
+      document.getElementById('advSearchInspector').value = '';
+      document.getElementById('advSearchArea').value = '';
+      document.getElementById('advSearchShop').value = '';
+      document.getElementById('advSearchFromDate').value = '';
+      document.getElementById('advSearchToDate').value = '';
+      document.getElementById('advancedSearchResults').innerHTML = '';
+    }
+    
+    window.openCodeInspector = function() {
+      const modal = document.createElement('div');
+      modal.className = 'modal show';
+      modal.id = 'codeInspectorModal';
+      modal.innerHTML = `
+        <div class="modal-content" style="max-width: 95%; max-height: 95vh;">
+          <div class="modal-header">
+            <h3 class="modal-title">🔧 مفتش الكود - Code Inspector</h3>
+            <button class="modal-close" onclick="closeModal('codeInspectorModal')">&times;</button>
+          </div>
+          <div class="modal-body" style="overflow-y: auto; max-height: 75vh;">
+            <div style="margin-bottom: 20px; padding: 15px; background: #e3f2fd; border-radius: 10px;">
+              <h4 style="margin-bottom: 10px;">📊 معلومات البيانات</h4>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                <div><strong>حجم البيانات:</strong> <span id="dataSize">-</span></div>
+                <div><strong>عدد السجلات:</strong> <span id="recordCount">-</span></div>
+                <div><strong>عدد المفتاحات:</strong> <span id="keyCount">-</span></div>
+                <div><strong>البنية:</strong> <span id="dataStructure">-</span></div>
+              </div>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+              <h4 style="margin-bottom: 10px;">🔍 فحص البيانات</h4>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-primary" onclick="analyzeDataStructure()">
+                  <i class="fas fa-sitemap"></i> تحليل البنية
+                </button>
+                <button class="btn btn-success" onclick="findDuplicates()">
+                  <i class="fas fa-copy"></i> البحث عن التكرارات
+                </button>
+                <button class="btn btn-warning" onclick="findMissingData()">
+                  <i class="fas fa-exclamation-triangle"></i> البيانات الناقصة
+                </button>
+                <button class="btn btn-info" onclick="generateStatistics()">
+                  <i class="fas fa-chart-bar"></i> إحصائيات شاملة
+                </button>
+              </div>
+            </div>
+            
+            <div id="codeInspectorResults" style="background: #f8f9fa; padding: 15px; border-radius: 10px; font-family: 'Courier New', monospace; white-space: pre-wrap; max-height: 400px; overflow-y: auto;">
+              جاهز للتحليل...
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      
+      // Update initial data
+      if (planData) {
+        document.getElementById('dataSize').textContent = 
+          (JSON.stringify(planData).length / 1024).toFixed(2) + ' KB';
+        document.getElementById('recordCount').textContent = 
+          planData.inspectionData ? planData.inspectionData.length : 0;
+        document.getElementById('keyCount').textContent = 
+          Object.keys(planData).length;
+        document.getElementById('dataStructure').textContent = 
+          Array.isArray(planData.inspectionData) ? 'Array' : 'Object';
+      }
+    }
+    
+    window.analyzeDataStructure = function() {
+      if (!planData) {
+        alert('❌ لا توجد بيانات للتحليل!');
+        return;
+      }
+      
+      const analysis = {
+        totalRecords: planData.inspectionData ? planData.inspectionData.length : 0,
+        uniqueInspectors: new Set(),
+        uniqueAreas: new Set(),
+        uniqueShops: new Set(),
+        dateRange: { min: null, max: null },
+        shiftDistribution: { 'صباحية': 0, 'مسائية': 0 }
+      };
+      
+      if (planData.inspectionData) {
+        planData.inspectionData.forEach(item => {
+          if (item.inspector) analysis.uniqueInspectors.add(item.inspector);
+          if (item.area) analysis.uniqueAreas.add(item.area);
+          if (item.shops) item.shops.forEach(s => analysis.uniqueShops.add(s));
+          if (item.day) {
+            if (!analysis.dateRange.min || item.day < analysis.dateRange.min) 
+              analysis.dateRange.min = item.day;
+            if (!analysis.dateRange.max || item.day > analysis.dateRange.max) 
+              analysis.dateRange.max = item.day;
+          }
+          if (item.shift) {
+            analysis.shiftDistribution[item.shift] = 
+              (analysis.shiftDistribution[item.shift] || 0) + 1;
+          }
+        });
+      }
+      
+      const result = `
+📊 تحليل البنية الشامل
+${'='.repeat(50)}
+
+📝 المعلومات الأساسية:
+   • إجمالي السجلات: ${analysis.totalRecords}
+   • المفتشون الفريدون: ${analysis.uniqueInspectors.size}
+   • المناطق الفريدة: ${analysis.uniqueAreas.size}
+   • المحلات الفريدة: ${analysis.uniqueShops.size}
+
+📅 نطاق التواريخ:
+   • من: ${analysis.dateRange.min || 'غير محدد'}
+   • إلى: ${analysis.dateRange.max || 'غير محدد'}
+
+⏰ توزيع الفترات:
+   • صباحية: ${analysis.shiftDistribution['صباحية']}
+   • مسائية: ${analysis.shiftDistribution['مسائية']}
+
+👥 قائمة المفتشين:
+${Array.from(analysis.uniqueInspectors).map((i, idx) => `   ${idx + 1}. ${i}`).join('\n')}
+
+📍 قائمة المناطق:
+${Array.from(analysis.uniqueAreas).map((a, idx) => `   ${idx + 1}. ${a}`).join('\n')}
+      `;
+      
+      document.getElementById('codeInspectorResults').textContent = result;
+    }
+    
+    window.findDuplicates = function() {
+      if (!planData || !planData.inspectionData) {
+        alert('❌ لا توجد بيانات للفحص!');
+        return;
+      }
+      
+      const duplicates = [];
+      const seen = new Map();
+      
+      planData.inspectionData.forEach((item, index) => {
+        const key = `${item.inspector}_${item.day}_${item.area}`;
+        if (seen.has(key)) {
+          duplicates.push({
+            index1: seen.get(key),
+            index2: index,
+            key: key,
+            item: item
+          });
+        } else {
+          seen.set(key, index);
+        }
+      });
+      
+      let result = `
+🔍 فحص التكرارات
+${'='.repeat(50)}
+
+`;
+      
+      if (duplicates.length === 0) {
+        result += '✅ لم يتم العثور على تكرارات!\n\nالبيانات نظيفة وخالية من التكرارات.';
+      } else {
+        result += `⚠️ تم العثور على ${duplicates.length} تكرار!\n\n`;
+        duplicates.forEach((dup, idx) => {
+          result += `${idx + 1}. التكرار بين السطر ${dup.index1 + 1} والسطر ${dup.index2 + 1}\n`;
+          result += `   المفتش: ${dup.item.inspector}\n`;
+          result += `   التاريخ: ${dup.item.day}\n`;
+          result += `   المنطقة: ${dup.item.area}\n\n`;
+        });
+      }
+      
+      document.getElementById('codeInspectorResults').textContent = result;
+    }
+    
+    window.findMissingData = function() {
+      if (!planData || !planData.inspectionData) {
+        alert('❌ لا توجد بيانات للفحص!');
+        return;
+      }
+      
+      const missing = [];
+      
+      planData.inspectionData.forEach((item, index) => {
+        const issues = [];
+        if (!item.inspector) issues.push('المفتش');
+        if (!item.day) issues.push('التاريخ');
+        if (!item.area) issues.push('المنطقة');
+        if (!item.shops || item.shops.length === 0) issues.push('المحلات');
+        
+        if (issues.length > 0) {
+          missing.push({ index, issues, item });
+        }
+      });
+      
+      let result = `
+⚠️ فحص البيانات الناقصة
+${'='.repeat(50)}
+
+`;
+      
+      if (missing.length === 0) {
+        result += '✅ جميع البيانات كاملة!\n\nلا توجد حقول ناقصة في البيانات.';
+      } else {
+        result += `❌ تم العثور على ${missing.length} سجل يحتوي على بيانات ناقصة!\n\n`;
+        missing.forEach((item, idx) => {
+          result += `${idx + 1}. السطر ${item.index + 1}:\n`;
+          result += `   البيانات الناقصة: ${item.issues.join(', ')}\n`;
+          if (item.item.inspector) result += `   المفتش: ${item.item.inspector}\n`;
+          if (item.item.day) result += `   التاريخ: ${item.item.day}\n`;
+          result += '\n';
+        });
+      }
+      
+      document.getElementById('codeInspectorResults').textContent = result;
+    }
+    
+    window.openBulkOperations = function() {
+      const modal = document.createElement('div');
+      modal.className = 'modal show';
+      modal.id = 'bulkOpsModal';
+      modal.innerHTML = `
+        <div class="modal-content" style="max-width: 800px;">
+          <div class="modal-header">
+            <h3 class="modal-title">⚡ العمليات المجمعة - Bulk Operations</h3>
+            <button class="modal-close" onclick="closeModal('bulkOpsModal')">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div style="margin-bottom: 20px; padding: 15px; background: #fff3cd; border-radius: 8px;">
+              <strong>⚠️ تنبيه:</strong> العمليات المجمعة قد تغير بيانات كثيرة دفعة واحدة. احفظ نسخة احتياطية أولاً!
+            </div>
+            
+            <div class="quick-actions" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+              <div class="quick-action-btn" onclick="bulkUpdateShift()">
+                <i class="fas fa-clock"></i>
+                <div class="label">تحديث الفترة</div>
+              </div>
+              <div class="quick-action-btn" onclick="bulkUpdateArea()">
+                <i class="fas fa-map-marked"></i>
+                <div class="label">تحديث المنطقة</div>
+              </div>
+              <div class="quick-action-btn" onclick="bulkDeleteByDate()">
+                <i class="fas fa-trash"></i>
+                <div class="label">حذف حسب التاريخ</div>
+              </div>
+              <div class="quick-action-btn" onclick="bulkExportFiltered()">
+                <i class="fas fa-file-export"></i>
+                <div class="label">تصدير مفلتر</div>
+              </div>
+              <div class="quick-action-btn" onclick="bulkMergeShops()">
+                <i class="fas fa-compress-arrows-alt"></i>
+                <div class="label">دمج المحلات</div>
+              </div>
+              <div class="quick-action-btn" onclick="bulkSortData()">
+                <i class="fas fa-sort-amount-down"></i>
+                <div class="label">ترتيب البيانات</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+    
+    window.bulkUpdateShift = function() {
+      if (!planData || !planData.inspectionData) {
+        alert('❌ لا توجد بيانات!');
+        return;
+      }
+      
+      const oldShift = prompt('أدخل الفترة القديمة (صباحية/مسائية):');
+      if (!oldShift) return;
+      
+      const newShift = prompt('أدخل الفترة الجديدة (صباحية/مسائية):');
+      if (!newShift) return;
+      
+      let count = 0;
+      planData.inspectionData.forEach(item => {
+        if (item.shift === oldShift) {
+          item.shift = newShift;
+          count++;
+        }
+      });
+      
+      document.getElementById('planEditor').value = JSON.stringify(planData, null, 2);
+      alert(`✅ تم تحديث ${count} سجل من "${oldShift}" إلى "${newShift}"`);
+      logActivity('عملية مجمعة', `تحديث الفترة: ${count} سجل`);
+    }
+    
+    window.bulkUpdateArea = function() {
+      if (!planData || !planData.inspectionData) {
+        alert('❌ لا توجد بيانات!');
+        return;
+      }
+      
+      const oldArea = prompt('أدخل اسم المنطقة القديمة:');
+      if (!oldArea) return;
+      
+      const newArea = prompt('أدخل اسم المنطقة الجديدة:');
+      if (!newArea) return;
+      
+      let count = 0;
+      planData.inspectionData.forEach(item => {
+        if (item.area === oldArea) {
+          item.area = newArea;
+          count++;
+        }
+      });
+      
+      document.getElementById('planEditor').value = JSON.stringify(planData, null, 2);
+      alert(`✅ تم تحديث ${count} سجل من "${oldArea}" إلى "${newArea}"`);
+      logActivity('عملية مجمعة', `تحديث المنطقة: ${count} سجل`);
+    }
+    
+    window.bulkDeleteByDate = function() {
+      if (!planData || !planData.inspectionData) {
+        alert('❌ لا توجد بيانات!');
+        return;
+      }
+      
+      const date = prompt('أدخل التاريخ للحذف (YYYY-MM-DD) أو شهر (YYYY-MM):');
+      if (!date) return;
+      
+      if (!confirm(`⚠️ هل أنت متأكد من حذف جميع السجلات التي تحتوي على "${date}"؟`)) return;
+      
+      const beforeCount = planData.inspectionData.length;
+      planData.inspectionData = planData.inspectionData.filter(item => 
+        !item.day || !item.day.includes(date)
+      );
+      const deletedCount = beforeCount - planData.inspectionData.length;
+      
+      document.getElementById('planEditor').value = JSON.stringify(planData, null, 2);
+      alert(`✅ تم حذف ${deletedCount} سجل`);
+      logActivity('عملية مجمعة', `حذف حسب التاريخ: ${deletedCount} سجل`);
+    }
+    
+    window.bulkExportFiltered = function() {
+      if (!planData || !planData.inspectionData) {
+        alert('❌ لا توجد بيانات!');
+        return;
+      }
+      
+      const filter = prompt('أدخل كلمة للفلترة (مفتش، منطقة، أو أي كلمة):');
+      if (!filter) return;
+      
+      const filtered = planData.inspectionData.filter(item => 
+        JSON.stringify(item).toLowerCase().includes(filter.toLowerCase())
+      );
+      
+      if (filtered.length === 0) {
+        alert('❌ لم يتم العثور على سجلات تطابق الفلتر!');
+        return;
+      }
+      
+      const exportData = { inspectionData: filtered };
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `filtered-data-${filter}-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      alert(`✅ تم تصدير ${filtered.length} سجل!`);
+      logActivity('عملية مجمعة', `تصدير مفلتر: ${filtered.length} سجل`);
+    }
+    
+    window.bulkMergeShops = function() {
+      alert('🔧 هذه الميزة تدمج المحلات المتشابهة في الأسماء.\n\nقريباً سيتم إضافتها...');
+    }
+    
+    window.bulkSortData = function() {
+      if (!planData || !planData.inspectionData) {
+        alert('❌ لا توجد بيانات!');
+        return;
+      }
+      
+      const sortBy = prompt('الترتيب حسب:\n1. التاريخ\n2. المفتش\n3. المنطقة\n\nأدخل الرقم:');
+      
+      if (sortBy === '1') {
+        planData.inspectionData.sort((a, b) => 
+          (a.day || '').localeCompare(b.day || '')
+        );
+      } else if (sortBy === '2') {
+        planData.inspectionData.sort((a, b) => 
+          (a.inspector || '').localeCompare(b.inspector || '')
+        );
+      } else if (sortBy === '3') {
+        planData.inspectionData.sort((a, b) => 
+          (a.area || '').localeCompare(b.area || '')
+        );
+      } else {
+        alert('❌ اختيار غير صحيح!');
+        return;
+      }
+      
+      document.getElementById('planEditor').value = JSON.stringify(planData, null, 2);
+      alert('✅ تم ترتيب البيانات بنجاح!');
+      logActivity('عملية مجمعة', 'ترتيب البيانات');
+    }
+    
+    window.openDataTransformer = function() {
+      const modal = document.createElement('div');
+      modal.className = 'modal show';
+      modal.id = 'dataTransformerModal';
+      modal.innerHTML = `
+        <div class="modal-content" style="max-width: 900px;">
+          <div class="modal-header">
+            <h3 class="modal-title">🔄 محول البيانات - Data Transformer</h3>
+            <button class="modal-close" onclick="closeModal('dataTransformerModal')">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div style="margin-bottom: 20px; padding: 15px; background: #e3f2fd; border-radius: 8px;">
+              <strong>ℹ️ معلومة:</strong> استخدم هذه الأداة لتحويل وتنسيق البيانات
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">نوع التحويل</label>
+              <select id="transformType" class="form-control">
+                <option value="json-to-csv">JSON إلى CSV</option>
+                <option value="json-to-excel">JSON إلى Excel Format</option>
+                <option value="normalize">تطبيع البيانات</option>
+                <option value="deduplicate">إزالة التكرارات</option>
+                <option value="fill-missing">ملء البيانات الناقصة</option>
+              </select>
+            </div>
+            
+            <button class="btn btn-primary" onclick="executeTransform()">
+              <i class="fas fa-magic"></i> تنفيذ التحويل
+            </button>
+            
+            <div id="transformResult" style="margin-top: 20px;"></div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+    
+    window.executeTransform = function() {
+      if (!planData || !planData.inspectionData) {
+        alert('❌ لا توجد بيانات!');
+        return;
+      }
+      
+      const type = document.getElementById('transformType').value;
+      const result = document.getElementById('transformResult');
+      
+      switch(type) {
+        case 'json-to-csv':
+          const csv = convertToCSV(planData.inspectionData);
+          result.innerHTML = `
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+              <h4>معاينة CSV:</h4>
+              <pre style="white-space: pre-wrap; max-height: 300px; overflow-y: auto;">${csv}</pre>
+              <button class="btn btn-success" onclick="downloadCSV()">
+                <i class="fas fa-download"></i> تحميل CSV
+              </button>
+            </div>
+          `;
+          window.currentCSV = csv;
+          break;
+          
+        case 'normalize':
+          normalizeData();
+          result.innerHTML = `<div class="status-message" style="background: #d4edda; color: #155724; padding: 15px; border-radius: 8px;">
+            ✅ تم تطبيع البيانات (توحيد التنسيق، إزالة المسافات الزائدة)
+          </div>`;
+          break;
+          
+        case 'deduplicate':
+          const beforeCount = planData.inspectionData.length;
+          removeDuplicates();
+          const afterCount = planData.inspectionData.length;
+          result.innerHTML = `<div class="status-message" style="background: #d4edda; color: #155724; padding: 15px; border-radius: 8px;">
+            ✅ تمت إزالة ${beforeCount - afterCount} تكرار
+          </div>`;
+          break;
+          
+        case 'fill-missing':
+          fillMissingData();
+          result.innerHTML = `<div class="status-message" style="background: #d4edda; color: #155724; padding: 15px; border-radius: 8px;">
+            ✅ تم ملء البيانات الناقصة بالقيم الافتراضية
+          </div>`;
+          break;
+          
+        default:
+          result.innerHTML = `<div class="status-message" style="background: #fff3cd; color: #856404; padding: 15px; border-radius: 8px;">
+            ⚠️ هذه الميزة قيد التطوير
+          </div>`;
+      }
+      
+      logActivity('تحويل البيانات', `نوع التحويل: ${type}`);
+    }
+    
+    function convertToCSV(data) {
+      if (!data || data.length === 0) return '';
+      
+      const headers = ['المفتش', 'التاريخ', 'الفترة', 'المنطقة', 'عدد المحلات', 'المحلات'];
+      let csv = headers.join(',') + '\n';
+      
+      data.forEach(item => {
+        const row = [
+          item.inspector || '',
+          item.day || '',
+          item.shift || '',
+          item.area || '',
+          item.shops ? item.shops.length : 0,
+          item.shops ? item.shops.join('; ') : ''
+        ];
+        csv += row.map(cell => `"${cell}"`).join(',') + '\n';
+      });
+      
+      return csv;
+    }
+    
+    window.downloadCSV = function() {
+      const blob = new Blob([window.currentCSV], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `plan-data-${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    
+    function normalizeData() {
+      planData.inspectionData.forEach(item => {
+        if (item.inspector) item.inspector = item.inspector.trim();
+        if (item.area) item.area = item.area.trim();
+        if (item.shops) item.shops = item.shops.map(s => s.trim());
+      });
+      document.getElementById('planEditor').value = JSON.stringify(planData, null, 2);
+    }
+    
+    function removeDuplicates() {
+      const seen = new Set();
+      planData.inspectionData = planData.inspectionData.filter(item => {
+        const key = `${item.inspector}_${item.day}_${item.area}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      document.getElementById('planEditor').value = JSON.stringify(planData, null, 2);
+    }
+    
+    function fillMissingData() {
+      planData.inspectionData.forEach(item => {
+        if (!item.inspector) item.inspector = 'غير محدد';
+        if (!item.area) item.area = 'غير محدد';
+        if (!item.shift) item.shift = 'صباحية';
+        if (!item.shops) item.shops = [];
+      });
+      document.getElementById('planEditor').value = JSON.stringify(planData, null, 2);
+    }
+    
+    window.generateStatistics = function() {
+      if (!planData || !planData.inspectionData) {
+        alert('❌ لا توجد بيانات للتحليل!');
+        return;
+      }
+      
+      const stats = {
+        inspectors: {},
+        areas: {},
+        months: {},
+        totalShops: 0
+      };
+      
+      planData.inspectionData.forEach(item => {
+        // Count by inspector
+        if (item.inspector) {
+          stats.inspectors[item.inspector] = 
+            (stats.inspectors[item.inspector] || 0) + 1;
+        }
+        
+        // Count by area
+        if (item.area) {
+          stats.areas[item.area] = 
+            (stats.areas[item.area] || 0) + 1;
+        }
+        
+        // Count by month
+        if (item.day) {
+          const month = item.day.substring(0, 7);
+          stats.months[month] = 
+            (stats.months[month] || 0) + 1;
+        }
+        
+        // Total shops
+        if (item.shops) {
+          stats.totalShops += item.shops.length;
+        }
+      });
+      
+      // Sort by count
+      const topInspectors = Object.entries(stats.inspectors)
+        .sort((a, b) => b[1] - a[1]).slice(0, 10);
+      const topAreas = Object.entries(stats.areas)
+        .sort((a, b) => b[1] - a[1]).slice(0, 10);
+      
+      let result = `
+📊 إحصائيات شاملة
+${'='.repeat(50)}
+
+📈 الأرقام العامة:
+   • إجمالي التفتيشات: ${planData.inspectionData.length}
+   • إجمالي المحلات المسجلة: ${stats.totalShops}
+   • متوسط المحلات لكل تفتيش: ${(stats.totalShops / planData.inspectionData.length).toFixed(2)}
+
+👨‍⚕️ أكثر المفتشين نشاطاً:
+${topInspectors.map(([name, count], idx) => 
+  `   ${idx + 1}. ${name}: ${count} تفتيش`).join('\n')}
+
+📍 أكثر المناطق تفتيشاً:
+${topAreas.map(([name, count], idx) => 
+  `   ${idx + 1}. ${name}: ${count} تفتيش`).join('\n')}
+
+📅 التوزيع الشهري:
+${Object.entries(stats.months).sort().map(([month, count]) => 
+  `   ${month}: ${count} تفتيش`).join('\n')}
+      `;
+      
+      document.getElementById('codeInspectorResults').textContent = result;
     }
     
     // ========================

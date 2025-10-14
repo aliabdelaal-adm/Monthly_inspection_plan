@@ -8262,7 +8262,12 @@ function renderPlanTable() {
         html += `
             <tr style="border-bottom:1px solid #e0e6f0;">
                 <td style="padding:12px 8px;font-weight:600;color:#234085;background:#f8faff;">${row.inspector}</td>
-                <td style="padding:12px 8px;text-align:center;font-family:monospace;background:#fff;">${row.day}</td>
+                <td style="padding:12px 8px;text-align:center;font-family:monospace;background:#fff;">
+                    <div style="line-height:1.4;">
+                        <div style="font-weight:600;">${row.day}</div>
+                        <div style="font-size:0.85em;color:#666;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">${getArabicDayName(row.day)}</div>
+                    </div>
+                </td>
                 <td style="padding:12px 8px;text-align:center;background:#f8faff;">
                     <span style="background:${row.shift === 'صباحية' ? '#e8f5e8' : '#fff3e0'};color:${row.shift === 'صباحية' ? '#2e7d32' : '#ef6c00'};padding:4px 8px;border-radius:12px;font-size:0.9em;border:1px solid ${row.shift === 'صباحية' ? '#c8e6c9' : '#ffcc02'};">
                         ${row.shift}
@@ -14339,6 +14344,17 @@ function getAreaName(areaValue) {
     
     // If it's already a name, return it as-is
     return areaValue;
+}
+
+function getArabicDayName(dateString) {
+    // Convert date string to Date object
+    const date = new Date(dateString + 'T00:00:00');
+    const dayIndex = date.getDay();
+    
+    // Arabic day names
+    const arabicDays = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    
+    return arabicDays[dayIndex];
 }
 
 function getShopActivity(shopName) {

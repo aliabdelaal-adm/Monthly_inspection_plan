@@ -5426,22 +5426,9 @@ async function showMaintenanceModeWithNotification(issues = [], skipNotification
         return;
     }
     
-    // Show "جاري التحديث" notification first (unless explicitly skipped)
-    if (!skipNotification) {
-        const wasAlreadyNotified = sessionStorage.getItem('maintenanceNotificationShown') === 'true';
-        if (!wasAlreadyNotified) {
-            console.log('📢 About to show "جاري التحديث" notification to user...');
-            showMaintenanceProgress('🔄 جاري التحديث...\n⏳ يرجى الانتظار', 'warning', true); // true = persist (don't auto-hide)
-            sessionStorage.setItem('maintenanceNotificationShown', 'true');
-            console.log('✅ "جاري التحديث" notification shown successfully (from wrapper) - will persist until developer closes it');
-        } else {
-            console.log('ℹ️ Update notification already shown in this session - skipping to prevent duplicate');
-        }
-    } else {
-        console.log('ℹ️ Update notification skipped (skipNotification = true)');
-    }
-    
-    // Now show the actual maintenance mode overlay
+    // Show the full maintenance mode overlay directly with music
+    // This shows "الزملاء الأعزاء" (Dear Colleagues) message with music
+    console.log('📢 Showing full maintenance screen with music for all users...');
     showMaintenanceMode(issues);
 }
 

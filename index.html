@@ -5426,7 +5426,6 @@ async function showMaintenanceModeWithNotification(issues = [], skipNotification
     // Don't show maintenance overlay for developers - they should always have access
     if (isDev || window.isDev) {
         console.log('⚠️ Maintenance mode active, but developer has access - overlay not shown');
-        console.log('💡 To test the update message, call: window.testShowUpdateMessage()');
         return;
     }
     
@@ -5435,30 +5434,6 @@ async function showMaintenanceModeWithNotification(issues = [], skipNotification
     console.log('📢 Showing full maintenance screen with music for all users...');
     showMaintenanceMode(issues);
 }
-
-// Testing function for developers to manually trigger the update message
-// Can be called from browser console: window.testShowUpdateMessage()
-window.testShowUpdateMessage = function(duration = 0) {
-    console.log('🧪 Test: Forcing update message to show (bypassing developer check)...');
-    
-    // Clear the notification flag to allow showing
-    sessionStorage.removeItem('maintenanceNotificationShown');
-    
-    // Show the message
-    showMaintenanceProgress('🔄 جاري التحديث...\n⏳ يرجى الانتظار (وضع الاختبار)', 'warning', true);
-    
-    console.log('✅ Test message shown! It will persist until manually closed.');
-    console.log('💡 To hide it, call: hideMaintenanceProgress()');
-    
-    // Auto-hide after duration if specified
-    if (duration > 0) {
-        console.log(`⏱️ Message will auto-hide after ${duration} seconds`);
-        setTimeout(() => {
-            hideMaintenanceProgress();
-            console.log('🗑️ Test message auto-hidden');
-        }, duration * 1000);
-    }
-};
 
 // Force re-check maintenance status and clear session cache
 window.forceCheckMaintenance = function() {
@@ -6059,7 +6034,7 @@ async function enableMaintenanceModeForAll() {
                   '• ✓ تم التفعيل على هذا الجهاز فوراً\n' +
                   '• ✓ تم إرسال إشارة فورية لجميع التبويبات المفتوحة\n' +
                   '• ✓ تم مسح جميع الكاش لضمان التحديث الفوري\n' +
-                  '• ✓ سيظهر رسالة "جاري التحديث" لجميع المستخدمين فوراً\n' +
+                  '• ✓ ستظهر شاشة الصيانة الكاملة مع الموسيقى لجميع المستخدمين فوراً\n' +
                   '• ✓ سيظهر على جميع الأجهزة خلال 3-5 ثواني\n' +
                   '• ✓ جميع المستخدمين سيرون رسالة الصيانة');
             console.log('✅ Maintenance mode enabled for all users on all devices');
@@ -6077,7 +6052,7 @@ async function enableMaintenanceModeForAll() {
             alert('⚠️ تم التفعيل محلياً بنجاح!\n\n' +
                   '📱 الحالة الحالية:\n' +
                   '• ✓ تم التفعيل على هذا الجهاز فوراً\n' +
-                  '• ✓ رسالة "جاري التحديث" ستظهر على الشاشة الرئيسية\n' +
+                  '• ✓ ستظهر شاشة الصيانة الكاملة مع الموسيقى على الشاشة الرئيسية\n' +
                   '• ✓ تم إرسال إشارة لجميع التبويبات المفتوحة\n' +
                   '• ⚠️ لم يتم الحفظ على GitHub (قد لا يظهر للأجهزة الأخرى)\n\n' +
                   '💡 السبب المحتمل:\n' +
@@ -6256,8 +6231,7 @@ async function checkMaintenanceMode() {
                     ? githubStatus.messages 
                     : ['جاري تحديث النظام', 'يقوم المطور بإجراء تعديلات', 'شكراً على الانتظار'];
                 
-                // Use the wrapper function which handles the notification consistently
-                // It will show "جاري التحديث" notification first, then the maintenance overlay
+                // Show the full maintenance screen with music directly for all non-developer users
                 showMaintenanceModeWithNotification(messages);
             } else {
                 console.log('⚠️ System is in maintenance mode (from GitHub) - developer has access');

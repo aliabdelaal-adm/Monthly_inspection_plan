@@ -1586,19 +1586,8 @@
             font-size: 0.82em;
         }
         
-        /* Desktop table data cell backgrounds - only for td elements */
-        .plan-table td:nth-child(1) { /* المفتش */
-            background: linear-gradient(135deg, rgba(250, 251, 255, 0.5) 0%, rgba(245, 248, 255, 0.6) 100%);
-        }
-        .plan-table td:nth-child(2) { /* التاريخ */
-            background: linear-gradient(135deg, rgba(245, 248, 255, 0.6) 0%, rgba(238, 243, 255, 0.7) 100%);
-        }
-        .plan-table td:nth-child(3) { /* المناوبة */
-            background: linear-gradient(135deg, rgba(250, 251, 255, 0.5) 0%, rgba(245, 248, 255, 0.6) 100%);
-        }
-        .plan-table td:nth-child(4) { /* المنطقة */
-            background: linear-gradient(135deg, rgba(252, 253, 255, 0.4) 0%, rgba(248, 250, 255, 0.5) 100%);
-        }
+        /* Desktop table data cell backgrounds - removed to allow yellow background on even rows */
+        /* Backgrounds now inherit from tbody tr:nth-child(even) yellow background */
         
         /* Enhanced Inspector Column Styling - Smart and Eye-catching */
         @keyframes inspector-glow {
@@ -1634,15 +1623,8 @@
         
         /* Enhanced inspector cell with glowing and shiny effects */
         .plan-table td:nth-child(1) { /* المفتش - Enhanced */
-            background: linear-gradient(135deg, 
-                rgba(102, 126, 234, 0.08) 0%, 
-                rgba(255, 215, 0, 0.05) 25%,
-                rgba(102, 126, 234, 0.12) 50%,
-                rgba(255, 215, 0, 0.08) 75%,
-                rgba(102, 126, 234, 0.08) 100%);
-            background-size: 200% 100%;
-            animation: inspector-shine 4s linear infinite,
-                       inspector-glow 3s ease-in-out infinite;
+            /* Removed background to allow yellow background on even rows */
+            animation: inspector-glow 3s ease-in-out infinite;
             font-weight: 700 !important;
             font-size: 0.95em !important;
             color: #1a237e !important;
@@ -1681,10 +1663,7 @@
         
         /* Enhanced inspector cell on hover */
         .plan-table tbody tr:hover td:nth-child(1) {
-            background: linear-gradient(135deg, 
-                rgba(102, 126, 234, 0.15) 0%, 
-                rgba(255, 215, 0, 0.1) 50%,
-                rgba(102, 126, 234, 0.15) 100%);
+            /* Removed background to allow yellow background on even rows */
             box-shadow: inset 0 0 30px rgba(102, 126, 234, 0.3),
                         inset 0 0 50px rgba(255, 215, 0, 0.2),
                         0 5px 20px rgba(102, 126, 234, 0.3);
@@ -8369,18 +8348,18 @@ function renderPlanTable() {
         html += `
             <tr style="border-bottom:1px solid #e0e6f0;">
                 <td style="padding:12px 8px 12px 35px;">${row.inspector}</td>
-                <td style="padding:12px 8px;text-align:center;font-family:monospace;background:#fff;">
+                <td style="padding:12px 8px;text-align:center;font-family:monospace;">
                     <div style="line-height:1.4;">
                         <div style="font-weight:600;">${row.day}</div>
                         <div style="font-size:0.85em;color:#666;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">${getArabicDayName(row.day)}</div>
                     </div>
                 </td>
-                <td style="padding:12px 8px;text-align:center;background:#f8faff;">
+                <td style="padding:12px 8px;text-align:center;">
                     <span style="display:inline-block;vertical-align:middle;background:${row.shift === 'صباحية' ? '#e8f5e8' : '#fff3e0'};color:${row.shift === 'صباحية' ? '#2e7d32' : '#ef6c00'};padding:4px 8px;border-radius:12px;font-size:0.9em;border:1px solid ${row.shift === 'صباحية' ? '#c8e6c9' : '#ffcc02'};">
                         ${row.shift}
                     </span>
                 </td>
-                <td style="padding:12px 8px;font-weight:500;color:${getAreaName(row.area) === 'سوق الميناء' || getAreaName(row.area) === 'سوق التراث' ? '#1976d2' : '#d32f2f'};background:#fff;">${getAreaName(row.area)}</td>
+                <td style="padding:12px 8px;font-weight:500;color:${getAreaName(row.area) === 'سوق الميناء' || getAreaName(row.area) === 'سوق التراث' ? '#1976d2' : '#d32f2f'};">${getAreaName(row.area)}</td>
                 <td style="padding:12px 8px;background:#f8faff;max-width:300px;">${shopsDisplay}</td>
                 ${isDev?`
                 <td style="padding:8px;text-align:center;background:#fff;">

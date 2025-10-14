@@ -1,0 +1,2497 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>لوحة التحكم الشاملة - Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Cache Control -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  
+  <!-- SEO Prevention -->
+  <meta name="robots" content="noindex, nofollow">
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Chart.js for Data Visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Cairo', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      direction: rtl;
+    }
+    
+    /* Sidebar Navigation */
+    .sidebar {
+      position: fixed;
+      right: 0;
+      top: 0;
+      width: 280px;
+      height: 100vh;
+      background: linear-gradient(180deg, #1a1f36 0%, #2d3561 100%);
+      padding: 20px;
+      overflow-y: auto;
+      box-shadow: -5px 0 20px rgba(0,0,0,0.3);
+      z-index: 1000;
+      transition: all 0.3s ease;
+    }
+    
+    .sidebar-header {
+      text-align: center;
+      padding: 20px 0;
+      border-bottom: 2px solid rgba(255,255,255,0.1);
+      margin-bottom: 30px;
+    }
+    
+    .sidebar-header h2 {
+      color: #fff;
+      font-size: 1.5em;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+    
+    .sidebar-header p {
+      color: rgba(255,255,255,0.7);
+      font-size: 0.9em;
+    }
+    
+    .nav-menu {
+      list-style: none;
+    }
+    
+    .nav-item {
+      margin-bottom: 8px;
+    }
+    
+    .nav-link {
+      display: flex;
+      align-items: center;
+      padding: 14px 18px;
+      color: rgba(255,255,255,0.8);
+      text-decoration: none;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    
+    .nav-link:hover {
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      transform: translateX(-5px);
+    }
+    
+    .nav-link.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      box-shadow: 0 5px 15px rgba(102,126,234,0.3);
+    }
+    
+    .nav-link i {
+      margin-left: 15px;
+      font-size: 1.2em;
+      width: 25px;
+      text-align: center;
+    }
+    
+    /* Main Content */
+    .main-content {
+      margin-right: 280px;
+      padding: 30px;
+      min-height: 100vh;
+    }
+    
+    .top-bar {
+      background: rgba(255,255,255,0.95);
+      padding: 20px 30px;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .top-bar h1 {
+      color: #1a1f36;
+      font-size: 1.8em;
+      font-weight: 700;
+    }
+    
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .user-avatar {
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 1.2em;
+    }
+    
+    .user-name {
+      font-weight: 600;
+      color: #1a1f36;
+    }
+    
+    /* Dashboard Section */
+    .section {
+      display: none;
+    }
+    
+    .section.active {
+      display: block;
+      animation: fadeIn 0.5s ease;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Stats Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .stat-card {
+      background: #fff;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+    
+    .stat-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .stat-card-title {
+      color: #666;
+      font-size: 0.95em;
+      font-weight: 600;
+    }
+    
+    .stat-card-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5em;
+      color: #fff;
+    }
+    
+    .stat-card-icon.blue {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .stat-card-icon.green {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+    
+    .stat-card-icon.orange {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    
+    .stat-card-icon.purple {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    
+    .stat-card-value {
+      font-size: 2.5em;
+      font-weight: 700;
+      color: #1a1f36;
+      margin-bottom: 5px;
+    }
+    
+    .stat-card-label {
+      color: #999;
+      font-size: 0.9em;
+    }
+    
+    /* Content Cards */
+    .content-card {
+      background: #fff;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+    
+    .content-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+    
+    .content-card-title {
+      font-size: 1.5em;
+      font-weight: 700;
+      color: #1a1f36;
+    }
+    
+    /* Buttons */
+    .btn {
+      padding: 12px 25px;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Cairo', sans-serif;
+      font-weight: 600;
+      font-size: 1em;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      box-shadow: 0 5px 15px rgba(102,126,234,0.3);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102,126,234,0.4);
+    }
+    
+    .btn-success {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      color: #fff;
+      box-shadow: 0 5px 15px rgba(17,153,142,0.3);
+    }
+    
+    .btn-success:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(17,153,142,0.4);
+    }
+    
+    .btn-danger {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: #fff;
+      box-shadow: 0 5px 15px rgba(245,87,108,0.3);
+    }
+    
+    .btn-danger:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(245,87,108,0.4);
+    }
+    
+    .btn-warning {
+      background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+      color: #fff;
+      box-shadow: 0 5px 15px rgba(250,112,154,0.3);
+    }
+    
+    .btn-warning:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(250,112,154,0.4);
+    }
+    
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+    
+    /* Form Elements */
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      color: #1a1f36;
+      font-weight: 600;
+      font-size: 0.95em;
+    }
+    
+    .form-control {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-family: 'Cairo', sans-serif;
+      font-size: 1em;
+      transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+    }
+    
+    textarea.form-control {
+      resize: vertical;
+      min-height: 150px;
+      font-family: monospace;
+    }
+    
+    select.form-control {
+      cursor: pointer;
+    }
+    
+    /* Quick Actions */
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+    
+    .quick-action-btn {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      border: 2px solid #e0e0e0;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+    
+    .quick-action-btn:hover {
+      border-color: #667eea;
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(102,126,234,0.2);
+    }
+    
+    .quick-action-btn i {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .quick-action-btn .label {
+      color: #1a1f36;
+      font-weight: 600;
+      font-size: 0.95em;
+    }
+    
+    /* Status Messages */
+    .status-message {
+      padding: 15px 20px;
+      border-radius: 10px;
+      margin-top: 15px;
+      font-weight: 600;
+      display: none;
+    }
+    
+    .status-message.show {
+      display: block;
+      animation: slideDown 0.3s ease;
+    }
+    
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .status-message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .status-message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .status-message.info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    
+    .status-message.warning {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeeba;
+    }
+    
+    /* Table Styles */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    
+    .data-table th,
+    .data-table td {
+      padding: 12px 15px;
+      text-align: right;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .data-table th {
+      background: #f8f9fa;
+      color: #1a1f36;
+      font-weight: 700;
+      position: sticky;
+      top: 0;
+    }
+    
+    .data-table tr:hover {
+      background: #f8f9fa;
+    }
+    
+    /* Charts */
+    .chart-container {
+      position: relative;
+      height: 300px;
+      margin-bottom: 30px;
+    }
+    
+    /* File List */
+    .file-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      transition: all 0.3s ease;
+    }
+    
+    .file-item:hover {
+      border-color: #667eea;
+      background: #f8f9fa;
+    }
+    
+    .file-info {
+      flex: 1;
+    }
+    
+    .file-name {
+      font-weight: 600;
+      color: #1a1f36;
+      margin-bottom: 5px;
+    }
+    
+    .file-meta {
+      font-size: 0.85em;
+      color: #999;
+    }
+    
+    .file-actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .file-actions button {
+      padding: 8px 15px;
+      font-size: 0.9em;
+    }
+    
+    /* Loading Spinner */
+    .loader {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal.show {
+      display: flex;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    .modal-content {
+      background: #fff;
+      padding: 30px;
+      border-radius: 15px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+    
+    .modal-title {
+      font-size: 1.5em;
+      font-weight: 700;
+      color: #1a1f36;
+    }
+    
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5em;
+      color: #999;
+      cursor: pointer;
+      padding: 0;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+    }
+    
+    .modal-close:hover {
+      background: #f0f0f0;
+      color: #1a1f36;
+    }
+    
+    .modal-body {
+      margin-bottom: 20px;
+    }
+    
+    .modal-footer {
+      display: flex;
+      justify-content: flex-start;
+      gap: 10px;
+      padding-top: 15px;
+      border-top: 2px solid #f0f0f0;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+      }
+      
+      .main-content {
+        margin-right: 0;
+        padding: 15px;
+      }
+      
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .top-bar {
+        flex-direction: column;
+        gap: 15px;
+      }
+      
+      .quick-actions {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    /* Toggle Sidebar Button (Mobile) */
+    .sidebar-toggle {
+      display: none;
+      position: fixed;
+      left: 20px;
+      top: 20px;
+      z-index: 2000;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      border: none;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      font-size: 1.5em;
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(102,126,234,0.3);
+    }
+    
+    @media (max-width: 768px) {
+      .sidebar-toggle {
+        display: block;
+      }
+      
+      .sidebar {
+        transform: translateX(100%);
+      }
+      
+      .sidebar.active {
+        transform: translateX(0);
+      }
+    }
+  </style>
+</head>
+<body>
+  
+  <!-- Sidebar Toggle Button (Mobile) -->
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <i class="fas fa-bars"></i>
+  </button>
+  
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h2>لوحة التحكم الشاملة</h2>
+      <p>نظام إدارة متقدم وذكي</p>
+    </div>
+    
+    <ul class="nav-menu">
+      <li class="nav-item">
+        <a class="nav-link active" onclick="showSection('dashboard')">
+          <i class="fas fa-chart-line"></i>
+          <span>لوحة المعلومات</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" onclick="showSection('quick-actions')">
+          <i class="fas fa-bolt"></i>
+          <span>الإجراءات السريعة</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" onclick="showSection('plan-editor')">
+          <i class="fas fa-edit"></i>
+          <span>محرر الخطة</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" onclick="showSection('file-management')">
+          <i class="fas fa-folder-open"></i>
+          <span>إدارة الملفات</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" onclick="showSection('inspectors')">
+          <i class="fas fa-users"></i>
+          <span>إدارة المفتشين</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" onclick="showSection('areas')">
+          <i class="fas fa-map-marked-alt"></i>
+          <span>إدارة المناطق</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" onclick="showSection('shops')">
+          <i class="fas fa-store"></i>
+          <span>إدارة المحلات</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" onclick="showSection('maintenance')">
+          <i class="fas fa-tools"></i>
+          <span>وضع الصيانة</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" onclick="showSection('reports')">
+          <i class="fas fa-chart-bar"></i>
+          <span>التقارير والإحصائيات</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" onclick="showSection('settings')">
+          <i class="fas fa-cog"></i>
+          <span>الإعدادات</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" onclick="showSection('activity-log')">
+          <i class="fas fa-history"></i>
+          <span>سجل النشاطات</span>
+        </a>
+      </li>
+      <li class="nav-item" style="margin-top: 20px; border-top: 2px solid rgba(255,255,255,0.1); padding-top: 20px;">
+        <a class="nav-link" onclick="window.location.href='index.html'">
+          <i class="fas fa-home"></i>
+          <span>العودة للموقع</span>
+        </a>
+      </li>
+    </ul>
+  </aside>
+  
+  <!-- Main Content -->
+  <main class="main-content">
+    
+    <!-- Top Bar -->
+    <div class="top-bar">
+      <h1>مرحباً بك في لوحة التحكم</h1>
+      <div class="user-info">
+        <div class="user-avatar">د.ع</div>
+        <div>
+          <div class="user-name">د. علي عبدالعال</div>
+          <div style="font-size: 0.85em; color: #999;">مطور النظام</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Dashboard Section -->
+    <section id="dashboard" class="section active">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-card-title">إجمالي التفتيشات</div>
+            <div class="stat-card-icon blue">
+              <i class="fas fa-clipboard-check"></i>
+            </div>
+          </div>
+          <div class="stat-card-value" id="totalInspections">-</div>
+          <div class="stat-card-label">تفتيش مسجل</div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-card-title">عدد المفتشين</div>
+            <div class="stat-card-icon green">
+              <i class="fas fa-user-check"></i>
+            </div>
+          </div>
+          <div class="stat-card-value" id="totalInspectors">-</div>
+          <div class="stat-card-label">مفتش نشط</div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-card-title">عدد المناطق</div>
+            <div class="stat-card-icon orange">
+              <i class="fas fa-map-marker-alt"></i>
+            </div>
+          </div>
+          <div class="stat-card-value" id="totalAreas">-</div>
+          <div class="stat-card-label">منطقة مسجلة</div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-card-title">عدد المحلات</div>
+            <div class="stat-card-icon purple">
+              <i class="fas fa-store"></i>
+            </div>
+          </div>
+          <div class="stat-card-value" id="totalShops">-</div>
+          <div class="stat-card-label">محل مسجل</div>
+        </div>
+      </div>
+      
+      <!-- Charts -->
+      <div class="content-card">
+        <div class="content-card-header">
+          <h3 class="content-card-title">التوزيع حسب المفتشين</h3>
+        </div>
+        <div class="chart-container">
+          <canvas id="inspectorsChart"></canvas>
+        </div>
+      </div>
+      
+      <div class="content-card">
+        <div class="content-card-header">
+          <h3 class="content-card-title">التوزيع حسب المناطق</h3>
+        </div>
+        <div class="chart-container">
+          <canvas id="areasChart"></canvas>
+        </div>
+      </div>
+      
+      <!-- Recent Activity -->
+      <div class="content-card">
+        <div class="content-card-header">
+          <h3 class="content-card-title">آخر النشاطات</h3>
+          <button class="btn btn-primary" onclick="refreshDashboard()">
+            <i class="fas fa-sync-alt"></i>
+            تحديث
+          </button>
+        </div>
+        <div id="recentActivity">
+          <p style="text-align: center; color: #999; padding: 20px;">لا توجد نشاطات حديثة</p>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Quick Actions Section -->
+    <section id="quick-actions" class="section">
+      <div class="content-card">
+        <div class="content-card-header">
+          <h3 class="content-card-title">الإجراءات السريعة</h3>
+        </div>
+        <div class="quick-actions">
+          <div class="quick-action-btn" onclick="showSection('plan-editor')">
+            <i class="fas fa-edit"></i>
+            <div class="label">تحرير الخطة</div>
+          </div>
+          <div class="quick-action-btn" onclick="addNewInspection()">
+            <i class="fas fa-plus-circle"></i>
+            <div class="label">إضافة تفتيش جديد</div>
+          </div>
+          <div class="quick-action-btn" onclick="showSection('file-management')">
+            <i class="fas fa-upload"></i>
+            <div class="label">رفع ملف</div>
+          </div>
+          <div class="quick-action-btn" onclick="exportData()">
+            <i class="fas fa-download"></i>
+            <div class="label">تصدير البيانات</div>
+          </div>
+          <div class="quick-action-btn" onclick="backupData()">
+            <i class="fas fa-database"></i>
+            <div class="label">نسخة احتياطية</div>
+          </div>
+          <div class="quick-action-btn" onclick="showSection('maintenance')">
+            <i class="fas fa-tools"></i>
+            <div class="label">وضع الصيانة</div>
+          </div>
+          <div class="quick-action-btn" onclick="validateData()">
+            <i class="fas fa-check-circle"></i>
+            <div class="label">التحقق من البيانات</div>
+          </div>
+          <div class="quick-action-btn" onclick="showSection('reports')">
+            <i class="fas fa-chart-pie"></i>
+            <div class="label">عرض التقارير</div>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Plan Editor Section -->
+    <section id="plan-editor" class="section">
+      <div class="content-card">
+        <div class="content-card-header">
+          <h3 class="content-card-title">محرر خطة التفتيش</h3>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn btn-success" onclick="savePlan()" id="savePlanBtn">
+              <i class="fas fa-save"></i>
+              حفظ التعديلات
+            </button>
+            <button class="btn btn-warning" onclick="loadPlan()">
+              <i class="fas fa-sync-alt"></i>
+              إعادة تحميل
+            </button>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">بيانات الخطة (JSON)</label>
+          <textarea id="planEditor" class="form-control" rows="20" placeholder='{"inspectionData": []}'></textarea>
+        </div>
+        
+        <div class="status-message" id="planEditorStatus"></div>
+        
+        <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+          <h4 style="margin-bottom: 10px; color: #1a1f36;">نصائح للتحرير:</h4>
+          <ul style="color: #666; line-height: 1.8;">
+            <li>تأكد من صحة تنسيق JSON قبل الحفظ</li>
+            <li>استخدم محرر JSON خارجي للتعديلات الكبيرة</li>
+            <li>احفظ نسخة احتياطية قبل التعديلات الهامة</li>
+            <li>تحقق من عدم وجود فواصل زائدة أو ناقصة</li>
+          </ul>
+        </div>
+      </div>
+      
+      <!-- Visual Plan Editor -->
+      <div class="content-card">
+        <div class="content-card-header">
+          <h3 class="content-card-title">المحرر المرئي</h3>
+          <button class="btn btn-primary" onclick="openVisualEditor()">
+            <i class="fas fa-table"></i>
+            فتح المحرر المرئي
+          </button>
+        </div>
+        <p style="color: #666;">استخدم المحرر المرئي لتعديل البيانات بطريقة أسهل وأكثر سهولة</p>
+      </div>
+    </section>
+    
+    <!-- File Management Section -->
+    <section id="file-management" class="section">
+      <div class="content-card">
+        <div class="content-card-header">
+          <h3 class="content-card-title">رفع ملف جديد</h3>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">اختر الملف</label>
+          <input type="file" id="fileUpload" class="form-control" 
+                 accept=".pdf,.xlsx,.xls,.docx,.doc,.pptx,.ppt,.csv,.txt,.jpg,.jpeg,.png,.gif">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">التصنيف</label>
+          <select id="fileCategory" class="form-control">
+            <option value="documents">الوثائق - Documents</option>
+            <option value="reports">التقارير - Reports</option>
+            <option value="schedules">الجداول - Schedules</option>
+            <option value="resources">الموارد - Resources</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">وصف الملف (اختياري)</label>
+          <input type="text" id="fileDescription" class="form-control" placeholder="وصف مختصر للملف">
+        </div>
+        
+        <button class="btn btn-primary" onclick="uploadFile()" id="uploadBtn">
+          <i class="fas fa-upload"></i>
+          رفع الملف
+        </button>
+        
+        <div class="status-message" id="fileUploadStatus"></div>
+      </div>
+      
+      <div class="content-card">
+        <div class="content-card-header">
+          <h3 class="content-card-title">الملفات المرفوعة</h3>
+          <button class="btn btn-primary" onclick="loadFilesList()">
+            <i class="fas fa-sync-alt"></i>
+            تحديث القائمة
+          </button>
+        </div>
+        <div id="filesList">
+          <p style="text-align: center; color: #999; padding: 20px;">انقر على "تحديث القائمة" لعرض الملفات</p>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Inspectors Section -->
+    <section id="inspectors" class="section">
+      <div class="content-card">
+        <div class="content-card-header">
+          <h3 class="content-card-title">إدارة المفتشين</h3>
+          <button class="btn btn-primary" onclick="addInspector()">
+            <i class="fas fa-user-plus"></i>
+            إضافة مفتش جديد
+          </button>
+        </div>
+        <div id="inspectorsList">
+          <div class="loader"></div>
+        </div>
+      </div>
+      
+      <div class="content-card">
+        <div class="content-card-header">
+          <h3 class="content-card-title">إحصائيات المفتشين</h3>
+        </div>
+        <div class="chart-container">
+          <canvas id="inspectorsStatsChart"></canvas>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Areas Section -->
+    <section id="areas" class="section">
+      <div class="content-card">
+        <div class="content-card-header">
+          <h3 class="content-card-title">إدارة المناطق</h3>
+          <button class="btn btn-primary" onclick="addArea()">
+            <i class="fas fa-map-marker-alt"></i>
+            إضافة منطقة جديدة
+          </button>
+        </div>
+        <div id="areasList">
+          <div class="loader"></div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Shops Section -->
+    <section id="shops" class="section">
+      <div class="content-card">
+        <div class="content-card-header">
+          <h3 class="content-card-title">إدارة المحلات</h3>
+          <button class="btn btn-primary" onclick="addShop()">
+            <i class="fas fa-store"></i>
+            إضافة محل جديد
+          </button>
+        </div>
+        <div id="shopsList">
+          <div class="loader"></div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Maintenance Section -->
+    <section id="maintenance" class="section">
+      <div class="content-card">
+        <div class="content-card-header">
+          <h3 class="content-card-title">وضع الصيانة</h3>
+        </div>
+        
+        <div style="background: #fff3cd; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 2px solid #ffc107;">
+          <h4 style="margin-bottom: 10px; color: #856404;"><i class="fas fa-exclamation-triangle"></i> تنبيه هام</h4>
+          <p style="color: #856404; margin: 0;">عند تفعيل وضع الصيانة، سيتم منع جميع المستخدمين من الوصول للموقع عدا المطور.</p>
+        </div>
+        
+        <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+          <button class="btn btn-danger" onclick="enableMaintenanceMode()">
+            <i class="fas fa-lock"></i>
+            تفعيل وضع الصيانة
+          </button>
+          <button class="btn btn-success" onclick="disableMaintenanceMode()">
+            <i class="fas fa-unlock"></i>
+            إلغاء وضع الصيانة
+          </button>
+          <button class="btn btn-primary" onclick="checkMaintenanceStatus()">
+            <i class="fas fa-info-circle"></i>
+            فحص الحالة
+          </button>
+        </div>
+        
+        <div class="status-message" id="maintenanceStatus"></div>
+        
+        <div class="content-card" style="margin-top: 20px;">
+          <h4 style="margin-bottom: 15px;">رسائل الصيانة المخصصة</h4>
+          <div class="form-group">
+            <label class="form-label">رسالة الصيانة (عربي)</label>
+            <textarea id="maintenanceMessageAr" class="form-control" rows="3">النظام قيد التحديث، الرجاء المحاولة لاحقاً</textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">رسالة الصيانة (إنجليزي)</label>
+            <textarea id="maintenanceMessageEn" class="form-control" rows="3">System under maintenance, please try again later</textarea>
+          </div>
+          <button class="btn btn-warning" onclick="updateMaintenanceMessages()">
+            <i class="fas fa-edit"></i>
+            تحديث الرسائل
+          </button>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Reports Section -->
+    <section id="reports" class="section">
+      <div class="content-card">
+        <div class="content-card-header">
+          <h3 class="content-card-title">التقارير والإحصائيات</h3>
+        </div>
+        
+        <div class="quick-actions">
+          <div class="quick-action-btn" onclick="generateMonthlyReport()">
+            <i class="fas fa-calendar-alt"></i>
+            <div class="label">التقرير الشهري</div>
+          </div>
+          <div class="quick-action-btn" onclick="generateInspectorReport()">
+            <i class="fas fa-user-tie"></i>
+            <div class="label">تقرير المفتشين</div>
+          </div>
+          <div class="quick-action-btn" onclick="generateAreaReport()">
+            <i class="fas fa-map"></i>
+            <div class="label">تقرير المناطق</div>
+          </div>
+          <div class="quick-action-btn" onclick="generateShopReport()">
+            <i class="fas fa-shopping-bag"></i>
+            <div class="label">تقرير المحلات</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="content-card">
+        <div class="content-card-header">
+          <h3 class="content-card-title">إحصائيات متقدمة</h3>
+        </div>
+        <div id="advancedStats">
+          <div class="loader"></div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Settings Section -->
+    <section id="settings" class="section">
+      <div class="content-card">
+        <div class="content-card-header">
+          <h3 class="content-card-title">الإعدادات العامة</h3>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">GitHub Token</label>
+          <input type="password" id="githubToken" class="form-control" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+          <small style="color: #999; display: block; margin-top: 5px;">
+            التوكن المستخدم للوصول إلى GitHub API
+          </small>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">اسم المستودع</label>
+          <input type="text" id="repoName" class="form-control" value="aliabdelaal-adm/Monthly_inspection_plan" readonly>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">وضع التطوير</label>
+          <select id="devMode" class="form-control">
+            <option value="production">الإنتاج (Production)</option>
+            <option value="development">التطوير (Development)</option>
+          </select>
+        </div>
+        
+        <button class="btn btn-primary" onclick="saveSettings()">
+          <i class="fas fa-save"></i>
+          حفظ الإعدادات
+        </button>
+        
+        <div class="status-message" id="settingsStatus"></div>
+      </div>
+      
+      <div class="content-card">
+        <div class="content-card-header">
+          <h3 class="content-card-title">إدارة النسخ الاحتياطية</h3>
+        </div>
+        
+        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+          <button class="btn btn-success" onclick="createBackup()">
+            <i class="fas fa-save"></i>
+            إنشاء نسخة احتياطية
+          </button>
+          <button class="btn btn-warning" onclick="listBackups()">
+            <i class="fas fa-list"></i>
+            عرض النسخ الاحتياطية
+          </button>
+          <button class="btn btn-danger" onclick="restoreBackup()">
+            <i class="fas fa-undo"></i>
+            استعادة نسخة احتياطية
+          </button>
+        </div>
+        
+        <div id="backupsList" style="margin-top: 20px;"></div>
+      </div>
+    </section>
+    
+    <!-- Activity Log Section -->
+    <section id="activity-log" class="section">
+      <div class="content-card">
+        <div class="content-card-header">
+          <h3 class="content-card-title">سجل النشاطات</h3>
+          <button class="btn btn-primary" onclick="refreshActivityLog()">
+            <i class="fas fa-sync-alt"></i>
+            تحديث
+          </button>
+        </div>
+        
+        <div id="activityLogContent">
+          <p style="text-align: center; color: #999; padding: 20px;">جاري تحميل سجل النشاطات...</p>
+        </div>
+      </div>
+    </section>
+    
+  </main>
+  
+  <!-- Token Setup Modal -->
+  <div id="tokenModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">إدخال GitHub Token</h3>
+        <button class="modal-close" onclick="closeTokenModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: 15px; color: #666;">
+          يرجى إدخال GitHub Personal Access Token للمستودع لتتمكن من إجراء التعديلات.
+        </p>
+        
+        <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+          <strong style="color: #856404;">كيفية إنشاء Token:</strong>
+          <ol style="margin: 10px 0; padding-right: 20px; color: #856404; font-size: 0.9em;">
+            <li>اذهب إلى <a href="https://github.com/settings/tokens" target="_blank" style="color: #0066cc;">GitHub Settings → Tokens</a></li>
+            <li>انقر "Generate new token (classic)"</li>
+            <li>اختر صلاحية <strong>repo</strong></li>
+            <li>انسخ التوكن</li>
+          </ol>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">GitHub Token</label>
+          <input type="password" id="tokenInput" class="form-control" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+        </div>
+        
+        <div class="status-message" id="tokenModalStatus"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" onclick="saveToken()">
+          <i class="fas fa-save"></i>
+          حفظ
+        </button>
+        <button class="btn btn-warning" onclick="useDefaultToken()">
+          <i class="fas fa-key"></i>
+          استخدام التوكن الافتراضي
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // ========================
+    // Configuration & Global Variables
+    // ========================
+    const repo = "aliabdelaal-adm/Monthly_inspection_plan";
+    const planPath = "plan-data.json";
+    const filesPath = "files.json";
+    const maintenancePath = "maintenance-status.json";
+    
+    let planData = null;
+    let filesData = null;
+    let planSha = "";
+    let filesSha = "";
+    
+    // Chart instances
+    let inspectorsChart = null;
+    let areasChart = null;
+    let inspectorsStatsChart = null;
+    
+    // ========================
+    // Token Management
+    // ========================
+    function getToken() {
+      return localStorage.getItem("devToken") || "";
+    }
+    
+    function setToken(token) {
+      localStorage.setItem("devToken", token);
+    }
+    
+    function removeToken() {
+      localStorage.removeItem("devToken");
+    }
+    
+    function showTokenModal() {
+      document.getElementById("tokenModal").classList.add("show");
+      document.getElementById("tokenInput").focus();
+    }
+    
+    function closeTokenModal() {
+      document.getElementById("tokenModal").classList.remove("show");
+    }
+    
+    function saveToken() {
+      const token = document.getElementById("tokenInput").value.trim();
+      if (!token) {
+        showMessage("tokenModalStatus", "error", "يرجى إدخال التوكن!");
+        return;
+      }
+      setToken(token);
+      closeTokenModal();
+      showMessage("tokenModalStatus", "success", "تم حفظ التوكن بنجاح!");
+      setTimeout(() => {
+        initDashboard();
+      }, 500);
+    }
+    
+    function useDefaultToken() {
+      const defaultToken = "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";
+      setToken(defaultToken);
+      closeTokenModal();
+      showMessage("tokenModalStatus", "success", "تم استخدام التوكن الافتراضي!");
+      setTimeout(() => {
+        initDashboard();
+      }, 500);
+    }
+    
+    // ========================
+    // Navigation & UI
+    // ========================
+    function showSection(sectionId) {
+      // Hide all sections
+      document.querySelectorAll('.section').forEach(section => {
+        section.classList.remove('active');
+      });
+      
+      // Remove active class from all nav links
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+      });
+      
+      // Show selected section
+      document.getElementById(sectionId).classList.add('active');
+      
+      // Add active class to clicked nav link
+      event.target.closest('.nav-link').classList.add('active');
+      
+      // Close sidebar on mobile
+      if (window.innerWidth <= 768) {
+        toggleSidebar();
+      }
+      
+      // Load section-specific data
+      loadSectionData(sectionId);
+    }
+    
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('active');
+    }
+    
+    function loadSectionData(sectionId) {
+      switch(sectionId) {
+        case 'dashboard':
+          refreshDashboard();
+          break;
+        case 'plan-editor':
+          if (!planData) loadPlan();
+          break;
+        case 'file-management':
+          // File management loads on demand
+          break;
+        case 'inspectors':
+          loadInspectorsList();
+          break;
+        case 'areas':
+          loadAreasList();
+          break;
+        case 'shops':
+          loadShopsList();
+          break;
+        case 'activity-log':
+          refreshActivityLog();
+          break;
+      }
+    }
+    
+    function showMessage(elementId, type, message) {
+      const element = document.getElementById(elementId);
+      element.className = `status-message show ${type}`;
+      element.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i> ${message}`;
+      
+      setTimeout(() => {
+        element.classList.remove('show');
+      }, 5000);
+    }
+    
+    // ========================
+    // Data Loading
+    // ========================
+    async function loadPlan() {
+      const token = getToken();
+      if (!token) {
+        showTokenModal();
+        return;
+      }
+      
+      try {
+        showMessage("planEditorStatus", "info", "جاري تحميل البيانات...");
+        
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/${planPath}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+        
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        
+        const file = await res.json();
+        const content = decodeURIComponent(escape(atob(file.content)));
+        planData = JSON.parse(content);
+        planSha = file.sha;
+        
+        document.getElementById("planEditor").value = JSON.stringify(planData, null, 2);
+        showMessage("planEditorStatus", "success", "تم تحميل البيانات بنجاح!");
+        
+        // Update dashboard stats
+        updateDashboardStats();
+        
+      } catch (error) {
+        showMessage("planEditorStatus", "error", "خطأ في تحميل البيانات: " + error.message);
+        if (error.message.includes("401") || error.message.includes("403")) {
+          removeToken();
+          setTimeout(showTokenModal, 500);
+        }
+      }
+    }
+    
+    async function savePlan() {
+      const token = getToken();
+      if (!token) {
+        showTokenModal();
+        return;
+      }
+      
+      let jsonData;
+      try {
+        jsonData = JSON.parse(document.getElementById("planEditor").value);
+      } catch(e) {
+        showMessage("planEditorStatus", "error", "خطأ في تنسيق JSON! راجع الأقواس والفواصل.");
+        return;
+      }
+      
+      try {
+        document.getElementById("savePlanBtn").disabled = true;
+        showMessage("planEditorStatus", "info", "جاري الحفظ...");
+        
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(jsonData, null, 2))));
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/${planPath}`, {
+          method: "PUT",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: "تحديث خطة التفتيش من لوحة التحكم المتقدمة",
+            content: content,
+            sha: planSha
+          })
+        });
+        
+        if (res.status === 200 || res.status === 201) {
+          showMessage("planEditorStatus", "success", "✅ تم حفظ التعديلات بنجاح!");
+          planData = jsonData;
+          await loadPlan(); // Reload to get new SHA
+          updateDashboardStats();
+          logActivity("تعديل خطة التفتيش", "تم حفظ التعديلات على خطة التفتيش");
+        } else {
+          const err = await res.json().catch(() => ({ message: `HTTP ${res.status}` }));
+          showMessage("planEditorStatus", "error", "❌ حدث خطأ: " + (err.message || "تحقق من التوكن"));
+        }
+      } catch (error) {
+        showMessage("planEditorStatus", "error", "❌ خطأ في الاتصال: " + error.message);
+      } finally {
+        document.getElementById("savePlanBtn").disabled = false;
+      }
+    }
+    
+    // ========================
+    // Dashboard Statistics
+    // ========================
+    function updateDashboardStats() {
+      if (!planData || !planData.inspectionData) return;
+      
+      const inspections = planData.inspectionData;
+      
+      // Count unique inspectors
+      const inspectors = new Set(inspections.map(i => i.inspector));
+      document.getElementById("totalInspectors").textContent = inspectors.size;
+      
+      // Count unique areas
+      const areas = new Set(inspections.map(i => i.area));
+      document.getElementById("totalAreas").textContent = areas.size;
+      
+      // Count unique shops
+      const shops = new Set();
+      inspections.forEach(i => {
+        if (i.shops && Array.isArray(i.shops)) {
+          i.shops.forEach(shop => shops.add(shop));
+        }
+      });
+      document.getElementById("totalShops").textContent = shops.size;
+      
+      // Total inspections
+      document.getElementById("totalInspections").textContent = inspections.length;
+      
+      // Update charts
+      updateCharts(inspections, inspectors, areas);
+    }
+    
+    function updateCharts(inspections, inspectors, areas) {
+      // Inspectors distribution
+      const inspectorCounts = {};
+      inspections.forEach(i => {
+        inspectorCounts[i.inspector] = (inspectorCounts[i.inspector] || 0) + 1;
+      });
+      
+      if (inspectorsChart) {
+        inspectorsChart.destroy();
+      }
+      
+      const ctx1 = document.getElementById('inspectorsChart');
+      if (ctx1) {
+        inspectorsChart = new Chart(ctx1, {
+          type: 'bar',
+          data: {
+            labels: Object.keys(inspectorCounts),
+            datasets: [{
+              label: 'عدد التفتيشات',
+              data: Object.values(inspectorCounts),
+              backgroundColor: 'rgba(102, 126, 234, 0.7)',
+              borderColor: 'rgba(102, 126, 234, 1)',
+              borderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true
+              }
+            }
+          }
+        });
+      }
+      
+      // Areas distribution
+      const areaCounts = {};
+      inspections.forEach(i => {
+        areaCounts[i.area] = (areaCounts[i.area] || 0) + 1;
+      });
+      
+      if (areasChart) {
+        areasChart.destroy();
+      }
+      
+      const ctx2 = document.getElementById('areasChart');
+      if (ctx2) {
+        areasChart = new Chart(ctx2, {
+          type: 'pie',
+          data: {
+            labels: Object.keys(areaCounts),
+            datasets: [{
+              data: Object.values(areaCounts),
+              backgroundColor: [
+                'rgba(102, 126, 234, 0.7)',
+                'rgba(17, 153, 142, 0.7)',
+                'rgba(240, 147, 251, 0.7)',
+                'rgba(79, 172, 254, 0.7)',
+                'rgba(250, 112, 154, 0.7)',
+                'rgba(254, 225, 64, 0.7)'
+              ],
+              borderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom'
+              }
+            }
+          }
+        });
+      }
+    }
+    
+    async function refreshDashboard() {
+      if (!planData) {
+        await loadPlan();
+      } else {
+        updateDashboardStats();
+      }
+    }
+    
+    // ========================
+    // File Management
+    // ========================
+    async function uploadFile() {
+      const token = getToken();
+      if (!token) {
+        showTokenModal();
+        return;
+      }
+      
+      const fileInput = document.getElementById("fileUpload");
+      const category = document.getElementById("fileCategory").value;
+      const description = document.getElementById("fileDescription").value;
+      
+      if (!fileInput.files[0]) {
+        showMessage("fileUploadStatus", "error", "يرجى اختيار ملف أولاً");
+        return;
+      }
+      
+      const file = fileInput.files[0];
+      const maxSize = 25 * 1024 * 1024; // 25 MB
+      if (file.size > maxSize) {
+        showMessage("fileUploadStatus", "error", "حجم الملف كبير جداً! يجب أن يكون أقل من 25 MB");
+        return;
+      }
+      
+      try {
+        document.getElementById("uploadBtn").disabled = true;
+        showMessage("fileUploadStatus", "info", "⏳ جاري رفع الملف...");
+        
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+          const content = e.target.result.split(',')[1];
+          const fileName = file.name;
+          const filePath = `files/${category}/${fileName}`;
+          
+          try {
+            const uploadRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+              method: "PUT",
+              headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                message: `رفع ملف جديد: ${fileName}`,
+                content: content
+              })
+            });
+            
+            if (uploadRes.status === 201) {
+              await updateFilesRegistry(fileName, filePath, category, file.size, description || fileName, token);
+              showMessage("fileUploadStatus", "success", `✅ تم رفع الملف بنجاح! ${fileName}`);
+              fileInput.value = '';
+              document.getElementById("fileDescription").value = '';
+              setTimeout(() => loadFilesList(), 1000);
+              logActivity("رفع ملف", `تم رفع الملف: ${fileName}`);
+            } else if (uploadRes.status === 422) {
+              showMessage("fileUploadStatus", "error", "❌ ملف بنفس الاسم موجود مسبقاً!");
+            } else {
+              showMessage("fileUploadStatus", "error", "❌ خطأ في رفع الملف");
+            }
+          } catch (error) {
+            showMessage("fileUploadStatus", "error", "❌ خطأ: " + error.message);
+          } finally {
+            document.getElementById("uploadBtn").disabled = false;
+          }
+        };
+        
+        reader.onerror = function() {
+          showMessage("fileUploadStatus", "error", "❌ خطأ في قراءة الملف");
+          document.getElementById("uploadBtn").disabled = false;
+        };
+        
+        reader.readAsDataURL(file);
+        
+      } catch (error) {
+        showMessage("fileUploadStatus", "error", "❌ خطأ: " + error.message);
+        document.getElementById("uploadBtn").disabled = false;
+      }
+    }
+    
+    async function updateFilesRegistry(fileName, filePath, category, fileSize, description, token) {
+      try {
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/${filesPath}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+        
+        let filesData = { files: [], categories: [], lastUpdate: new Date().toISOString() };
+        let currentSha = "";
+        
+        if (res.ok) {
+          const file = await res.json();
+          filesData = JSON.parse(decodeURIComponent(escape(atob(file.content))));
+          currentSha = file.sha;
+        }
+        
+        const newFile = {
+          id: Date.now().toString(),
+          name: fileName,
+          path: filePath,
+          category: category,
+          type: fileName.split('.').pop().toLowerCase(),
+          size: fileSize,
+          uploadDate: new Date().toISOString(),
+          description: description,
+          uploader: "د. علي عبدالعال",
+          visible: true
+        };
+        
+        filesData.files.push(newFile);
+        filesData.lastUpdate = new Date().toISOString();
+        
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(filesData, null, 2))));
+        await fetch(`https://api.github.com/repos/${repo}/contents/${filesPath}`, {
+          method: "PUT",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: `تحديث سجل الملفات - إضافة ${fileName}`,
+            content: content,
+            sha: currentSha
+          })
+        });
+      } catch (error) {
+        console.error("خطأ في تحديث سجل الملفات:", error);
+      }
+    }
+    
+    async function loadFilesList() {
+      const token = getToken();
+      if (!token) {
+        showTokenModal();
+        return;
+      }
+      
+      try {
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/${filesPath}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+        
+        if (res.ok) {
+          const file = await res.json();
+          filesData = JSON.parse(decodeURIComponent(escape(atob(file.content))));
+          displayFilesList(filesData.files);
+        } else {
+          document.getElementById("filesList").innerHTML = '<p style="text-align: center; color: #999;">لا توجد ملفات</p>';
+        }
+      } catch (error) {
+        document.getElementById("filesList").innerHTML = '<p style="text-align: center; color: #f5576c;">خطأ في تحميل الملفات</p>';
+      }
+    }
+    
+    function displayFilesList(files) {
+      const container = document.getElementById("filesList");
+      
+      if (!files || files.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #999;">لا توجد ملفات مرفوعة</p>';
+        return;
+      }
+      
+      const visibleFiles = files.filter(f => f.visible !== false);
+      
+      let html = '';
+      visibleFiles.forEach(file => {
+        const fileSize = formatFileSize(file.size);
+        const uploadDate = new Date(file.uploadDate).toLocaleDateString('ar-EG');
+        
+        html += `
+          <div class="file-item">
+            <div class="file-info">
+              <div class="file-name"><i class="fas fa-file"></i> ${file.name}</div>
+              <div class="file-meta">${file.description}</div>
+              <div class="file-meta">الحجم: ${fileSize} | التاريخ: ${uploadDate}</div>
+            </div>
+            <div class="file-actions">
+              <button class="btn btn-success" onclick="downloadFile('${file.path}')">
+                <i class="fas fa-download"></i> تحميل
+              </button>
+              <button class="btn btn-danger" onclick="deleteFile('${file.id}', '${file.path}', '${escapeQuotes(file.name)}')">
+                <i class="fas fa-trash"></i> حذف
+              </button>
+            </div>
+          </div>
+        `;
+      });
+      
+      container.innerHTML = html;
+    }
+    
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    function escapeQuotes(str) {
+      return str.replace(/'/g, "\\'").replace(/"/g, '\\"');
+    }
+    
+    async function downloadFile(filePath) {
+      const token = getToken();
+      if (!token) return;
+      
+      try {
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+        
+        if (res.ok) {
+          const file = await res.json();
+          const content = atob(file.content);
+          const blob = new Blob([content], { type: 'application/octet-stream' });
+          const url = URL.createObjectURL(blob);
+          
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = file.name;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+      } catch (error) {
+        console.error("خطأ في تحميل الملف:", error);
+      }
+    }
+    
+    async function deleteFile(fileId, filePath, fileName) {
+      if (!confirm(`هل أنت متأكد من حذف الملف "${fileName}"؟`)) {
+        return;
+      }
+      
+      const token = getToken();
+      if (!token) return;
+      
+      try {
+        const fileRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+        
+        if (fileRes.ok) {
+          const file = await fileRes.json();
+          const deleteRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+            method: "DELETE",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              message: `حذف الملف: ${fileName}`,
+              sha: file.sha
+            })
+          });
+          
+          if (deleteRes.ok) {
+            await removeFromFilesRegistry(fileId, token);
+            loadFilesList();
+            logActivity("حذف ملف", `تم حذف الملف: ${fileName}`);
+          }
+        }
+      } catch (error) {
+        console.error("خطأ في حذف الملف:", error);
+      }
+    }
+    
+    async function removeFromFilesRegistry(fileId, token) {
+      try {
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/${filesPath}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+        
+        if (res.ok) {
+          const file = await res.json();
+          const filesData = JSON.parse(decodeURIComponent(escape(atob(file.content))));
+          
+          filesData.files = filesData.files.filter(f => f.id !== fileId);
+          filesData.lastUpdate = new Date().toISOString();
+          
+          const content = btoa(unescape(encodeURIComponent(JSON.stringify(filesData, null, 2))));
+          await fetch(`https://api.github.com/repos/${repo}/contents/${filesPath}`, {
+            method: "PUT",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              message: `تحديث سجل الملفات - حذف ملف`,
+              content: content,
+              sha: file.sha
+            })
+          });
+        }
+      } catch (error) {
+        console.error("خطأ في تحديث سجل الملفات:", error);
+      }
+    }
+    
+    // ========================
+    // Inspectors Management
+    // ========================
+    function loadInspectorsList() {
+      if (!planData || !planData.inspectionData) {
+        document.getElementById("inspectorsList").innerHTML = '<p style="text-align: center; color: #999;">لا توجد بيانات</p>';
+        return;
+      }
+      
+      const inspections = planData.inspectionData;
+      const inspectorStats = {};
+      
+      inspections.forEach(i => {
+        if (!inspectorStats[i.inspector]) {
+          inspectorStats[i.inspector] = {
+            name: i.inspector,
+            totalInspections: 0,
+            areas: new Set(),
+            shops: new Set()
+          };
+        }
+        inspectorStats[i.inspector].totalInspections++;
+        inspectorStats[i.inspector].areas.add(i.area);
+        if (i.shops && Array.isArray(i.shops)) {
+          i.shops.forEach(shop => inspectorStats[i.inspector].shops.add(shop));
+        }
+      });
+      
+      let html = '<table class="data-table"><thead><tr><th>المفتش</th><th>عدد التفتيشات</th><th>عدد المناطق</th><th>عدد المحلات</th></tr></thead><tbody>';
+      
+      Object.values(inspectorStats).forEach(inspector => {
+        html += `
+          <tr>
+            <td><i class="fas fa-user-tie"></i> ${inspector.name}</td>
+            <td>${inspector.totalInspections}</td>
+            <td>${inspector.areas.size}</td>
+            <td>${inspector.shops.size}</td>
+          </tr>
+        `;
+      });
+      
+      html += '</tbody></table>';
+      document.getElementById("inspectorsList").innerHTML = html;
+    }
+    
+    // ========================
+    // Areas Management
+    // ========================
+    function loadAreasList() {
+      if (!planData || !planData.inspectionData) {
+        document.getElementById("areasList").innerHTML = '<p style="text-align: center; color: #999;">لا توجد بيانات</p>';
+        return;
+      }
+      
+      const inspections = planData.inspectionData;
+      const areaStats = {};
+      
+      inspections.forEach(i => {
+        if (!areaStats[i.area]) {
+          areaStats[i.area] = {
+            name: i.area,
+            totalInspections: 0,
+            inspectors: new Set(),
+            shops: new Set()
+          };
+        }
+        areaStats[i.area].totalInspections++;
+        areaStats[i.area].inspectors.add(i.inspector);
+        if (i.shops && Array.isArray(i.shops)) {
+          i.shops.forEach(shop => areaStats[i.area].shops.add(shop));
+        }
+      });
+      
+      let html = '<table class="data-table"><thead><tr><th>المنطقة</th><th>عدد التفتيشات</th><th>عدد المفتشين</th><th>عدد المحلات</th></tr></thead><tbody>';
+      
+      Object.values(areaStats).forEach(area => {
+        html += `
+          <tr>
+            <td><i class="fas fa-map-marker-alt"></i> ${area.name}</td>
+            <td>${area.totalInspections}</td>
+            <td>${area.inspectors.size}</td>
+            <td>${area.shops.size}</td>
+          </tr>
+        `;
+      });
+      
+      html += '</tbody></table>';
+      document.getElementById("areasList").innerHTML = html;
+    }
+    
+    // ========================
+    // Shops Management
+    // ========================
+    function loadShopsList() {
+      if (!planData || !planData.inspectionData) {
+        document.getElementById("shopsList").innerHTML = '<p style="text-align: center; color: #999;">لا توجد بيانات</p>';
+        return;
+      }
+      
+      const inspections = planData.inspectionData;
+      const shopStats = {};
+      
+      inspections.forEach(i => {
+        if (i.shops && Array.isArray(i.shops)) {
+          i.shops.forEach(shop => {
+            if (!shopStats[shop]) {
+              shopStats[shop] = {
+                name: shop,
+                totalInspections: 0,
+                areas: new Set(),
+                inspectors: new Set()
+              };
+            }
+            shopStats[shop].totalInspections++;
+            shopStats[shop].areas.add(i.area);
+            shopStats[shop].inspectors.add(i.inspector);
+          });
+        }
+      });
+      
+      let html = '<table class="data-table"><thead><tr><th>المحل</th><th>عدد التفتيشات</th><th>عدد المناطق</th><th>عدد المفتشين</th></tr></thead><tbody>';
+      
+      Object.values(shopStats).forEach(shop => {
+        html += `
+          <tr>
+            <td><i class="fas fa-store"></i> ${shop.name}</td>
+            <td>${shop.totalInspections}</td>
+            <td>${shop.areas.size}</td>
+            <td>${shop.inspectors.size}</td>
+          </tr>
+        `;
+      });
+      
+      html += '</tbody></table>';
+      document.getElementById("shopsList").innerHTML = html;
+    }
+    
+    // ========================
+    // Maintenance Mode
+    // ========================
+    async function enableMaintenanceMode() {
+      if (!confirm("هل أنت متأكد من تفعيل وضع الصيانة؟ سيتم منع جميع المستخدمين من الوصول للموقع.")) {
+        return;
+      }
+      
+      const token = getToken();
+      if (!token) {
+        showTokenModal();
+        return;
+      }
+      
+      try {
+        showMessage("maintenanceStatus", "info", "جاري تفعيل وضع الصيانة...");
+        
+        const messageAr = document.getElementById("maintenanceMessageAr").value;
+        const messageEn = document.getElementById("maintenanceMessageEn").value;
+        
+        const maintenanceData = {
+          enabled: true,
+          messages: {
+            ar: messageAr,
+            en: messageEn
+          },
+          enabledAt: new Date().toISOString(),
+          enabledBy: "د. علي عبدالعال"
+        };
+        
+        // Save to GitHub
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(maintenanceData, null, 2))));
+        
+        // Get current file SHA
+        const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/${maintenancePath}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+        
+        let sha = "";
+        if (getRes.ok) {
+          const file = await getRes.json();
+          sha = file.sha;
+        }
+        
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/${maintenancePath}`, {
+          method: "PUT",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: "تفعيل وضع الصيانة",
+            content: content,
+            sha: sha
+          })
+        });
+        
+        if (res.status === 200 || res.status === 201) {
+          showMessage("maintenanceStatus", "success", "✅ تم تفعيل وضع الصيانة بنجاح!");
+          logActivity("تفعيل وضع الصيانة", "تم تفعيل وضع الصيانة للموقع");
+        } else {
+          showMessage("maintenanceStatus", "error", "❌ حدث خطأ في تفعيل وضع الصيانة");
+        }
+      } catch (error) {
+        showMessage("maintenanceStatus", "error", "❌ خطأ: " + error.message);
+      }
+    }
+    
+    async function disableMaintenanceMode() {
+      if (!confirm("هل أنت متأكد من إلغاء وضع الصيانة؟ سيتمكن جميع المستخدمين من الوصول للموقع.")) {
+        return;
+      }
+      
+      const token = getToken();
+      if (!token) {
+        showTokenModal();
+        return;
+      }
+      
+      try {
+        showMessage("maintenanceStatus", "info", "جاري إلغاء وضع الصيانة...");
+        
+        const maintenanceData = {
+          enabled: false,
+          messages: {},
+          disabledAt: new Date().toISOString(),
+          disabledBy: "د. علي عبدالعال"
+        };
+        
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(maintenanceData, null, 2))));
+        
+        const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/${maintenancePath}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+        
+        let sha = "";
+        if (getRes.ok) {
+          const file = await getRes.json();
+          sha = file.sha;
+        }
+        
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/${maintenancePath}`, {
+          method: "PUT",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: "إلغاء وضع الصيانة",
+            content: content,
+            sha: sha
+          })
+        });
+        
+        if (res.status === 200 || res.status === 201) {
+          showMessage("maintenanceStatus", "success", "✅ تم إلغاء وضع الصيانة بنجاح!");
+          logActivity("إلغاء وضع الصيانة", "تم إلغاء وضع الصيانة للموقع");
+        } else {
+          showMessage("maintenanceStatus", "error", "❌ حدث خطأ في إلغاء وضع الصيانة");
+        }
+      } catch (error) {
+        showMessage("maintenanceStatus", "error", "❌ خطأ: " + error.message);
+      }
+    }
+    
+    async function checkMaintenanceStatus() {
+      const token = getToken();
+      if (!token) {
+        showTokenModal();
+        return;
+      }
+      
+      try {
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/${maintenancePath}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+        
+        if (res.ok) {
+          const file = await res.json();
+          const maintenanceData = JSON.parse(decodeURIComponent(escape(atob(file.content))));
+          
+          if (maintenanceData.enabled) {
+            showMessage("maintenanceStatus", "warning", `⚠️ وضع الصيانة مفعّل حالياً منذ: ${new Date(maintenanceData.enabledAt).toLocaleString('ar-EG')}`);
+          } else {
+            showMessage("maintenanceStatus", "success", "✅ وضع الصيانة غير مفعّل");
+          }
+        } else {
+          showMessage("maintenanceStatus", "info", "ℹ️ لا توجد معلومات عن وضع الصيانة");
+        }
+      } catch (error) {
+        showMessage("maintenanceStatus", "error", "❌ خطأ في فحص وضع الصيانة: " + error.message);
+      }
+    }
+    
+    // ========================
+    // Activity Log
+    // ========================
+    function logActivity(action, details) {
+      const activities = JSON.parse(localStorage.getItem("activityLog") || "[]");
+      activities.unshift({
+        timestamp: new Date().toISOString(),
+        action: action,
+        details: details,
+        user: "د. علي عبدالعال"
+      });
+      
+      // Keep only last 50 activities
+      if (activities.length > 50) {
+        activities.length = 50;
+      }
+      
+      localStorage.setItem("activityLog", JSON.stringify(activities));
+    }
+    
+    function refreshActivityLog() {
+      const activities = JSON.parse(localStorage.getItem("activityLog") || "[]");
+      const container = document.getElementById("activityLogContent");
+      
+      if (activities.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">لا توجد نشاطات مسجلة</p>';
+        return;
+      }
+      
+      let html = '<table class="data-table"><thead><tr><th>الوقت</th><th>الإجراء</th><th>التفاصيل</th><th>المستخدم</th></tr></thead><tbody>';
+      
+      activities.forEach(activity => {
+        const date = new Date(activity.timestamp);
+        html += `
+          <tr>
+            <td>${date.toLocaleString('ar-EG')}</td>
+            <td><strong>${activity.action}</strong></td>
+            <td>${activity.details}</td>
+            <td>${activity.user}</td>
+          </tr>
+        `;
+      });
+      
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+    
+    // ========================
+    // Utility Functions
+    // ========================
+    function addNewInspection() {
+      alert("ميزة إضافة تفتيش جديد قيد التطوير");
+    }
+    
+    function exportData() {
+      if (!planData) {
+        alert("لا توجد بيانات لتصديرها");
+        return;
+      }
+      
+      const dataStr = JSON.stringify(planData, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `plan-data-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      logActivity("تصدير البيانات", "تم تصدير بيانات الخطة");
+    }
+    
+    function backupData() {
+      if (!planData) {
+        alert("لا توجد بيانات للنسخ الاحتياطي");
+        return;
+      }
+      
+      const backupData = {
+        timestamp: new Date().toISOString(),
+        data: planData
+      };
+      
+      const backups = JSON.parse(localStorage.getItem("backups") || "[]");
+      backups.unshift(backupData);
+      
+      // Keep only last 10 backups
+      if (backups.length > 10) {
+        backups.length = 10;
+      }
+      
+      localStorage.setItem("backups", JSON.stringify(backups));
+      alert("✅ تم إنشاء نسخة احتياطية بنجاح!");
+      
+      logActivity("نسخة احتياطية", "تم إنشاء نسخة احتياطية من البيانات");
+    }
+    
+    function validateData() {
+      if (!planData) {
+        alert("لا توجد بيانات للتحقق منها");
+        return;
+      }
+      
+      let errors = [];
+      
+      if (!planData.inspectionData || !Array.isArray(planData.inspectionData)) {
+        errors.push("البيانات لا تحتوي على حقل inspectionData");
+      } else {
+        planData.inspectionData.forEach((item, index) => {
+          if (!item.inspector) errors.push(`العنصر ${index + 1}: اسم المفتش مفقود`);
+          if (!item.day) errors.push(`العنصر ${index + 1}: التاريخ مفقود`);
+          if (!item.area) errors.push(`العنصر ${index + 1}: المنطقة مفقودة`);
+          if (!item.shops || !Array.isArray(item.shops)) errors.push(`العنصر ${index + 1}: المحلات مفقودة أو غير صحيحة`);
+        });
+      }
+      
+      if (errors.length === 0) {
+        alert("✅ البيانات صحيحة ولا توجد أخطاء!");
+      } else {
+        alert("❌ تم العثور على الأخطاء التالية:\n\n" + errors.join("\n"));
+      }
+    }
+    
+    function openVisualEditor() {
+      alert("المحرر المرئي قيد التطوير - سيتم إضافته قريباً");
+    }
+    
+    function addInspector() {
+      alert("ميزة إضافة مفتش قيد التطوير");
+    }
+    
+    function addArea() {
+      alert("ميزة إضافة منطقة قيد التطوير");
+    }
+    
+    function addShop() {
+      alert("ميزة إضافة محل قيد التطوير");
+    }
+    
+    function generateMonthlyReport() {
+      alert("ميزة التقرير الشهري قيد التطوير");
+    }
+    
+    function generateInspectorReport() {
+      alert("ميزة تقرير المفتشين قيد التطوير");
+    }
+    
+    function generateAreaReport() {
+      alert("ميزة تقرير المناطق قيد التطوير");
+    }
+    
+    function generateShopReport() {
+      alert("ميزة تقرير المحلات قيد التطوير");
+    }
+    
+    function saveSettings() {
+      const token = document.getElementById("githubToken").value.trim();
+      const devMode = document.getElementById("devMode").value;
+      
+      if (token) {
+        setToken(token);
+      }
+      
+      localStorage.setItem("devMode", devMode);
+      
+      showMessage("settingsStatus", "success", "✅ تم حفظ الإعدادات بنجاح!");
+      logActivity("تحديث الإعدادات", "تم تحديث إعدادات النظام");
+    }
+    
+    function createBackup() {
+      backupData();
+    }
+    
+    function listBackups() {
+      const backups = JSON.parse(localStorage.getItem("backups") || "[]");
+      const container = document.getElementById("backupsList");
+      
+      if (backups.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #999;">لا توجد نسخ احتياطية</p>';
+        return;
+      }
+      
+      let html = '<table class="data-table"><thead><tr><th>التاريخ</th><th>الوقت</th><th>الإجراءات</th></tr></thead><tbody>';
+      
+      backups.forEach((backup, index) => {
+        const date = new Date(backup.timestamp);
+        html += `
+          <tr>
+            <td>${date.toLocaleDateString('ar-EG')}</td>
+            <td>${date.toLocaleTimeString('ar-EG')}</td>
+            <td>
+              <button class="btn btn-primary" onclick="restoreBackupByIndex(${index})">
+                <i class="fas fa-undo"></i> استعادة
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+      
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+    
+    function restoreBackup() {
+      listBackups();
+    }
+    
+    function restoreBackupByIndex(index) {
+      if (!confirm("هل أنت متأكد من استعادة هذه النسخة الاحتياطية؟")) {
+        return;
+      }
+      
+      const backups = JSON.parse(localStorage.getItem("backups") || "[]");
+      if (index >= 0 && index < backups.length) {
+        planData = backups[index].data;
+        document.getElementById("planEditor").value = JSON.stringify(planData, null, 2);
+        alert("✅ تم استعادة النسخة الاحتياطية بنجاح!");
+        logActivity("استعادة نسخة احتياطية", "تم استعادة نسخة احتياطية من البيانات");
+      }
+    }
+    
+    function updateMaintenanceMessages() {
+      alert("سيتم تحديث رسائل الصيانة عند تفعيل وضع الصيانة");
+    }
+    
+    // ========================
+    // Initialization
+    // ========================
+    async function initDashboard() {
+      const token = getToken();
+      if (!token) {
+        showTokenModal();
+        return;
+      }
+      
+      // Load plan data
+      await loadPlan();
+      
+      // Initialize activity log
+      refreshActivityLog();
+      
+      // Log dashboard access
+      logActivity("الوصول للوحة التحكم", "تم الدخول إلى لوحة التحكم المتقدمة");
+    }
+    
+    // Initialize on page load
+    window.onload = function() {
+      initDashboard();
+    };
+  </script>
+</body>
+</html>

@@ -1060,12 +1060,143 @@
             background: linear-gradient(135deg, #138496 0%, #1ba085 100%);
         }
         
+        /* Enhanced Shop Priority Icon Button - تحسينات أيقونة أولوية المحلات */
+        @keyframes shop-priority-glow {
+            0%, 100% { 
+                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4),
+                            0 0 15px rgba(118, 75, 162, 0.3),
+                            0 0 25px rgba(102, 126, 234, 0.2);
+            }
+            50% { 
+                box-shadow: 0 6px 20px rgba(102, 126, 234, 0.8),
+                            0 0 30px rgba(118, 75, 162, 0.6),
+                            0 0 40px rgba(255, 215, 0, 0.5),
+                            0 0 50px rgba(102, 126, 234, 0.4);
+            }
+        }
+        
+        @keyframes shop-priority-icon-sparkle {
+            0%, 100% { 
+                transform: translateY(0) scale(1) rotate(0deg);
+                filter: brightness(1) drop-shadow(0 0 5px rgba(255, 215, 0, 0.5));
+            }
+            25% { 
+                transform: translateY(-3px) scale(1.15) rotate(-5deg);
+                filter: brightness(1.3) drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
+            }
+            50% { 
+                transform: translateY(0) scale(1.2) rotate(5deg);
+                filter: brightness(1.5) drop-shadow(0 0 15px rgba(255, 215, 0, 1));
+            }
+            75% { 
+                transform: translateY(-3px) scale(1.15) rotate(-5deg);
+                filter: brightness(1.3) drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
+            }
+        }
+        
+        @keyframes shop-priority-shine-sweep {
+            0% { 
+                left: -100%;
+                opacity: 0;
+            }
+            40% { 
+                opacity: 1;
+            }
+            100% { 
+                left: 200%;
+                opacity: 0;
+            }
+        }
+        
+        @keyframes shop-priority-border-pulse {
+            0%, 100% { 
+                border-color: rgba(255, 215, 0, 0.6);
+            }
+            50% { 
+                border-color: rgba(255, 215, 0, 1);
+            }
+        }
+        
+        @keyframes shop-priority-sparkles-orbit {
+            0% { 
+                transform: rotate(0deg) translateX(45px) rotate(0deg);
+                opacity: 0;
+            }
+            10%, 90% {
+                opacity: 1;
+            }
+            100% { 
+                transform: rotate(360deg) translateX(45px) rotate(-360deg);
+                opacity: 0;
+            }
+        }
+        
         .shop-priority-btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: #fff;
+            position: relative;
+            overflow: visible !important; /* Allow sparkles to show outside */
+            border: 2px solid rgba(255, 215, 0, 0.6) !important;
+            animation: shop-priority-glow 2s ease-in-out infinite,
+                       shop-priority-border-pulse 2s ease-in-out infinite;
         }
+        
+        /* Shine sweep effect overlay */
+        .shop-priority-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 80%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.7), 
+                transparent);
+            animation: shop-priority-shine-sweep 3s ease-in-out infinite;
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        /* Orbiting sparkles around button */
+        .shop-priority-btn::after {
+            content: '✨';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            font-size: 1.2em;
+            animation: shop-priority-sparkles-orbit 4s linear infinite;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        /* Make icon sparkle continuously */
+        .shop-priority-btn .icon {
+            animation: shop-priority-icon-sparkle 2s ease-in-out infinite;
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* Make label stand out */
+        .shop-priority-btn .label {
+            position: relative;
+            z-index: 2;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3),
+                         0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        
         .shop-priority-btn:hover {
             background: linear-gradient(135deg, #5568d3 0%, #6a3f92 100%);
+            transform: translateY(-10px) scale(1.1) !important;
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 1),
+                        0 0 50px rgba(118, 75, 162, 0.9),
+                        0 0 60px rgba(255, 215, 0, 0.7) !important;
+            border-color: rgba(255, 215, 0, 1) !important;
+        }
+        
+        .shop-priority-btn:hover .icon {
+            animation: shop-priority-icon-sparkle 0.5s ease-in-out infinite;
+            transform: scale(1.3) rotate(10deg) !important;
         }
         
         .monthly-schedule-btn {

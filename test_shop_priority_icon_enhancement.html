@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عرض تحسينات أيقونة أولوية المحلات - Shop Priority Icon Enhancement Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+        
+        .demo-container {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+        
+        .buttons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+        
+        .icon-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 110px;
+            height: 110px;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 0.75em;
+            font-weight: 600;
+            text-align: center;
+            line-height: 1.2;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            position: relative;
+            overflow: hidden;
+            margin: 0 auto;
+        }
+        
+        .icon-btn .icon {
+            font-size: 2.5em;
+            margin-bottom: 8px;
+            display: block;
+            transition: all 0.4s ease;
+        }
+        
+        .icon-btn .label {
+            font-size: 0.9em;
+            font-weight: 600;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        /* Enhanced Shop Priority Icon Button - تحسينات أيقونة أولوية المحلات */
+        @keyframes shop-priority-glow {
+            0%, 100% { 
+                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4),
+                            0 0 15px rgba(118, 75, 162, 0.3),
+                            0 0 25px rgba(102, 126, 234, 0.2);
+            }
+            50% { 
+                box-shadow: 0 6px 20px rgba(102, 126, 234, 0.8),
+                            0 0 30px rgba(118, 75, 162, 0.6),
+                            0 0 40px rgba(255, 215, 0, 0.5),
+                            0 0 50px rgba(102, 126, 234, 0.4);
+            }
+        }
+        
+        @keyframes shop-priority-icon-sparkle {
+            0%, 100% { 
+                transform: translateY(0) scale(1) rotate(0deg);
+                filter: brightness(1) drop-shadow(0 0 5px rgba(255, 215, 0, 0.5));
+            }
+            25% { 
+                transform: translateY(-3px) scale(1.15) rotate(-5deg);
+                filter: brightness(1.3) drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
+            }
+            50% { 
+                transform: translateY(0) scale(1.2) rotate(5deg);
+                filter: brightness(1.5) drop-shadow(0 0 15px rgba(255, 215, 0, 1));
+            }
+            75% { 
+                transform: translateY(-3px) scale(1.15) rotate(-5deg);
+                filter: brightness(1.3) drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
+            }
+        }
+        
+        @keyframes shop-priority-shine-sweep {
+            0% { 
+                left: -100%;
+                opacity: 0;
+            }
+            40% { 
+                opacity: 1;
+            }
+            100% { 
+                left: 200%;
+                opacity: 0;
+            }
+        }
+        
+        @keyframes shop-priority-border-pulse {
+            0%, 100% { 
+                border-color: rgba(255, 215, 0, 0.6);
+            }
+            50% { 
+                border-color: rgba(255, 215, 0, 1);
+            }
+        }
+        
+        @keyframes shop-priority-sparkles-orbit {
+            0% { 
+                transform: rotate(0deg) translateX(55px) rotate(0deg);
+                opacity: 0;
+            }
+            10%, 90% {
+                opacity: 1;
+            }
+            100% { 
+                transform: rotate(360deg) translateX(55px) rotate(-360deg);
+                opacity: 0;
+            }
+        }
+        
+        .shop-priority-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            position: relative;
+            overflow: visible !important;
+            border: 2px solid rgba(255, 215, 0, 0.6) !important;
+            animation: shop-priority-glow 2s ease-in-out infinite,
+                       shop-priority-border-pulse 2s ease-in-out infinite;
+        }
+        
+        /* Shine sweep effect overlay */
+        .shop-priority-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 80%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.7), 
+                transparent);
+            animation: shop-priority-shine-sweep 3s ease-in-out infinite;
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        /* Orbiting sparkles around button */
+        .shop-priority-btn::after {
+            content: '✨';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            font-size: 1.2em;
+            animation: shop-priority-sparkles-orbit 4s linear infinite;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        /* Make icon sparkle continuously */
+        .shop-priority-btn .icon {
+            animation: shop-priority-icon-sparkle 2s ease-in-out infinite;
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* Make label stand out */
+        .shop-priority-btn .label {
+            position: relative;
+            z-index: 2;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3),
+                         0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        
+        .shop-priority-btn:hover {
+            background: linear-gradient(135deg, #5568d3 0%, #6a3f92 100%);
+            transform: translateY(-10px) scale(1.15) !important;
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 1),
+                        0 0 50px rgba(118, 75, 162, 0.9),
+                        0 0 60px rgba(255, 215, 0, 0.7) !important;
+            border-color: rgba(255, 215, 0, 1) !important;
+        }
+        
+        .shop-priority-btn:hover .icon {
+            animation: shop-priority-icon-sparkle 0.5s ease-in-out infinite;
+            transform: scale(1.4) rotate(15deg) !important;
+        }
+        
+        /* Regular buttons for comparison */
+        .regular-btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: #fff;
+        }
+        
+        .regular-btn:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.5);
+        }
+        
+        .info-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 40px;
+        }
+        
+        .info-section h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        
+        .features-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .features-list li {
+            padding: 10px 0;
+            color: #555;
+            font-size: 1.1em;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .features-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .features-list li::before {
+            content: '✨ ';
+            margin-left: 10px;
+        }
+        
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .comparison-item {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .comparison-item h3 {
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        
+        .emoji-large {
+            font-size: 3em;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1>🌟 تحسينات أيقونة أولوية المحلات 🌟</h1>
+        <p class="subtitle">Shop Priority Icon Enhancement Demo</p>
+        
+        <div class="comparison">
+            <div class="comparison-item">
+                <h3>زر عادي / Regular Button</h3>
+                <button class="icon-btn regular-btn">
+                    <span class="icon">📊</span>
+                    <span class="label">أولوية المحلات</span>
+                </button>
+            </div>
+            
+            <div class="comparison-item">
+                <h3>⭐ الزر المحسّن / Enhanced Button ⭐</h3>
+                <button class="icon-btn shop-priority-btn">
+                    <span class="icon">📊</span>
+                    <span class="label">أولوية المحلات</span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="info-section">
+            <h2>✨ التحسينات المضافة / Added Enhancements</h2>
+            <ul class="features-list">
+                <li><strong>توهج نابض مستمر</strong> بألوان بنفسجية وذهبية / <strong>Continuous Pulsing Glow</strong> with purple and golden colors</li>
+                <li><strong>أيقونة متحركة ومتوهجة</strong> مع تأثيرات التدوير والسطوع / <strong>Animated Sparkling Icon</strong> with rotation and brightness effects</li>
+                <li><strong>تأثير التلميع المتحرك</strong> يمسح عبر الزر / <strong>Moving Shine Sweep Effect</strong> across the button</li>
+                <li><strong>حدود ذهبية نابضة</strong> تتوهج باستمرار / <strong>Pulsing Golden Border</strong> that glows continuously</li>
+                <li><strong>نجمة دوّارة حول الزر</strong> تدور في مدار دائري / <strong>Orbiting Sparkle</strong> around the button</li>
+                <li><strong>تأثيرات Hover قوية</strong> مع ارتفاع وتكبير الزر / <strong>Powerful Hover Effects</strong> with lift and scale</li>
+                <li><strong>ظل نصي ذهبي</strong> على التسمية / <strong>Golden Text Shadow</strong> on the label</li>
+            </ul>
+        </div>
+        
+        <div class="info-section" style="margin-top: 20px;">
+            <h2>🎯 الهدف / Goal</h2>
+            <p style="font-size: 1.2em; color: #555; line-height: 1.8;">
+                جعل أيقونة أولوية المحلات <strong>متوهجة ولامعة وذكية وملفتة للانتباه</strong> بحيث يلاحظها جميع المفتشين بسهولة ويتم استخدامها بشكل أكبر.
+            </p>
+            <p style="font-size: 1.1em; color: #777; margin-top: 10px; line-height: 1.6;">
+                Make the shop priority icon <strong>glowing, shiny, smart, and eye-catching</strong> so that all inspectors notice it easily and use it more frequently.
+            </p>
+        </div>
+        
+        <div class="emoji-large" style="text-align: center;">
+            💫 ✨ 🌟 ⭐ 💎
+        </div>
+    </div>
+</body>
+</html>

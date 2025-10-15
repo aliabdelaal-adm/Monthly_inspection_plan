@@ -36,6 +36,17 @@
     <link rel="canonical" href="https://aliabdelaal-adm.github.io/Monthly_inspection_plan/">
     <meta name="theme-color" content="#2336a0">
     
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="./manifest.json">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="./icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="./icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="./icon-192x192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="التفتيش الشهري">
+    
     <!-- Structured Data JSON-LD -->
     <script type="application/ld+json">
     {
@@ -18257,6 +18268,170 @@ async function saveDirectToGitHub() {
         }
     }
 }
+
+// ========================================
+// PWA Service Worker Registration
+// ========================================
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then((registration) => {
+                console.log('✅ Service Worker registered successfully:', registration);
+                
+                // Check for updates periodically
+                setInterval(() => {
+                    registration.update();
+                }, 60000); // Check every minute
+                
+                // Listen for updates
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    console.log('🔄 New Service Worker installing...');
+                    
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // New service worker available, prompt user to update
+                            if (confirm('يتوفر تحديث جديد للتطبيق. هل تريد التحديث الآن؟\n\nA new update is available. Update now?')) {
+                                newWorker.postMessage({ action: 'skipWaiting' });
+                                window.location.reload();
+                            }
+                        }
+                    });
+                });
+            })
+            .catch((error) => {
+                console.error('❌ Service Worker registration failed:', error);
+            });
+        
+        // Reload page when new service worker takes control
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+                refreshing = true;
+                window.location.reload();
+            }
+        });
+    });
+}
+
+// PWA Install Prompt
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+    console.log('📱 PWA install prompt available');
+    // Prevent the mini-infobar from appearing on mobile
+    e.preventDefault();
+    // Stash the event so it can be triggered later
+    deferredPrompt = e;
+    
+    // Show install button or banner
+    showPWAInstallBanner();
+});
+
+// Function to show PWA install banner
+function showPWAInstallBanner() {
+    // Check if already installed or dismissed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+        console.log('✅ PWA already installed');
+        return;
+    }
+    
+    if (localStorage.getItem('pwa-install-dismissed')) {
+        return;
+    }
+    
+    // Create install banner
+    const banner = document.createElement('div');
+    banner.id = 'pwa-install-banner';
+    banner.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px 25px;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        z-index: 100000;
+        max-width: 90%;
+        text-align: center;
+        font-family: 'Cairo', sans-serif;
+        animation: slideUp 0.5s ease-out;
+    `;
+    
+    banner.innerHTML = `
+        <div style="margin-bottom: 10px;">
+            <strong>📱 قم بتثبيت التطبيق على هاتفك</strong><br>
+            <small>للوصول السريع والعمل بدون إنترنت</small>
+        </div>
+        <button id="pwa-install-btn" style="
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-right: 10px;
+            font-family: 'Cairo', sans-serif;
+        ">تثبيت الآن</button>
+        <button id="pwa-dismiss-btn" style="
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+        ">لاحقاً</button>
+    `;
+    
+    document.body.appendChild(banner);
+    
+    // Install button click
+    document.getElementById('pwa-install-btn').addEventListener('click', async () => {
+        if (!deferredPrompt) {
+            alert('عذراً، لا يمكن تثبيت التطبيق في الوقت الحالي. جرب من خلال قائمة المتصفح.');
+            return;
+        }
+        
+        // Show the install prompt
+        deferredPrompt.prompt();
+        
+        // Wait for the user's response
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response to install prompt: ${outcome}`);
+        
+        if (outcome === 'accepted') {
+            console.log('✅ User accepted the install prompt');
+        } else {
+            console.log('❌ User dismissed the install prompt');
+        }
+        
+        // Clear the deferred prompt
+        deferredPrompt = null;
+        
+        // Remove banner
+        banner.remove();
+    });
+    
+    // Dismiss button click
+    document.getElementById('pwa-dismiss-btn').addEventListener('click', () => {
+        localStorage.setItem('pwa-install-dismissed', 'true');
+        banner.remove();
+    });
+}
+
+// Check if running as PWA
+window.addEventListener('DOMContentLoaded', () => {
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                  window.navigator.standalone === true;
+    
+    if (isPWA) {
+        console.log('✅ Running as installed PWA');
+        document.body.classList.add('pwa-mode');
+    }
+});
 
 </script>
 </body>

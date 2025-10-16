@@ -7183,7 +7183,7 @@ function fillAreasDropdowns() {
     if (searchAreaSelect) {
         searchAreaSelect.innerHTML = '<option value="">-- جميع المناطق --</option>';
         areasData.forEach(area => {
-            searchAreaSelect.innerHTML += `<option value="${area.name}">${area.name}</option>`;
+            searchAreaSelect.innerHTML += `<option value="${area.id}">${area.name}</option>`;
         });
     }
 }
@@ -8169,9 +8169,13 @@ function filterInspectionData(data) {
             return false;
         }
         
-        // Filter by area (compare using area names to handle both ID and name formats)
-        if (currentSearchFilters.area && getAreaName(item.area) !== currentSearchFilters.area) {
-            return false;
+        // Filter by area (compare area names, converting IDs if necessary)
+        if (currentSearchFilters.area) {
+            const itemAreaName = getAreaName(item.area);
+            const filterAreaName = getAreaName(currentSearchFilters.area);
+            if (itemAreaName !== filterAreaName) {
+                return false;
+            }
         }
         
         // Filter by shift
@@ -11898,7 +11902,8 @@ function generateShopAnalyticsReport(data, selectedYear, selectedMonth) {
     underInspectedShops.slice(0, 5).forEach(shop => {
         const urgencyLevel = shop.daysSinceLastInspection > 14 ? '🔴 عاجل' : 
                             shop.daysSinceLastInspection > 7 ? '🟡 متوسط' : '🟢 عادي';
-        html += `<li>${shop.name} (${shop.area}) - ${shop.totalInspections} تفتيش ${urgencyLevel}</li>`;
+        const areaName = shop.area || 'غير محدد';
+        html += `<li>${shop.name} (${areaName}) - ${shop.totalInspections} تفتيش ${urgencyLevel}</li>`;
     });
     
     html += `
@@ -11963,10 +11968,11 @@ function generateShopAnalyticsReport(data, selectedYear, selectedMonth) {
         const statusColor = shop.totalInspections >= avgInspectionRate ? '#d4edda' : 
                            shop.totalInspections >= avgInspectionRate * 0.5 ? '#fff3cd' : '#f8d7da';
         
+        const areaName = shop.area || 'غير محدد';
         html += `
             <tr style="background:${statusColor};">
                 <td style="font-weight:bold;">${shop.name}</td>
-                <td>${shop.area}</td>
+                <td>${areaName}</td>
                 <td style="text-align:center;font-weight:bold;">${shop.totalInspections}</td>
                 <td style="text-align:center;">${shop.weekCount}</td>
                 <td style="text-align:center;">${shop.inspectionRate}</td>

@@ -1524,27 +1524,47 @@
       try {
         showMessage("planEditorStatus", "info", "جاري تحميل البيانات...");
         
-        const res = await fetch(`https://api.github.com/repos/${repo}/contents/${planPath}`, {
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json"
+        // Try to load from GitHub first
+        try {
+          const res = await fetch(`https://api.github.com/repos/${repo}/contents/${planPath}`, {
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
+            }
+          });
+          
+          if (res.ok) {
+            const file = await res.json();
+            const content = decodeURIComponent(escape(atob(file.content)));
+            planData = JSON.parse(content);
+            planSha = file.sha;
+            
+            document.getElementById("planEditor").value = JSON.stringify(planData, null, 2);
+            showMessage("planEditorStatus", "success", "تم تحميل البيانات بنجاح من GitHub!");
+            
+            // Update dashboard stats
+            updateDashboardStats();
+            return;
           }
-        });
-        
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        } catch (ghError) {
+          console.warn('Could not load from GitHub, trying local file:', ghError.message);
         }
         
-        const file = await res.json();
-        const content = decodeURIComponent(escape(atob(file.content)));
-        planData = JSON.parse(content);
-        planSha = file.sha;
+        // Fallback: Load from local file
+        const localRes = await fetch('plan-data.json');
+        if (localRes.ok) {
+          planData = await localRes.json();
+          planSha = "";
+          
+          document.getElementById("planEditor").value = JSON.stringify(planData, null, 2);
+          showMessage("planEditorStatus", "success", "تم تحميل البيانات بنجاح من الملف المحلي!");
+          
+          // Update dashboard stats
+          updateDashboardStats();
+          return;
+        }
         
-        document.getElementById("planEditor").value = JSON.stringify(planData, null, 2);
-        showMessage("planEditorStatus", "success", "تم تحميل البيانات بنجاح!");
-        
-        // Update dashboard stats
-        updateDashboardStats();
+        throw new Error('Could not load plan data from GitHub or local file');
         
       } catch (error) {
         showMessage("planEditorStatus", "error", "خطأ في تحميل البيانات: " + error.message);
@@ -3008,9 +3028,10 @@
       logActivity("إضافة تفتيش", `تم إضافة تفتيش جديد للمفتش ${inspector} في ${area}`);
     }
     
-    // Load shops details from GitHub
+    // Load shops details from GitHub or local file
     async function loadShopsDetails() {
       try {
+        // Try to load from GitHub first
         const response = await fetch(`https://api.github.com/repos/${repo}/contents/shops_details.json`, {
           headers: {
             'Authorization': `token ${getToken()}`,
@@ -3018,20 +3039,32 @@
           }
         });
         
-        if (!response.ok) {
-          console.warn('Could not load shops_details.json:', response.statusText);
-          shopsDetails = {};
+        if (response.ok) {
+          const data = await response.json();
+          const content = atob(data.content);
+          shopsDetails = JSON.parse(content);
+          console.log('Loaded shops details from GitHub:', Object.keys(shopsDetails).length, 'shops');
           return;
         }
-        
-        const data = await response.json();
-        const content = atob(data.content);
-        shopsDetails = JSON.parse(content);
-        console.log('Loaded shops details:', Object.keys(shopsDetails).length, 'shops');
       } catch (error) {
-        console.error('Error loading shops details:', error);
-        shopsDetails = {};
+        console.warn('Could not load from GitHub, trying local file:', error.message);
       }
+      
+      // Fallback: Load from local file
+      try {
+        const response = await fetch('shops_details.json');
+        if (response.ok) {
+          shopsDetails = await response.json();
+          console.log('Loaded shops details from local file:', Object.keys(shopsDetails).length, 'shops');
+          return;
+        }
+      } catch (error) {
+        console.error('Error loading shops details from local file:', error);
+      }
+      
+      // Last resort: empty object
+      shopsDetails = {};
+      console.warn('Could not load shops details, using empty object');
     }
     
     // Update shops dropdown based on selected area

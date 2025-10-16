@@ -37,7 +37,7 @@
     <meta name="theme-color" content="#2336a0">
     
     <!-- PWA Manifest -->
-    <link rel="manifest" href="./manifest.json">
+    <link rel="manifest" href="./manifest.json?v=1.1.0">
     
     <!-- Apple Touch Icons -->
     <link rel="apple-touch-icon" href="./icon-192x192.png">
@@ -4933,6 +4933,61 @@ function playClickSound() {
 let selectedInspector = "";
 const DEV_PASSWORD = "ali@1940";
 
+// ========================================
+// Smart Cache Management for Safari/Firefox
+// ========================================
+// This ensures browsers like Safari and Firefox always get fresh data
+async function smartCacheClear() {
+    try {
+        const APP_VERSION = '1.1.0'; // Increment this when you want to force cache clear
+        const lastVersion = localStorage.getItem('appVersion');
+        
+        // Check if this is a new version or first load
+        if (lastVersion !== APP_VERSION) {
+            console.log('🔄 New app version detected. Clearing caches...');
+            
+            // 1. Clear Service Worker caches (if any)
+            if ('serviceWorker' in navigator && 'caches' in window) {
+                const cacheNames = await caches.keys();
+                await Promise.all(
+                    cacheNames.map(cacheName => caches.delete(cacheName))
+                );
+                console.log('✅ Service Worker caches cleared');
+            }
+            
+            // 2. Unregister old service workers
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                await Promise.all(
+                    registrations.map(registration => registration.unregister())
+                );
+                console.log('✅ Old service workers unregistered');
+            }
+            
+            // 3. Store new version
+            localStorage.setItem('appVersion', APP_VERSION);
+            console.log(`✅ App version updated to ${APP_VERSION}`);
+            
+            // 4. Force reload to apply changes (only once)
+            if (!sessionStorage.getItem('versionReloadDone')) {
+                sessionStorage.setItem('versionReloadDone', 'true');
+                console.log('🔄 Reloading to apply fresh cache...');
+                window.location.reload(true); // Force reload from server
+                return;
+            }
+        }
+        
+        // Clear the reload flag after successful load
+        sessionStorage.removeItem('versionReloadDone');
+        
+    } catch (error) {
+        console.error('❌ Smart cache clear failed:', error);
+    }
+}
+
+// Run smart cache management immediately
+smartCacheClear();
+
 // إضافة مستمعات الأحداث لأصوات النقر
 document.addEventListener('DOMContentLoaded', function() {
     // إضافة أصوات النقر لجميع الأزرار
@@ -6594,7 +6649,13 @@ async function loadInspectionData() {
 let shopsDetailsData = {};
 async function loadShopsDetails() {
     try {
-        const response = await fetch('./shops_details.json');
+        const response = await fetch('./shops_details.json?t=' + Date.now(), {
+            cache: 'no-cache',
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache'
+            }
+        });
         if (response.ok) {
             shopsDetailsData = await response.json();
             console.log(`✅ تم تحميل ${Object.keys(shopsDetailsData).length} محل من ملف تفاصيل المحلات`);
@@ -6609,7 +6670,13 @@ async function loadShopsDetails() {
 // تحميل البيانات من plan-data.json
 async function loadPlanData() {
     try {
-        const response = await fetch('./plan-data.json');
+        const response = await fetch('./plan-data.json?t=' + Date.now(), {
+            cache: 'no-cache',
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache'
+            }
+        });
         if (response.ok) {
             const planData = await response.json();
             if (Array.isArray(planData) && planData.length > 0) {
@@ -16828,7 +16895,13 @@ async function loadPublicFiles(category = 'all') {
         
         // محاولة تحميل ملف files.json محلياً أولاً للاختبار
         try {
-            const localResponse = await fetch('./files.json');
+            const localResponse = await fetch('./files.json?t=' + Date.now(), {
+                cache: 'no-cache',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache'
+                }
+            });
             if (localResponse.ok) {
                 filesData = await localResponse.json();
                 console.log('تم تحميل الملفات محلياً');

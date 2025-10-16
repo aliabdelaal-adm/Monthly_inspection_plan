@@ -1,8 +1,8 @@
 // Service Worker for Monthly Inspection Plan PWA
-// Version 1.0.0
+// Version 1.1.0 - Enhanced cache strategy for Safari and Firefox
 
-const CACHE_NAME = 'monthly-inspection-v1.0.0';
-const RUNTIME_CACHE = 'runtime-cache-v1';
+const CACHE_NAME = 'monthly-inspection-v1.1.0';
+const RUNTIME_CACHE = 'runtime-cache-v1.1.0';
 
 // Files to cache immediately on install
 const STATIC_CACHE_URLS = [
@@ -66,7 +66,7 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - Network-First strategy for dynamic data, Cache-First for static assets
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -81,43 +81,86 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  event.respondWith(
-    caches.match(request)
-      .then((cachedResponse) => {
-        if (cachedResponse) {
-          console.log('Service Worker: Serving from cache:', request.url);
-          // Return cached response and update cache in background
-          event.waitUntil(updateCache(request));
-          return cachedResponse;
+  // Dynamic data files that need Network-First strategy (for Safari/Firefox cache issues)
+  const dynamicFiles = ['plan-data.json', 'shops_details.json', 'files.json', 'maintenance-status.json'];
+  const isDynamicFile = dynamicFiles.some(file => url.pathname.includes(file));
+
+  if (isDynamicFile) {
+    // Network-First strategy for dynamic data files
+    event.respondWith(
+      fetch(request, {
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
         }
-
-        console.log('Service Worker: Fetching from network:', request.url);
-        return fetch(request)
-          .then((response) => {
-            // Don't cache if not successful
-            if (!response || response.status !== 200 || response.type === 'error') {
-              return response;
-            }
-
-            // Clone the response
-            const responseToCache = response.clone();
-
-            // Cache the fetched response for runtime
-            caches.open(RUNTIME_CACHE)
-              .then((cache) => {
-                cache.put(request, responseToCache);
-              });
-
-            return response;
-          })
-          .catch((error) => {
-            console.error('Service Worker: Fetch failed:', error);
-            
-            // Return a custom offline page if available
-            return caches.match('./index.html');
-          });
       })
-  );
+        .then((response) => {
+          if (response && response.status === 200) {
+            console.log('Service Worker: Fetched fresh data from network:', request.url);
+            // Clone and cache the fresh response
+            const responseToCache = response.clone();
+            caches.open(RUNTIME_CACHE).then((cache) => {
+              cache.put(request, responseToCache);
+            });
+            return response;
+          }
+          return response;
+        })
+        .catch((error) => {
+          console.log('Service Worker: Network failed, trying cache:', request.url);
+          // Fallback to cache if network fails
+          return caches.match(request).then((cachedResponse) => {
+            if (cachedResponse) {
+              return cachedResponse;
+            }
+            throw error;
+          });
+        })
+    );
+  } else {
+    // Cache-First strategy for static assets (HTML, CSS, JS, images)
+    event.respondWith(
+      caches.match(request)
+        .then((cachedResponse) => {
+          if (cachedResponse) {
+            console.log('Service Worker: Serving static asset from cache:', request.url);
+            // Update cache in background for HTML files
+            if (request.url.includes('.html')) {
+              event.waitUntil(updateCache(request));
+            }
+            return cachedResponse;
+          }
+
+          console.log('Service Worker: Fetching from network:', request.url);
+          return fetch(request)
+            .then((response) => {
+              // Don't cache if not successful
+              if (!response || response.status !== 200 || response.type === 'error') {
+                return response;
+              }
+
+              // Clone the response
+              const responseToCache = response.clone();
+
+              // Cache the fetched response for runtime
+              caches.open(RUNTIME_CACHE)
+                .then((cache) => {
+                  cache.put(request, responseToCache);
+                });
+
+              return response;
+            })
+            .catch((error) => {
+              console.error('Service Worker: Fetch failed:', error);
+              
+              // Return a custom offline page if available
+              return caches.match('./index.html');
+            });
+        })
+    );
+  }
 });
 
 // Function to update cache in background

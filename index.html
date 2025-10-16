@@ -2680,23 +2680,22 @@
             background:#1a2870;
         }
         
-        /* Maintenance Mode Overlay Styles */
+        /* Maintenance Mode Overlay Styles - Now replaces main content instead of full overlay */
         #maintenanceOverlay {
-            position: fixed;
-            top: 0;
-            left: 0;
             width: 100%;
-            height: 100%;
+            min-height: 600px;
             background: linear-gradient(135deg, 
                 rgba(35, 54, 160, 0.95) 0%,
                 rgba(76, 175, 80, 0.95) 50%,
                 rgba(33, 150, 243, 0.95) 100%);
-            z-index: 99999;
             display: flex;
             align-items: center;
             justify-content: center;
             backdrop-filter: blur(10px);
             animation: fadeIn 0.5s ease-in-out;
+            border-radius: 18px;
+            margin: 24px 0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
         }
         
         @keyframes fadeIn {
@@ -3144,26 +3143,6 @@
     متصفحك لا يدعم تشغيل الملفات الصوتية.
 </audio>
 
-<!-- Maintenance Mode Overlay -->
-<div id="maintenanceOverlay" style="display:none;">
-    <div class="maintenance-content">
-        <button id="maintenanceCloseBtn" class="maintenance-close-btn" onclick="closeMaintenance()" title="إغلاق (للمطور فقط)">×</button>
-        <div class="maintenance-icon">
-            <div class="shield-icon">🛡️</div>
-            <div class="lock-icon">🔒</div>
-        </div>
-        <h2 class="maintenance-title">الزملاء الأعزاء</h2>
-        <p class="maintenance-message">جاري تحديث البيانات الآن</p>
-        <p class="maintenance-submessage">يُرجي الإنتظار</p>
-        <div class="maintenance-spinner">
-            <div class="spinner-ring"></div>
-            <div class="spinner-ring"></div>
-            <div class="spinner-ring"></div>
-        </div>
-        <div class="maintenance-details" id="maintenanceDetails"></div>
-    </div>
-</div>
-
 <!-- Hidden Audio Element for Maintenance Mode -->
 <audio id="maintenanceAudio" preload="auto" style="display:none;">
     <source src="music.mp3" type="audio/mpeg">
@@ -3568,7 +3547,30 @@
             </div>
         </div>
     </div>
+    
+    <!-- Data Table Container - Hidden when maintenance is active -->
     <div id="planTableContainer" class="plan-table-container"></div>
+    
+    <!-- Maintenance Mode Overlay - Replaces table when active -->
+    <div id="maintenanceOverlay" style="display:none;">
+        <div class="maintenance-content">
+            <button id="maintenanceCloseBtn" class="maintenance-close-btn" onclick="closeMaintenance()" title="إغلاق (للمطور فقط)">×</button>
+            <div class="maintenance-icon">
+                <div class="shield-icon">🛡️</div>
+                <div class="lock-icon">🔒</div>
+            </div>
+            <h2 class="maintenance-title">الزملاء الأعزاء</h2>
+            <p class="maintenance-message">جاري تحديث البيانات الآن</p>
+            <p class="maintenance-submessage">يُرجي الإنتظار</p>
+            <div class="maintenance-spinner">
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+            </div>
+            <div class="maintenance-details" id="maintenanceDetails"></div>
+        </div>
+    </div>
+    
     <!-- Main Quick Actions -->
     <div class="actions-row">
         <div class="actions-line">
@@ -5629,6 +5631,7 @@ function showMaintenanceMode(issues = []) {
     }
     
     const overlay = document.getElementById('maintenanceOverlay');
+    const planTable = document.getElementById('planTableContainer');
     const detailsDiv = document.getElementById('maintenanceDetails');
     
     if (!overlay) return;
@@ -5650,6 +5653,11 @@ function showMaintenanceMode(issues = []) {
     }
     
     detailsDiv.innerHTML = detailsHTML;
+    
+    // Hide plan table and show maintenance overlay in its place
+    if (planTable) {
+        planTable.style.display = 'none';
+    }
     overlay.style.display = 'flex';
     
     // Save maintenance mode state
@@ -5659,15 +5667,21 @@ function showMaintenanceMode(issues = []) {
     startMaintenanceMusic();
     
     // Log for developer
-    console.log('⚠️ Maintenance Mode Activated');
+    console.log('⚠️ Maintenance Mode Activated - Table hidden, maintenance screen shown');
     console.log('Issues found:', issues);
 }
 
 function hideMaintenanceMode() {
     const overlay = document.getElementById('maintenanceOverlay');
+    const planTable = document.getElementById('planTableContainer');
     
     if (overlay) {
         overlay.style.display = 'none';
+    }
+    
+    // Show plan table again
+    if (planTable) {
+        planTable.style.display = 'flex';
     }
     
     // Stop maintenance music
@@ -5676,7 +5690,7 @@ function hideMaintenanceMode() {
     // Clear maintenance mode state
     localStorage.removeItem('systemMaintenanceMode');
     
-    console.log('✅ Maintenance Mode Deactivated');
+    console.log('✅ Maintenance Mode Deactivated - Table restored, maintenance screen hidden');
 }
 
 // Global variable to store playback timer

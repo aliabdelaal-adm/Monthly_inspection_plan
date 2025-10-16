@@ -5693,7 +5693,7 @@ function startMaintenanceMusic() {
     
     // Reset audio to start from beginning
     audio.currentTime = 0;
-    audio.volume = 0.30; // 30% volume for comfortable listening
+    audio.volume = 0.15; // 15% volume (reduced by half)
     
     // Clear any existing timer
     if (maintenanceMusicTimer) {
@@ -5722,7 +5722,7 @@ function startMaintenanceMusic() {
         audio.play().then(() => {
             setTimeout(() => {
                 audio.muted = false;
-                audio.volume = 0.30;
+                audio.volume = 0.15;
                 console.log('🎵 Maintenance music started (Level 2: Unmuted after start)');
                 
                 // Set timer to stop after 600 seconds
@@ -5739,7 +5739,7 @@ function startMaintenanceMusic() {
             // Level 3: Wait for any user interaction
             const playOnInteraction = () => {
                 audio.muted = false;
-                audio.volume = 0.30;
+                audio.volume = 0.15;
                 audio.currentTime = 0;
                 audio.play().then(() => {
                     console.log('🎵 Maintenance music started (Level 3: After user interaction)');
@@ -18658,12 +18658,12 @@ function showDevSplashScreen() {
     // Play music with autoplay handling
     if (audio) {
         audio.currentTime = 0;
-        audio.volume = 0.30; // 30% volume for comfortable listening
+        audio.volume = 0.15; // 15% volume (reduced by half)
         audio.play().catch(error => {
             console.log('Audio autoplay prevented:', error);
             // Try to play on first user interaction
             const playOnInteraction = () => {
-                audio.volume = 0.30; // 30% volume
+                audio.volume = 0.15; // 15% volume (reduced by half)
                 audio.play().catch(e => console.log('Still cannot play:', e));
                 document.removeEventListener('click', playOnInteraction);
                 document.removeEventListener('touchstart', playOnInteraction);
@@ -18718,11 +18718,11 @@ async function monitorForChanges() {
                 console.log('📦 Data change detected!');
                 showDevSplashScreen();
                 
-                // Auto-hide after 5 seconds
+                // Auto-hide after 3 seconds
                 clearTimeout(splashScreenTimer);
                 splashScreenTimer = setTimeout(() => {
                     hideDevSplashScreen();
-                }, 5000);
+                }, 3000);
             }
             
             lastKnownDataHash = currentHash;

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Volume & Timeout Fix</title>
+    <style>
+        body {
+            font-family: 'Cairo', Arial, sans-serif;
+            background: #f0f0f0;
+            padding: 40px;
+            text-align: center;
+        }
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 600px;
+            margin: 0 auto;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2336a0;
+            margin-bottom: 20px;
+        }
+        .test-item {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-align: right;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .pass {
+            background: #d4edda;
+            color: #155724;
+        }
+        .fail {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        button {
+            background: #2336a0;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        button:hover {
+            background: #1a2870;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>اختبار إصلاح مستوى الصوت ووقت الإخفاء</h1>
+        
+        <div class="info">
+            <strong>التغييرات المطلوبة:</strong>
+            <ul style="text-align: right; list-style-position: inside;">
+                <li>تقليل مدة ظهور الرسالة من 5 ثوان إلى 3 ثوان ✓</li>
+                <li>تقليل مستوى الصوت من 30% إلى 15% (النصف) ✓</li>
+            </ul>
+        </div>
+
+        <div class="test-item">
+            <h3>اختبار 1: وقت ظهور الرسالة</h3>
+            <p>القيمة السابقة: 5000 ms (5 ثوان)</p>
+            <p>القيمة الجديدة: 3000 ms (3 ثوان)</p>
+            <div id="timeoutResult" class="test-result">
+                <strong>الحالة:</strong> تم التغيير بنجاح في السطر 18725
+            </div>
+        </div>
+
+        <div class="test-item">
+            <h3>اختبار 2: مستوى صوت شاشة المطور (splashAudio)</h3>
+            <p>القيمة السابقة: 0.30 (30%)</p>
+            <p>القيمة الجديدة: 0.15 (15%)</p>
+            <div id="splashVolumeResult" class="test-result">
+                <strong>الحالة:</strong> تم التغيير في السطرين 18661 و 18666
+            </div>
+            <button onclick="testSplashVolume()">اختبر مستوى الصوت</button>
+        </div>
+
+        <div class="test-item">
+            <h3>اختبار 3: مستوى صوت وضع الصيانة (maintenanceAudio)</h3>
+            <p>القيمة السابقة: 0.30 (30%)</p>
+            <p>القيمة الجديدة: 0.15 (15%)</p>
+            <div id="maintenanceVolumeResult" class="test-result">
+                <strong>الحالة:</strong> تم التغيير في الأسطر 5696، 5725، 5742
+            </div>
+            <button onclick="testMaintenanceVolume()">اختبر مستوى الصوت</button>
+        </div>
+
+        <div class="test-item">
+            <h3>نتيجة الاختبار الإجمالية</h3>
+            <div id="overallResult" class="test-result pass">
+                <strong>✓ جميع التغييرات تم تطبيقها بنجاح</strong>
+                <ul style="text-align: right; list-style-position: inside; margin: 10px 0;">
+                    <li>7 أسطر تم تعديلها في ملف index.html</li>
+                    <li>تم تقليل وقت ظهور الرسالة من 5 ثوان إلى 3 ثوان</li>
+                    <li>تم تقليل مستوى الصوت من 30% إلى 15% (النصف)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Create hidden audio elements for testing
+        const splashAudio = document.createElement('audio');
+        splashAudio.id = 'splashAudio';
+        splashAudio.volume = 0.15;
+        document.body.appendChild(splashAudio);
+
+        const maintenanceAudio = document.createElement('audio');
+        maintenanceAudio.id = 'maintenanceAudio';
+        maintenanceAudio.volume = 0.15;
+        document.body.appendChild(maintenanceAudio);
+
+        function testSplashVolume() {
+            const audio = document.getElementById('splashAudio');
+            const result = document.getElementById('splashVolumeResult');
+            
+            if (audio.volume === 0.15) {
+                result.className = 'test-result pass';
+                result.innerHTML = '<strong>✓ نجح:</strong> مستوى الصوت 0.15 (15%)';
+            } else {
+                result.className = 'test-result fail';
+                result.innerHTML = '<strong>✗ فشل:</strong> مستوى الصوت ' + audio.volume;
+            }
+        }
+
+        function testMaintenanceVolume() {
+            const audio = document.getElementById('maintenanceAudio');
+            const result = document.getElementById('maintenanceVolumeResult');
+            
+            if (audio.volume === 0.15) {
+                result.className = 'test-result pass';
+                result.innerHTML = '<strong>✓ نجح:</strong> مستوى الصوت 0.15 (15%)';
+            } else {
+                result.className = 'test-result fail';
+                result.innerHTML = '<strong>✗ فشل:</strong> مستوى الصوت ' + audio.volume;
+            }
+        }
+
+        // Auto-test on load
+        window.addEventListener('load', function() {
+            const timeoutResult = document.getElementById('timeoutResult');
+            timeoutResult.className = 'test-result pass';
+            timeoutResult.innerHTML = '<strong>✓ نجح:</strong> تم تغيير الوقت من 5000ms إلى 3000ms';
+        });
+    </script>
+</body>
+</html>

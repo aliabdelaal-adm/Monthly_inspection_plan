@@ -3041,7 +3041,10 @@
         
         if (response.ok) {
           const data = await response.json();
-          const content = atob(data.content);
+          // Properly decode base64 with UTF-8 support for Arabic text
+          const content = decodeURIComponent(Array.prototype.map.call(atob(data.content), function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+          }).join(''));
           shopsDetails = JSON.parse(content);
           console.log('Loaded shops details from GitHub:', Object.keys(shopsDetails).length, 'shops');
           return;

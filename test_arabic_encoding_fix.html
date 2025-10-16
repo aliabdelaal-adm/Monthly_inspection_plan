@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>اختبار تشفير النص العربي - Arabic Encoding Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Cairo', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+      direction: rtl;
+    }
+    
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    
+    h1 {
+      color: #764ba2;
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 2em;
+    }
+    
+    .test-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 10px;
+      border-left: 4px solid #764ba2;
+    }
+    
+    .test-section h2 {
+      color: #667eea;
+      margin-bottom: 15px;
+      font-size: 1.3em;
+    }
+    
+    .test-result {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 10px;
+      direction: rtl;
+    }
+    
+    .success {
+      border-left: 4px solid #28a745;
+    }
+    
+    .error {
+      border-left: 4px solid #dc3545;
+    }
+    
+    .code-block {
+      background: #2d3561;
+      color: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      overflow-x: auto;
+      margin-top: 10px;
+      direction: ltr;
+      text-align: left;
+    }
+    
+    .label {
+      font-weight: 600;
+      color: #764ba2;
+      display: inline-block;
+      margin-left: 10px;
+    }
+    
+    select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-family: 'Cairo', Arial, sans-serif;
+      font-size: 1em;
+      margin-top: 10px;
+      direction: rtl;
+    }
+    
+    select option {
+      padding: 10px;
+      direction: rtl;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 اختبار إصلاح تشفير النص العربي</h1>
+    
+    <div class="test-section">
+      <h2>المشكلة الأصلية</h2>
+      <p>عند استخدام <code>atob()</code> مباشرة لفك تشفير base64 من GitHub API، تظهر الأحرف العربية كرموز غير مفهومة.</p>
+      <div class="test-result error">
+        <span class="label">الطريقة الخاطئة:</span>
+        <div class="code-block">const content = atob(data.content);</div>
+        <span class="label">النتيجة:</span>
+        <span id="wrongMethod"></span>
+      </div>
+    </div>
+    
+    <div class="test-section">
+      <h2>الحل الصحيح</h2>
+      <p>استخدام فك تشفير UTF-8 الصحيح للحفاظ على الأحرف العربية.</p>
+      <div class="test-result success">
+        <span class="label">الطريقة الصحيحة:</span>
+        <div class="code-block">const content = decodeURIComponent(Array.prototype.map.call(atob(data.content), function(c) {
+  return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+}).join(''));</div>
+        <span class="label">النتيجة:</span>
+        <span id="correctMethod"></span>
+      </div>
+    </div>
+    
+    <div class="test-section">
+      <h2>اختبار عملي: قائمة المناطق</h2>
+      <p>مثال على كيفية ظهور أسماء المناطق في القائمة المنسدلة</p>
+      <select id="areasDropdown" size="5">
+        <option value="">-- اختر المنطقة --</option>
+      </select>
+    </div>
+    
+    <div class="test-section">
+      <h2>اختبار عملي: قائمة المحلات</h2>
+      <p>مثال على كيفية ظهور أسماء المحلات في القائمة المنسدلة</p>
+      <select id="shopsDropdown" size="5">
+        <option value="">-- اختر المحل --</option>
+      </select>
+    </div>
+  </div>
+
+  <script>
+    // Sample Arabic text in base64 (as it would come from GitHub API)
+    const sampleData = {
+      "سوق الميناء": {
+        "nameAr": "سوق الميناء",
+        "address": "سوق الميناء"
+      },
+      "جرين لندز": {
+        "nameAr": "جرين لندز",
+        "address": "سوق الميناء"
+      },
+      "معرض الطيور الاليفه": {
+        "nameAr": "معرض الطيور الاليفه",
+        "address": "سوق الميناء"
+      }
+    };
+    
+    // Simulate GitHub API base64 encoding
+    const jsonString = JSON.stringify(sampleData);
+    const base64Content = btoa(unescape(encodeURIComponent(jsonString)));
+    
+    // Wrong method (will show corrupted Arabic)
+    function wrongDecodeMethod(base64) {
+      try {
+        const content = atob(base64);
+        const data = JSON.parse(content);
+        return data;
+      } catch (e) {
+        return { error: "فشل فك التشفير: " + e.message };
+      }
+    }
+    
+    // Correct method (will show proper Arabic)
+    function correctDecodeMethod(base64) {
+      try {
+        const content = decodeURIComponent(Array.prototype.map.call(atob(base64), function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        const data = JSON.parse(content);
+        return data;
+      } catch (e) {
+        return { error: "فشل فك التشفير: " + e.message };
+      }
+    }
+    
+    // Test both methods
+    const wrongResult = wrongDecodeMethod(base64Content);
+    const correctResult = correctDecodeMethod(base64Content);
+    
+    // Display results
+    if (wrongResult.error) {
+      document.getElementById('wrongMethod').textContent = wrongResult.error;
+    } else {
+      const firstShop = Object.keys(wrongResult)[0];
+      document.getElementById('wrongMethod').textContent = `"${firstShop}"`;
+    }
+    
+    if (correctResult.error) {
+      document.getElementById('correctMethod').textContent = correctResult.error;
+    } else {
+      const firstShop = Object.keys(correctResult)[0];
+      document.getElementById('correctMethod').textContent = `"${firstShop}" ✅`;
+    }
+    
+    // Populate dropdowns with correct method
+    if (correctResult && !correctResult.error) {
+      // Get unique areas
+      const areas = [...new Set(Object.values(correctResult).map(s => s.address).filter(Boolean))].sort();
+      const areasDropdown = document.getElementById('areasDropdown');
+      areas.forEach(area => {
+        const option = document.createElement('option');
+        option.value = area;
+        option.textContent = area;
+        areasDropdown.appendChild(option);
+      });
+      
+      // Populate shops
+      const shopsDropdown = document.getElementById('shopsDropdown');
+      Object.keys(correctResult).sort().forEach(shopName => {
+        const option = document.createElement('option');
+        option.value = shopName;
+        option.textContent = shopName;
+        shopsDropdown.appendChild(option);
+      });
+    }
+  </script>
+</body>
+</html>

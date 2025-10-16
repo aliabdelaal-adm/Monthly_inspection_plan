@@ -3061,6 +3061,55 @@
             }
         }
 
+        @keyframes rotate360 {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes slideInDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -300px 0;
+            }
+            100% {
+                background-position: 300px 0;
+            }
+        }
+
+        @keyframes musicNote {
+            0%, 100% {
+                transform: translateY(0) scale(1);
+            }
+            50% {
+                transform: translateY(-10px) scale(1.1);
+            }
+        }
+
         #devSplashScreen.show {
             display: flex !important;
             opacity: 1 !important;
@@ -3075,13 +3124,17 @@
 <!-- Developer Splash Screen Overlay -->
 <div id="devSplashScreen" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); z-index:999999; opacity:0; transition:opacity 0.5s ease;">
     <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:white; font-family:'Cairo', Arial, sans-serif; text-align:center; padding:20px;">
-        <div style="font-size:80px; margin-bottom:20px; animation:pulse 1.5s ease-in-out infinite;">⚡</div>
-        <h2 style="font-size:2.5em; margin:0 0 15px 0; font-weight:800; text-shadow:0 4px 8px rgba(0,0,0,0.3);">جاري التحديث</h2>
-        <p style="font-size:1.3em; margin:0 0 30px 0; opacity:0.95;">المطور يقوم بإجراء تعديلات على النظام</p>
-        <div style="width:200px; height:4px; background:rgba(255,255,255,0.3); border-radius:2px; overflow:hidden; margin-bottom:20px;">
-            <div id="splashProgressBar" style="width:0%; height:100%; background:white; border-radius:2px; transition:width 0.3s ease; animation:progressAnimation 2s ease-in-out infinite;"></div>
+        <div style="font-size:100px; margin-bottom:25px; animation:pulse 1.5s ease-in-out infinite, rotate360 3s linear infinite;">💫</div>
+        <h1 style="font-size:3em; margin:0 0 20px 0; font-weight:900; text-shadow:0 6px 12px rgba(0,0,0,0.4); letter-spacing:2px; animation:slideInDown 0.8s ease-out;">جاري تحديث البيانات الآن</h1>
+        <p style="font-size:1.8em; margin:0 0 35px 0; opacity:0.95; font-weight:600; animation:fadeInUp 1s ease-out;">يُرجي الإنتظار</p>
+        <div style="width:300px; height:6px; background:rgba(255,255,255,0.3); border-radius:3px; overflow:hidden; margin-bottom:25px; box-shadow:0 4px 10px rgba(0,0,0,0.2);">
+            <div id="splashProgressBar" style="width:0%; height:100%; background:linear-gradient(90deg, #fff 0%, #ffd700 50%, #fff 100%); border-radius:3px; transition:width 0.3s ease; animation:progressAnimation 2s ease-in-out infinite, shimmer 1.5s linear infinite;"></div>
         </div>
-        <p style="font-size:1.1em; opacity:0.85; margin:0;">🎵 استمتع بالموسيقى أثناء الانتظار</p>
+        <div style="display:flex; align-items:center; gap:15px; margin-top:10px;">
+            <div style="font-size:2.5em; animation:musicNote 1s ease-in-out infinite;">🎵</div>
+            <p style="font-size:1.3em; opacity:0.9; margin:0; font-weight:500;">استمتع بالموسيقى أثناء الانتظار</p>
+            <div style="font-size:2.5em; animation:musicNote 1s ease-in-out infinite 0.5s;">🎶</div>
+        </div>
     </div>
 </div>
 
@@ -3100,8 +3153,8 @@
             <div class="lock-icon">🔒</div>
         </div>
         <h2 class="maintenance-title">الزملاء الأعزاء</h2>
-        <p class="maintenance-message">جاري التحديث الآن</p>
-        <p class="maintenance-submessage">شكراً على الانتظار</p>
+        <p class="maintenance-message">جاري تحديث البيانات الآن</p>
+        <p class="maintenance-submessage">يُرجي الإنتظار</p>
         <div class="maintenance-spinner">
             <div class="spinner-ring"></div>
             <div class="spinner-ring"></div>
@@ -5585,7 +5638,7 @@ function startMaintenanceMusic() {
     
     // Reset audio to start from beginning
     audio.currentTime = 0;
-    audio.volume = 0.25; // 25% volume for comfortable listening
+    audio.volume = 0.30; // 30% volume for comfortable listening
     
     // Clear any existing timer
     if (maintenanceMusicTimer) {
@@ -5614,7 +5667,7 @@ function startMaintenanceMusic() {
         audio.play().then(() => {
             setTimeout(() => {
                 audio.muted = false;
-                audio.volume = 0.25;
+                audio.volume = 0.30;
                 console.log('🎵 Maintenance music started (Level 2: Unmuted after start)');
                 
                 // Set timer to stop after 600 seconds
@@ -5631,7 +5684,7 @@ function startMaintenanceMusic() {
             // Level 3: Wait for any user interaction
             const playOnInteraction = () => {
                 audio.muted = false;
-                audio.volume = 0.25;
+                audio.volume = 0.30;
                 audio.currentTime = 0;
                 audio.play().then(() => {
                     console.log('🎵 Maintenance music started (Level 3: After user interaction)');
@@ -18526,10 +18579,12 @@ function showDevSplashScreen() {
     // Play music with autoplay handling
     if (audio) {
         audio.currentTime = 0;
+        audio.volume = 0.30; // 30% volume for comfortable listening
         audio.play().catch(error => {
             console.log('Audio autoplay prevented:', error);
             // Try to play on first user interaction
             const playOnInteraction = () => {
+                audio.volume = 0.30; // 30% volume
                 audio.play().catch(e => console.log('Still cannot play:', e));
                 document.removeEventListener('click', playOnInteraction);
                 document.removeEventListener('touchstart', playOnInteraction);

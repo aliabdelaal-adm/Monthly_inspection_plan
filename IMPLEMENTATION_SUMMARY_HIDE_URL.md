@@ -157,13 +157,17 @@
 
 الملفات الجديدة المضافة للتوثيق:
 - `CUSTOM_DOMAIN_SETUP_AR.md` - دليل إعداد النطاق المخصص
-- `IMPLEMENTATION_SUMMARY_HIDE_URL.md` - هذا الملف
+- `IMPLEMENTATION_SUMMARY_HIDE_URL.md` - هذا الملف (ملخص التنفيذ الكامل)
+- `QUICK_REFERENCE_HIDE_URL.md` - الدليل السريع
+- `TASK_COMPLETION_REPORT.md` - تقرير إتمام المهمة
 
 ---
 
 ## 🔗 روابط مفيدة
 
 - [دليل إعداد النطاق المخصص](./CUSTOM_DOMAIN_SETUP_AR.md)
+- [الدليل السريع](./QUICK_REFERENCE_HIDE_URL.md)
+- [تقرير إتمام المهمة](./TASK_COMPLETION_REPORT.md)
 - [دليل تثبيت التطبيق على الهاتف](./MOBILE_INSTALL_GUIDE_AR.md)
 - [دليل التثبيت السريع](./PWA_QUICK_INSTALL_AR.md)
 

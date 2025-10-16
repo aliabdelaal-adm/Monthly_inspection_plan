@@ -3031,9 +3031,61 @@
             position: relative;
             z-index: 2;
         }
+
+        /* Developer Splash Screen Animations */
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 0.8;
+            }
+        }
+
+        @keyframes progressAnimation {
+            0% {
+                width: 0%;
+            }
+            50% {
+                width: 100%;
+            }
+            100% {
+                width: 0%;
+            }
+        }
+
+        #devSplashScreen.show {
+            display: flex !important;
+            opacity: 1 !important;
+        }
+
+        #devSplashScreen.hide {
+            opacity: 0 !important;
+        }
     </style>
 </head>
 <body>
+<!-- Developer Splash Screen Overlay -->
+<div id="devSplashScreen" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); z-index:999999; opacity:0; transition:opacity 0.5s ease;">
+    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:white; font-family:'Cairo', Arial, sans-serif; text-align:center; padding:20px;">
+        <div style="font-size:80px; margin-bottom:20px; animation:pulse 1.5s ease-in-out infinite;">⚡</div>
+        <h2 style="font-size:2.5em; margin:0 0 15px 0; font-weight:800; text-shadow:0 4px 8px rgba(0,0,0,0.3);">جاري التحديث</h2>
+        <p style="font-size:1.3em; margin:0 0 30px 0; opacity:0.95;">المطور يقوم بإجراء تعديلات على النظام</p>
+        <div style="width:200px; height:4px; background:rgba(255,255,255,0.3); border-radius:2px; overflow:hidden; margin-bottom:20px;">
+            <div id="splashProgressBar" style="width:0%; height:100%; background:white; border-radius:2px; transition:width 0.3s ease; animation:progressAnimation 2s ease-in-out infinite;"></div>
+        </div>
+        <p style="font-size:1.1em; opacity:0.85; margin:0;">🎵 استمتع بالموسيقى أثناء الانتظار</p>
+    </div>
+</div>
+
+<!-- Hidden Audio Element for Developer Splash Screen -->
+<audio id="splashAudio" preload="auto" style="display:none;" loop>
+    <source src="music.mp3" type="audio/mpeg">
+    متصفحك لا يدعم تشغيل الملفات الصوتية.
+</audio>
+
 <!-- Maintenance Mode Overlay -->
 <div id="maintenanceOverlay" style="display:none;">
     <div class="maintenance-content">
@@ -18437,6 +18489,181 @@ window.addEventListener('DOMContentLoaded', () => {
         document.body.classList.add('pwa-mode');
     }
 });
+
+// ===== Developer Splash Screen System =====
+// This system monitors for file changes and shows a splash screen with music
+
+let splashScreenTimer = null;
+let lastKnownDataHash = null;
+let isMonitoringActive = false;
+
+// Calculate hash of data for change detection
+function calculateDataHash(data) {
+    return JSON.stringify(data).split('').reduce((a, b) => {
+        a = ((a << 5) - a) + b.charCodeAt(0);
+        return a & a;
+    }, 0);
+}
+
+// Show developer splash screen with music
+function showDevSplashScreen() {
+    const splash = document.getElementById('devSplashScreen');
+    const audio = document.getElementById('splashAudio');
+    
+    if (!splash) return;
+    
+    // Show splash screen
+    splash.style.display = 'flex';
+    setTimeout(() => {
+        splash.classList.add('show');
+    }, 10);
+    
+    // Play music with autoplay handling
+    if (audio) {
+        audio.currentTime = 0;
+        audio.play().catch(error => {
+            console.log('Audio autoplay prevented:', error);
+            // Try to play on first user interaction
+            const playOnInteraction = () => {
+                audio.play().catch(e => console.log('Still cannot play:', e));
+                document.removeEventListener('click', playOnInteraction);
+                document.removeEventListener('touchstart', playOnInteraction);
+            };
+            document.addEventListener('click', playOnInteraction);
+            document.addEventListener('touchstart', playOnInteraction);
+        });
+    }
+    
+    console.log('🎬 Developer splash screen shown with music');
+}
+
+// Hide developer splash screen
+function hideDevSplashScreen() {
+    const splash = document.getElementById('devSplashScreen');
+    const audio = document.getElementById('splashAudio');
+    
+    if (!splash) return;
+    
+    // Fade out
+    splash.classList.remove('show');
+    splash.classList.add('hide');
+    
+    // Stop music
+    if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
+    }
+    
+    // Remove from DOM after animation
+    setTimeout(() => {
+        splash.style.display = 'none';
+        splash.classList.remove('hide');
+    }, 500);
+    
+    console.log('🎬 Developer splash screen hidden');
+}
+
+// Monitor for data changes
+async function monitorForChanges() {
+    if (!isMonitoringActive) return;
+    
+    try {
+        // Check plan-data.json for changes
+        const response = await fetch('./plan-data.json?t=' + Date.now());
+        if (response.ok) {
+            const data = await response.json();
+            const currentHash = calculateDataHash(data);
+            
+            // If hash changed, show splash screen
+            if (lastKnownDataHash !== null && currentHash !== lastKnownDataHash) {
+                console.log('📦 Data change detected!');
+                showDevSplashScreen();
+                
+                // Auto-hide after 5 seconds
+                clearTimeout(splashScreenTimer);
+                splashScreenTimer = setTimeout(() => {
+                    hideDevSplashScreen();
+                }, 5000);
+            }
+            
+            lastKnownDataHash = currentHash;
+        }
+    } catch (error) {
+        console.log('Monitor error:', error);
+    }
+    
+    // Check again in 3 seconds
+    setTimeout(monitorForChanges, 3000);
+}
+
+// Start monitoring when page loads
+window.addEventListener('load', function() {
+    // Calculate initial hash
+    if (typeof inspectionData !== 'undefined') {
+        lastKnownDataHash = calculateDataHash({
+            inspectionData,
+            inspectors: inspectorsData,
+            areas: areasData
+        });
+    }
+    
+    // Start monitoring after 5 seconds
+    setTimeout(() => {
+        isMonitoringActive = true;
+        monitorForChanges();
+        console.log('👀 File change monitoring started');
+    }, 5000);
+});
+
+// Manual trigger for developers (can be called from console)
+window.showSplash = showDevSplashScreen;
+window.hideSplash = hideDevSplashScreen;
+
+// Detect when saveInspectionData is called (when developer makes edits)
+const originalSaveInspectionData = window.saveInspectionData;
+if (typeof originalSaveInspectionData === 'function') {
+    window.saveInspectionData = function() {
+        // Show splash screen when saving
+        showDevSplashScreen();
+        
+        // Call original function
+        const result = originalSaveInspectionData.apply(this, arguments);
+        
+        // Auto-hide after 3 seconds
+        clearTimeout(splashScreenTimer);
+        splashScreenTimer = setTimeout(() => {
+            hideDevSplashScreen();
+        }, 3000);
+        
+        return result;
+    };
+}
+
+// Detect GitHub save operations
+const originalSaveDirectToGitHub = window.saveDirectToGitHub;
+if (typeof originalSaveDirectToGitHub === 'function') {
+    window.saveDirectToGitHub = async function() {
+        // Show splash screen
+        showDevSplashScreen();
+        
+        try {
+            // Call original function
+            const result = await originalSaveDirectToGitHub.apply(this, arguments);
+            
+            // Auto-hide after 4 seconds to allow GitHub operation to complete
+            clearTimeout(splashScreenTimer);
+            splashScreenTimer = setTimeout(() => {
+                hideDevSplashScreen();
+            }, 4000);
+            
+            return result;
+        } catch (error) {
+            // Hide on error too
+            setTimeout(hideDevSplashScreen, 1000);
+            throw error;
+        }
+    };
+}
 
 </script>
 </body>

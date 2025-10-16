@@ -1386,6 +1386,7 @@
     let filesData = null;
     let planSha = "";
     let filesSha = "";
+    let shopsDetails = null;
     
     // Chart instances
     let inspectorsChart = null;
@@ -2887,16 +2888,23 @@
     // ========================
     // Utility Functions
     // ========================
-    function addNewInspection() {
+    async function addNewInspection() {
       if (!planData) {
         alert("❌ يجب تحميل البيانات أولاً!");
-        loadPlan();
-        return;
+        await loadPlan();
+        if (!planData) return;
       }
       
-      // Get unique inspectors, areas for suggestions
-      const inspectors = [...new Set(planData.inspectionData.map(i => i.inspector).filter(Boolean))];
-      const areas = [...new Set(planData.inspectionData.map(i => i.area).filter(Boolean))];
+      // Load shops details if not already loaded
+      if (!shopsDetails) {
+        await loadShopsDetails();
+      }
+      
+      // Get unique inspectors from existing data
+      const inspectors = [...new Set(planData.inspectionData.map(i => i.inspector).filter(Boolean))].sort();
+      
+      // Get unique areas from shops_details.json
+      const areas = shopsDetails ? [...new Set(Object.values(shopsDetails).map(s => s.address).filter(Boolean))].sort() : [];
       
       const modal = document.createElement('div');
       modal.className = 'modal show';
@@ -2910,11 +2918,10 @@
           <div class="modal-body">
             <div class="form-group">
               <label class="form-label">المفتش</label>
-              <input type="text" id="newInspectionInspector" class="form-control" 
-                     list="inspectorsList" placeholder="د. اسم المفتش">
-              <datalist id="inspectorsList">
-                ${inspectors.map(i => `<option value="${i}">`).join('')}
-              </datalist>
+              <select id="newInspectionInspector" class="form-control">
+                <option value="">-- اختر المفتش --</option>
+                ${inspectors.map(i => `<option value="${i}">${i}</option>`).join('')}
+              </select>
             </div>
             <div class="form-group">
               <label class="form-label">التاريخ</label>
@@ -2930,16 +2937,25 @@
             </div>
             <div class="form-group">
               <label class="form-label">المنطقة</label>
-              <input type="text" id="newInspectionArea" class="form-control" 
-                     list="areasList" placeholder="سوق الميناء">
-              <datalist id="areasList">
-                ${areas.map(a => `<option value="${a}">`).join('')}
-              </datalist>
+              <select id="newInspectionArea" class="form-control" onchange="updateShopsDropdownByArea()">
+                <option value="">-- اختر المنطقة --</option>
+                ${areas.map(a => `<option value="${a}">${a}</option>`).join('')}
+              </select>
             </div>
             <div class="form-group">
-              <label class="form-label">المحلات (كل محل في سطر)</label>
-              <textarea id="newInspectionShops" class="form-control" rows="5" 
-                        placeholder="محل 1&#10;محل 2&#10;محل 3"></textarea>
+              <label class="form-label">المحلات</label>
+              <div style="background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+                <small style="color: #666;">
+                  <i class="fas fa-info-circle"></i> اختر المنطقة أولاً لعرض المحلات التابعة لها. يمكنك تحديد عدة محلات.
+                </small>
+              </div>
+              <select id="newInspectionShopsSelect" class="form-control" multiple size="8" 
+                      style="width: 100%;" disabled>
+                <option value="">-- اختر المنطقة أولاً --</option>
+              </select>
+              <small style="color: #999; display: block; margin-top: 5px;">
+                اضغط Ctrl (أو Cmd على Mac) + انقر لتحديد عدة محلات
+              </small>
             </div>
           </div>
           <div class="modal-footer">
@@ -2960,11 +2976,13 @@
       const day = document.getElementById('newInspectionDate').value;
       const shift = document.getElementById('newInspectionShift').value;
       const area = document.getElementById('newInspectionArea').value.trim();
-      const shopsText = document.getElementById('newInspectionShops').value;
-      const shops = shopsText.split('\n').map(s => s.trim()).filter(s => s);
+      
+      // Get selected shops from the multi-select dropdown
+      const shopsSelect = document.getElementById('newInspectionShopsSelect');
+      const shops = Array.from(shopsSelect.selectedOptions).map(option => option.value);
       
       if (!inspector || !day || !area || shops.length === 0) {
-        alert('❌ يجب ملء جميع الحقول المطلوبة!');
+        alert('❌ يجب ملء جميع الحقول المطلوبة واختيار محل واحد على الأقل!');
         return;
       }
       
@@ -2988,6 +3006,68 @@
       updateDashboardStats();
       
       logActivity("إضافة تفتيش", `تم إضافة تفتيش جديد للمفتش ${inspector} في ${area}`);
+    }
+    
+    // Load shops details from GitHub
+    async function loadShopsDetails() {
+      try {
+        const response = await fetch(`https://api.github.com/repos/${repo}/contents/shops_details.json`, {
+          headers: {
+            'Authorization': `token ${getToken()}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+        
+        if (!response.ok) {
+          console.warn('Could not load shops_details.json:', response.statusText);
+          shopsDetails = {};
+          return;
+        }
+        
+        const data = await response.json();
+        const content = atob(data.content);
+        shopsDetails = JSON.parse(content);
+        console.log('Loaded shops details:', Object.keys(shopsDetails).length, 'shops');
+      } catch (error) {
+        console.error('Error loading shops details:', error);
+        shopsDetails = {};
+      }
+    }
+    
+    // Update shops dropdown based on selected area
+    window.updateShopsDropdownByArea = function() {
+      const areaSelect = document.getElementById('newInspectionArea');
+      const shopsSelect = document.getElementById('newInspectionShopsSelect');
+      
+      if (!areaSelect || !shopsSelect) return;
+      
+      const selectedArea = areaSelect.value;
+      
+      if (!selectedArea) {
+        shopsSelect.innerHTML = '<option value="">-- اختر المنطقة أولاً --</option>';
+        shopsSelect.disabled = true;
+        return;
+      }
+      
+      // Filter shops by selected area
+      const shopsInArea = shopsDetails ? 
+        Object.entries(shopsDetails)
+          .filter(([name, details]) => details.address === selectedArea)
+          .map(([name, details]) => name)
+          .sort() 
+        : [];
+      
+      if (shopsInArea.length === 0) {
+        shopsSelect.innerHTML = '<option value="">-- لا توجد محلات في هذه المنطقة --</option>';
+        shopsSelect.disabled = true;
+        return;
+      }
+      
+      // Populate shops dropdown
+      shopsSelect.innerHTML = shopsInArea.map(shop => 
+        `<option value="${shop}">${shop}</option>`
+      ).join('');
+      shopsSelect.disabled = false;
     }
     
     function exportData() {
@@ -4521,6 +4601,9 @@ ${Object.entries(stats.months).sort().map(([month, count]) =>
       
       // Load plan data
       await loadPlan();
+      
+      // Load shops details for dropdowns
+      await loadShopsDetails();
       
       // Initialize activity log
       refreshActivityLog();

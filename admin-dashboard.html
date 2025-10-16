@@ -1067,14 +1067,22 @@
       <div class="content-card">
         <div class="content-card-header">
           <h3 class="content-card-title">إدارة المفتشين</h3>
-          <button class="btn btn-primary" onclick="addInspector()">
-            <i class="fas fa-user-plus"></i>
-            إضافة مفتش جديد
-          </button>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn btn-primary" onclick="addInspector()">
+              <i class="fas fa-user-plus"></i>
+              إضافة مفتش جديد
+            </button>
+            <button class="btn btn-success" onclick="saveInspectorsToGitHub()" id="saveInspectorsBtn">
+              <i class="fas fa-save"></i>
+              <i class="fab fa-github"></i>
+              حفظ في GitHub
+            </button>
+          </div>
         </div>
         <div id="inspectorsList">
           <div class="loader"></div>
         </div>
+        <div class="status-message" id="inspectorsStatus"></div>
       </div>
       
       <div class="content-card">
@@ -1092,13 +1100,36 @@
       <div class="content-card">
         <div class="content-card-header">
           <h3 class="content-card-title">إدارة المناطق</h3>
-          <button class="btn btn-primary" onclick="addArea()">
-            <i class="fas fa-map-marker-alt"></i>
-            إضافة منطقة جديدة
-          </button>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn btn-primary" onclick="addArea()">
+              <i class="fas fa-map-marker-alt"></i>
+              إضافة منطقة جديدة
+            </button>
+            <button class="btn btn-success" onclick="saveAreasToGitHub()" id="saveAreasBtn">
+              <i class="fas fa-save"></i>
+              <i class="fab fa-github"></i>
+              حفظ في GitHub
+            </button>
+          </div>
         </div>
         <div id="areasList">
           <div class="loader"></div>
+        </div>
+        <div class="status-message" id="areasStatus"></div>
+      </div>
+      
+      <div class="content-card">
+        <div class="content-card-header">
+          <h3 class="content-card-title">ربط المناطق بالمحلات</h3>
+        </div>
+        <div class="form-group">
+          <label class="form-label">اختر منطقة لعرض المحلات التابعة لها</label>
+          <select id="areaFilterSelect" class="form-control" onchange="filterShopsByArea()">
+            <option value="">-- اختر منطقة --</option>
+          </select>
+        </div>
+        <div id="areaShopsList" style="margin-top: 20px;">
+          <p style="text-align: center; color: #999;">اختر منطقة لعرض المحلات التابعة لها</p>
         </div>
       </div>
     </section>
@@ -1108,14 +1139,30 @@
       <div class="content-card">
         <div class="content-card-header">
           <h3 class="content-card-title">إدارة المحلات</h3>
-          <button class="btn btn-primary" onclick="addShop()">
-            <i class="fas fa-store"></i>
-            إضافة محل جديد
-          </button>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn btn-primary" onclick="addShop()">
+              <i class="fas fa-store"></i>
+              إضافة محل جديد
+            </button>
+            <button class="btn btn-success" onclick="saveShopsToGitHub()" id="saveShopsBtn">
+              <i class="fas fa-save"></i>
+              <i class="fab fa-github"></i>
+              حفظ في GitHub
+            </button>
+            <button class="btn btn-warning" onclick="loadShops()">
+              <i class="fas fa-sync-alt"></i>
+              تحديث القائمة
+            </button>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top: 20px;">
+          <label class="form-label">البحث والفلترة</label>
+          <input type="text" id="shopsSearchInput" class="form-control" placeholder="ابحث عن محل..." onkeyup="filterShops()">
         </div>
         <div id="shopsList">
           <div class="loader"></div>
         </div>
+        <div class="status-message" id="shopsStatus"></div>
       </div>
     </section>
     
@@ -1442,9 +1489,10 @@
           break;
         case 'areas':
           loadAreasList();
+          populateAreaFilter();
           break;
         case 'shops':
-          loadShopsList();
+          loadShops();
           break;
         case 'activity-log':
           refreshActivityLog();
@@ -2022,7 +2070,19 @@
         }
       });
       
-      let html = '<table class="data-table"><thead><tr><th>المفتش</th><th>عدد التفتيشات</th><th>عدد المناطق</th><th>عدد المحلات</th></tr></thead><tbody>';
+      let html = `
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>المفتش</th>
+              <th>عدد التفتيشات</th>
+              <th>عدد المناطق</th>
+              <th>عدد المحلات</th>
+              <th>الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
       
       Object.values(inspectorStats).forEach(inspector => {
         html += `
@@ -2031,6 +2091,16 @@
             <td>${inspector.totalInspections}</td>
             <td>${inspector.areas.size}</td>
             <td>${inspector.shops.size}</td>
+            <td>
+              <button class="btn btn-warning" style="padding: 5px 10px; font-size: 0.85em; margin-left: 5px;" 
+                      onclick="editInspector('${inspector.name.replace(/'/g, "\\'")}')">
+                <i class="fas fa-edit"></i> تعديل
+              </button>
+              <button class="btn btn-danger" style="padding: 5px 10px; font-size: 0.85em;" 
+                      onclick="deleteInspector('${inspector.name.replace(/'/g, "\\'")}')">
+                <i class="fas fa-trash"></i> حذف
+              </button>
+            </td>
           </tr>
         `;
       });
@@ -2067,7 +2137,19 @@
         }
       });
       
-      let html = '<table class="data-table"><thead><tr><th>المنطقة</th><th>عدد التفتيشات</th><th>عدد المفتشين</th><th>عدد المحلات</th></tr></thead><tbody>';
+      let html = `
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>المنطقة</th>
+              <th>عدد التفتيشات</th>
+              <th>عدد المفتشين</th>
+              <th>عدد المحلات</th>
+              <th>الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
       
       Object.values(areaStats).forEach(area => {
         html += `
@@ -2076,6 +2158,16 @@
             <td>${area.totalInspections}</td>
             <td>${area.inspectors.size}</td>
             <td>${area.shops.size}</td>
+            <td>
+              <button class="btn btn-warning" style="padding: 5px 10px; font-size: 0.85em; margin-left: 5px;" 
+                      onclick="editArea('${area.name.replace(/'/g, "\\'")}')">
+                <i class="fas fa-edit"></i> تعديل
+              </button>
+              <button class="btn btn-danger" style="padding: 5px 10px; font-size: 0.85em;" 
+                      onclick="deleteArea('${area.name.replace(/'/g, "\\'")}')">
+                <i class="fas fa-trash"></i> حذف
+              </button>
+            </td>
           </tr>
         `;
       });
@@ -2114,7 +2206,19 @@
         }
       });
       
-      let html = '<table class="data-table"><thead><tr><th>المحل</th><th>عدد التفتيشات</th><th>عدد المناطق</th><th>عدد المفتشين</th></tr></thead><tbody>';
+      let html = `
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>المحل</th>
+              <th>عدد التفتيشات</th>
+              <th>عدد المناطق</th>
+              <th>عدد المفتشين</th>
+              <th>الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
       
       Object.values(shopStats).forEach(shop => {
         html += `
@@ -2123,12 +2227,451 @@
             <td>${shop.totalInspections}</td>
             <td>${shop.areas.size}</td>
             <td>${shop.inspectors.size}</td>
+            <td>
+              <button class="btn btn-warning" style="padding: 5px 10px; font-size: 0.85em; margin-left: 5px;" 
+                      onclick="editShop('${shop.name.replace(/'/g, "\\'")}')">
+                <i class="fas fa-edit"></i> تعديل
+              </button>
+              <button class="btn btn-danger" style="padding: 5px 10px; font-size: 0.85em;" 
+                      onclick="deleteShop('${shop.name.replace(/'/g, "\\'")}')">
+                <i class="fas fa-trash"></i> حذف
+              </button>
+            </td>
           </tr>
         `;
       });
       
       html += '</tbody></table>';
       document.getElementById("shopsList").innerHTML = html;
+    }
+    
+    // ========================
+    // GitHub Direct Save Functions
+    // ========================
+    
+    // Save Inspectors to GitHub
+    async function saveInspectorsToGitHub() {
+      const token = getToken();
+      if (!token) {
+        showTokenModal();
+        return;
+      }
+      
+      if (!planData || !planData.inspectionData) {
+        showMessage("inspectorsStatus", "error", "لا توجد بيانات للحفظ!");
+        return;
+      }
+      
+      try {
+        showMessage("inspectorsStatus", "info", "جاري حفظ المفتشين في GitHub...");
+        document.getElementById("saveInspectorsBtn").disabled = true;
+        
+        await savePlanToGitHub();
+        
+        showMessage("inspectorsStatus", "success", "✅ تم حفظ بيانات المفتشين في GitHub بنجاح!");
+        logActivity("حفظ المفتشين", "تم حفظ بيانات المفتشين مباشرة في GitHub");
+        
+      } catch (error) {
+        showMessage("inspectorsStatus", "error", "❌ فشل حفظ البيانات: " + error.message);
+      } finally {
+        document.getElementById("saveInspectorsBtn").disabled = false;
+      }
+    }
+    
+    // Save Areas to GitHub
+    async function saveAreasToGitHub() {
+      const token = getToken();
+      if (!token) {
+        showTokenModal();
+        return;
+      }
+      
+      if (!planData || !planData.inspectionData) {
+        showMessage("areasStatus", "error", "لا توجد بيانات للحفظ!");
+        return;
+      }
+      
+      try {
+        showMessage("areasStatus", "info", "جاري حفظ المناطق في GitHub...");
+        document.getElementById("saveAreasBtn").disabled = true;
+        
+        await savePlanToGitHub();
+        
+        showMessage("areasStatus", "success", "✅ تم حفظ بيانات المناطق في GitHub بنجاح!");
+        logActivity("حفظ المناطق", "تم حفظ بيانات المناطق مباشرة في GitHub");
+        
+        // Refresh area dropdown
+        populateAreaFilter();
+        
+      } catch (error) {
+        showMessage("areasStatus", "error", "❌ فشل حفظ البيانات: " + error.message);
+      } finally {
+        document.getElementById("saveAreasBtn").disabled = false;
+      }
+    }
+    
+    // Save Shops to GitHub
+    async function saveShopsToGitHub() {
+      const token = getToken();
+      if (!token) {
+        showTokenModal();
+        return;
+      }
+      
+      if (!planData || !planData.inspectionData) {
+        showMessage("shopsStatus", "error", "لا توجد بيانات للحفظ!");
+        return;
+      }
+      
+      try {
+        showMessage("shopsStatus", "info", "جاري حفظ المحلات في GitHub...");
+        document.getElementById("saveShopsBtn").disabled = true;
+        
+        await savePlanToGitHub();
+        
+        showMessage("shopsStatus", "success", "✅ تم حفظ بيانات المحلات في GitHub بنجاح!");
+        logActivity("حفظ المحلات", "تم حفظ بيانات المحلات مباشرة في GitHub");
+        
+      } catch (error) {
+        showMessage("shopsStatus", "error", "❌ فشل حفظ البيانات: " + error.message);
+      } finally {
+        document.getElementById("saveShopsBtn").disabled = false;
+      }
+    }
+    
+    // Helper function to save plan to GitHub
+    async function savePlanToGitHub() {
+      const token = getToken();
+      if (!token) {
+        throw new Error("لا يوجد توكن GitHub");
+      }
+      
+      // Encode plan data
+      const content = btoa(unescape(encodeURIComponent(JSON.stringify(planData, null, 2))));
+      
+      // Get current file SHA
+      const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/${planPath}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      });
+      
+      if (!getRes.ok) {
+        throw new Error("فشل في الحصول على SHA للملف");
+      }
+      
+      const fileData = await getRes.json();
+      const sha = fileData.sha;
+      
+      // Update file on GitHub
+      const putRes = await fetch(`https://api.github.com/repos/${repo}/contents/${planPath}`, {
+        method: "PUT",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          message: "تحديث البيانات من لوحة التحكم - Developer Dashboard Update",
+          content: content,
+          sha: sha,
+          branch: "main"
+        })
+      });
+      
+      if (!putRes.ok) {
+        const errorData = await putRes.json();
+        throw new Error(errorData.message || "فشل في حفظ الملف");
+      }
+      
+      return await putRes.json();
+    }
+    
+    // Filter shops by area
+    function filterShopsByArea() {
+      const selectedArea = document.getElementById("areaFilterSelect").value;
+      const container = document.getElementById("areaShopsList");
+      
+      if (!selectedArea) {
+        container.innerHTML = '<p style="text-align: center; color: #999;">اختر منطقة لعرض المحلات التابعة لها</p>';
+        return;
+      }
+      
+      if (!planData || !planData.inspectionData) {
+        container.innerHTML = '<p style="text-align: center; color: #999;">لا توجد بيانات</p>';
+        return;
+      }
+      
+      // Collect shops for selected area
+      const areaShops = new Set();
+      planData.inspectionData.forEach(inspection => {
+        if (inspection.area === selectedArea && inspection.shops) {
+          inspection.shops.forEach(shop => areaShops.add(shop));
+        }
+      });
+      
+      if (areaShops.size === 0) {
+        container.innerHTML = `<p style="text-align: center; color: #999;">لا توجد محلات مسجلة في منطقة "${selectedArea}"</p>`;
+        return;
+      }
+      
+      // Display shops
+      let html = `
+        <div style="background: #e8f5e9; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+          <h4 style="margin-bottom: 10px; color: #2e7d32;">
+            <i class="fas fa-map-marked-alt"></i> المحلات في منطقة: ${selectedArea}
+          </h4>
+          <p style="color: #555;">عدد المحلات: <strong>${areaShops.size}</strong></p>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;">
+      `;
+      
+      Array.from(areaShops).sort().forEach((shop, index) => {
+        html += `
+          <div style="background: #fff; border: 2px solid #4caf50; border-radius: 10px; padding: 15px; transition: all 0.3s ease;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="background: linear-gradient(135deg, #4caf50 0%, #81c784 100%); 
+                          width: 40px; height: 40px; border-radius: 50%; 
+                          display: flex; align-items: center; justify-content: center; 
+                          color: white; font-weight: bold;">
+                ${index + 1}
+              </div>
+              <div style="flex: 1;">
+                <div style="font-weight: 600; color: #1a1f36; margin-bottom: 5px;">
+                  <i class="fas fa-store"></i> ${shop}
+                </div>
+                <div style="font-size: 0.85em; color: #666;">
+                  <i class="fas fa-map-marker-alt"></i> ${selectedArea}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      
+      html += '</div>';
+      container.innerHTML = html;
+    }
+    
+    // Populate area filter dropdown
+    function populateAreaFilter() {
+      if (!planData || !planData.inspectionData) return;
+      
+      const areas = new Set();
+      planData.inspectionData.forEach(inspection => {
+        if (inspection.area) {
+          areas.add(inspection.area);
+        }
+      });
+      
+      const select = document.getElementById("areaFilterSelect");
+      if (!select) return;
+      
+      select.innerHTML = '<option value="">-- اختر منطقة --</option>';
+      Array.from(areas).sort().forEach(area => {
+        const option = document.createElement('option');
+        option.value = area;
+        option.textContent = area;
+        select.appendChild(option);
+      });
+    }
+    
+    // Load shops with enhanced features
+    function loadShops() {
+      loadShopsList();
+      populateAreaFilter();
+    }
+    
+    // Filter shops in the shops list
+    function filterShops() {
+      const searchTerm = document.getElementById("shopsSearchInput").value.toLowerCase();
+      const table = document.querySelector("#shopsList table");
+      
+      if (!table) return;
+      
+      const rows = table.querySelectorAll("tbody tr");
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? "" : "none";
+      });
+    }
+    
+    // ========================
+    // Edit and Delete Functions
+    // ========================
+    
+    // Edit Inspector
+    function editInspector(oldName) {
+      const newName = prompt(`تعديل اسم المفتش:\n\nالاسم الحالي: ${oldName}\n\nأدخل الاسم الجديد:`, oldName);
+      
+      if (!newName || newName === oldName) return;
+      
+      if (!confirm(`هل تريد تغيير اسم المفتش من "${oldName}" إلى "${newName}"؟\n\nسيتم تحديث جميع السجلات المرتبطة.`)) {
+        return;
+      }
+      
+      // Update all inspections with this inspector
+      let updateCount = 0;
+      planData.inspectionData.forEach(inspection => {
+        if (inspection.inspector === oldName) {
+          inspection.inspector = newName;
+          updateCount++;
+        }
+      });
+      
+      // Update the plan editor
+      document.getElementById('planEditor').value = JSON.stringify(planData, null, 2);
+      
+      // Reload the list
+      loadInspectorsList();
+      
+      showMessage("inspectorsStatus", "success", `✅ تم تحديث ${updateCount} سجل بنجاح! اضغط "حفظ في GitHub" لحفظ التغييرات.`);
+      logActivity("تعديل مفتش", `تم تغيير اسم المفتش من "${oldName}" إلى "${newName}"`);
+    }
+    
+    // Delete Inspector
+    function deleteInspector(name) {
+      if (!confirm(`⚠️ هل أنت متأكد من حذف جميع سجلات المفتش "${name}"؟\n\nهذا الإجراء لا يمكن التراجع عنه!`)) {
+        return;
+      }
+      
+      const beforeCount = planData.inspectionData.length;
+      planData.inspectionData = planData.inspectionData.filter(inspection => inspection.inspector !== name);
+      const deletedCount = beforeCount - planData.inspectionData.length;
+      
+      if (deletedCount === 0) {
+        showMessage("inspectorsStatus", "warning", "لم يتم العثور على سجلات للحذف!");
+        return;
+      }
+      
+      // Update the plan editor
+      document.getElementById('planEditor').value = JSON.stringify(planData, null, 2);
+      
+      // Reload the list
+      loadInspectorsList();
+      
+      showMessage("inspectorsStatus", "success", `✅ تم حذف ${deletedCount} سجل للمفتش "${name}"! اضغط "حفظ في GitHub" لحفظ التغييرات.`);
+      logActivity("حذف مفتش", `تم حذف ${deletedCount} سجل للمفتش "${name}"`);
+    }
+    
+    // Edit Area
+    function editArea(oldName) {
+      const newName = prompt(`تعديل اسم المنطقة:\n\nالاسم الحالي: ${oldName}\n\nأدخل الاسم الجديد:`, oldName);
+      
+      if (!newName || newName === oldName) return;
+      
+      if (!confirm(`هل تريد تغيير اسم المنطقة من "${oldName}" إلى "${newName}"؟\n\nسيتم تحديث جميع السجلات المرتبطة.`)) {
+        return;
+      }
+      
+      // Update all inspections with this area
+      let updateCount = 0;
+      planData.inspectionData.forEach(inspection => {
+        if (inspection.area === oldName) {
+          inspection.area = newName;
+          updateCount++;
+        }
+      });
+      
+      // Update the plan editor
+      document.getElementById('planEditor').value = JSON.stringify(planData, null, 2);
+      
+      // Reload the list
+      loadAreasList();
+      populateAreaFilter();
+      
+      showMessage("areasStatus", "success", `✅ تم تحديث ${updateCount} سجل بنجاح! اضغط "حفظ في GitHub" لحفظ التغييرات.`);
+      logActivity("تعديل منطقة", `تم تغيير اسم المنطقة من "${oldName}" إلى "${newName}"`);
+    }
+    
+    // Delete Area
+    function deleteArea(name) {
+      if (!confirm(`⚠️ هل أنت متأكد من حذف جميع سجلات المنطقة "${name}"؟\n\nهذا الإجراء لا يمكن التراجع عنه!`)) {
+        return;
+      }
+      
+      const beforeCount = planData.inspectionData.length;
+      planData.inspectionData = planData.inspectionData.filter(inspection => inspection.area !== name);
+      const deletedCount = beforeCount - planData.inspectionData.length;
+      
+      if (deletedCount === 0) {
+        showMessage("areasStatus", "warning", "لم يتم العثور على سجلات للحذف!");
+        return;
+      }
+      
+      // Update the plan editor
+      document.getElementById('planEditor').value = JSON.stringify(planData, null, 2);
+      
+      // Reload the list
+      loadAreasList();
+      populateAreaFilter();
+      
+      showMessage("areasStatus", "success", `✅ تم حذف ${deletedCount} سجل للمنطقة "${name}"! اضغط "حفظ في GitHub" لحفظ التغييرات.`);
+      logActivity("حذف منطقة", `تم حذف ${deletedCount} سجل للمنطقة "${name}"`);
+    }
+    
+    // Edit Shop
+    function editShop(oldName) {
+      const newName = prompt(`تعديل اسم المحل:\n\nالاسم الحالي: ${oldName}\n\nأدخل الاسم الجديد:`, oldName);
+      
+      if (!newName || newName === oldName) return;
+      
+      if (!confirm(`هل تريد تغيير اسم المحل من "${oldName}" إلى "${newName}"؟\n\nسيتم تحديث جميع السجلات المرتبطة.`)) {
+        return;
+      }
+      
+      // Update all inspections that contain this shop
+      let updateCount = 0;
+      planData.inspectionData.forEach(inspection => {
+        if (inspection.shops && Array.isArray(inspection.shops)) {
+          const index = inspection.shops.indexOf(oldName);
+          if (index !== -1) {
+            inspection.shops[index] = newName;
+            updateCount++;
+          }
+        }
+      });
+      
+      // Update the plan editor
+      document.getElementById('planEditor').value = JSON.stringify(planData, null, 2);
+      
+      // Reload the list
+      loadShopsList();
+      
+      showMessage("shopsStatus", "success", `✅ تم تحديث ${updateCount} سجل بنجاح! اضغط "حفظ في GitHub" لحفظ التغييرات.`);
+      logActivity("تعديل محل", `تم تغيير اسم المحل من "${oldName}" إلى "${newName}"`);
+    }
+    
+    // Delete Shop
+    function deleteShop(name) {
+      if (!confirm(`⚠️ هل أنت متأكد من حذف المحل "${name}" من جميع السجلات؟\n\nهذا الإجراء لا يمكن التراجع عنه!`)) {
+        return;
+      }
+      
+      let deleteCount = 0;
+      planData.inspectionData.forEach(inspection => {
+        if (inspection.shops && Array.isArray(inspection.shops)) {
+          const beforeLength = inspection.shops.length;
+          inspection.shops = inspection.shops.filter(shop => shop !== name);
+          if (inspection.shops.length < beforeLength) {
+            deleteCount++;
+          }
+        }
+      });
+      
+      if (deleteCount === 0) {
+        showMessage("shopsStatus", "warning", "لم يتم العثور على المحل في السجلات!");
+        return;
+      }
+      
+      // Update the plan editor
+      document.getElementById('planEditor').value = JSON.stringify(planData, null, 2);
+      
+      // Reload the list
+      loadShopsList();
+      
+      showMessage("shopsStatus", "success", `✅ تم حذف المحل "${name}" من ${deleteCount} سجل! اضغط "حفظ في GitHub" لحفظ التغييرات.`);
+      logActivity("حذف محل", `تم حذف المحل "${name}" من ${deleteCount} سجل`);
     }
     
     // ========================

@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>اختبار حل الكاش - Safari/Firefox Cache Fix Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Cache Control Meta Tags -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+        .test-result {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .success {
+            background: rgba(76, 175, 80, 0.3);
+            border-left: 5px solid #4CAF50;
+        }
+        .error {
+            background: rgba(244, 67, 54, 0.3);
+            border-left: 5px solid #F44336;
+        }
+        .info {
+            background: rgba(33, 150, 243, 0.3);
+            border-left: 5px solid #2196F3;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        button:active {
+            transform: scale(0.95);
+        }
+        .timestamp {
+            font-size: 0.9em;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        pre {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .status-green {
+            background: #4CAF50;
+        }
+        .status-red {
+            background: #F44336;
+        }
+        .status-yellow {
+            background: #FFC107;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 اختبار حل الكاش Safari/Firefox</h1>
+        <h2 style="text-align: center;">Safari/Firefox Cache Fix Test</h2>
+        
+        <div class="test-section">
+            <h3>معلومات المتصفح - Browser Info</h3>
+            <div id="browserInfo"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>حالة Service Worker - Service Worker Status</h3>
+            <div id="swStatus"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>اختبار تحميل البيانات - Data Loading Test</h3>
+            <button onclick="testDataLoading()">اختبار تحميل plan-data.json</button>
+            <button onclick="testShopsLoading()">اختبار تحميل shops_details.json</button>
+            <div id="dataTestResults"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>اختبار الكاش - Cache Test</h3>
+            <button onclick="checkCaches()">فحص الكاش</button>
+            <button onclick="clearAllCaches()">مسح كل الكاش</button>
+            <div id="cacheResults"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>سجل الاختبارات - Test Log</h3>
+            <button onclick="clearLog()">مسح السجل</button>
+            <pre id="testLog"></pre>
+        </div>
+    </div>
+
+    <script>
+        let logMessages = [];
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString('ar-EG');
+            logMessages.push(`[${timestamp}] ${message}`);
+            updateLog();
+            console.log(message);
+        }
+        
+        function updateLog() {
+            const logElement = document.getElementById('testLog');
+            logElement.textContent = logMessages.join('\n');
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        function clearLog() {
+            logMessages = [];
+            updateLog();
+        }
+        
+        // Browser Detection
+        function detectBrowser() {
+            const userAgent = navigator.userAgent;
+            let browserName = 'Unknown';
+            let browserIcon = '🌐';
+            
+            if (userAgent.indexOf('Firefox') > -1) {
+                browserName = 'Firefox';
+                browserIcon = '🦊';
+            } else if (userAgent.indexOf('Safari') > -1 && userAgent.indexOf('Chrome') === -1) {
+                browserName = 'Safari';
+                browserIcon = '🧭';
+            } else if (userAgent.indexOf('Chrome') > -1) {
+                browserName = 'Chrome';
+                browserIcon = '🌈';
+            } else if (userAgent.indexOf('Edge') > -1) {
+                browserName = 'Edge';
+                browserIcon = '🔷';
+            }
+            
+            return { name: browserName, icon: browserIcon };
+        }
+        
+        // Display Browser Info
+        function displayBrowserInfo() {
+            const browser = detectBrowser();
+            const browserInfo = document.getElementById('browserInfo');
+            
+            browserInfo.innerHTML = `
+                <div class="test-result info">
+                    <span class="status-indicator status-green"></span>
+                    ${browser.icon} المتصفح: ${browser.name}<br>
+                    <span class="timestamp">User Agent: ${navigator.userAgent.substring(0, 100)}...</span>
+                </div>
+            `;
+            
+            log(`المتصفح: ${browser.name}`);
+        }
+        
+        // Check Service Worker
+        async function checkServiceWorker() {
+            const swStatus = document.getElementById('swStatus');
+            
+            if ('serviceWorker' in navigator) {
+                try {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    if (registrations.length > 0) {
+                        const reg = registrations[0];
+                        swStatus.innerHTML = `
+                            <div class="test-result success">
+                                <span class="status-indicator status-green"></span>
+                                ✅ Service Worker نشط<br>
+                                <span class="timestamp">Scope: ${reg.scope}</span><br>
+                                <span class="timestamp">State: ${reg.active ? reg.active.state : 'N/A'}</span>
+                            </div>
+                        `;
+                        log('✅ Service Worker نشط');
+                    } else {
+                        swStatus.innerHTML = `
+                            <div class="test-result error">
+                                <span class="status-indicator status-red"></span>
+                                ❌ لا يوجد Service Worker مسجل
+                            </div>
+                        `;
+                        log('❌ لا يوجد Service Worker');
+                    }
+                } catch (error) {
+                    swStatus.innerHTML = `
+                        <div class="test-result error">
+                            <span class="status-indicator status-red"></span>
+                            ❌ خطأ في فحص Service Worker: ${error.message}
+                        </div>
+                    `;
+                    log(`❌ خطأ: ${error.message}`);
+                }
+            } else {
+                swStatus.innerHTML = `
+                    <div class="test-result error">
+                        <span class="status-indicator status-red"></span>
+                        ❌ Service Worker غير مدعوم في هذا المتصفح
+                    </div>
+                `;
+                log('❌ Service Worker غير مدعوم');
+            }
+        }
+        
+        // Test Data Loading with Cache-Busting
+        async function testDataLoading() {
+            const results = document.getElementById('dataTestResults');
+            results.innerHTML = '<div class="test-result info">جاري التحميل...</div>';
+            
+            try {
+                const timestamp = Date.now();
+                const url = `./plan-data.json?t=${timestamp}`;
+                log(`🔄 جاري تحميل: ${url}`);
+                
+                const startTime = performance.now();
+                const response = await fetch(url, {
+                    cache: 'no-cache',
+                    headers: {
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache'
+                    }
+                });
+                const endTime = performance.now();
+                const loadTime = (endTime - startTime).toFixed(2);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    results.innerHTML = `
+                        <div class="test-result success">
+                            <span class="status-indicator status-green"></span>
+                            ✅ تم تحميل plan-data.json بنجاح!<br>
+                            <span class="timestamp">الحجم: ${JSON.stringify(data).length} حرف</span><br>
+                            <span class="timestamp">الوقت: ${loadTime}ms</span><br>
+                            <span class="timestamp">URL: ${url}</span>
+                        </div>
+                    `;
+                    log(`✅ تم التحميل بنجاح في ${loadTime}ms`);
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                results.innerHTML = `
+                    <div class="test-result error">
+                        <span class="status-indicator status-red"></span>
+                        ❌ فشل التحميل: ${error.message}
+                    </div>
+                `;
+                log(`❌ فشل التحميل: ${error.message}`);
+            }
+        }
+        
+        // Test Shops Loading
+        async function testShopsLoading() {
+            const results = document.getElementById('dataTestResults');
+            results.innerHTML = '<div class="test-result info">جاري التحميل...</div>';
+            
+            try {
+                const timestamp = Date.now();
+                const url = `./shops_details.json?t=${timestamp}`;
+                log(`🔄 جاري تحميل: ${url}`);
+                
+                const startTime = performance.now();
+                const response = await fetch(url, {
+                    cache: 'no-cache',
+                    headers: {
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache'
+                    }
+                });
+                const endTime = performance.now();
+                const loadTime = (endTime - startTime).toFixed(2);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const shopsCount = Object.keys(data).length;
+                    results.innerHTML = `
+                        <div class="test-result success">
+                            <span class="status-indicator status-green"></span>
+                            ✅ تم تحميل shops_details.json بنجاح!<br>
+                            <span class="timestamp">عدد المحلات: ${shopsCount}</span><br>
+                            <span class="timestamp">الوقت: ${loadTime}ms</span><br>
+                            <span class="timestamp">URL: ${url}</span>
+                        </div>
+                    `;
+                    log(`✅ تم تحميل ${shopsCount} محل في ${loadTime}ms`);
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                results.innerHTML = `
+                    <div class="test-result error">
+                        <span class="status-indicator status-red"></span>
+                        ❌ فشل التحميل: ${error.message}
+                    </div>
+                `;
+                log(`❌ فشل التحميل: ${error.message}`);
+            }
+        }
+        
+        // Check Caches
+        async function checkCaches() {
+            const results = document.getElementById('cacheResults');
+            
+            if ('caches' in window) {
+                try {
+                    const cacheNames = await caches.keys();
+                    if (cacheNames.length > 0) {
+                        let cacheInfo = '';
+                        for (const name of cacheNames) {
+                            const cache = await caches.open(name);
+                            const keys = await cache.keys();
+                            cacheInfo += `<br>📦 ${name} (${keys.length} ملف)`;
+                        }
+                        
+                        results.innerHTML = `
+                            <div class="test-result info">
+                                <span class="status-indicator status-yellow"></span>
+                                الكاش الموجود: ${cacheNames.length} cache${cacheInfo}
+                            </div>
+                        `;
+                        log(`الكاش الموجود: ${cacheNames.join(', ')}`);
+                    } else {
+                        results.innerHTML = `
+                            <div class="test-result success">
+                                <span class="status-indicator status-green"></span>
+                                ✅ لا يوجد كاش محفوظ
+                            </div>
+                        `;
+                        log('✅ لا يوجد كاش');
+                    }
+                } catch (error) {
+                    results.innerHTML = `
+                        <div class="test-result error">
+                            <span class="status-indicator status-red"></span>
+                            ❌ خطأ في فحص الكاش: ${error.message}
+                        </div>
+                    `;
+                    log(`❌ خطأ في فحص الكاش: ${error.message}`);
+                }
+            } else {
+                results.innerHTML = `
+                    <div class="test-result error">
+                        <span class="status-indicator status-red"></span>
+                        ❌ Cache API غير مدعوم
+                    </div>
+                `;
+                log('❌ Cache API غير مدعوم');
+            }
+        }
+        
+        // Clear All Caches
+        async function clearAllCaches() {
+            const results = document.getElementById('cacheResults');
+            
+            if ('caches' in window) {
+                try {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(cacheNames.map(name => caches.delete(name)));
+                    
+                    results.innerHTML = `
+                        <div class="test-result success">
+                            <span class="status-indicator status-green"></span>
+                            ✅ تم مسح ${cacheNames.length} cache بنجاح!
+                        </div>
+                    `;
+                    log(`✅ تم مسح ${cacheNames.length} cache`);
+                } catch (error) {
+                    results.innerHTML = `
+                        <div class="test-result error">
+                            <span class="status-indicator status-red"></span>
+                            ❌ خطأ في مسح الكاش: ${error.message}
+                        </div>
+                    `;
+                    log(`❌ خطأ في مسح الكاش: ${error.message}`);
+                }
+            }
+        }
+        
+        // Initialize
+        window.addEventListener('load', () => {
+            log('🚀 بدء الاختبارات...');
+            displayBrowserInfo();
+            checkServiceWorker();
+        });
+    </script>
+</body>
+</html>

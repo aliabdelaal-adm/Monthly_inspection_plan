@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>اختبار الموسيقى غير المحدودة في وضع الصيانة</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Cairo', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: white;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 50px;
+            max-width: 900px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        h2 {
+            text-align: center;
+            font-size: 1.3em;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        
+        .info-section {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 25px 0;
+        }
+        
+        .info-section h3 {
+            color: #ffd700;
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .info-item {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .info-item strong {
+            color: #ffd700;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            margin: 20px 0;
+            border-collapse: collapse;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .comparison-table th,
+        .comparison-table td {
+            padding: 15px;
+            text-align: right;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .comparison-table th {
+            background: rgba(0, 0, 0, 0.3);
+            color: #ffd700;
+            font-weight: bold;
+        }
+        
+        .old-value {
+            color: #f87171;
+        }
+        
+        .new-value {
+            color: #4ade80;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 35px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Cairo', Arial, sans-serif;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(-1px);
+        }
+        
+        .status-display {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        
+        .timer {
+            font-size: 3em;
+            font-weight: bold;
+            color: #4ade80;
+            text-shadow: 0 0 20px rgba(74, 222, 128, 0.5);
+            margin: 10px 0;
+        }
+        
+        .timer.warning {
+            color: #fbbf24;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .status-text {
+            font-size: 1.2em;
+            margin: 10px 0;
+        }
+        
+        .milestone {
+            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: bold;
+            box-shadow: 0 5px 20px rgba(74, 222, 128, 0.3);
+            display: none;
+        }
+        
+        .milestone.show {
+            display: block;
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .code-section {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .code-section h4 {
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+        
+        pre {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            overflow-x: auto;
+            color: #4ade80;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .highlight {
+            color: #fbbf24;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <audio id="testAudio" preload="metadata" style="display:none;">
+        <source src="music.mp3" type="audio/mpeg">
+    </audio>
+
+    <div class="container">
+        <h1>🎵 اختبار الموسيقى غير المحدودة</h1>
+        <h2>وضع الصيانة - الحل النهائي</h2>
+        
+        <div class="info-section">
+            <h3>📋 نظرة عامة على التحديث</h3>
+            <div class="info-item">
+                <strong>المشكلة السابقة:</strong>
+                كانت رسالة "جاري التحديث" والموسيقى تظهر لمدة 10 دقائق فقط ثم تختفي تلقائياً، حتى لو كان وضع الصيانة لا يزال نشطاً.
+            </div>
+            <div class="info-item">
+                <strong>الحل الجديد:</strong>
+                الآن الرسالة والموسيقى تستمران بلا حدود زمنية حتى يقوم المطور بإلغاء تفعيل وضع الصيانة يدوياً.
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h3>🔄 مقارنة الإعدادات</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>القيمة الجديدة</th>
+                        <th>القيمة القديمة</th>
+                        <th>الإعداد</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="new-value">0 (غير محدود)</td>
+                        <td class="old-value">600000 (10 دقائق)</td>
+                        <td><strong>musicDuration</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="new-value">"غير محدود (حتى إلغاء وضع الصيانة)"</td>
+                        <td class="old-value">"10 دقائق"</td>
+                        <td><strong>musicDurationLabel</strong></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="text-align: center;">✅ true (مفعّل)</td>
+                        <td><strong>musicEnabled</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="controls">
+            <button onclick="startTest()">▶️ بدء الاختبار</button>
+            <button onclick="stopTest()">⏹️ إيقاف الاختبار</button>
+        </div>
+
+        <div class="status-display">
+            <div class="status-text" id="musicStatus">🎵 الحالة: في انتظار البدء</div>
+            <div class="timer" id="timer">00:00</div>
+            <div class="status-text" id="statusMessage">انقر "بدء الاختبار" لبدء تشغيل الموسيقى</div>
+        </div>
+
+        <div class="milestone" id="milestone600">
+            🎉 تم تجاوز 10 دقائق! في النظام القديم كانت الموسيقى ستتوقف الآن
+        </div>
+
+        <div class="info-section">
+            <h3>💡 كيف يعمل الحل</h3>
+            <div class="info-item">
+                <strong>1. التحقق من المدة:</strong>
+                يتحقق الكود من قيمة <code>duration</code>، إذا كانت أكبر من 0، يتم تعيين مؤقت لإيقاف الموسيقى
+            </div>
+            <div class="info-item">
+                <strong>2. المدة غير المحدودة:</strong>
+                عندما تكون <code>duration = 0</code>، لا يتم تعيين أي مؤقت، وتستمر الموسيقى في العمل
+            </div>
+            <div class="info-item">
+                <strong>3. الإيقاف اليدوي:</strong>
+                الموسيقى تتوقف فقط عندما يقوم المطور بإلغاء وضع الصيانة، مما يستدعي <code>stopMaintenanceMusic()</code>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h4>📝 التغييرات في الكود</h4>
+            <pre>// في ملف maintenance-config.json
+{
+  "checkInterval": 10000,
+  "musicEnabled": true,
+  <span class="highlight">"musicDuration": 0,</span>  // كان: 600000
+  <span class="highlight">"musicDurationLabel": "غير محدود (حتى إلغاء وضع الصيانة)",</span>
+  "musicVolume": 0.05
+}</pre>
+            
+            <pre>// في ملف index.html - دالة startMaintenanceMusic()
+if (duration > 0) {
+    maintenanceMusicTimer = setTimeout(() => {
+        audio.pause();
+        audio.currentTime = 0;
+    }, duration);
+} else {
+    <span class="highlight">console.log('🎵 Music set to play continuously (unlimited duration)');</span>
+}</pre>
+        </div>
+
+        <div class="info-section">
+            <h3>✅ النتيجة النهائية</h3>
+            <div class="info-item">
+                <strong>للمستخدمين العاديين:</strong>
+                عندما يكون النظام في وضع الصيانة، سيرون رسالة "جاري التحديث" مع الموسيقى، وستستمر حتى ينتهي المطور من الصيانة.
+            </div>
+            <div class="info-item">
+                <strong>للمطور:</strong>
+                يمكنك الوصول إلى النظام حتى أثناء وضع الصيانة. عندما تنتهي من التحديثات، قم بإلغاء تفعيل وضع الصيانة وستختفي الرسالة والموسيقى لجميع المستخدمين.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let startTime = null;
+        let timerInterval = null;
+        let milestone600Shown = false;
+        const audio = document.getElementById('testAudio');
+        const musicStatus = document.getElementById('musicStatus');
+        const timer = document.getElementById('timer');
+        const statusMessage = document.getElementById('statusMessage');
+        const milestone = document.getElementById('milestone600');
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function updateTimer() {
+            if (startTime && !audio.paused) {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                timer.textContent = formatTime(elapsed);
+                
+                // Check for milestone
+                if (elapsed >= 600 && !milestone600Shown) {
+                    milestone.classList.add('show');
+                    milestone600Shown = true;
+                    timer.classList.add('warning');
+                }
+                
+                // Update status message
+                if (elapsed < 600) {
+                    const remaining = 600 - elapsed;
+                    statusMessage.textContent = `⏱️ سيتم الوصول إلى علامة 10 دقائق خلال ${remaining} ثانية`;
+                } else {
+                    statusMessage.textContent = `✅ تجاوزنا ${Math.floor(elapsed / 60)} دقيقة - الموسيقى مستمرة!`;
+                }
+            }
+        }
+
+        function startTest() {
+            audio.volume = 0.05;
+            audio.currentTime = 0;
+            milestone600Shown = false;
+            milestone.classList.remove('show');
+            timer.classList.remove('warning');
+            
+            const playPromise = audio.play();
+            
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    startTime = Date.now();
+                    timerInterval = setInterval(updateTimer, 1000);
+                    musicStatus.textContent = '🎵 الحالة: الموسيقى قيد التشغيل (غير محدودة)';
+                    statusMessage.textContent = '⏱️ سيتم الوصول إلى علامة 10 دقائق خلال 600 ثانية';
+                    console.log('🎵 Test started - music will play indefinitely (duration = 0)');
+                }).catch(err => {
+                    musicStatus.textContent = '⚠️ الحالة: فشل التشغيل التلقائي';
+                    statusMessage.textContent = 'انقر في أي مكان على الصفحة ثم حاول مرة أخرى';
+                    console.error('Play failed:', err);
+                });
+            }
+        }
+
+        function stopTest() {
+            audio.pause();
+            audio.currentTime = 0;
+            
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            
+            musicStatus.textContent = '🎵 الحالة: تم الإيقاف يدوياً';
+            statusMessage.textContent = 'تم إيقاف الموسيقى كما لو تم إلغاء تفعيل وضع الصيانة';
+            timer.textContent = '00:00';
+            milestone.classList.remove('show');
+            timer.classList.remove('warning');
+            console.log('🎵 Test stopped manually');
+        }
+
+        // Listen for audio events
+        audio.addEventListener('ended', () => {
+            stopTest();
+            statusMessage.textContent = '⏹️ انتهى الملف الصوتي طبيعياً';
+        });
+
+        audio.addEventListener('error', (e) => {
+            musicStatus.textContent = '❌ خطأ في تحميل الملف الصوتي';
+            statusMessage.textContent = 'تأكد من وجود ملف music.mp3 في المجلد';
+            console.error('Audio error:', e);
+        });
+    </script>
+</body>
+</html>

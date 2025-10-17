@@ -5472,7 +5472,11 @@ function startAutoRefresh() {
                         // Wait 2 seconds before loading new data (reduced from 3 for faster updates)
                         setTimeout(async () => {
                             await loadInspectionData();
-                            hideMaintenanceMode();
+                            // Only hide maintenance mode if not in system maintenance
+                            const systemMaintenanceActive = localStorage.getItem('systemMaintenanceMode') === 'true';
+                            if (!systemMaintenanceActive) {
+                                hideMaintenanceMode();
+                            }
                             showUpdateMessage('✅ تم تحديث البيانات تلقائياً - التغييرات ظاهرة الآن');
                         }, 2000);
                     } else {
@@ -6817,7 +6821,13 @@ async function loadInspectionData() {
             }
             
             console.log('✅ Firewall: Data validation passed');
-            hideMaintenanceMode();
+            // Only hide maintenance mode if it was triggered by data validation, not by system maintenance mode
+            const systemMaintenanceActive = localStorage.getItem('systemMaintenanceMode') === 'true';
+            if (!systemMaintenanceActive) {
+                hideMaintenanceMode();
+            } else {
+                console.log('ℹ️ System maintenance mode is active - keeping maintenance overlay visible');
+            }
             
             if (data.inspectionData && Array.isArray(data.inspectionData)) {
                 inspectionData = data.inspectionData;
@@ -6882,9 +6892,14 @@ async function loadInspectionData() {
             'سيتم تحديث البيانات تلقائياً'
         ]);
         
-        // Auto-hide maintenance mode after 5 seconds
+        // Auto-hide maintenance mode after 5 seconds (only if not in system maintenance)
         setTimeout(() => {
-            hideMaintenanceMode();
+            const systemMaintenanceActive = localStorage.getItem('systemMaintenanceMode') === 'true';
+            if (!systemMaintenanceActive) {
+                hideMaintenanceMode();
+            } else {
+                console.log('ℹ️ System maintenance mode is active - keeping maintenance overlay visible');
+            }
         }, 5000);
         
         // First try to load complete data from localStorage
@@ -7382,7 +7397,7 @@ function showMaintenanceProgress(message, type = 'loading', persist = false) {
     // Add loading spinner if type is 'loading' or 'warning'
     if (type === 'loading' || type === 'warning') {
         const spinner = document.createElement('div');
-        spinner.className = 'maintenance-spinner';
+        spinner.className = 'progress-spinner';
         messageDiv.appendChild(spinner);
     }
     
@@ -7450,7 +7465,7 @@ if (!document.getElementById('maintenanceProgressStyles')) {
                 transform: translateX(-50%) scale(1.02);
             }
         }
-        .maintenance-spinner {
+        .progress-spinner {
             border: 2px solid rgba(255, 255, 255, 0.3);
             border-top: 2px solid white;
             border-radius: 50%;

@@ -12677,13 +12677,18 @@ function generateInspectorMonthlyReport(data, inspectorName) {
             totalInspections++;
             totalShops += shopsCount;
             
+            // Format shops as separate lines
+            const shopsDisplay = item.shops && item.shops.length > 0 
+                ? item.shops.map(shop => `<div style="padding:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${shop}</div>`).join('') 
+                : '';
+            
             html += `
                 <tr>
                     <td>${item.day}</td>
                     <td style="color:${getAreaName(item.area) === 'سوق الميناء' || getAreaName(item.area) === 'سوق التراث' ? '#1976d2' : '#d32f2f'};">${getAreaName(item.area)}</td>
                     <td>${item.shift}</td>
                     <td>${shopsCount}</td>
-                    <td>${item.shops ? item.shops.join(', ') : ''}</td>
+                    <td style="text-align:right;padding:8px;line-height:1.8;">${shopsDisplay}</td>
                 </tr>
             `;
         });
@@ -13193,6 +13198,11 @@ function exportEnhancedReportToPDF() {
         return;
     }
     
+    // Add confirmation dialog
+    if (!confirm('هل ترغب في حفظ التقرير كـ PDF؟')) {
+        return;
+    }
+    
     const wrap = document.createElement('div');
     wrap.style.background = '#fff';
     wrap.style.padding = '18px';
@@ -13206,8 +13216,16 @@ function exportEnhancedReportToPDF() {
     wrap.appendChild(tableClone);
     document.body.appendChild(wrap);
     
-    html2canvas(wrap).then(canvas => {
+    html2canvas(wrap, {
+        backgroundColor: '#fff', 
+        scale: 1.5,
+        useCORS: true,
+        allowTaint: true,
+        width: wrap.scrollWidth,
+        height: wrap.scrollHeight
+    }).then(canvas => {
         const imgData = canvas.toDataURL('image/png');
+        const { jsPDF } = window.jspdf;
         const doc = new jsPDF({orientation: "landscape", unit: "pt", format: "a4"});
         const pageWidth = doc.internal.pageSize.getWidth();
         const imgProps = doc.getImageProperties(imgData);
@@ -13217,6 +13235,10 @@ function exportEnhancedReportToPDF() {
         doc.addImage(imgData, 'PNG', 40, 35, pdfWidth, pdfHeight);
         doc.save(`تقرير_متقدم_${Date.now()}.pdf`);
         document.body.removeChild(wrap);
+    }).catch(function(error) {
+        console.error('PDF generation error:', error);
+        document.body.removeChild(wrap);
+        alert('حدث خطأ في تصدير ملف PDF');
     });
 }
 
@@ -13225,6 +13247,11 @@ function exportEnhancedReportToExcel() {
     
     if (!tableElement) {
         alert('يرجى توليد التقرير أولاً');
+        return;
+    }
+    
+    // Add confirmation dialog
+    if (!confirm('هل ترغب في حفظ التقرير كـ Excel؟')) {
         return;
     }
     

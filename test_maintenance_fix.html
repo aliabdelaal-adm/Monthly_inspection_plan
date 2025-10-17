@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>اختبار إصلاح رسالة الصيانة</title>
+    <style>
+        body {
+            font-family: 'Cairo', Arial, sans-serif;
+            direction: rtl;
+            text-align: right;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 20px auto;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔧 اختبار إصلاح رسالة الصيانة والموسيقى</h1>
+        
+        <h2>الهدف من الاختبار:</h2>
+        <p>التحقق من أن ملف <code>maintenance-status.json</code> يحتوي على الحقول الصحيحة التي يتوقعها الكود</p>
+        
+        <h2>المشكلة الأصلية:</h2>
+        <ul>
+            <li>رسالة "جاري التحديث" تظهر مع الموسيقى ثم تختفي خلال 3 ثواني</li>
+            <li>السبب: عدم تطابق أسماء الحقول في ملف JSON</li>
+            <li>الكود يتوقع حقل <code>isMaintenanceMode</code> ولكن الملف يحتوي على <code>enabled</code></li>
+        </ul>
+        
+        <h2>الحل:</h2>
+        <ul>
+            <li>تم تغيير <code>"enabled"</code> إلى <code>"isMaintenanceMode"</code></li>
+            <li>تم تحويل حقل <code>messages</code> من كائن إلى مصفوفة</li>
+            <li>تم توحيد أسماء الحقول مع ما يتوقعه الكود</li>
+        </ul>
+        
+        <div id="results"></div>
+        
+        <button onclick="testMaintenanceFile()">🧪 اختبار الملف</button>
+        <button onclick="showOldFormat()">📄 عرض التنسيق القديم (الخاطئ)</button>
+        <button onclick="showNewFormat()">✅ عرض التنسيق الجديد (الصحيح)</button>
+    </div>
+
+    <script>
+        function showStatus(message, type) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = message;
+            results.appendChild(div);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function testMaintenanceFile() {
+            clearResults();
+            showStatus('🔄 جاري اختبار ملف الصيانة...', 'info');
+            
+            try {
+                // Read the local file
+                const response = await fetch('maintenance-status.json');
+                if (!response.ok) {
+                    showStatus('❌ فشل في قراءة الملف', 'error');
+                    return;
+                }
+                
+                const data = await response.json();
+                showStatus('✅ تم قراءة الملف بنجاح', 'success');
+                
+                // Display the file content
+                const pre = document.createElement('pre');
+                pre.textContent = JSON.stringify(data, null, 2);
+                document.getElementById('results').appendChild(pre);
+                
+                // Test for correct fields
+                if (typeof data.isMaintenanceMode === 'boolean') {
+                    showStatus('✅ الحقل isMaintenanceMode موجود وصحيح', 'success');
+                } else {
+                    showStatus('❌ الحقل isMaintenanceMode غير موجود أو غير صحيح', 'error');
+                }
+                
+                if (Array.isArray(data.messages)) {
+                    showStatus('✅ الحقل messages موجود كمصفوفة (صحيح)', 'success');
+                } else if (typeof data.messages === 'object') {
+                    showStatus('⚠️ الحقل messages موجود ككائن (قد يعمل ولكن ليس التنسيق المتوقع)', 'error');
+                } else {
+                    showStatus('❌ الحقل messages غير موجود أو بتنسيق خاطئ', 'error');
+                }
+                
+                if (data.lastUpdated) {
+                    showStatus('✅ الحقل lastUpdated موجود', 'success');
+                } else {
+                    showStatus('⚠️ الحقل lastUpdated غير موجود', 'error');
+                }
+                
+                if (data.updatedBy) {
+                    showStatus('✅ الحقل updatedBy موجود', 'success');
+                } else {
+                    showStatus('⚠️ الحقل updatedBy غير موجود', 'error');
+                }
+                
+                // Check for old fields
+                if (data.enabled !== undefined) {
+                    showStatus('⚠️ الحقل القديم "enabled" لا يزال موجوداً - يجب حذفه', 'error');
+                }
+                
+                if (data.enabledAt !== undefined) {
+                    showStatus('⚠️ الحقل القديم "enabledAt" لا يزال موجوداً - يجب حذفه', 'error');
+                }
+                
+            } catch (error) {
+                showStatus('❌ خطأ: ' + error.message, 'error');
+            }
+        }
+
+        function showOldFormat() {
+            clearResults();
+            showStatus('📄 التنسيق القديم (الخاطئ):', 'info');
+            const pre = document.createElement('pre');
+            pre.textContent = `{
+  "enabled": true,
+  "messages": {
+    "ar": "النظام قيد التحديث، الرجاء المحاولة لاحقاً",
+    "en": "System under maintenance, please try again later"
+  },
+  "enabledAt": "2025-10-17T07:21:16.364Z",
+  "enabledBy": "د. علي عبدالعال"
+}`;
+            document.getElementById('results').appendChild(pre);
+            showStatus('❌ المشكلة: الحقل "enabled" بدلاً من "isMaintenanceMode"', 'error');
+            showStatus('❌ المشكلة: "messages" ككائن بدلاً من مصفوفة', 'error');
+            showStatus('❌ المشكلة: "enabledAt" بدلاً من "lastUpdated"', 'error');
+        }
+
+        function showNewFormat() {
+            clearResults();
+            showStatus('✅ التنسيق الجديد (الصحيح):', 'success');
+            const pre = document.createElement('pre');
+            pre.textContent = `{
+  "isMaintenanceMode": true,
+  "messages": [
+    "النظام قيد التحديث، الرجاء المحاولة لاحقاً"
+  ],
+  "lastUpdated": "2025-10-17T07:21:16.364Z",
+  "updatedBy": "د. علي عبدالعال"
+}`;
+            document.getElementById('results').appendChild(pre);
+            showStatus('✅ الحقل "isMaintenanceMode" بدلاً من "enabled"', 'success');
+            showStatus('✅ "messages" كمصفوفة بدلاً من كائن', 'success');
+            showStatus('✅ "lastUpdated" بدلاً من "enabledAt"', 'success');
+        }
+
+        // Run test on load
+        window.addEventListener('load', () => {
+            showStatus('✨ جاهز للاختبار', 'info');
+        });
+    </script>
+</body>
+</html>

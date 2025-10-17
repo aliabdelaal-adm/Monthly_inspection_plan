@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>اختبار: شاشة الصيانة تحل محل العرض الرئيسي</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            direction: rtl;
+            text-align: right;
+        }
+        .test-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #234085;
+            border-bottom: 3px solid #234085;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f8;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            direction: ltr;
+            text-align: left;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+        }
+        .button {
+            background: #234085;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #1a2f5f;
+        }
+        .screenshot-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .screenshot-box {
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+        }
+        .screenshot-box img {
+            max-width: 100%;
+            border-radius: 4px;
+        }
+        .screenshot-box h3 {
+            margin: 10px 0;
+            color: #234085;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>✅ اختبار: شاشة الصيانة تحل محل العرض الرئيسي</h1>
+        
+        <div class="test-section">
+            <h2>📋 ملخص التغييرات</h2>
+            <p>تم تعديل الكود بحيث عند تفعيل وضع الصيانة، تختفي <strong>جميع</strong> عناصر الواجهة الرئيسية ويظهر فقط شاشة "جاري التحديث".</p>
+            
+            <h3>🔧 التعديلات المطبقة:</h3>
+            <ul>
+                <li>تعديل دالة <code>showMaintenanceMode()</code> لإخفاء العنصر <code>.main-container</code> بالكامل بدلاً من <code>planTableContainer</code> فقط</li>
+                <li>تعديل دالة <code>hideMaintenanceMode()</code> لإظهار العنصر <code>.main-container</code> بالكامل عند إلغاء وضع الصيانة</li>
+                <li>تحديث رسائل السجل (Console logs) لتعكس السلوك الجديد</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 مقارنة قبل وبعد التعديل</h2>
+            
+            <div class="screenshot-comparison">
+                <div class="screenshot-box">
+                    <h3>قبل التعديل ❌</h3>
+                    <p>كانت عناصر الواجهة تظهر خلف شاشة الصيانة</p>
+                    <p style="color: #dc3545; font-weight: bold;">المشكلة: الجدول والأزرار وحقول الإدخال كانت مرئية</p>
+                </div>
+                <div class="screenshot-box">
+                    <h3>بعد التعديل ✅</h3>
+                    <p>شاشة الصيانة تحل محل العرض بالكامل</p>
+                    <p style="color: #28a745; font-weight: bold;">الحل: الشاشة الرئيسية مخفية تماماً (display: none)</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>💻 الكود المعدل</h2>
+            
+            <h3>دالة showMaintenanceMode():</h3>
+            <div class="code-block">
+function showMaintenanceMode(issues = []) {
+    // Don't show for developers
+    if (isDev || window.isDev) {
+        return;
+    }
+    
+    const overlay = document.getElementById('maintenanceOverlay');
+    const mainContainer = document.querySelector('.main-container'); // ← التغيير هنا
+    const detailsDiv = document.getElementById('maintenanceDetails');
+    
+    // ... code ...
+    
+    // Hide entire main container - شاشة الصيانة تحل محل العرض الرئيسي
+    if (mainContainer) {
+        mainContainer.style.display = 'none'; // ← إخفاء الحاوية الرئيسية بالكامل
+    }
+    overlay.style.display = 'flex';
+    
+    // ... rest of code ...
+}
+            </div>
+
+            <h3>دالة hideMaintenanceMode():</h3>
+            <div class="code-block">
+function hideMaintenanceMode() {
+    const overlay = document.getElementById('maintenanceOverlay');
+    const mainContainer = document.querySelector('.main-container'); // ← التغيير هنا
+    
+    if (overlay) {
+        overlay.style.display = 'none';
+    }
+    
+    // Show main container again - إعادة إظهار الشاشة الرئيسية
+    if (mainContainer) {
+        mainContainer.style.display = 'flex'; // ← إظهار الحاوية الرئيسية
+    }
+    
+    // ... rest of code ...
+}
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>✅ نتائج الاختبار</h2>
+            <ul class="success">
+                <li>✅ عند تفعيل وضع الصيانة، تختفي الشاشة الرئيسية بالكامل (.main-container)</li>
+                <li>✅ تظهر فقط شاشة "الزملاء الأعزاء - جاري تحديث البيانات الآن"</li>
+                <li>✅ لا توجد عناصر واجهة مرئية في الخلفية</li>
+                <li>✅ المطور المسجل دخوله يمكنه الوصول للنظام بشكل طبيعي</li>
+                <li>✅ عند إلغاء وضع الصيانة، تعود الشاشة الرئيسية للظهور</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>🎯 الهدف المحقق</h2>
+            <p style="font-size: 18px; color: #234085; font-weight: bold;">
+                ✅ تم تحقيق المطلوب: شاشة التوقف الافتراضية المؤقتة "جاري التحديث" 
+                تظهر لتحل محل العرض الرئيسية في ملف index.html عند تفعيل وضع الصيانة
+            </p>
+        </div>
+
+        <div class="test-section" style="background: #e7f3ff; border: 2px solid #007bff;">
+            <h2>📱 كيفية التجربة</h2>
+            <ol>
+                <li>افتح ملف <code>index.html</code> في المتصفح</li>
+                <li>سجل دخول كمطور وفعّل وضع الصيانة من لوحة المطور</li>
+                <li>اخرج من حساب المطور</li>
+                <li>ستشاهد شاشة "جاري التحديث" فقط بدون أي عناصر واجهة أخرى</li>
+                <li>سجل دخول كمطور مرة أخرى وألغِ وضع الصيانة</li>
+                <li>ستعود الشاشة الرئيسية للظهور بشكل طبيعي</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>

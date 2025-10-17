@@ -3154,14 +3154,16 @@
 </div>
 
 <!-- Hidden Audio Element for Developer Splash Screen -->
-<audio id="splashAudio" preload="auto" style="display:none;" loop>
+<audio id="splashAudio" preload="metadata" playsinline webkit-playsinline style="display:none;" loop crossorigin="anonymous">
     <source src="Classical-Music-for-Relaxation-Mozart-Bach-Tchaikovsky...-128Kbps-44KHz(mp3)1الجزء(4).mp3" type="audio/mpeg">
+    <source src="Classical-Music-for-Relaxation-Mozart-Bach-Tchaikovsky...-128Kbps-44KHz(mp3)1الجزء(4).mp3" type="audio/mp3">
     متصفحك لا يدعم تشغيل الملفات الصوتية.
 </audio>
 
 <!-- Hidden Audio Element for Maintenance Mode -->
-<audio id="maintenanceAudio" preload="auto" style="display:none;">
+<audio id="maintenanceAudio" preload="metadata" playsinline webkit-playsinline style="display:none;" crossorigin="anonymous">
     <source src="music.mp3" type="audio/mpeg">
+    <source src="music.mp3" type="audio/mp3">
     متصفحك لا يدعم تشغيل الملفات الصوتية.
 </audio>
 
@@ -3228,8 +3230,9 @@
     <!-- رسالة الشيخ زايد الصوتية -->
     <div class="sheikh-zayed-message-container">
         <div class="sheikh-zayed-label">🎤 رسالة الشيخ زايد</div>
-        <audio id="sheikhZayedAudio" preload="auto">
+        <audio id="sheikhZayedAudio" preload="metadata" playsinline webkit-playsinline crossorigin="anonymous">
             <source src="AUD-20251004-WA0028.mp3" type="audio/mpeg">
+            <source src="AUD-20251004-WA0028.mp3" type="audio/mp3">
             متصفحك لا يدعم تشغيل الملفات الصوتية.
         </audio>
         <button id="playSheikhZayedBtn" class="play-sheikh-zayed-btn">رسالة الشيخ زايد</button>
@@ -5066,6 +5069,9 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('click', playClickSound);
     });
     
+    // Initialize audio elements for better cross-browser compatibility
+    initializeAudioElements();
+    
     // Clear the maintenance notification flag on page load
     // This ensures the "جاري التحديث" message appears on every page reload
     // when maintenance is active, not just the first time
@@ -5097,6 +5103,80 @@ document.addEventListener('DOMContentLoaded', function() {
         startMaintenanceStatusChecker();
     }
 });
+
+// Initialize audio elements with proper error handling and Safari compatibility
+function initializeAudioElements() {
+    const audioElements = [
+        document.getElementById('maintenanceAudio'),
+        document.getElementById('splashAudio'),
+        document.getElementById('sheikhZayedAudio')
+    ];
+    
+    audioElements.forEach(audio => {
+        if (!audio) return;
+        
+        // Add error handling
+        audio.addEventListener('error', function(e) {
+            console.error('🎵 Audio error for', audio.id, ':', e);
+            // Try to reload the audio
+            if (audio.readyState === 0) {
+                audio.load();
+            }
+        });
+        
+        // Handle stalling (common in Safari)
+        audio.addEventListener('stalled', function() {
+            console.warn('🎵 Audio stalled for', audio.id, '- attempting to resume');
+            audio.load();
+        });
+        
+        // Handle waiting/buffering
+        audio.addEventListener('waiting', function() {
+            console.log('🎵 Audio buffering for', audio.id);
+        });
+        
+        // Handle when audio can play through
+        audio.addEventListener('canplaythrough', function() {
+            console.log('🎵 Audio ready for', audio.id);
+        });
+        
+        // Safari-specific: Prevent interruptions
+        audio.addEventListener('pause', function() {
+            // If audio paused unexpectedly (not by user), try to resume
+            if (audio.id === 'maintenanceAudio' && maintenanceConfig.musicEnabled) {
+                const overlay = document.getElementById('maintenanceOverlay');
+                if (overlay && overlay.style.display === 'flex') {
+                    // Maintenance is active but audio paused - try to resume after short delay
+                    setTimeout(() => {
+                        if (audio.paused && overlay.style.display === 'flex') {
+                            audio.play().catch(err => {
+                                console.log('🎵 Could not resume audio:', err);
+                            });
+                        }
+                    }, 500);
+                }
+            }
+        });
+        
+        // Safari-specific: Handle ended event for loop
+        audio.addEventListener('ended', function() {
+            if (audio.id === 'splashAudio' || (audio.id === 'maintenanceAudio' && maintenanceConfig.musicDuration === 0)) {
+                // Should loop, restart it
+                audio.currentTime = 0;
+                audio.play().catch(err => {
+                    console.log('🎵 Could not loop audio:', err);
+                });
+            }
+        });
+        
+        // Preload audio for faster playback
+        if (audio.readyState < 2) {
+            audio.load();
+        }
+    });
+    
+    console.log('✅ Audio elements initialized with cross-browser compatibility');
+}
 
 </script>
 
@@ -5797,6 +5877,11 @@ function startMaintenanceMusic() {
         return;
     }
     
+    // Safari-specific: Load audio data first
+    if (audio.readyState < 2) {
+        audio.load();
+    }
+    
     // Reset audio to start from beginning
     audio.currentTime = 0;
     audio.volume = maintenanceConfig.musicVolume; // Use configured volume
@@ -5810,77 +5895,120 @@ function startMaintenanceMusic() {
     // Get duration from config (0 means unlimited)
     const duration = maintenanceConfig.musicDuration;
     
-    // Three-tier autoplay strategy for browser compatibility
+    // Enhanced four-tier autoplay strategy for maximum browser compatibility
     
-    // Level 1: Try direct play
-    audio.play().then(() => {
-        console.log(`🎵 Maintenance music started automatically (Level 1: Direct play) - Volume: ${Math.round(maintenanceConfig.musicVolume * 100)}%`);
-        
-        // Set timer to stop after configured duration (if not unlimited)
-        if (duration > 0) {
-            maintenanceMusicTimer = setTimeout(() => {
-                audio.pause();
-                audio.currentTime = 0;
-                console.log(`🎵 Maintenance music stopped after ${duration}ms (${duration/1000} seconds)`);
-            }, duration);
-        } else {
-            console.log('🎵 Music set to play continuously (unlimited duration)');
-        }
-        
-    }).catch(err => {
-        console.log('⚠️ Level 1 failed, trying Level 2: Muted start then unmute');
-        
-        // Level 2: Start muted then unmute after short delay
-        audio.muted = true;
-        audio.play().then(() => {
-            setTimeout(() => {
-                audio.muted = false;
-                audio.volume = maintenanceConfig.musicVolume;
-                console.log(`🎵 Maintenance music started (Level 2: Unmuted after start) - Volume: ${Math.round(maintenanceConfig.musicVolume * 100)}%`);
-                
-                // Set timer to stop after configured duration
-                if (duration > 0) {
-                    maintenanceMusicTimer = setTimeout(() => {
-                        audio.pause();
-                        audio.currentTime = 0;
-                        console.log(`🎵 Maintenance music stopped after ${duration}ms`);
-                    }, duration);
-                }
-                
-            }, 100);
-        }).catch(err2 => {
-            console.log('⚠️ Level 2 failed, waiting for user interaction (Level 3)');
+    // Level 1: Try direct play with Safari optimization
+    const playPromise = audio.play();
+    
+    if (playPromise !== undefined) {
+        playPromise.then(() => {
+            console.log(`🎵 Maintenance music started automatically (Level 1: Direct play) - Volume: ${Math.round(maintenanceConfig.musicVolume * 100)}%`);
             
-            // Level 3: Wait for any user interaction
-            const playOnInteraction = () => {
-                audio.muted = false;
-                audio.volume = maintenanceConfig.musicVolume;
-                audio.currentTime = 0;
-                audio.play().then(() => {
-                    console.log(`🎵 Maintenance music started (Level 3: After user interaction) - Volume: ${Math.round(maintenanceConfig.musicVolume * 100)}%`);
+            // Set timer to stop after configured duration (if not unlimited)
+            if (duration > 0) {
+                maintenanceMusicTimer = setTimeout(() => {
+                    audio.pause();
+                    audio.currentTime = 0;
+                    console.log(`🎵 Maintenance music stopped after ${duration}ms (${duration/1000} seconds)`);
+                }, duration);
+            } else {
+                console.log('🎵 Music set to play continuously (unlimited duration)');
+            }
+            
+        }).catch(err => {
+            console.log('⚠️ Level 1 failed, trying Level 2: Muted start then unmute');
+            
+            // Level 2: Start muted then unmute after short delay
+            audio.muted = true;
+            const mutedPromise = audio.play();
+            
+            if (mutedPromise !== undefined) {
+                mutedPromise.then(() => {
+                    // Wait for audio to actually start playing before unmuting
+                    setTimeout(() => {
+                        audio.muted = false;
+                        audio.volume = maintenanceConfig.musicVolume;
+                        console.log(`🎵 Maintenance music started (Level 2: Unmuted after start) - Volume: ${Math.round(maintenanceConfig.musicVolume * 100)}%`);
+                        
+                        // Set timer to stop after configured duration
+                        if (duration > 0) {
+                            maintenanceMusicTimer = setTimeout(() => {
+                                audio.pause();
+                                audio.currentTime = 0;
+                                console.log(`🎵 Maintenance music stopped after ${duration}ms`);
+                            }, duration);
+                        }
+                        
+                    }, 100);
+                }).catch(err2 => {
+                    console.log('⚠️ Level 2 failed, trying Level 3: Load then play');
                     
-                    // Set timer to stop after configured duration
-                    if (duration > 0) {
-                        maintenanceMusicTimer = setTimeout(() => {
-                            audio.pause();
-                            audio.currentTime = 0;
-                            console.log(`🎵 Maintenance music stopped after ${duration}ms`);
-                        }, duration);
-                    }
-                    
-                }).catch(err3 => {
-                    console.log('❌ Failed to play maintenance music:', err3);
+                    // Level 3: Force load then play (Safari-specific)
+                    audio.load();
+                    audio.addEventListener('canplaythrough', function playWhenReady() {
+                        audio.muted = true;
+                        audio.play().then(() => {
+                            setTimeout(() => {
+                                audio.muted = false;
+                                audio.volume = maintenanceConfig.musicVolume;
+                                console.log(`🎵 Maintenance music started (Level 3: After load) - Volume: ${Math.round(maintenanceConfig.musicVolume * 100)}%`);
+                                
+                                if (duration > 0) {
+                                    maintenanceMusicTimer = setTimeout(() => {
+                                        audio.pause();
+                                        audio.currentTime = 0;
+                                        console.log(`🎵 Maintenance music stopped after ${duration}ms`);
+                                    }, duration);
+                                }
+                            }, 100);
+                        }).catch(err3 => {
+                            console.log('⚠️ Level 3 failed, waiting for user interaction (Level 4)');
+                            setupUserInteractionPlayback(audio, duration);
+                        });
+                        audio.removeEventListener('canplaythrough', playWhenReady);
+                    }, { once: true });
                 });
-                
-                // Remove listeners after first interaction
-                document.removeEventListener('click', playOnInteraction);
-                document.removeEventListener('touchstart', playOnInteraction);
-            };
-            
-            document.addEventListener('click', playOnInteraction);
-            document.addEventListener('touchstart', playOnInteraction);
+            } else {
+                setupUserInteractionPlayback(audio, duration);
+            }
         });
-    });
+    } else {
+        setupUserInteractionPlayback(audio, duration);
+    }
+}
+
+// Helper function to setup user interaction-based playback
+function setupUserInteractionPlayback(audio, duration) {
+    // Level 4: Wait for any user interaction
+    const playOnInteraction = () => {
+        audio.muted = false;
+        audio.volume = maintenanceConfig.musicVolume;
+        audio.currentTime = 0;
+        audio.play().then(() => {
+            console.log(`🎵 Maintenance music started (Level 4: After user interaction) - Volume: ${Math.round(maintenanceConfig.musicVolume * 100)}%`);
+            
+            // Set timer to stop after configured duration
+            if (duration > 0) {
+                maintenanceMusicTimer = setTimeout(() => {
+                    audio.pause();
+                    audio.currentTime = 0;
+                    console.log(`🎵 Maintenance music stopped after ${duration}ms`);
+                }, duration);
+            }
+            
+        }).catch(err4 => {
+            console.log('❌ Failed to play maintenance music after user interaction:', err4);
+        });
+        
+        // Remove listeners after first interaction
+        document.removeEventListener('click', playOnInteraction);
+        document.removeEventListener('touchstart', playOnInteraction);
+        document.removeEventListener('keydown', playOnInteraction);
+    };
+    
+    document.addEventListener('click', playOnInteraction);
+    document.addEventListener('touchstart', playOnInteraction);
+    document.addEventListener('keydown', playOnInteraction);
 }
 
 // Stop maintenance music
@@ -17887,14 +18015,34 @@ if (typeof closeShopsManagementModal === 'undefined') {
         });
     }
     
-    // Toggle play/pause on button click ONLY
+    // Toggle play/pause on button click with enhanced cross-browser support
     if (playBtn && audio) {
         playBtn.addEventListener('click', function(e) {
             e.stopPropagation();
             if (audio.paused) {
-                audio.play().catch(error => {
-                    console.log('Audio playback prevented:', error);
-                });
+                // Safari-specific: Load audio if not ready
+                if (audio.readyState < 2) {
+                    audio.load();
+                }
+                
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        console.log('🎵 Sheikh Zayed audio playing');
+                    }).catch(error => {
+                        console.log('🎵 Audio playback prevented, trying muted start:', error);
+                        // Try muted start for Safari
+                        audio.muted = true;
+                        audio.play().then(() => {
+                            setTimeout(() => {
+                                audio.muted = false;
+                                audio.volume = 1.0;
+                            }, 100);
+                        }).catch(err => {
+                            console.log('🎵 Sheikh Zayed audio playback failed:', err);
+                        });
+                    });
+                }
             } else {
                 audio.pause();
             }

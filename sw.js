@@ -211,7 +211,17 @@ if ('periodicSync' in self.registration) {
     console.log('Service Worker: Periodic sync:', event.tag);
     
     if (event.tag === 'update-data') {
-      event.waitUntil(updateCache(new Request('./plan-data.json')));
+      event.waitUntil(
+        fetch('./plan-data.json', { cache: 'no-cache' })
+          .then(response => {
+            if (response.ok) {
+              return caches.open(RUNTIME_CACHE).then(cache => {
+                return cache.put('./plan-data.json', response);
+              });
+            }
+          })
+          .catch(err => console.log('Periodic sync failed:', err))
+      );
     }
   });
 }

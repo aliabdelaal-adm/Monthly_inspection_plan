@@ -11148,8 +11148,21 @@ function generateInspectorInspectionsTab(inspectorName) {
         
         futureInspections.forEach(item => {
             const shopsCount = item.shops ? item.shops.length : 0;
-            const shopsList = item.shops ? item.shops.sort().join('، ') : 'لا توجد محلات';
             const dayName = getArabicDayName(item.day);
+            
+            let shopsTableRows = '';
+            if (item.shops && item.shops.length > 0) {
+                item.shops.sort().forEach((shop, index) => {
+                    shopsTableRows += `
+                        <tr style="${index % 2 === 0 ? 'background: #f9f9f9;' : 'background: #fff;'}">
+                            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${index + 1}</td>
+                            <td style="padding: 8px; border: 1px solid #ddd;">${shop}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                shopsTableRows = '<tr><td colspan="2" style="padding: 8px; text-align: center; color: #999;">لا توجد محلات</td></tr>';
+            }
             
             html += `
                 <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; border-left: 4px solid #28a745;">
@@ -11160,8 +11173,18 @@ function generateInspectorInspectionsTab(inspectorName) {
                         <div><strong>🏪 عدد المحلات:</strong> ${shopsCount}</div>
                     </div>
                     <div style="background: #fff; padding: 10px; border-radius: 4px; margin-top: 10px;">
-                        <strong>قائمة المحلات:</strong><br>
-                        <span style="color: #666;">${shopsList}</span>
+                        <strong>قائمة المحلات:</strong>
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 8px;">
+                            <thead>
+                                <tr style="background: #234085; color: #fff;">
+                                    <th style="padding: 8px; border: 1px solid #ddd; width: 60px;">الرقم</th>
+                                    <th style="padding: 8px; border: 1px solid #ddd;">اسم المحل</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${shopsTableRows}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             `;
@@ -11182,7 +11205,20 @@ function generateInspectorInspectionsTab(inspectorName) {
         
         todayInspections.forEach(item => {
             const shopsCount = item.shops ? item.shops.length : 0;
-            const shopsList = item.shops ? item.shops.sort().join('، ') : 'لا توجد محلات';
+            
+            let shopsTableRows = '';
+            if (item.shops && item.shops.length > 0) {
+                item.shops.sort().forEach((shop, index) => {
+                    shopsTableRows += `
+                        <tr style="${index % 2 === 0 ? 'background: #f9f9f9;' : 'background: #fff;'}">
+                            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${index + 1}</td>
+                            <td style="padding: 8px; border: 1px solid #ddd;">${shop}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                shopsTableRows = '<tr><td colspan="2" style="padding: 8px; text-align: center; color: #999;">لا توجد محلات</td></tr>';
+            }
             
             html += `
                 <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 4px solid #007bff;">
@@ -11192,8 +11228,18 @@ function generateInspectorInspectionsTab(inspectorName) {
                         <div><strong>🏪 عدد المحلات:</strong> ${shopsCount}</div>
                     </div>
                     <div style="background: #fff; padding: 10px; border-radius: 4px; margin-top: 10px;">
-                        <strong>قائمة المحلات:</strong><br>
-                        <span style="color: #666;">${shopsList}</span>
+                        <strong>قائمة المحلات:</strong>
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 8px;">
+                            <thead>
+                                <tr style="background: #234085; color: #fff;">
+                                    <th style="padding: 8px; border: 1px solid #ddd; width: 60px;">الرقم</th>
+                                    <th style="padding: 8px; border: 1px solid #ddd;">اسم المحل</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${shopsTableRows}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             `;
@@ -11217,8 +11263,21 @@ function generateInspectorInspectionsTab(inspectorName) {
         
         recentPast.forEach(item => {
             const shopsCount = item.shops ? item.shops.length : 0;
-            const shopsList = item.shops ? item.shops.sort().join('، ') : 'لا توجد محلات';
             const dayName = getArabicDayName(item.day);
+            
+            let shopsTableRows = '';
+            if (item.shops && item.shops.length > 0) {
+                item.shops.sort().forEach((shop, index) => {
+                    shopsTableRows += `
+                        <tr style="${index % 2 === 0 ? 'background: #f9f9f9;' : 'background: #fff;'}">
+                            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${index + 1}</td>
+                            <td style="padding: 8px; border: 1px solid #ddd;">${shop}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                shopsTableRows = '<tr><td colspan="2" style="padding: 8px; text-align: center; color: #999;">لا توجد محلات</td></tr>';
+            }
             
             html += `
                 <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #6c757d;">
@@ -11229,8 +11288,18 @@ function generateInspectorInspectionsTab(inspectorName) {
                         <div><strong>🏪 عدد المحلات:</strong> ${shopsCount}</div>
                     </div>
                     <div style="background: #fff; padding: 10px; border-radius: 4px; margin-top: 10px;">
-                        <strong>قائمة المحلات:</strong><br>
-                        <span style="color: #666;">${shopsList}</span>
+                        <strong>قائمة المحلات:</strong>
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 8px;">
+                            <thead>
+                                <tr style="background: #234085; color: #fff;">
+                                    <th style="padding: 8px; border: 1px solid #ddd; width: 60px;">الرقم</th>
+                                    <th style="padding: 8px; border: 1px solid #ddd;">اسم المحل</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${shopsTableRows}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             `;
@@ -11357,7 +11426,34 @@ function generateInspectorReportTab(inspectorName) {
     rows.sort((a, b) => a.day.localeCompare(b.day)).forEach(r => {
         const dayName = getArabicDayName(r.day);
         const shopsCount = r.shops ? r.shops.length : 0;
-        const shopsList = r.shops ? r.shops.sort().join('، ') : 'لا توجد محلات';
+        
+        let shopsTableContent = '';
+        if (r.shops && r.shops.length > 0) {
+            shopsTableContent = `
+                <table style="width: 100%; border-collapse: collapse; margin: 0;">
+                    <thead>
+                        <tr style="background: #f0f0f0;">
+                            <th style="padding: 4px; border: 1px solid #ccc; width: 40px; font-size: 0.85em;">رقم</th>
+                            <th style="padding: 4px; border: 1px solid #ccc; font-size: 0.85em;">المحل</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            r.shops.sort().forEach((shop, index) => {
+                shopsTableContent += `
+                    <tr style="${index % 2 === 0 ? 'background: #fafafa;' : 'background: #fff;'}">
+                        <td style="padding: 4px; border: 1px solid #ccc; text-align: center; font-size: 0.85em;">${index + 1}</td>
+                        <td style="padding: 4px; border: 1px solid #ccc; font-size: 0.85em;">${shop}</td>
+                    </tr>
+                `;
+            });
+            shopsTableContent += `
+                    </tbody>
+                </table>
+            `;
+        } else {
+            shopsTableContent = '<span style="color: #999;">لا توجد محلات</span>';
+        }
         
         html += `
             <tr style="border-bottom: 1px solid #ddd;">
@@ -11370,7 +11466,7 @@ function generateInspectorReportTab(inspectorName) {
                 </td>
                 <td style="padding: 10px; border: 1px solid #ddd;">${getAreaName(r.area)}</td>
                 <td style="padding: 10px; border: 1px solid #ddd; text-align: center; font-weight: bold;">${shopsCount}</td>
-                <td style="padding: 10px; border: 1px solid #ddd; font-size: 0.9em;">${shopsList}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${shopsTableContent}</td>
             </tr>
         `;
     });

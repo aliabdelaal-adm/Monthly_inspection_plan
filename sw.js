@@ -1,8 +1,8 @@
 // Service Worker for Monthly Inspection Plan PWA
-// Version 1.1.0 - Enhanced cache strategy for Safari and Firefox
+// Version 1.2.0 - Network-First strategy for HTML files to show immediate updates
 
-const CACHE_NAME = 'monthly-inspection-v1.1.0';
-const RUNTIME_CACHE = 'runtime-cache-v1.1.0';
+const CACHE_NAME = 'monthly-inspection-v1.2.0';
+const RUNTIME_CACHE = 'runtime-cache-v1.2.0';
 
 // Files to cache immediately on install
 const STATIC_CACHE_URLS = [
@@ -81,12 +81,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Dynamic data files that need Network-First strategy (for Safari/Firefox cache issues)
+  // Dynamic data files and HTML files that need Network-First strategy
+  // This ensures users always see the latest changes from pull requests
   const dynamicFiles = ['plan-data.json', 'shops_details.json', 'files.json', 'maintenance-status.json'];
   const isDynamicFile = dynamicFiles.some(file => url.pathname.includes(file));
+  const isHtmlFile = url.pathname.endsWith('.html') || url.pathname === '/' || url.pathname === './';
 
-  if (isDynamicFile) {
-    // Network-First strategy for dynamic data files
+  if (isDynamicFile || isHtmlFile) {
+    // Network-First strategy for dynamic data files and HTML files
+    // This ensures all recent changes from pull requests appear immediately
     event.respondWith(
       fetch(request, {
         cache: 'no-cache',
@@ -98,7 +101,7 @@ self.addEventListener('fetch', (event) => {
       })
         .then((response) => {
           if (response && response.status === 200) {
-            console.log('Service Worker: Fetched fresh data from network:', request.url);
+            console.log('Service Worker: Fetched fresh content from network:', request.url);
             // Clone and cache the fresh response
             const responseToCache = response.clone();
             caches.open(RUNTIME_CACHE).then((cache) => {
@@ -113,6 +116,7 @@ self.addEventListener('fetch', (event) => {
           // Fallback to cache if network fails
           return caches.match(request).then((cachedResponse) => {
             if (cachedResponse) {
+              console.log('Service Worker: Serving cached content (offline):', request.url);
               return cachedResponse;
             }
             throw error;
@@ -120,16 +124,12 @@ self.addEventListener('fetch', (event) => {
         })
     );
   } else {
-    // Cache-First strategy for static assets (HTML, CSS, JS, images)
+    // Cache-First strategy only for static assets (CSS, JS, images)
     event.respondWith(
       caches.match(request)
         .then((cachedResponse) => {
           if (cachedResponse) {
             console.log('Service Worker: Serving static asset from cache:', request.url);
-            // Update cache in background for HTML files
-            if (request.url.includes('.html')) {
-              event.waitUntil(updateCache(request));
-            }
             return cachedResponse;
           }
 
@@ -162,19 +162,6 @@ self.addEventListener('fetch', (event) => {
     );
   }
 });
-
-// Function to update cache in background
-async function updateCache(request) {
-  try {
-    const cache = await caches.open(RUNTIME_CACHE);
-    const response = await fetch(request);
-    if (response && response.status === 200) {
-      await cache.put(request, response);
-    }
-  } catch (error) {
-    console.log('Service Worker: Background update failed:', error);
-  }
-}
 
 // Handle messages from the main app
 self.addEventListener('message', (event) => {
@@ -224,7 +211,17 @@ if ('periodicSync' in self.registration) {
     console.log('Service Worker: Periodic sync:', event.tag);
     
     if (event.tag === 'update-data') {
-      event.waitUntil(updateCache(new Request('./plan-data.json')));
+      event.waitUntil(
+        fetch('./plan-data.json', { cache: 'no-cache' })
+          .then(response => {
+            if (response.ok) {
+              return caches.open(RUNTIME_CACHE).then(cache => {
+                return cache.put('./plan-data.json', response);
+              });
+            }
+          })
+          .catch(err => console.log('Periodic sync failed:', err))
+      );
     }
   });
 }

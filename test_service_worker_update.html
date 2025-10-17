@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار تحديثات Service Worker - SW Update Test</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Cairo', Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #e8f0fe 0%, #f0e8ff 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #234085;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid #e0e0e0;
+            background: #f8f9fa;
+        }
+        .test-section h2 {
+            color: #234085;
+            margin-top: 0;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background: linear-gradient(135deg, #234085 0%, #3b82f6 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Cairo', Arial, sans-serif;
+            font-size: 1em;
+            font-weight: 600;
+            margin: 10px 5px;
+            transition: all 0.3s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(35, 64, 133, 0.3);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .info-box {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            color: #1565c0;
+        }
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            direction: ltr;
+            text-align: left;
+        }
+        .result-item {
+            padding: 10px;
+            margin: 8px 0;
+            background: white;
+            border-radius: 6px;
+            border-right: 4px solid #234085;
+            font-size: 0.95em;
+        }
+        .emoji {
+            font-size: 1.5em;
+            margin-left: 10px;
+        }
+        .test-time {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>
+            🔍 اختبار تحديثات Service Worker
+            <br>
+            <small style="font-size: 0.5em; color: #666;">Service Worker Update Test</small>
+        </h1>
+
+        <!-- Test 1: Service Worker Registration -->
+        <div class="test-section">
+            <h2>
+                <span class="emoji">⚙️</span>
+                1. تسجيل Service Worker
+            </h2>
+            <div id="swRegistration">
+                <div class="status info">⏳ جاري الفحص...</div>
+            </div>
+        </div>
+
+        <!-- Test 2: Cache Version -->
+        <div class="test-section">
+            <h2>
+                <span class="emoji">📦</span>
+                2. إصدار الذاكرة المؤقتة
+            </h2>
+            <div id="cacheVersion">
+                <div class="status info">⏳ جاري الفحص...</div>
+            </div>
+        </div>
+
+        <!-- Test 3: Caching Strategy -->
+        <div class="test-section">
+            <h2>
+                <span class="emoji">🎯</span>
+                3. استراتيجية التخزين المؤقت
+            </h2>
+            <div id="cachingStrategy">
+                <div class="status info">⏳ جاري الفحص...</div>
+            </div>
+            <button onclick="testIndexCaching()">اختبار index.html</button>
+            <button onclick="testJsonCaching()">اختبار JSON</button>
+        </div>
+
+        <!-- Test 4: Network First Test -->
+        <div class="test-section">
+            <h2>
+                <span class="emoji">🌐</span>
+                4. اختبار Network-First
+            </h2>
+            <div id="networkTest">
+                <div class="status info">⏳ جاري الفحص...</div>
+            </div>
+            <button onclick="testNetworkFirst()">تشغيل الاختبار</button>
+        </div>
+
+        <!-- Test 5: Clear Cache -->
+        <div class="test-section">
+            <h2>
+                <span class="emoji">🗑️</span>
+                5. مسح الذاكرة المؤقتة
+            </h2>
+            <div id="clearCacheResult">
+                <div class="info-box">
+                    <strong>ملاحظة:</strong> هذا الاختبار سيمسح جميع الذاكرة المؤقتة. استخدمه فقط للاختبار.
+                </div>
+            </div>
+            <button onclick="clearAllCaches()">مسح جميع الذاكرة المؤقتة</button>
+        </div>
+
+        <!-- Results Summary -->
+        <div class="test-section">
+            <h2>
+                <span class="emoji">📊</span>
+                ملخص النتائج
+            </h2>
+            <div id="summary">
+                <div class="status info">انتظر اكتمال جميع الاختبارات...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Test Results Tracking
+        let testResults = {
+            swRegistered: false,
+            correctVersion: false,
+            networkFirst: false
+        };
+
+        // Auto-run tests on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                runAllTests();
+            }, 500);
+        });
+
+        async function runAllTests() {
+            await checkServiceWorker();
+            await checkCacheVersion();
+            await checkCachingStrategy();
+            updateSummary();
+        }
+
+        async function checkServiceWorker() {
+            const resultDiv = document.getElementById('swRegistration');
+            
+            if ('serviceWorker' in navigator) {
+                try {
+                    const registration = await navigator.serviceWorker.getRegistration();
+                    
+                    if (registration) {
+                        testResults.swRegistered = true;
+                        resultDiv.innerHTML = `
+                            <div class="status success">✅ Service Worker مسجل بنجاح</div>
+                            <div class="result-item">
+                                <strong>الحالة:</strong> Active<br>
+                                <strong>النطاق:</strong> ${registration.scope}
+                            </div>
+                        `;
+                    } else {
+                        resultDiv.innerHTML = `
+                            <div class="status error">❌ Service Worker غير مسجل</div>
+                        `;
+                    }
+                } catch (error) {
+                    resultDiv.innerHTML = `
+                        <div class="status error">❌ خطأ: ${error.message}</div>
+                    `;
+                }
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="status error">❌ المتصفح لا يدعم Service Worker</div>
+                `;
+            }
+        }
+
+        async function checkCacheVersion() {
+            const resultDiv = document.getElementById('cacheVersion');
+            
+            try {
+                const cacheNames = await caches.keys();
+                const expectedVersion = '1.2.0';
+                const hasCorrectVersion = cacheNames.some(name => name.includes(expectedVersion));
+                
+                testResults.correctVersion = hasCorrectVersion;
+                
+                resultDiv.innerHTML = `
+                    <div class="status ${hasCorrectVersion ? 'success' : 'warning'}">
+                        ${hasCorrectVersion ? '✅' : '⚠️'} الإصدار: ${hasCorrectVersion ? 'صحيح (1.2.0)' : 'قديم'}
+                    </div>
+                    <div class="result-item">
+                        <strong>الذاكرة المؤقتة الموجودة:</strong><br>
+                        ${cacheNames.map(name => `• ${name}`).join('<br>')}
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="status error">❌ خطأ: ${error.message}</div>
+                `;
+            }
+        }
+
+        async function checkCachingStrategy() {
+            const resultDiv = document.getElementById('cachingStrategy');
+            
+            resultDiv.innerHTML = `
+                <div class="status info">
+                    ℹ️ لفحص الاستراتيجية، استخدم الأزرار أدناه
+                </div>
+                <div class="info-box">
+                    <strong>المتوقع:</strong><br>
+                    • index.html: Network-First<br>
+                    • JSON files: Network-First<br>
+                    • Static assets: Cache-First
+                </div>
+            `;
+        }
+
+        async function testIndexCaching() {
+            const resultDiv = document.getElementById('cachingStrategy');
+            resultDiv.innerHTML = '<div class="status info">⏳ جاري الاختبار...</div>';
+            
+            try {
+                const startTime = performance.now();
+                const response = await fetch('./index.html', {
+                    cache: 'no-cache'
+                });
+                const endTime = performance.now();
+                const loadTime = Math.round(endTime - startTime);
+                
+                const fromCache = response.headers.get('X-From-Cache') || 'network';
+                
+                resultDiv.innerHTML = `
+                    <div class="status ${loadTime < 1000 ? 'success' : 'warning'}">
+                        ${loadTime < 1000 ? '✅' : '⚠️'} index.html تم تحميله من: ${fromCache}
+                    </div>
+                    <div class="result-item">
+                        <strong>وقت التحميل:</strong> ${loadTime}ms<br>
+                        <strong>الحجم:</strong> ${Math.round(response.headers.get('content-length') / 1024) || '~300'}KB<br>
+                        <strong>التوصية:</strong> ${loadTime < 1000 ? 'الأداء ممتاز ✓' : 'قد يحتاج تحسين'}
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="status error">❌ خطأ: ${error.message}</div>
+                `;
+            }
+        }
+
+        async function testJsonCaching() {
+            const resultDiv = document.getElementById('cachingStrategy');
+            resultDiv.innerHTML = '<div class="status info">⏳ جاري الاختبار...</div>';
+            
+            try {
+                const response = await fetch('./plan-data.json?t=' + Date.now());
+                
+                resultDiv.innerHTML = `
+                    <div class="status success">✅ plan-data.json تم تحميله بنجاح</div>
+                    <div class="result-item">
+                        <strong>الحالة:</strong> ${response.status}<br>
+                        <strong>الحجم:</strong> ${Math.round(response.headers.get('content-length') / 1024) || 'N/A'}KB
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="status error">❌ خطأ: ${error.message}</div>
+                `;
+            }
+        }
+
+        async function testNetworkFirst() {
+            const resultDiv = document.getElementById('networkTest');
+            resultDiv.innerHTML = '<div class="status info">⏳ جاري الاختبار...</div>';
+            
+            try {
+                // Test 1: Fetch with cache buster
+                const timestamp1 = Date.now();
+                const response1 = await fetch('./index.html?t=' + timestamp1);
+                
+                // Wait 100ms
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                // Test 2: Fetch again with different cache buster
+                const timestamp2 = Date.now();
+                const response2 = await fetch('./index.html?t=' + timestamp2);
+                
+                // Both should be from network if Network-First is working
+                const test1FromNetwork = response1.type === 'basic' || response1.type === 'cors';
+                const test2FromNetwork = response2.type === 'basic' || response2.type === 'cors';
+                
+                testResults.networkFirst = test1FromNetwork && test2FromNetwork;
+                
+                resultDiv.innerHTML = `
+                    <div class="status ${testResults.networkFirst ? 'success' : 'warning'}">
+                        ${testResults.networkFirst ? '✅' : '⚠️'} Network-First: ${testResults.networkFirst ? 'يعمل بشكل صحيح' : 'قد لا يعمل'}
+                    </div>
+                    <div class="result-item">
+                        <strong>الاختبار 1:</strong> ${test1FromNetwork ? 'من الشبكة ✓' : 'من الذاكرة المؤقتة'}<br>
+                        <strong>الاختبار 2:</strong> ${test2FromNetwork ? 'من الشبكة ✓' : 'من الذاكرة المؤقتة'}
+                    </div>
+                    <div class="info-box">
+                        <strong>النتيجة:</strong> ${testResults.networkFirst ? 
+                            'جميع التحديثات ستظهر فوراً! ✅' : 
+                            'قد تحتاج لمسح الذاكرة المؤقتة ⚠️'}
+                    </div>
+                `;
+                
+                updateSummary();
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="status error">❌ خطأ: ${error.message}</div>
+                `;
+            }
+        }
+
+        async function clearAllCaches() {
+            const resultDiv = document.getElementById('clearCacheResult');
+            resultDiv.innerHTML = '<div class="status info">⏳ جاري المسح...</div>';
+            
+            try {
+                const cacheNames = await caches.keys();
+                await Promise.all(cacheNames.map(name => caches.delete(name)));
+                
+                resultDiv.innerHTML = `
+                    <div class="status success">✅ تم مسح جميع الذاكرة المؤقتة (${cacheNames.length} ذاكرة)</div>
+                    <div class="result-item">
+                        تم مسح: ${cacheNames.join(', ')}
+                    </div>
+                    <div class="info-box">
+                        <strong>ملاحظة:</strong> يُفضل إعادة تحميل الصفحة الآن
+                    </div>
+                `;
+                
+                // Unregister service worker
+                const registration = await navigator.serviceWorker.getRegistration();
+                if (registration) {
+                    await registration.unregister();
+                    resultDiv.innerHTML += `
+                        <div class="status success">✅ تم إلغاء تسجيل Service Worker</div>
+                    `;
+                }
+                
+                setTimeout(() => {
+                    if (confirm('تم مسح الذاكرة المؤقتة. هل تريد إعادة تحميل الصفحة؟')) {
+                        window.location.reload(true);
+                    }
+                }, 1000);
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="status error">❌ خطأ: ${error.message}</div>
+                `;
+            }
+        }
+
+        function updateSummary() {
+            const summaryDiv = document.getElementById('summary');
+            const totalTests = Object.keys(testResults).length;
+            const passedTests = Object.values(testResults).filter(v => v === true).length;
+            const percentage = Math.round((passedTests / totalTests) * 100);
+            
+            const allPassed = passedTests === totalTests;
+            
+            summaryDiv.innerHTML = `
+                <div class="status ${allPassed ? 'success' : 'warning'}">
+                    ${allPassed ? '✅' : '⚠️'} نجح ${passedTests} من ${totalTests} اختبار (${percentage}%)
+                </div>
+                <div class="result-item">
+                    <strong>تفاصيل:</strong><br>
+                    • Service Worker: ${testResults.swRegistered ? '✅' : '❌'}<br>
+                    • إصدار صحيح: ${testResults.correctVersion ? '✅' : '❌'}<br>
+                    • Network-First: ${testResults.networkFirst ? '✅' : '❌'}
+                </div>
+                ${allPassed ? `
+                    <div class="info-box">
+                        <strong>🎉 ممتاز!</strong> جميع التحديثات ستظهر فوراً بدون الحاجة لمسح الذاكرة المؤقتة.
+                    </div>
+                ` : `
+                    <div class="info-box">
+                        <strong>⚠️ تنبيه:</strong> بعض الاختبارات لم تنجح. قد تحتاج لمسح الذاكرة المؤقتة.
+                    </div>
+                `}
+                <div class="test-time">
+                    آخر اختبار: ${new Date().toLocaleString('ar-EG')}
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎵 اختبار موسيقى الصيانة - التشغيل المستمر مع Loop</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .test-container {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+        
+        .info {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        
+        .info p {
+            margin: 10px 0;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .success {
+            background: #d4edda;
+            border-left-color: #28a745;
+            color: #155724;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+            color: #856404;
+        }
+        
+        .error {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+            color: #721c24;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn-play {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-pause {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        .btn-stop {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-check {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .status {
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            font-size: 1.1em;
+            text-align: center;
+        }
+        
+        .config-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .config-table th,
+        .config-table td {
+            padding: 12px;
+            text-align: right;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .config-table th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .config-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .check-icon {
+            color: #28a745;
+            font-size: 1.3em;
+        }
+        
+        .cross-icon {
+            color: #dc3545;
+            font-size: 1.3em;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🎵 اختبار موسيقى الصيانة - التشغيل المستمر</h1>
+        
+        <div class="info">
+            <p><strong>الهدف من الاختبار:</strong></p>
+            <p>التحقق من أن الموسيقى:</p>
+            <ul style="margin-right: 20px; margin-top: 10px;">
+                <li>✅ تبدأ التشغيل تلقائياً</li>
+                <li>✅ تستمر في التشغيل بشكل متكرر (loop)</li>
+                <li>✅ لا تتوقف أبداً (duration = 0)</li>
+                <li>✅ تعمل على جميع المتصفحات</li>
+            </ul>
+        </div>
+        
+        <div class="controls">
+            <button class="btn-play" onclick="playMusic()">▶️ تشغيل</button>
+            <button class="btn-pause" onclick="pauseMusic()">⏸️ إيقاف مؤقت</button>
+            <button class="btn-stop" onclick="stopMusic()">⏹️ إيقاف</button>
+            <button class="btn-check" onclick="checkStatus()">🔍 فحص الحالة</button>
+        </div>
+        
+        <div id="status" class="status" style="display: none;"></div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressBar" style="width: 0%;">0%</div>
+        </div>
+        
+        <h2 style="color: #667eea; margin-top: 30px;">📊 إعدادات الصوت الحالية</h2>
+        <table class="config-table">
+            <thead>
+                <tr>
+                    <th>القيمة</th>
+                    <th>الإعداد</th>
+                </tr>
+            </thead>
+            <tbody id="configBody">
+            </tbody>
+        </table>
+        
+        <div class="info warning">
+            <p><strong>⚠️ ملاحظات هامة:</strong></p>
+            <ul style="margin-right: 20px; margin-top: 10px;">
+                <li>إذا لم يبدأ التشغيل تلقائياً، اضغط على زر التشغيل</li>
+                <li>بعض المتصفحات تمنع التشغيل التلقائي حتى يتفاعل المستخدم مع الصفحة</li>
+                <li>الموسيقى يجب أن تعود للبداية تلقائياً عند الانتهاء (loop)</li>
+                <li>شاهد Console للحصول على معلومات تفصيلية</li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Audio Element with Loop -->
+    <audio id="maintenanceAudio" preload="metadata" playsinline webkit-playsinline style="display:none;" loop crossorigin="anonymous">
+        <source src="music.mp3" type="audio/mpeg">
+        <source src="music.mp3" type="audio/mp3">
+        متصفحك لا يدعم تشغيل الملفات الصوتية.
+    </audio>
+    
+    <script>
+        const audio = document.getElementById('maintenanceAudio');
+        const statusDiv = document.getElementById('status');
+        const configBody = document.getElementById('configBody');
+        const progressBar = document.getElementById('progressBar');
+        
+        // Maintenance configuration (same as index.html)
+        let maintenanceConfig = {
+            checkInterval: 10000,
+            musicEnabled: true,
+            musicDuration: 0, // 0 = unlimited
+            musicVolume: 0.15
+        };
+        
+        let maintenanceMusicTimer = null;
+        
+        // Display configuration
+        function displayConfig() {
+            configBody.innerHTML = `
+                <tr>
+                    <td><span class="${audio.loop ? 'check-icon' : 'cross-icon'}">${audio.loop ? '✅ مفعّل' : '❌ معطّل'}</span></td>
+                    <td>التكرار التلقائي (Loop)</td>
+                </tr>
+                <tr>
+                    <td><span class="check-icon">✅ ${Math.round(maintenanceConfig.musicVolume * 100)}%</span></td>
+                    <td>مستوى الصوت</td>
+                </tr>
+                <tr>
+                    <td><span class="check-icon">✅ ${maintenanceConfig.musicDuration === 0 ? 'غير محدود' : maintenanceConfig.musicDuration/1000 + ' ثانية'}</span></td>
+                    <td>مدة التشغيل</td>
+                </tr>
+                <tr>
+                    <td><span class="${maintenanceConfig.musicEnabled ? 'check-icon' : 'cross-icon'}">${maintenanceConfig.musicEnabled ? '✅ مفعّل' : '❌ معطّل'}</span></td>
+                    <td>حالة الموسيقى</td>
+                </tr>
+                <tr>
+                    <td>${audio.readyState >= 2 ? '✅ جاهز' : '⏳ يتم التحميل...'}</td>
+                    <td>حالة التحميل</td>
+                </tr>
+            `;
+        }
+        
+        // Show status message
+        function showStatus(message, type = 'success') {
+            statusDiv.style.display = 'block';
+            statusDiv.className = `status info ${type}`;
+            statusDiv.innerHTML = message;
+        }
+        
+        // Update progress bar
+        function updateProgress() {
+            if (!audio.paused && audio.duration) {
+                const percent = (audio.currentTime / audio.duration) * 100;
+                progressBar.style.width = percent + '%';
+                progressBar.textContent = Math.round(percent) + '%';
+            }
+        }
+        
+        // Play music function (same as index.html)
+        function playMusic() {
+            console.log('🎵 Starting maintenance music...');
+            
+            if (!maintenanceConfig.musicEnabled) {
+                showStatus('⚠️ الموسيقى معطلة في الإعدادات', 'warning');
+                return;
+            }
+            
+            // Safari-specific: Load audio data first
+            if (audio.readyState < 2) {
+                audio.load();
+            }
+            
+            // Enable loop for continuous playback
+            audio.loop = true;
+            
+            // Reset audio to start from beginning
+            audio.currentTime = 0;
+            audio.volume = maintenanceConfig.musicVolume;
+            
+            // Clear any existing timer
+            if (maintenanceMusicTimer) {
+                clearTimeout(maintenanceMusicTimer);
+                maintenanceMusicTimer = null;
+            }
+            
+            const duration = maintenanceConfig.musicDuration;
+            
+            // Level 1: Try direct play
+            const playPromise = audio.play();
+            
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    console.log(`✅ Music started (Level 1: Direct play) - Volume: ${Math.round(maintenanceConfig.musicVolume * 100)}%`);
+                    showStatus(`✅ بدأ تشغيل الموسيقى بنجاح<br>التكرار: ${audio.loop ? 'مفعّل' : 'معطّل'}<br>المدة: ${duration === 0 ? 'غير محدودة' : duration/1000 + ' ثانية'}`, 'success');
+                    
+                    if (duration > 0) {
+                        maintenanceMusicTimer = setTimeout(() => {
+                            audio.pause();
+                            audio.currentTime = 0;
+                            console.log(`🎵 Music stopped after ${duration}ms`);
+                            showStatus('⏹️ توقفت الموسيقى بعد انتهاء المدة المحددة', 'warning');
+                        }, duration);
+                    } else {
+                        console.log('🎵 Music set to play continuously (unlimited duration with loop)');
+                    }
+                    
+                    displayConfig();
+                }).catch(err => {
+                    console.log('⚠️ Level 1 failed, trying Level 2: Muted start');
+                    
+                    // Level 2: Start muted then unmute
+                    audio.muted = true;
+                    const mutedPromise = audio.play();
+                    
+                    if (mutedPromise !== undefined) {
+                        mutedPromise.then(() => {
+                            setTimeout(() => {
+                                audio.muted = false;
+                                audio.volume = maintenanceConfig.musicVolume;
+                                console.log(`✅ Music started (Level 2: Unmuted after start)`);
+                                showStatus('✅ بدأ تشغيل الموسيقى (Level 2: بعد إزالة كتم الصوت)', 'success');
+                                displayConfig();
+                            }, 100);
+                        }).catch(err2 => {
+                            console.log('❌ Level 2 failed:', err2);
+                            showStatus('❌ فشل التشغيل التلقائي. يرجى الضغط على زر التشغيل مرة أخرى بعد التفاعل مع الصفحة', 'error');
+                            setupUserInteractionPlayback();
+                        });
+                    }
+                });
+            }
+        }
+        
+        // Setup user interaction playback
+        function setupUserInteractionPlayback() {
+            const playOnInteraction = () => {
+                audio.loop = true;
+                audio.muted = false;
+                audio.volume = maintenanceConfig.musicVolume;
+                audio.currentTime = 0;
+                audio.play().then(() => {
+                    console.log('✅ Music started after user interaction');
+                    showStatus('✅ بدأ تشغيل الموسيقى بعد التفاعل مع الصفحة', 'success');
+                    displayConfig();
+                }).catch(err => {
+                    console.error('❌ Failed to play:', err);
+                    showStatus('❌ فشل تشغيل الموسيقى: ' + err.message, 'error');
+                });
+                
+                document.removeEventListener('click', playOnInteraction);
+                document.removeEventListener('touchstart', playOnInteraction);
+            };
+            
+            document.addEventListener('click', playOnInteraction);
+            document.addEventListener('touchstart', playOnInteraction);
+        }
+        
+        // Pause music
+        function pauseMusic() {
+            audio.pause();
+            showStatus('⏸️ تم إيقاف الموسيقى مؤقتاً', 'warning');
+            console.log('⏸️ Music paused');
+        }
+        
+        // Stop music
+        function stopMusic() {
+            audio.pause();
+            audio.currentTime = 0;
+            if (maintenanceMusicTimer) {
+                clearTimeout(maintenanceMusicTimer);
+                maintenanceMusicTimer = null;
+            }
+            showStatus('⏹️ تم إيقاف الموسيقى', 'warning');
+            console.log('⏹️ Music stopped');
+        }
+        
+        // Check status
+        function checkStatus() {
+            const isPaused = audio.paused;
+            const currentTime = audio.currentTime.toFixed(2);
+            const duration = audio.duration.toFixed(2);
+            
+            let statusMsg = `
+                <strong>حالة التشغيل:</strong> ${isPaused ? 'متوقف ⏸️' : 'يعمل ▶️'}<br>
+                <strong>الوقت الحالي:</strong> ${currentTime} ثانية<br>
+                <strong>مدة الملف:</strong> ${duration} ثانية<br>
+                <strong>التكرار (Loop):</strong> ${audio.loop ? 'مفعّل ✅' : 'معطّل ❌'}<br>
+                <strong>مستوى الصوت:</strong> ${Math.round(audio.volume * 100)}%
+            `;
+            
+            showStatus(statusMsg, isPaused ? 'warning' : 'success');
+            displayConfig();
+            
+            console.log('🔍 Status check:', {
+                paused: isPaused,
+                currentTime: currentTime,
+                duration: duration,
+                loop: audio.loop,
+                volume: audio.volume
+            });
+        }
+        
+        // Audio event listeners
+        audio.addEventListener('play', () => {
+            console.log('🎵 Audio play event');
+        });
+        
+        audio.addEventListener('pause', () => {
+            console.log('⏸️ Audio pause event');
+        });
+        
+        audio.addEventListener('ended', () => {
+            console.log('🔚 Audio ended event (should not happen with loop!)');
+            if (audio.loop) {
+                console.error('⚠️ Audio ended despite loop being enabled!');
+                showStatus('⚠️ انتهى الملف الصوتي رغم تفعيل التكرار!', 'error');
+            }
+        });
+        
+        audio.addEventListener('error', (e) => {
+            console.error('❌ Audio error:', e);
+            showStatus('❌ خطأ في تحميل الملف الصوتي', 'error');
+        });
+        
+        audio.addEventListener('loadedmetadata', () => {
+            console.log('✅ Audio metadata loaded');
+            displayConfig();
+        });
+        
+        // Update progress bar continuously
+        setInterval(updateProgress, 100);
+        
+        // Initial display
+        displayConfig();
+        
+        // Try to play automatically after a short delay
+        setTimeout(() => {
+            console.log('🎬 Attempting automatic playback...');
+            playMusic();
+        }, 1000);
+    </script>
+</body>
+</html>

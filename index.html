@@ -10646,7 +10646,7 @@ function exportInspectorReportToExcel() {
     // Add daily details
     rows.forEach(r => {
         const shopsCount = r.shops ? r.shops.length : 0;
-        const shopNames = r.shops ? r.shops.join(', ') : '';
+        const shopNames = r.shops ? r.shops.sort().join(', ') : '';
         ws_data.push([r.day, r.area, r.shift, shopsCount, shopNames]);
     });
     
@@ -11020,7 +11020,7 @@ function generateInspectorInspectionsTab(inspectorName) {
         
         futureInspections.forEach(item => {
             const shopsCount = item.shops ? item.shops.length : 0;
-            const shopsList = item.shops ? item.shops.join('، ') : 'لا توجد محلات';
+            const shopsList = item.shops ? item.shops.sort().join('، ') : 'لا توجد محلات';
             const dayName = getArabicDayName(item.day);
             
             html += `
@@ -11054,7 +11054,7 @@ function generateInspectorInspectionsTab(inspectorName) {
         
         todayInspections.forEach(item => {
             const shopsCount = item.shops ? item.shops.length : 0;
-            const shopsList = item.shops ? item.shops.join('، ') : 'لا توجد محلات';
+            const shopsList = item.shops ? item.shops.sort().join('، ') : 'لا توجد محلات';
             
             html += `
                 <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 4px solid #007bff;">
@@ -11089,7 +11089,7 @@ function generateInspectorInspectionsTab(inspectorName) {
         
         recentPast.forEach(item => {
             const shopsCount = item.shops ? item.shops.length : 0;
-            const shopsList = item.shops ? item.shops.join('، ') : 'لا توجد محلات';
+            const shopsList = item.shops ? item.shops.sort().join('، ') : 'لا توجد محلات';
             const dayName = getArabicDayName(item.day);
             
             html += `
@@ -11229,7 +11229,7 @@ function generateInspectorReportTab(inspectorName) {
     rows.sort((a, b) => a.day.localeCompare(b.day)).forEach(r => {
         const dayName = getArabicDayName(r.day);
         const shopsCount = r.shops ? r.shops.length : 0;
-        const shopsList = r.shops ? r.shops.join('، ') : 'لا توجد محلات';
+        const shopsList = r.shops ? r.shops.sort().join('، ') : 'لا توجد محلات';
         
         html += `
             <tr style="border-bottom: 1px solid #ddd;">
@@ -12681,7 +12681,7 @@ function generateInspectorMonthlyReport(data, inspectorName) {
             
             // Format shops as separate lines
             const shopsDisplay = item.shops && item.shops.length > 0 
-                ? item.shops.map(shop => `<div style="padding:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${shop}</div>`).join('') 
+                ? item.shops.sort().map(shop => `<div style="padding:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${shop}</div>`).join('') 
                 : '';
             
             html += `
@@ -13423,7 +13423,7 @@ function displayFullScheduleTable() {
                 </td>
                 <td>
                     <div class="shops-list" style="font-size: 0.85em; max-height: 60px; overflow-y: auto;">
-                        ${item.shops.map(shop => `<span class="shop-tag">${shop}</span>`).join(' ')}
+                        ${item.shops.sort().map(shop => `<span class="shop-tag">${shop}</span>`).join(' ')}
                     </div>
                 </td>
             </tr>
@@ -17540,7 +17540,7 @@ function displayRotationPreview() {
                     <span style="display:inline-block;padding: 3px 8px; border-radius: 12px; font-size: 0.8em; ${item.shift === 'صباحية' ? 'background: #e8f5e8; color: #2e7d32;' : 'background: #fff3e0; color: #f57c00;'}">${item.shift}</span>
                 </td>
                 <td style="border: 1px solid #ddd; padding: 8px; color:${getAreaName(item.area) === 'سوق الميناء' || getAreaName(item.area) === 'سوق التراث' ? '#1976d2' : '#d32f2f'};">${getAreaName(item.area)}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; font-size: 0.85em;">${item.shops.join(', ')}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; font-size: 0.85em;">${item.shops.sort().join(', ')}</td>
             </tr>
         `;
     });

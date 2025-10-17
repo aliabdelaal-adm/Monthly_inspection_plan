@@ -5740,7 +5740,7 @@ function showMaintenanceMode(issues = []) {
     }
     
     const overlay = document.getElementById('maintenanceOverlay');
-    const planTable = document.getElementById('planTableContainer');
+    const mainContainer = document.querySelector('.main-container');
     const detailsDiv = document.getElementById('maintenanceDetails');
     
     if (!overlay) return;
@@ -5763,9 +5763,9 @@ function showMaintenanceMode(issues = []) {
     
     detailsDiv.innerHTML = detailsHTML;
     
-    // Hide plan table and show maintenance overlay in its place
-    if (planTable) {
-        planTable.style.display = 'none';
+    // Hide entire main container and show maintenance overlay to replace it completely
+    if (mainContainer) {
+        mainContainer.style.display = 'none';
     }
     overlay.style.display = 'flex';
     
@@ -5776,21 +5776,21 @@ function showMaintenanceMode(issues = []) {
     startMaintenanceMusic();
     
     // Log for developer
-    console.log('⚠️ Maintenance Mode Activated - Table hidden, maintenance screen shown');
+    console.log('⚠️ Maintenance Mode Activated - Main container hidden, maintenance screen shown');
     console.log('Issues found:', issues);
 }
 
 function hideMaintenanceMode() {
     const overlay = document.getElementById('maintenanceOverlay');
-    const planTable = document.getElementById('planTableContainer');
+    const mainContainer = document.querySelector('.main-container');
     
     if (overlay) {
         overlay.style.display = 'none';
     }
     
-    // Show plan table again
-    if (planTable) {
-        planTable.style.display = 'flex';
+    // Show main container again
+    if (mainContainer) {
+        mainContainer.style.display = 'flex';
     }
     
     // Stop maintenance music
@@ -5799,7 +5799,7 @@ function hideMaintenanceMode() {
     // Clear maintenance mode state
     localStorage.removeItem('systemMaintenanceMode');
     
-    console.log('✅ Maintenance Mode Deactivated - Table restored, maintenance screen hidden');
+    console.log('✅ Maintenance Mode Deactivated - Main container restored, maintenance screen hidden');
 }
 
 // Global variable to store playback timer

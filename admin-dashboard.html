@@ -1210,6 +1210,101 @@
             تحديث الرسائل
           </button>
         </div>
+
+        <!-- Advanced Maintenance Configuration -->
+        <div class="content-card" style="margin-top: 20px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+          <h4 style="margin-bottom: 20px; color: #2d3561;"><i class="fas fa-cog"></i> إعدادات متقدمة للصيانة والموسيقى</h4>
+          
+          <!-- Current Status Display -->
+          <div style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 5px solid #667eea;">
+            <h5 style="margin-bottom: 10px; color: #2d3561;">الحالة الحالية</h5>
+            <div id="configCurrentStatus" style="color: #666;">
+              <p><strong>فترة الفحص:</strong> <span id="currentCheckInterval">جاري التحميل...</span></p>
+              <p><strong>تشغيل الموسيقى تلقائياً:</strong> <span id="currentMusicEnabled">جاري التحميل...</span></p>
+              <p><strong>مدة تشغيل الموسيقى:</strong> <span id="currentMusicDuration">جاري التحميل...</span></p>
+              <p><strong>مستوى الصوت:</strong> <span id="currentMusicVolume">جاري التحميل...</span></p>
+            </div>
+          </div>
+
+          <!-- Check Interval Control -->
+          <div class="form-group">
+            <label class="form-label"><i class="fas fa-clock"></i> فترة فحص وضع الصيانة</label>
+            <select id="checkIntervalSelect" class="form-control">
+              <option value="0">إيقاف الفحص التلقائي</option>
+              <option value="5000">5 ثوانٍ (سريع جداً)</option>
+              <option value="10000" selected>10 ثوانٍ (افتراضي)</option>
+              <option value="30000">30 ثانية (متوسط)</option>
+              <option value="60000">60 ثانية (بطيء)</option>
+              <option value="300000">5 دقائق (بطيء جداً)</option>
+            </select>
+            <small style="color: #666; display: block; margin-top: 5px;">
+              تحديد عدد الثواني بين كل فحص لحالة الصيانة. اختر "إيقاف" لمنع الفحص التلقائي تماماً.
+            </small>
+          </div>
+
+          <!-- Music Autoplay Control -->
+          <div class="form-group">
+            <label class="form-label"><i class="fas fa-music"></i> تشغيل الموسيقى تلقائياً عند وضع الصيانة</label>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <label style="display: flex; align-items: center; cursor: pointer;">
+                <input type="radio" name="musicEnabled" value="true" style="margin-left: 5px;">
+                <span>تفعيل</span>
+              </label>
+              <label style="display: flex; align-items: center; cursor: pointer;">
+                <input type="radio" name="musicEnabled" value="false" checked style="margin-left: 5px;">
+                <span>إيقاف</span>
+              </label>
+            </div>
+            <small style="color: #666; display: block; margin-top: 5px;">
+              عند التفعيل، سيتم تشغيل الموسيقى تلقائياً عند ظهور شاشة الصيانة.
+            </small>
+          </div>
+
+          <!-- Music Duration Control -->
+          <div class="form-group">
+            <label class="form-label"><i class="fas fa-hourglass-half"></i> مدة تشغيل الموسيقى</label>
+            <select id="musicDurationSelect" class="form-control">
+              <option value="30000">30 ثانية</option>
+              <option value="60000">دقيقة واحدة</option>
+              <option value="300000">5 دقائق</option>
+              <option value="600000" selected>10 دقائق (افتراضي)</option>
+              <option value="1800000">30 دقيقة</option>
+              <option value="0">تشغيل مستمر (بدون إيقاف)</option>
+            </select>
+            <small style="color: #666; display: block; margin-top: 5px;">
+              تحديد مدة تشغيل الموسيقى قبل إيقافها تلقائياً.
+            </small>
+          </div>
+
+          <!-- Music Volume Control -->
+          <div class="form-group">
+            <label class="form-label"><i class="fas fa-volume-up"></i> مستوى الصوت: <span id="volumeValue">15%</span></label>
+            <input type="range" id="musicVolumeSlider" class="form-control" min="0" max="100" value="15" step="5" 
+                   style="height: 40px; cursor: pointer;"
+                   oninput="document.getElementById('volumeValue').textContent = this.value + '%'">
+            <small style="color: #666; display: block; margin-top: 5px;">
+              تحديد مستوى صوت الموسيقى (0% = كتم الصوت، 100% = أعلى صوت).
+            </small>
+          </div>
+
+          <!-- Action Buttons -->
+          <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+            <button class="btn btn-primary" onclick="saveMaintenanceConfig()">
+              <i class="fas fa-save"></i>
+              حفظ الإعدادات
+            </button>
+            <button class="btn btn-info" onclick="loadMaintenanceConfig()">
+              <i class="fas fa-sync"></i>
+              تحديث الحالة
+            </button>
+            <button class="btn btn-danger" onclick="emergencyStopAll()">
+              <i class="fas fa-stop-circle"></i>
+              إيقاف طارئ (كل شيء)
+            </button>
+          </div>
+          
+          <div class="status-message" id="configStatus" style="margin-top: 15px;"></div>
+        </div>
       </div>
     </section>
     
@@ -4626,6 +4721,278 @@ ${Object.entries(stats.months).sort().map(([month, count]) =>
     }
     
     // ========================
+    // Maintenance Configuration Functions
+    // ========================
+    const configPath = "maintenance-config.json";
+    
+    // Load current maintenance configuration
+    async function loadMaintenanceConfig() {
+      const token = getToken();
+      if (!token) {
+        showMessage("configStatus", "error", "❌ يجب تسجيل الدخول أولاً");
+        return;
+      }
+      
+      try {
+        showMessage("configStatus", "info", "جاري تحميل الإعدادات...");
+        
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/${configPath}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+        
+        if (res.ok) {
+          const file = await res.json();
+          const config = JSON.parse(decodeURIComponent(escape(atob(file.content))));
+          
+          // Update UI with current config
+          document.getElementById('checkIntervalSelect').value = config.checkInterval || 10000;
+          
+          const musicEnabledRadios = document.querySelectorAll('input[name="musicEnabled"]');
+          musicEnabledRadios.forEach(radio => {
+            radio.checked = radio.value === String(config.musicEnabled);
+          });
+          
+          document.getElementById('musicDurationSelect').value = config.musicDuration || 600000;
+          
+          const volumePercent = Math.round((config.musicVolume || 0.15) * 100);
+          document.getElementById('musicVolumeSlider').value = volumePercent;
+          document.getElementById('volumeValue').textContent = volumePercent + '%';
+          
+          // Update status display
+          updateConfigStatusDisplay(config);
+          
+          showMessage("configStatus", "success", "✅ تم تحميل الإعدادات بنجاح!");
+        } else {
+          showMessage("configStatus", "warning", "⚠️ لم يتم العثور على ملف الإعدادات - سيتم استخدام القيم الافتراضية");
+        }
+      } catch (error) {
+        showMessage("configStatus", "error", "❌ خطأ في تحميل الإعدادات: " + error.message);
+      }
+    }
+    
+    // Update status display
+    function updateConfigStatusDisplay(config) {
+      const intervalLabels = {
+        0: "إيقاف الفحص التلقائي",
+        5000: "5 ثوانٍ (سريع جداً)",
+        10000: "10 ثوانٍ (افتراضي)",
+        30000: "30 ثانية (متوسط)",
+        60000: "60 ثانية (بطيء)",
+        300000: "5 دقائق (بطيء جداً)"
+      };
+      
+      const durationLabels = {
+        0: "تشغيل مستمر (بدون إيقاف)",
+        30000: "30 ثانية",
+        60000: "دقيقة واحدة",
+        300000: "5 دقائق",
+        600000: "10 دقائق (افتراضي)",
+        1800000: "30 دقيقة"
+      };
+      
+      document.getElementById('currentCheckInterval').textContent = intervalLabels[config.checkInterval] || config.checkIntervalLabel || "غير معروف";
+      document.getElementById('currentMusicEnabled').textContent = config.musicEnabled ? "✅ مفعّل" : "❌ معطّل";
+      document.getElementById('currentMusicDuration').textContent = durationLabels[config.musicDuration] || config.musicDurationLabel || "غير معروف";
+      document.getElementById('currentMusicVolume').textContent = Math.round((config.musicVolume || 0.15) * 100) + '%';
+    }
+    
+    // Save maintenance configuration
+    async function saveMaintenanceConfig() {
+      const token = getToken();
+      if (!token) {
+        showTokenModal();
+        return;
+      }
+      
+      if (!confirm("هل أنت متأكد من حفظ هذه الإعدادات؟\n\nستؤثر التغييرات على جميع الأجهزة فوراً.")) {
+        return;
+      }
+      
+      try {
+        showMessage("configStatus", "info", "جاري حفظ الإعدادات...");
+        
+        const checkInterval = parseInt(document.getElementById('checkIntervalSelect').value);
+        const musicEnabled = document.querySelector('input[name="musicEnabled"]:checked').value === 'true';
+        const musicDuration = parseInt(document.getElementById('musicDurationSelect').value);
+        const musicVolume = parseInt(document.getElementById('musicVolumeSlider').value) / 100;
+        
+        const intervalLabels = {
+          0: "إيقاف",
+          5000: "5 ثوانٍ",
+          10000: "10 ثوانٍ",
+          30000: "30 ثانية",
+          60000: "60 ثانية",
+          300000: "5 دقائق"
+        };
+        
+        const durationLabels = {
+          0: "مستمر",
+          30000: "30 ثانية",
+          60000: "دقيقة واحدة",
+          300000: "5 دقائق",
+          600000: "10 دقائق",
+          1800000: "30 دقيقة"
+        };
+        
+        const config = {
+          checkInterval: checkInterval,
+          checkIntervalLabel: intervalLabels[checkInterval] || checkInterval + " مللي ثانية",
+          musicEnabled: musicEnabled,
+          musicDuration: musicDuration,
+          musicDurationLabel: durationLabels[musicDuration] || musicDuration + " مللي ثانية",
+          musicVolume: musicVolume,
+          lastUpdated: new Date().toISOString(),
+          updatedBy: "المطور"
+        };
+        
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(config, null, 2))));
+        
+        // Get current file SHA
+        const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/${configPath}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+        
+        let sha = "";
+        if (getRes.ok) {
+          const file = await getRes.json();
+          sha = file.sha;
+        }
+        
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/${configPath}`, {
+          method: "PUT",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: "تحديث إعدادات الصيانة والموسيقى",
+            content: content,
+            sha: sha
+          })
+        });
+        
+        if (res.status === 200 || res.status === 201) {
+          updateConfigStatusDisplay(config);
+          showMessage("configStatus", "success", "✅ تم حفظ الإعدادات بنجاح!\n\n📱 سيتم تطبيق التغييرات على جميع الأجهزة خلال ثوانٍ.");
+          logActivity("تحديث إعدادات الصيانة", `فحص: ${config.checkIntervalLabel}، موسيقى: ${musicEnabled ? 'مفعّلة' : 'معطّلة'}`);
+        } else {
+          showMessage("configStatus", "error", "❌ حدث خطأ في حفظ الإعدادات");
+        }
+      } catch (error) {
+        showMessage("configStatus", "error", "❌ خطأ: " + error.message);
+      }
+    }
+    
+    // Emergency stop all maintenance features
+    async function emergencyStopAll() {
+      if (!confirm("⚠️ تحذير: إيقاف طارئ لكل شيء!\n\nسيتم:\n• إيقاف وضع الصيانة فوراً\n• إيقاف تشغيل الموسيقى\n• إيقاف الفحص التلقائي\n\nهل أنت متأكد؟")) {
+        return;
+      }
+      
+      const token = getToken();
+      if (!token) {
+        showTokenModal();
+        return;
+      }
+      
+      try {
+        showMessage("configStatus", "info", "🚨 جاري تنفيذ الإيقاف الطارئ...");
+        
+        // 1. Disable maintenance mode
+        const maintenanceData = {
+          enabled: false,
+          messages: {},
+          disabledAt: new Date().toISOString(),
+          disabledBy: "المطور (إيقاف طارئ)"
+        };
+        
+        let content = btoa(unescape(encodeURIComponent(JSON.stringify(maintenanceData, null, 2))));
+        
+        let getRes = await fetch(`https://api.github.com/repos/${repo}/contents/${maintenancePath}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+        
+        let sha = "";
+        if (getRes.ok) {
+          const file = await getRes.json();
+          sha = file.sha;
+        }
+        
+        await fetch(`https://api.github.com/repos/${repo}/contents/${maintenancePath}`, {
+          method: "PUT",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: "إيقاف طارئ - إلغاء وضع الصيانة",
+            content: content,
+            sha: sha
+          })
+        });
+        
+        // 2. Update config to disable music and slow down checks
+        const config = {
+          checkInterval: 60000,
+          checkIntervalLabel: "60 ثانية",
+          musicEnabled: false,
+          musicDuration: 0,
+          musicDurationLabel: "معطّل",
+          musicVolume: 0,
+          lastUpdated: new Date().toISOString(),
+          updatedBy: "المطور (إيقاف طارئ)"
+        };
+        
+        content = btoa(unescape(encodeURIComponent(JSON.stringify(config, null, 2))));
+        
+        getRes = await fetch(`https://api.github.com/repos/${repo}/contents/${configPath}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+        
+        sha = "";
+        if (getRes.ok) {
+          const file = await getRes.json();
+          sha = file.sha;
+        }
+        
+        await fetch(`https://api.github.com/repos/${repo}/contents/${configPath}`, {
+          method: "PUT",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: "إيقاف طارئ - تعطيل الموسيقى والفحص السريع",
+            content: content,
+            sha: sha
+          })
+        });
+        
+        // Update UI
+        await loadMaintenanceConfig();
+        
+        showMessage("configStatus", "success", "✅ تم تنفيذ الإيقاف الطارئ بنجاح!\n\n✓ وضع الصيانة: معطّل\n✓ الموسيقى: معطّلة\n✓ الفحص: مرة كل دقيقة");
+        showMessage("maintenanceStatus", "success", "✅ تم إلغاء وضع الصيانة (إيقاف طارئ)");
+        
+        logActivity("إيقاف طارئ", "تم إيقاف جميع ميزات الصيانة والموسيقى فوراً");
+      } catch (error) {
+        showMessage("configStatus", "error", "❌ خطأ في الإيقاف الطارئ: " + error.message);
+      }
+    }
+    
+    // ========================
     // Initialization
     // ========================
     async function initDashboard() {
@@ -4643,6 +5010,9 @@ ${Object.entries(stats.months).sort().map(([month, count]) =>
       
       // Initialize activity log
       refreshActivityLog();
+      
+      // Load maintenance configuration
+      await loadMaintenanceConfig();
       
       // Log dashboard access
       logActivity("الوصول للوحة التحكم", "تم الدخول إلى لوحة التحكم المتقدمة");

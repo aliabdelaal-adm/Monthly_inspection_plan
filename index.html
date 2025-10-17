@@ -3170,7 +3170,7 @@
 </audio>
 
 <!-- Hidden Audio Element for Maintenance Mode -->
-<audio id="maintenanceAudio" preload="metadata" playsinline webkit-playsinline style="display:none;" crossorigin="anonymous">
+<audio id="maintenanceAudio" preload="metadata" playsinline webkit-playsinline style="display:none;" loop crossorigin="anonymous">
     <source src="music.mp3" type="audio/mpeg">
     <source src="music.mp3" type="audio/mp3">
     متصفحك لا يدعم تشغيل الملفات الصوتية.
@@ -5808,8 +5808,8 @@ let maintenanceMusicTimer = null;
 // Global variable to store maintenance configuration
 let maintenanceConfig = {
     checkInterval: 10000,
-    musicEnabled: false,
-    musicDuration: 600000,
+    musicEnabled: true,
+    musicDuration: 0,
     musicVolume: 0.15
 };
 
@@ -5895,6 +5895,9 @@ function startMaintenanceMusic() {
         audio.load();
     }
     
+    // Enable loop for continuous playback
+    audio.loop = true;
+    
     // Reset audio to start from beginning
     audio.currentTime = 0;
     audio.volume = maintenanceConfig.musicVolume; // Use configured volume
@@ -5918,6 +5921,7 @@ function startMaintenanceMusic() {
             console.log(`🎵 Maintenance music started automatically (Level 1: Direct play) - Volume: ${Math.round(maintenanceConfig.musicVolume * 100)}%`);
             
             // Set timer to stop after configured duration (if not unlimited)
+            // When duration is 0, music will loop indefinitely
             if (duration > 0) {
                 maintenanceMusicTimer = setTimeout(() => {
                     audio.pause();
@@ -5925,7 +5929,7 @@ function startMaintenanceMusic() {
                     console.log(`🎵 Maintenance music stopped after ${duration}ms (${duration/1000} seconds)`);
                 }, duration);
             } else {
-                console.log('🎵 Music set to play continuously (unlimited duration)');
+                console.log('🎵 Music set to play continuously (unlimited duration with loop)');
             }
             
         }).catch(err => {
@@ -5951,7 +5955,7 @@ function startMaintenanceMusic() {
                                 console.log(`🎵 Maintenance music stopped after ${duration}ms`);
                             }, duration);
                         } else {
-                            console.log('🎵 Music set to play continuously (unlimited duration)');
+                            console.log('🎵 Music set to play continuously (unlimited duration with loop)');
                         }
                         
                     }, 100);
@@ -5975,7 +5979,7 @@ function startMaintenanceMusic() {
                                         console.log(`🎵 Maintenance music stopped after ${duration}ms`);
                                     }, duration);
                                 } else {
-                                    console.log('🎵 Music set to play continuously (unlimited duration)');
+                                    console.log('🎵 Music set to play continuously (unlimited duration with loop)');
                                 }
                             }, 100);
                         }).catch(err3 => {
@@ -5998,6 +6002,7 @@ function startMaintenanceMusic() {
 function setupUserInteractionPlayback(audio, duration) {
     // Level 4: Wait for any user interaction
     const playOnInteraction = () => {
+        audio.loop = true; // Enable loop for continuous playback
         audio.muted = false;
         audio.volume = maintenanceConfig.musicVolume;
         audio.currentTime = 0;
@@ -6012,7 +6017,7 @@ function setupUserInteractionPlayback(audio, duration) {
                     console.log(`🎵 Maintenance music stopped after ${duration}ms`);
                 }, duration);
             } else {
-                console.log('🎵 Music set to play continuously (unlimited duration)');
+                console.log('🎵 Music set to play continuously (unlimited duration with loop)');
             }
             
         }).catch(err4 => {

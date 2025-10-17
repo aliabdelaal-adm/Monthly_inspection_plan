@@ -3265,6 +3265,9 @@
         <select id="inspectorSelect">
             <option value="">-- اختر المفتش --</option>
         </select>
+        <button id="viewInspectorDetailsBtn" onclick="viewSelectedInspectorDetails()" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;margin-right:10px;font-size:0.9em;display:none;" title="عرض جميع تفاصيل وتقارير المفتش">
+            👤 تفاصيل المفتش
+        </button>
         <button id="searchToggleBtn" style="background:#234085;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;margin-right:10px;font-size:0.9em;" title="البحث">
             🔍 البحث
         </button>
@@ -3983,6 +3986,52 @@
     <div class="footer">
         تم التطوير بواسطة &copy; المطور د. علي عبدالعال
     </div>
+</div>
+
+<!-- Inspector Details Modal - مودال تفاصيل المفتش الشامل -->
+<div id="inspectorDetailsModal" class="modal-overlay" style="display:none;">
+  <div class="modal-content" style="max-width: 1400px; max-height: 90vh; overflow-y: auto;">
+    <button class="close-btn" onclick="closeInspectorDetailsModal()">×</button>
+    <div class="stats-title" id="inspectorDetailsTitle" style="text-align: center; margin-bottom: 20px; color: #234085; font-size: 1.8em;">
+      👤 معلومات المفتش الشاملة
+    </div>
+    
+    <!-- Quick Stats Overview -->
+    <div id="inspectorQuickStats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
+      <!-- Stats will be populated dynamically -->
+    </div>
+    
+    <!-- Tab Navigation -->
+    <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; border-bottom: 2px solid #e0e6f0; padding-bottom: 10px;">
+      <button class="inspector-tab-btn active" onclick="showInspectorTab('inspections')" data-tab="inspections" style="background: #234085; color: #fff; border: none; padding: 10px 20px; border-radius: 6px 6px 0 0; cursor: pointer; font-weight: 600; transition: all 0.3s;">
+        📋 التفتيشات السابقة والقادمة
+      </button>
+      <button class="inspector-tab-btn" onclick="showInspectorTab('report')" data-tab="report" style="background: #e0e6f0; color: #234085; border: none; padding: 10px 20px; border-radius: 6px 6px 0 0; cursor: pointer; font-weight: 600; transition: all 0.3s;">
+        👤 تقرير المفتش
+      </button>
+      <button class="inspector-tab-btn" onclick="showInspectorTab('statistics')" data-tab="statistics" style="background: #e0e6f0; color: #234085; border: none; padding: 10px 20px; border-radius: 6px 6px 0 0; cursor: pointer; font-weight: 600; transition: all 0.3s;">
+        🎯 الإحصائيات الذكية
+      </button>
+      <button class="inspector-tab-btn" onclick="showInspectorTab('analytics')" data-tab="analytics" style="background: #e0e6f0; color: #234085; border: none; padding: 10px 20px; border-radius: 6px 6px 0 0; cursor: pointer; font-weight: 600; transition: all 0.3s;">
+        📊 التحليلات المتقدمة
+      </button>
+    </div>
+    
+    <!-- Tab Content -->
+    <div id="inspectorTabContent" style="min-height: 300px;">
+      <!-- Content will be populated dynamically -->
+    </div>
+    
+    <!-- Export Actions -->
+    <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; text-align: center;">
+      <button onclick="exportInspectorDetailsToPDF()" style="background: #dc3545; color: #fff; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; margin: 5px; font-weight: 600;">
+        📄 تصدير كل المعلومات إلى PDF
+      </button>
+      <button onclick="exportInspectorDetailsToExcel()" style="background: #28a745; color: #fff; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; margin: 5px; font-weight: 600;">
+        📊 تصدير كل المعلومات إلى Excel
+      </button>
+    </div>
+  </div>
 </div>
 
 <!-- Bell Notes Modal -->
@@ -8425,7 +8474,24 @@ document.getElementById('inspectorSelect').addEventListener('change', function()
     selectedInspector = this.value;
     renderPlanTable();
     document.getElementById('inspectorReportDiv').style.display = "none";
+    
+    // Show/hide inspector details button based on selection
+    const detailsBtn = document.getElementById('viewInspectorDetailsBtn');
+    if (selectedInspector && selectedInspector !== '') {
+        detailsBtn.style.display = 'inline-block';
+    } else {
+        detailsBtn.style.display = 'none';
+    }
 });
+
+function viewSelectedInspectorDetails() {
+    const inspectorName = selectedInspector;
+    if (!inspectorName || inspectorName === '') {
+        alert('يرجى اختيار مفتش أولاً');
+        return;
+    }
+    showInspectorDetailsModal(inspectorName);
+}
 
 document.getElementById("addEditForm").addEventListener("submit", function(e){
     e.preventDefault();
@@ -8692,7 +8758,11 @@ function renderPlanTable() {
         
         html += `
             <tr style="border-bottom:1px solid #e0e6f0;">
-                <td style="padding:12px 8px;color:#234085;background:#f8faff;">${row.inspector}</td>
+                <td style="padding:12px 8px;color:#234085;background:#f8faff;">
+                    <span class="inspector-name-link" onclick="showInspectorDetailsModal('${row.inspector}')" style="cursor:pointer;text-decoration:underline;color:#234085;font-weight:600;" title="انقر لعرض جميع تفاصيل وتقارير ${row.inspector}">
+                        ${row.inspector}
+                    </span>
+                </td>
                 <td style="padding:12px 8px;text-align:center;font-family:monospace;background:#fff;">
                     <div style="line-height:1.4;">
                         <div>${row.day}</div>
@@ -10777,6 +10847,697 @@ function showMonthlyReport() {
 function closeMonthlyReportModal() {
     document.getElementById('monthlyReportModal').style.display = 'none';
 }
+
+// ============================================================================
+// Inspector Details Modal Functions - وظائف مودال تفاصيل المفتش الشامل
+// ============================================================================
+
+let currentInspectorDetails = {
+    name: '',
+    currentTab: 'inspections'
+};
+
+function showInspectorDetailsModal(inspectorName) {
+    if (!inspectorName) {
+        alert("لم يتم تحديد مفتش");
+        return;
+    }
+    
+    currentInspectorDetails.name = inspectorName;
+    currentInspectorDetails.currentTab = 'inspections';
+    
+    // Update modal title
+    document.getElementById('inspectorDetailsTitle').textContent = `👤 معلومات المفتش الشاملة: ${inspectorName}`;
+    
+    // Generate quick stats
+    generateInspectorQuickStats(inspectorName);
+    
+    // Show inspections tab by default
+    showInspectorTab('inspections');
+    
+    // Display modal
+    document.getElementById('inspectorDetailsModal').style.display = 'flex';
+}
+
+function closeInspectorDetailsModal() {
+    document.getElementById('inspectorDetailsModal').style.display = 'none';
+    currentInspectorDetails = { name: '', currentTab: 'inspections' };
+}
+
+function generateInspectorQuickStats(inspectorName) {
+    const inspectorData = inspectionData.filter(item => item.inspector === inspectorName);
+    
+    if (inspectorData.length === 0) {
+        document.getElementById('inspectorQuickStats').innerHTML = '<p style="text-align:center;color:#666;">لا توجد بيانات لهذا المفتش</p>';
+        return;
+    }
+    
+    // Calculate stats
+    const today = new Date().toLocaleDateString('en-CA');
+    const pastInspections = inspectorData.filter(item => item.day < today);
+    const todayInspections = inspectorData.filter(item => item.day === today);
+    const futureInspections = inspectorData.filter(item => item.day > today);
+    
+    let totalShops = 0;
+    let uniqueShops = new Set();
+    let uniqueAreas = new Set();
+    
+    inspectorData.forEach(item => {
+        if (item.shops) {
+            totalShops += item.shops.length;
+            item.shops.forEach(shop => uniqueShops.add(shop));
+        }
+        uniqueAreas.add(item.area);
+    });
+    
+    const html = `
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; text-align: center; color: #fff; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+            <h3 style="margin: 0 0 10px 0; font-size: 1.5em;">📊 إجمالي التفتيشات</h3>
+            <div style="font-size: 2.5em; font-weight: bold;">${inspectorData.length}</div>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 10px; text-align: center; color: #fff; box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);">
+            <h3 style="margin: 0 0 10px 0; font-size: 1.2em;">✅ تفتيشات سابقة</h3>
+            <div style="font-size: 2em; font-weight: bold;">${pastInspections.length}</div>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 20px; border-radius: 10px; text-align: center; color: #fff; box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);">
+            <h3 style="margin: 0 0 10px 0; font-size: 1.2em;">📅 تفتيشات اليوم</h3>
+            <div style="font-size: 2em; font-weight: bold;">${todayInspections.length}</div>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); padding: 20px; border-radius: 10px; text-align: center; color: #fff; box-shadow: 0 4px 15px rgba(67, 233, 123, 0.3);">
+            <h3 style="margin: 0 0 10px 0; font-size: 1.2em;">🔜 تفتيشات قادمة</h3>
+            <div style="font-size: 2em; font-weight: bold;">${futureInspections.length}</div>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); padding: 20px; border-radius: 10px; text-align: center; color: #fff; box-shadow: 0 4px 15px rgba(250, 112, 154, 0.3);">
+            <h3 style="margin: 0 0 10px 0; font-size: 1.2em;">🏪 إجمالي المحلات</h3>
+            <div style="font-size: 2em; font-weight: bold;">${totalShops}</div>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); padding: 20px; border-radius: 10px; text-align: center; color: #fff; box-shadow: 0 4px 15px rgba(48, 207, 208, 0.3);">
+            <h3 style="margin: 0 0 10px 0; font-size: 1.2em;">🏪 محلات مختلفة</h3>
+            <div style="font-size: 2em; font-weight: bold;">${uniqueShops.size}</div>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); padding: 20px; border-radius: 10px; text-align: center; color: #234085; box-shadow: 0 4px 15px rgba(168, 237, 234, 0.3);">
+            <h3 style="margin: 0 0 10px 0; font-size: 1.2em;">📍 مناطق مغطاة</h3>
+            <div style="font-size: 2em; font-weight: bold;">${uniqueAreas.size}</div>
+        </div>
+    `;
+    
+    document.getElementById('inspectorQuickStats').innerHTML = html;
+}
+
+function showInspectorTab(tabName) {
+    currentInspectorDetails.currentTab = tabName;
+    const inspectorName = currentInspectorDetails.name;
+    
+    // Update tab button styles
+    const buttons = document.querySelectorAll('.inspector-tab-btn');
+    buttons.forEach(btn => {
+        if (btn.getAttribute('data-tab') === tabName) {
+            btn.style.background = '#234085';
+            btn.style.color = '#fff';
+            btn.classList.add('active');
+        } else {
+            btn.style.background = '#e0e6f0';
+            btn.style.color = '#234085';
+            btn.classList.remove('active');
+        }
+    });
+    
+    // Generate content based on tab
+    let content = '';
+    
+    switch(tabName) {
+        case 'inspections':
+            content = generateInspectorInspectionsTab(inspectorName);
+            break;
+        case 'report':
+            content = generateInspectorReportTab(inspectorName);
+            break;
+        case 'statistics':
+            content = generateInspectorStatisticsTab(inspectorName);
+            break;
+        case 'analytics':
+            content = generateInspectorAnalyticsTab(inspectorName);
+            break;
+    }
+    
+    document.getElementById('inspectorTabContent').innerHTML = content;
+}
+
+function generateInspectorInspectionsTab(inspectorName) {
+    const inspectorData = inspectionData.filter(item => item.inspector === inspectorName);
+    
+    if (inspectorData.length === 0) {
+        return '<p style="text-align:center;color:#666;padding:30px;">لا توجد تفتيشات لهذا المفتش</p>';
+    }
+    
+    // Sort by date
+    const sortedData = inspectorData.sort((a, b) => a.day.localeCompare(b.day));
+    
+    const today = new Date().toLocaleDateString('en-CA');
+    const pastInspections = sortedData.filter(item => item.day < today);
+    const todayInspections = sortedData.filter(item => item.day === today);
+    const futureInspections = sortedData.filter(item => item.day > today);
+    
+    let html = '<div style="padding: 10px;">';
+    
+    // Future Inspections
+    if (futureInspections.length > 0) {
+        html += `
+            <div style="margin-bottom: 30px;">
+                <h3 style="color: #28a745; border-bottom: 3px solid #28a745; padding-bottom: 10px; margin-bottom: 15px;">
+                    🔜 التفتيشات القادمة (${futureInspections.length})
+                </h3>
+                <div style="display: grid; gap: 15px;">
+        `;
+        
+        futureInspections.forEach(item => {
+            const shopsCount = item.shops ? item.shops.length : 0;
+            const shopsList = item.shops ? item.shops.join('، ') : 'لا توجد محلات';
+            const dayName = getArabicDayName(item.day);
+            
+            html += `
+                <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; border-left: 4px solid #28a745;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 10px;">
+                        <div><strong>📅 التاريخ:</strong> ${item.day} (${dayName})</div>
+                        <div><strong>⏰ المناوبة:</strong> ${item.shift}</div>
+                        <div><strong>📍 المنطقة:</strong> ${getAreaName(item.area)}</div>
+                        <div><strong>🏪 عدد المحلات:</strong> ${shopsCount}</div>
+                    </div>
+                    <div style="background: #fff; padding: 10px; border-radius: 4px; margin-top: 10px;">
+                        <strong>قائمة المحلات:</strong><br>
+                        <span style="color: #666;">${shopsList}</span>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += `</div></div>`;
+    }
+    
+    // Today's Inspections
+    if (todayInspections.length > 0) {
+        html += `
+            <div style="margin-bottom: 30px;">
+                <h3 style="color: #007bff; border-bottom: 3px solid #007bff; padding-bottom: 10px; margin-bottom: 15px;">
+                    📅 تفتيشات اليوم (${todayInspections.length})
+                </h3>
+                <div style="display: grid; gap: 15px;">
+        `;
+        
+        todayInspections.forEach(item => {
+            const shopsCount = item.shops ? item.shops.length : 0;
+            const shopsList = item.shops ? item.shops.join('، ') : 'لا توجد محلات';
+            
+            html += `
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 4px solid #007bff;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 10px;">
+                        <div><strong>⏰ المناوبة:</strong> ${item.shift}</div>
+                        <div><strong>📍 المنطقة:</strong> ${getAreaName(item.area)}</div>
+                        <div><strong>🏪 عدد المحلات:</strong> ${shopsCount}</div>
+                    </div>
+                    <div style="background: #fff; padding: 10px; border-radius: 4px; margin-top: 10px;">
+                        <strong>قائمة المحلات:</strong><br>
+                        <span style="color: #666;">${shopsList}</span>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += `</div></div>`;
+    }
+    
+    // Past Inspections
+    if (pastInspections.length > 0) {
+        html += `
+            <div style="margin-bottom: 30px;">
+                <h3 style="color: #6c757d; border-bottom: 3px solid #6c757d; padding-bottom: 10px; margin-bottom: 15px;">
+                    ✅ التفتيشات السابقة (${pastInspections.length})
+                </h3>
+                <div style="display: grid; gap: 15px;">
+        `;
+        
+        // Show only last 20 past inspections to avoid overwhelming the display
+        const recentPast = pastInspections.slice(-20).reverse();
+        
+        recentPast.forEach(item => {
+            const shopsCount = item.shops ? item.shops.length : 0;
+            const shopsList = item.shops ? item.shops.join('، ') : 'لا توجد محلات';
+            const dayName = getArabicDayName(item.day);
+            
+            html += `
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #6c757d;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 10px;">
+                        <div><strong>📅 التاريخ:</strong> ${item.day} (${dayName})</div>
+                        <div><strong>⏰ المناوبة:</strong> ${item.shift}</div>
+                        <div><strong>📍 المنطقة:</strong> ${getAreaName(item.area)}</div>
+                        <div><strong>🏪 عدد المحلات:</strong> ${shopsCount}</div>
+                    </div>
+                    <div style="background: #fff; padding: 10px; border-radius: 4px; margin-top: 10px;">
+                        <strong>قائمة المحلات:</strong><br>
+                        <span style="color: #666;">${shopsList}</span>
+                    </div>
+                </div>
+            `;
+        });
+        
+        if (pastInspections.length > 20) {
+            html += `<p style="text-align:center;color:#666;font-style:italic;">عرض آخر 20 تفتيش من أصل ${pastInspections.length} تفتيش سابق</p>`;
+        }
+        
+        html += `</div></div>`;
+    }
+    
+    html += '</div>';
+    return html;
+}
+
+function generateInspectorReportTab(inspectorName) {
+    // Reuse the existing inspector report generation logic
+    const rows = inspectionData.filter(item => item.inspector === inspectorName);
+    
+    if (rows.length === 0) {
+        return '<p style="text-align:center;color:#666;padding:30px;">لا توجد بيانات لهذا المفتش</p>';
+    }
+    
+    // Calculate comprehensive statistics
+    let totalShops = 0;
+    let morningShops = 0;
+    let eveningShops = 0;
+    let weekendShops = 0;
+    let totalDays = 0;
+    let areasVisited = new Set();
+    let shopsList = new Set();
+    let dailyStats = {};
+    
+    rows.forEach(r => {
+        const shopsCount = r.shops ? r.shops.length : 0;
+        totalShops += shopsCount;
+        totalDays++;
+        areasVisited.add(r.area);
+        
+        if (r.shops) {
+            r.shops.forEach(shop => shopsList.add(shop));
+        }
+        
+        if (!dailyStats[r.day]) {
+            dailyStats[r.day] = { shops: 0, shift: r.shift, area: r.area };
+        }
+        dailyStats[r.day].shops += shopsCount;
+        
+        if (r.shift === "صباحية") {
+            morningShops += shopsCount;
+        } else if (r.shift === "مسائية") {
+            eveningShops += shopsCount;
+        }
+        
+        const dayOfWeek = new Date(r.day).getDay();
+        if ([5,6,0].includes(dayOfWeek)) {
+            weekendShops += shopsCount;
+        }
+    });
+    
+    const averageShopsPerDay = totalDays > 0 ? (totalShops / totalDays).toFixed(1) : 0;
+    const uniqueShopsCount = shopsList.size;
+    
+    let html = `
+    <div style="padding: 20px;">
+        <!-- Summary Statistics -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+            <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; text-align: center; border-left: 4px solid #2196f3;">
+                <h4 style="margin: 0; color: #1976d2;">إجمالي التفتيشات</h4>
+                <span style="font-size: 1.5em; font-weight: bold; color: #1976d2;">${totalShops}</span>
+            </div>
+            <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; text-align: center; border-left: 4px solid #4caf50;">
+                <h4 style="margin: 0; color: #388e3c;">عدد المحلات المختلفة</h4>
+                <span style="font-size: 1.5em; font-weight: bold; color: #388e3c;">${uniqueShopsCount}</span>
+            </div>
+            <div style="background: #fff3e0; padding: 15px; border-radius: 8px; text-align: center; border-left: 4px solid #ff9800;">
+                <h4 style="margin: 0; color: #f57c00;">متوسط المحلات يومياً</h4>
+                <span style="font-size: 1.5em; font-weight: bold; color: #f57c00;">${averageShopsPerDay}</span>
+            </div>
+            <div style="background: #fce4ec; padding: 15px; border-radius: 8px; text-align: center; border-left: 4px solid #e91e63;">
+                <h4 style="margin: 0; color: #c2185b;">عدد الأيام</h4>
+                <span style="font-size: 1.5em; font-weight: bold; color: #c2185b;">${totalDays}</span>
+            </div>
+        </div>
+        
+        <!-- Shift Statistics -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+            <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; text-align: center;">
+                <h4 style="margin: 0; color: #2e7d32;">تفتيشات صباحية</h4>
+                <span style="font-size: 1.5em; font-weight: bold; color: #2e7d32;">${morningShops}</span>
+            </div>
+            <div style="background: #fff3e0; padding: 15px; border-radius: 8px; text-align: center;">
+                <h4 style="margin: 0; color: #ef6c00;">تفتيشات مسائية</h4>
+                <span style="font-size: 1.5em; font-weight: bold; color: #ef6c00;">${eveningShops}</span>
+            </div>
+            <div style="background: #f3e5f5; padding: 15px; border-radius: 8px; text-align: center;">
+                <h4 style="margin: 0; color: #7b1fa2;">تفتيشات نهاية الأسبوع</h4>
+                <span style="font-size: 1.5em; font-weight: bold; color: #7b1fa2;">${weekendShops}</span>
+            </div>
+            <div style="background: #e1f5fe; padding: 15px; border-radius: 8px; text-align: center;">
+                <h4 style="margin: 0; color: #0277bd;">عدد المناطق</h4>
+                <span style="font-size: 1.5em; font-weight: bold; color: #0277bd;">${areasVisited.size}</span>
+            </div>
+        </div>
+        
+        <!-- Detailed Table -->
+        <h3 style="color: #234085; border-bottom: 2px solid #234085; padding-bottom: 10px; margin-top: 30px;">جدول تفصيلي لجميع التفتيشات</h3>
+        <div style="overflow-x: auto;">
+            <table class="stats-table" style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                <thead>
+                    <tr style="background: #234085; color: #fff;">
+                        <th style="padding: 12px; border: 1px solid #ddd;">التاريخ</th>
+                        <th style="padding: 12px; border: 1px solid #ddd;">اليوم</th>
+                        <th style="padding: 12px; border: 1px solid #ddd;">المناوبة</th>
+                        <th style="padding: 12px; border: 1px solid #ddd;">المنطقة</th>
+                        <th style="padding: 12px; border: 1px solid #ddd;">عدد المحلات</th>
+                        <th style="padding: 12px; border: 1px solid #ddd;">المحلات</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    rows.sort((a, b) => a.day.localeCompare(b.day)).forEach(r => {
+        const dayName = getArabicDayName(r.day);
+        const shopsCount = r.shops ? r.shops.length : 0;
+        const shopsList = r.shops ? r.shops.join('، ') : 'لا توجد محلات';
+        
+        html += `
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${r.day}</td>
+                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${dayName}</td>
+                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
+                    <span style="background: ${r.shift === 'صباحية' ? '#e8f5e9' : '#fff3e0'}; color: ${r.shift === 'صباحية' ? '#2e7d32' : '#ef6c00'}; padding: 4px 8px; border-radius: 4px;">
+                        ${r.shift}
+                    </span>
+                </td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${getAreaName(r.area)}</td>
+                <td style="padding: 10px; border: 1px solid #ddd; text-align: center; font-weight: bold;">${shopsCount}</td>
+                <td style="padding: 10px; border: 1px solid #ddd; font-size: 0.9em;">${shopsList}</td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                </tbody>
+            </table>
+        </div>
+    </div>
+    `;
+    
+    return html;
+}
+
+function generateInspectorStatisticsTab(inspectorName) {
+    // Filter data for this inspector
+    const inspectorData = inspectionData.filter(item => item.inspector === inspectorName);
+    
+    if (inspectorData.length === 0) {
+        return '<p style="text-align:center;color:#666;padding:30px;">لا توجد بيانات لهذا المفتش</p>';
+    }
+    
+    // Use the smart stats generation logic
+    const stats = generateSmartMonthlyStats(inspectorData);
+    
+    let html = '<div style="padding: 20px;">';
+    
+    // Overview Statistics
+    html += `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; color: #fff; text-align: center;">
+                <h4 style="margin: 0 0 10px 0;">إجمالي الزيارات</h4>
+                <div style="font-size: 2em; font-weight: bold;">${stats.totalInspections}</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 10px; color: #fff; text-align: center;">
+                <h4 style="margin: 0 0 10px 0;">إجمالي المحلات</h4>
+                <div style="font-size: 2em; font-weight: bold;">${stats.totalShops}</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 20px; border-radius: 10px; color: #fff; text-align: center;">
+                <h4 style="margin: 0 0 10px 0;">محلات مختلفة</h4>
+                <div style="font-size: 2em; font-weight: bold;">${stats.uniqueShops.size}</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); padding: 20px; border-radius: 10px; color: #fff; text-align: center;">
+                <h4 style="margin: 0 0 10px 0;">متوسط المحلات يومياً</h4>
+                <div style="font-size: 2em; font-weight: bold;">${stats.averageShopsPerDay.toFixed(1)}</div>
+            </div>
+        </div>
+    `;
+    
+    // Shift Distribution
+    html += `
+        <h3 style="color: #234085; border-bottom: 2px solid #234085; padding-bottom: 10px; margin-bottom: 15px;">
+            توزيع المناوبات
+        </h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 25px;">
+            <div style="background: #e8f5e9; padding: 20px; border-radius: 8px; border-left: 4px solid #4caf50;">
+                <h4 style="margin: 0 0 10px 0; color: #2e7d32;">مناوبات صباحية</h4>
+                <div style="font-size: 1.8em; font-weight: bold; color: #2e7d32;">${stats.shiftStats.morning}</div>
+            </div>
+            <div style="background: #fff3e0; padding: 20px; border-radius: 8px; border-left: 4px solid #ff9800;">
+                <h4 style="margin: 0 0 10px 0; color: #ef6c00;">مناوبات مسائية</h4>
+                <div style="font-size: 1.8em; font-weight: bold; color: #ef6c00;">${stats.shiftStats.evening}</div>
+            </div>
+        </div>
+    `;
+    
+    // Area Statistics
+    html += `
+        <h3 style="color: #234085; border-bottom: 2px solid #234085; padding-bottom: 10px; margin-bottom: 15px;">
+            إحصائيات المناطق
+        </h3>
+        <div style="overflow-x: auto; margin-bottom: 25px;">
+            <table class="stats-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #234085; color: #fff;">
+                        <th style="padding: 12px; border: 1px solid #ddd;">المنطقة</th>
+                        <th style="padding: 12px; border: 1px solid #ddd;">عدد الزيارات</th>
+                        <th style="padding: 12px; border: 1px solid #ddd;">عدد المحلات المفتشة</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    Object.entries(stats.areaStats).forEach(([area, data]) => {
+        html += `
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;">${getAreaName(area)}</td>
+                <td style="padding: 10px; border: 1px solid #ddd; text-align: center; font-weight: bold;">${data.visits}</td>
+                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${data.shops}</td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                </tbody>
+            </table>
+        </div>
+    `;
+    
+    // Most inspected shops
+    const shopStatsArray = Object.entries(stats.shopStats).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    
+    if (shopStatsArray.length > 0) {
+        html += `
+            <h3 style="color: #234085; border-bottom: 2px solid #234085; padding-bottom: 10px; margin-bottom: 15px;">
+                أكثر 10 محلات تفتيشاً
+            </h3>
+            <div style="overflow-x: auto; margin-bottom: 25px;">
+                <table class="stats-table" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #234085; color: #fff;">
+                            <th style="padding: 12px; border: 1px solid #ddd;">المحل</th>
+                            <th style="padding: 12px; border: 1px solid #ddd;">عدد مرات التفتيش</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        shopStatsArray.forEach(([shop, count]) => {
+            html += `
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #ddd;">${shop}</td>
+                    <td style="padding: 10px; border: 1px solid #ddd; text-align: center; font-weight: bold; color: #234085;">${count}</td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+    
+    html += '</div>';
+    return html;
+}
+
+function generateInspectorAnalyticsTab(inspectorName) {
+    const inspectorData = inspectionData.filter(item => item.inspector === inspectorName);
+    
+    if (inspectorData.length === 0) {
+        return '<p style="text-align:center;color:#666;padding:30px;">لا توجد بيانات لهذا المفتش</p>';
+    }
+    
+    let html = '<div style="padding: 20px;">';
+    
+    // Monthly breakdown
+    const monthlyData = {};
+    inspectorData.forEach(item => {
+        const month = item.day.substring(0, 7); // YYYY-MM
+        if (!monthlyData[month]) {
+            monthlyData[month] = {
+                inspections: 0,
+                shops: 0,
+                areas: new Set(),
+                morningShifts: 0,
+                eveningShifts: 0
+            };
+        }
+        monthlyData[month].inspections++;
+        if (item.shops) {
+            monthlyData[month].shops += item.shops.length;
+        }
+        monthlyData[month].areas.add(item.area);
+        if (item.shift === 'صباحية') monthlyData[month].morningShifts++;
+        if (item.shift === 'مسائية') monthlyData[month].eveningShifts++;
+    });
+    
+    html += `
+        <h3 style="color: #234085; border-bottom: 2px solid #234085; padding-bottom: 10px; margin-bottom: 15px;">
+            📊 التحليل الشهري
+        </h3>
+        <div style="overflow-x: auto; margin-bottom: 25px;">
+            <table class="stats-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #234085; color: #fff;">
+                        <th style="padding: 12px; border: 1px solid #ddd;">الشهر</th>
+                        <th style="padding: 12px; border: 1px solid #ddd;">عدد التفتيشات</th>
+                        <th style="padding: 12px; border: 1px solid #ddd;">المحلات المفتشة</th>
+                        <th style="padding: 12px; border: 1px solid #ddd;">المناطق</th>
+                        <th style="padding: 12px; border: 1px solid #ddd;">صباحية</th>
+                        <th style="padding: 12px; border: 1px solid #ddd;">مسائية</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    Object.entries(monthlyData).sort((a, b) => b[0].localeCompare(a[0])).forEach(([month, data]) => {
+        const [year, monthNum] = month.split('-');
+        const monthName = getMonthName(monthNum);
+        
+        html += `
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">${monthName} ${year}</td>
+                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${data.inspections}</td>
+                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${data.shops}</td>
+                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${data.areas.size}</td>
+                <td style="padding: 10px; border: 1px solid #ddd; text-align: center; background: #e8f5e9;">${data.morningShifts}</td>
+                <td style="padding: 10px; border: 1px solid #ddd; text-align: center; background: #fff3e0;">${data.eveningShifts}</td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                </tbody>
+            </table>
+        </div>
+    `;
+    
+    // Performance metrics
+    const totalShops = inspectorData.reduce((sum, item) => sum + (item.shops ? item.shops.length : 0), 0);
+    const uniqueDays = new Set(inspectorData.map(item => item.day)).size;
+    const avgShopsPerDay = (totalShops / uniqueDays).toFixed(2);
+    const uniqueShops = new Set();
+    inspectorData.forEach(item => {
+        if (item.shops) item.shops.forEach(shop => uniqueShops.add(shop));
+    });
+    const shopCoverage = ((uniqueShops.size / totalShops) * 100).toFixed(1);
+    
+    html += `
+        <h3 style="color: #234085; border-bottom: 2px solid #234085; padding-bottom: 10px; margin-bottom: 15px;">
+            📈 مؤشرات الأداء
+        </h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 25px;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; color: #fff;">
+                <h4 style="margin: 0 0 10px 0;">متوسط المحلات يومياً</h4>
+                <div style="font-size: 2em; font-weight: bold;">${avgShopsPerDay}</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 10px; color: #fff;">
+                <h4 style="margin: 0 0 10px 0;">نسبة تنوع المحلات</h4>
+                <div style="font-size: 2em; font-weight: bold;">${shopCoverage}%</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 20px; border-radius: 10px; color: #fff;">
+                <h4 style="margin: 0 0 10px 0;">أيام العمل</h4>
+                <div style="font-size: 2em; font-weight: bold;">${uniqueDays}</div>
+            </div>
+        </div>
+    `;
+    
+    // Day of week analysis
+    const dayOfWeekData = {};
+    const daysAr = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    daysAr.forEach(day => dayOfWeekData[day] = 0);
+    
+    inspectorData.forEach(item => {
+        const date = new Date(item.day);
+        const dayIndex = date.getDay();
+        const dayName = daysAr[dayIndex];
+        dayOfWeekData[dayName]++;
+    });
+    
+    html += `
+        <h3 style="color: #234085; border-bottom: 2px solid #234085; padding-bottom: 10px; margin-bottom: 15px;">
+            📅 توزيع أيام الأسبوع
+        </h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 25px;">
+    `;
+    
+    Object.entries(dayOfWeekData).forEach(([day, count]) => {
+        html += `
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; border: 2px solid #e0e6f0;">
+                <h5 style="margin: 0 0 8px 0; color: #234085;">${day}</h5>
+                <div style="font-size: 1.5em; font-weight: bold; color: #667eea;">${count}</div>
+            </div>
+        `;
+    });
+    
+    html += `
+        </div>
+    `;
+    
+    html += '</div>';
+    return html;
+}
+
+// Export functions for inspector details
+function exportInspectorDetailsToPDF() {
+    const inspectorName = currentInspectorDetails.name;
+    if (!inspectorName) return;
+    
+    alert('تصدير جميع معلومات المفتش إلى PDF - قيد التطوير');
+    // This would generate a comprehensive PDF with all tabs
+}
+
+function exportInspectorDetailsToExcel() {
+    const inspectorName = currentInspectorDetails.name;
+    if (!inspectorName) return;
+    
+    alert('تصدير جميع معلومات المفتش إلى Excel - قيد التطوير');
+    // This would generate a comprehensive Excel file with multiple sheets
+}
+
+// ============================================================================
+// End of Inspector Details Modal Functions
+// ============================================================================
+
 function exportMonthlyReportToPDF() {
     let reportContent = document.getElementById('monthlyReportContent');
     if (!reportContent) return;

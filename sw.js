@@ -1,8 +1,9 @@
 // Service Worker for Monthly Inspection Plan PWA
-// Version 1.2.0 - Network-First strategy for HTML files to show immediate updates
+// Version 2.0.0 - ABSOLUTE ZERO-CACHE STRATEGY for instant updates on all browsers
+// Special handling for Safari, Chrome mobile/desktop with aggressive cache prevention
 
-const CACHE_NAME = 'monthly-inspection-v1.2.0';
-const RUNTIME_CACHE = 'runtime-cache-v1.2.0';
+const CACHE_NAME = 'monthly-inspection-v2.0.0';
+const RUNTIME_CACHE = 'runtime-cache-v2.0.0';
 
 // Files to cache immediately on install
 const STATIC_CACHE_URLS = [
@@ -88,40 +89,51 @@ self.addEventListener('fetch', (event) => {
   const isHtmlFile = url.pathname.endsWith('.html') || url.pathname === '/' || url.pathname === './';
 
   if (isDynamicFile || isHtmlFile) {
-    // Network-First strategy for dynamic data files and HTML files
-    // This ensures all recent changes from pull requests appear immediately
+    // ABSOLUTE NETWORK-ONLY strategy - NO CACHING for instant updates
+    // Safari and Chrome mobile/desktop get fresh content every time
     event.respondWith(
-      fetch(request, {
-        cache: 'no-cache',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
-      })
-        .then((response) => {
+      (async () => {
+        try {
+          // Add aggressive cache-busting parameters for all browsers
+          const cacheBuster = `?v=${Date.now()}&r=${Math.random().toString(36).substring(7)}&nocache=1`;
+          const freshUrl = request.url.includes('?') 
+            ? request.url + '&' + cacheBuster.substring(1)
+            : request.url + cacheBuster;
+          
+          const freshRequest = new Request(freshUrl, {
+            method: request.method,
+            headers: new Headers({
+              'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+              'Pragma': 'no-cache',
+              'Expires': '0',
+              'If-None-Match': 'no-match',
+              'If-Modified-Since': 'Thu, 01 Jan 1970 00:00:00 GMT'
+            }),
+            mode: 'cors',
+            credentials: request.credentials,
+            cache: 'no-store'
+          });
+          
+          console.log('Service Worker: FORCING fresh network fetch (ZERO-CACHE):', request.url);
+          const response = await fetch(freshRequest);
+          
           if (response && response.status === 200) {
-            console.log('Service Worker: Fetched fresh content from network:', request.url);
-            // Clone and cache the fresh response
-            const responseToCache = response.clone();
-            caches.open(RUNTIME_CACHE).then((cache) => {
-              cache.put(request, responseToCache);
-            });
+            console.log('Service Worker: ✅ Fresh content fetched successfully:', request.url);
+            // DON'T cache - always fetch fresh for instant updates
             return response;
           }
           return response;
-        })
-        .catch((error) => {
-          console.log('Service Worker: Network failed, trying cache:', request.url);
-          // Fallback to cache if network fails
-          return caches.match(request).then((cachedResponse) => {
-            if (cachedResponse) {
-              console.log('Service Worker: Serving cached content (offline):', request.url);
-              return cachedResponse;
-            }
-            throw error;
-          });
-        })
+        } catch (error) {
+          console.log('Service Worker: Network failed, trying cache as last resort:', request.url);
+          // Only use cache if network completely fails (offline scenario)
+          const cachedResponse = await caches.match(request);
+          if (cachedResponse) {
+            console.log('Service Worker: ⚠️ Serving cached content (offline mode):', request.url);
+            return cachedResponse;
+          }
+          throw error;
+        }
+      })()
     );
   } else {
     // Cache-First strategy only for static assets (CSS, JS, images)

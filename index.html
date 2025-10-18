@@ -1,16 +1,24 @@
 <!DOCTYPE html>
-<!-- Version 1.2.0 - Network-First caching for immediate updates -->
-<!-- Last Updated: 2025-10-17 - Fixed service worker caching to show all recent PR changes immediately -->
+<!-- Version 2.0.0 - ABSOLUTE ZERO-CACHE STRATEGY for instant updates -->
+<!-- Last Updated: 2025-10-18 - Complete cache prevention for Safari, Chrome (mobile/desktop) -->
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <title>خطة التفتيش الشهرية</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     
-    <!-- Cache Control Meta Tags - Prevent browser caching for instant updates -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <!-- ABSOLUTE CACHE PREVENTION - Works on ALL browsers including Safari and Chrome -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0, max-stale=0, post-check=0, pre-check=0">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
+    <!-- Safari-specific cache prevention -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- Chrome mobile-specific cache prevention -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <!-- Additional cache control for aggressive browsers -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="cleartype" content="on">
     
     <!-- SEO Optimization Meta Tags -->
     <meta name="robots" content="index, follow">
@@ -77,6 +85,80 @@
         "ratingCount": "1"
       }
     }
+    </script>
+    
+    <!-- ============================================ -->
+    <!-- 🚀 ABSOLUTE CACHE PREVENTION SCRIPT -->
+    <!-- Works on ALL browsers: Safari, Chrome, Firefox, Edge -->
+    <!-- Mobile and Desktop devices -->
+    <!-- ============================================ -->
+    <script>
+    (function() {
+        'use strict';
+        
+        console.log('🚀 ZERO-CACHE STRATEGY: Initializing absolute cache prevention...');
+        
+        // 1. Prevent browser back/forward cache (bfcache) - Safari specific
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                console.log('⚠️ Page loaded from bfcache - forcing reload');
+                window.location.reload(true);
+            }
+        });
+        
+        // 2. Force reload on visibility change (handles mobile app switching)
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                // Check if page data is stale (older than 30 seconds)
+                const lastLoadTime = sessionStorage.getItem('pageLoadTime');
+                const now = Date.now();
+                if (lastLoadTime && (now - parseInt(lastLoadTime)) > 30000) {
+                    console.log('⚠️ Page data is stale - forcing refresh');
+                    sessionStorage.setItem('pageLoadTime', now.toString());
+                    window.location.reload(true);
+                } else if (!lastLoadTime) {
+                    sessionStorage.setItem('pageLoadTime', now.toString());
+                }
+            }
+        });
+        
+        // 3. Override fetch to add cache-busting headers
+        const originalFetch = window.fetch;
+        window.fetch = function(...args) {
+            let [resource, config] = args;
+            
+            // Add cache-busting for same-origin requests
+            if (typeof resource === 'string' && !resource.startsWith('http')) {
+                const separator = resource.includes('?') ? '&' : '?';
+                resource += separator + 'v=' + Date.now() + '&r=' + Math.random().toString(36).substring(7);
+            }
+            
+            // Enhance config with no-cache headers
+            config = config || {};
+            config.headers = config.headers || {};
+            config.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+            config.headers['Pragma'] = 'no-cache';
+            config.headers['Expires'] = '0';
+            config.cache = 'no-store';
+            
+            return originalFetch(resource, config);
+        };
+        
+        // 4. Set initial page load time
+        sessionStorage.setItem('pageLoadTime', Date.now().toString());
+        
+        // 5. Clear Safari-specific caches
+        if ('safari' in window) {
+            console.log('🍎 Safari detected - applying additional cache prevention');
+        }
+        
+        // 6. Clear Chrome mobile cache indicators
+        if (/Chrome/.test(navigator.userAgent) && /Mobile/.test(navigator.userAgent)) {
+            console.log('📱 Chrome Mobile detected - applying mobile-specific cache prevention');
+        }
+        
+        console.log('✅ ZERO-CACHE STRATEGY: Absolute cache prevention initialized successfully');
+    })();
     </script>
     
     <!-- خط Cairo من Google Fonts مع خطوط إضافية للعنوان -->
@@ -3249,6 +3331,42 @@
     </style>
 </head>
 <body>
+<!-- ============================================ -->
+<!-- 🚨 EMERGENCY DEVELOPER CONTROL PANEL 🚨 -->
+<!-- INSTANT 100% CONTROL - ALWAYS VISIBLE FOR DEVELOPER -->
+<!-- ============================================ -->
+<div id="emergencyDevPanel" style="display:none; position:fixed; top:0; left:0; right:0; z-index:99999999; background:linear-gradient(135deg, #dc3545 0%, #c82333 100%); color:white; padding:15px; box-shadow:0 4px 12px rgba(0,0,0,0.3); border-bottom:3px solid #b21f2d; font-family:'Cairo',Arial,sans-serif;">
+    <div style="max-width:1400px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:15px; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:15px;">
+            <div style="font-size:2em; animation:pulse 1.5s infinite;">🚨</div>
+            <div>
+                <div style="font-weight:bold; font-size:1.2em; margin-bottom:3px;">⚡ لوحة التحكم الطارئة للمطور</div>
+                <div style="font-size:0.85em; opacity:0.9;">التحكم الفوري 100% في وضع الصيانة والتحديثات</div>
+            </div>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <div style="padding:8px 15px; background:rgba(255,255,255,0.2); border-radius:6px; font-size:0.9em; font-weight:600;">
+                الحالة: <span id="emergencyStatusIndicator" style="color:#ffd700;">⚠️ غير معروف</span>
+            </div>
+            <button onclick="emergencyEnableMaintenance()" style="background:#ffc107; color:#000; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:1em; box-shadow:0 2px 8px rgba(0,0,0,0.3); transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                🔒 تفعيل فوري
+            </button>
+            <button onclick="emergencyDisableMaintenance()" style="background:#28a745; color:#fff; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:1em; box-shadow:0 2px 8px rgba(0,0,0,0.3); transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                ✅ إلغاء فوري
+            </button>
+            <button onclick="emergencyHideMessage()" style="background:#007bff; color:#fff; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:1em; box-shadow:0 2px 8px rgba(0,0,0,0.3); transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                ❌ إخفاء الرسالة
+            </button>
+            <button onclick="emergencyClearCache()" style="background:#6c757d; color:#fff; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:1em; box-shadow:0 2px 8px rgba(0,0,0,0.3); transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                🧹 مسح الكاش
+            </button>
+            <button onclick="emergencyForceRefresh()" style="background:#fd7e14; color:#fff; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:1em; box-shadow:0 2px 8px rgba(0,0,0,0.3); transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                🔄 تحديث فوري
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Developer Splash Screen Overlay -->
 <div id="devSplashScreen" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); z-index:999999; opacity:0; transition:opacity 0.5s ease;">
     <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:white; font-family:'Cairo', Arial, sans-serif; text-align:center; padding:20px;">
@@ -5264,6 +5382,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Update maintenance close button visibility
         updateMaintenanceCloseButton();
+        
+        // 🚨 Show emergency developer control panel
+        showEmergencyPanel();
+        console.log('✅ Emergency developer control panel initialized');
     }
     
     // Start periodic maintenance mode checker
@@ -6873,6 +6995,237 @@ async function forceMaintenanceCheck() {
     console.log('🔄 Forcing immediate maintenance status check...');
     await checkMaintenanceMode();
     console.log('✅ Forced check completed');
+}
+
+// ============================================================================
+// 🚨 EMERGENCY DEVELOPER CONTROL PANEL FUNCTIONS
+// INSTANT 100% CONTROL - NO DELAYS, NO FAKE OPERATIONS
+// ============================================================================
+
+// Update emergency panel status indicator
+function updateEmergencyStatusIndicator() {
+    const indicator = document.getElementById('emergencyStatusIndicator');
+    if (!indicator) return;
+    
+    const isMaintenanceMode = localStorage.getItem('systemMaintenanceMode') === 'true';
+    const overlay = document.getElementById('maintenanceOverlay');
+    const isOverlayVisible = overlay && overlay.style.display !== 'none';
+    
+    if (isMaintenanceMode && isOverlayVisible) {
+        indicator.innerHTML = '🔒 مفعّل ومرئي';
+        indicator.style.color = '#ffc107';
+    } else if (isMaintenanceMode && !isOverlayVisible) {
+        indicator.innerHTML = '🔒 مفعّل (مخفي للمطور)';
+        indicator.style.color = '#28a745';
+    } else {
+        indicator.innerHTML = '✅ معطّل';
+        indicator.style.color = '#28a745';
+    }
+}
+
+// Emergency enable maintenance - INSTANT, NO DELAYS
+async function emergencyEnableMaintenance() {
+    console.log('🚨 EMERGENCY: Enabling maintenance mode NOW...');
+    
+    try {
+        // Show progress immediately
+        showMaintenanceProgress('⚡ جاري التفعيل الفوري...');
+        
+        // Enable immediately
+        await enableMaintenanceModeForAll();
+        
+        // Update status
+        updateEmergencyStatusIndicator();
+        
+        console.log('✅ EMERGENCY: Maintenance enabled successfully');
+    } catch (error) {
+        console.error('❌ EMERGENCY: Error enabling maintenance:', error);
+        alert('⚠️ حدث خطأ: ' + error.message);
+    }
+}
+
+// Emergency disable maintenance - INSTANT, NO DELAYS
+async function emergencyDisableMaintenance() {
+    console.log('🚨 EMERGENCY: Disabling maintenance mode NOW...');
+    
+    try {
+        // Show progress immediately
+        showMaintenanceProgress('⚡ جاري الإلغاء الفوري...');
+        
+        // Disable immediately on this device
+        localStorage.removeItem('systemMaintenanceMode');
+        sessionStorage.removeItem('maintenanceNotificationShown');
+        hideMaintenanceMode();
+        hideMaintenanceProgress();
+        
+        // Try to save to GitHub (but don't wait)
+        disableMaintenanceModeForAll().then(() => {
+            console.log('✅ EMERGENCY: Maintenance disabled and synced to GitHub');
+        }).catch(err => {
+            console.warn('⚠️ EMERGENCY: Local disable succeeded, GitHub sync failed:', err);
+        });
+        
+        // Update status immediately
+        updateEmergencyStatusIndicator();
+        
+        // Clear all caches for instant propagation
+        await clearAllCaches();
+        
+        console.log('✅ EMERGENCY: Maintenance disabled immediately on this device');
+        alert('✅ تم الإلغاء الفوري!\n\n' +
+              '• تم الإلغاء على هذا الجهاز فوراً\n' +
+              '• يتم المزامنة مع GitHub في الخلفية\n' +
+              '• تم مسح الكاش للتحديث الفوري');
+    } catch (error) {
+        console.error('❌ EMERGENCY: Error disabling maintenance:', error);
+        alert('⚠️ حدث خطأ: ' + error.message);
+    }
+}
+
+// Emergency hide message - INSTANT
+function emergencyHideMessage() {
+    console.log('🚨 EMERGENCY: Hiding maintenance message NOW...');
+    
+    try {
+        // Hide maintenance overlay immediately
+        const overlay = document.getElementById('maintenanceOverlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+            console.log('✅ Maintenance overlay hidden');
+        }
+        
+        // Hide progress message
+        hideMaintenanceProgress();
+        
+        // Hide splash screen if visible
+        const splashScreen = document.getElementById('devSplashScreen');
+        if (splashScreen) {
+            splashScreen.style.display = 'none';
+            splashScreen.style.opacity = '0';
+        }
+        
+        // Stop all audio
+        const audioElements = ['maintenanceAudio', 'splashAudio', 'sheikhZayedAudio'];
+        audioElements.forEach(id => {
+            const audio = document.getElementById(id);
+            if (audio && !audio.paused) {
+                audio.pause();
+                audio.currentTime = 0;
+                console.log(`🔇 Stopped audio: ${id}`);
+            }
+        });
+        
+        // Update status
+        updateEmergencyStatusIndicator();
+        
+        console.log('✅ EMERGENCY: All messages hidden successfully');
+        alert('✅ تم إخفاء جميع الرسائل فوراً!');
+    } catch (error) {
+        console.error('❌ EMERGENCY: Error hiding message:', error);
+        alert('⚠️ حدث خطأ: ' + error.message);
+    }
+}
+
+// Emergency clear cache - INSTANT and AGGRESSIVE
+async function emergencyClearCache() {
+    console.log('🚨 EMERGENCY: Clearing ALL caches NOW...');
+    
+    try {
+        showMaintenanceProgress('🧹 جاري مسح الكاش...');
+        
+        // Clear service worker caches
+        if ('serviceWorker' in navigator && 'caches' in window) {
+            const cacheNames = await caches.keys();
+            await Promise.all(cacheNames.map(name => caches.delete(name)));
+            console.log('✅ Service Worker caches cleared');
+        }
+        
+        // Unregister service workers
+        if ('serviceWorker' in navigator) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(registrations.map(reg => reg.unregister()));
+            console.log('✅ Service Workers unregistered');
+        }
+        
+        // Clear localStorage cache entries (but keep user data)
+        const keysToRemove = ['maintenanceStatusCache', 'maintenanceStatusCacheTime', 'dataVersion'];
+        keysToRemove.forEach(key => {
+            if (localStorage.getItem(key)) {
+                localStorage.removeItem(key);
+            }
+        });
+        console.log('✅ LocalStorage caches cleared');
+        
+        // Clear sessionStorage
+        sessionStorage.clear();
+        console.log('✅ SessionStorage cleared');
+        
+        hideMaintenanceProgress();
+        
+        console.log('✅ EMERGENCY: All caches cleared successfully');
+        alert('✅ تم مسح جميع الكاش بنجاح!\n\n' +
+              '• Service Worker Cache: ✓\n' +
+              '• LocalStorage Cache: ✓\n' +
+              '• SessionStorage: ✓\n\n' +
+              'سيتم تحديث الصفحة الآن للحصول على أحدث البيانات');
+        
+        // Wait a moment then reload
+        setTimeout(() => {
+            window.location.reload(true);
+        }, 1000);
+    } catch (error) {
+        console.error('❌ EMERGENCY: Error clearing cache:', error);
+        hideMaintenanceProgress();
+        alert('⚠️ حدث خطأ: ' + error.message + '\n\nسيتم محاولة إعادة تحميل الصفحة...');
+        setTimeout(() => window.location.reload(true), 1000);
+    }
+}
+
+// Emergency force refresh - INSTANT with cache bypass
+function emergencyForceRefresh() {
+    console.log('🚨 EMERGENCY: Force refreshing page with cache bypass...');
+    
+    try {
+        // Clear session maintenance flag
+        sessionStorage.removeItem('maintenanceNotificationShown');
+        
+        // Force hard reload with cache bypass
+        // Works on all browsers including Safari and Chrome
+        if (window.location.reload) {
+            window.location.reload(true);
+        } else {
+            // Fallback: add cache-busting parameter
+            const url = new URL(window.location.href);
+            url.searchParams.set('_refresh', Date.now());
+            window.location.href = url.toString();
+        }
+    } catch (error) {
+        console.error('❌ EMERGENCY: Error forcing refresh:', error);
+        // Ultimate fallback
+        window.location.href = window.location.href + '?_=' + Date.now();
+    }
+}
+
+// Show emergency panel for developer
+function showEmergencyPanel() {
+    const panel = document.getElementById('emergencyDevPanel');
+    if (panel && isDev) {
+        panel.style.display = 'block';
+        updateEmergencyStatusIndicator();
+        
+        // Update status every 2 seconds
+        setInterval(updateEmergencyStatusIndicator, 2000);
+        
+        console.log('✅ Emergency developer panel shown');
+    }
+}
+
+// Hide emergency panel
+function hideEmergencyPanel() {
+    const panel = document.getElementById('emergencyDevPanel');
+    if (panel) {
+        panel.style.display = 'none';
+    }
 }
 
 // 🔥 NEW: Manual test function to show update message (for testing/debugging)

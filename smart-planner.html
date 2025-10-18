@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أداة التخطيط الذكية للتفتيش الشهري</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Cairo', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .feature-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .feature-card .icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .feature-card h3 {
+            color: #2d3561;
+            margin-bottom: 5px;
+        }
+        
+        .feature-card p {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            font-size: 1.8em;
+            color: #2d3561;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #2d3561;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+        
+        select.form-control {
+            cursor: pointer;
+        }
+        
+        .btn {
+            padding: 14px 30px;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(102,126,234,0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102,126,234,0.4);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(17,153,142,0.3);
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(17,153,142,0.4);
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(250,112,154,0.3);
+        }
+        
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(250,112,154,0.4);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .status-message {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-weight: 600;
+            display: none;
+        }
+        
+        .status-message.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .status-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+        
+        .status-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+        
+        .status-message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 2px solid #bee5eb;
+        }
+        
+        .status-message.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffeeba;
+        }
+        
+        .shops-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        .shop-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .shop-card:hover {
+            border-color: #667eea;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(102,126,234,0.2);
+        }
+        
+        .shop-card.selected {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+        
+        .shop-card.high-priority {
+            border-left: 5px solid #dc3545;
+        }
+        
+        .shop-card.medium-priority {
+            border-left: 5px solid #ffc107;
+        }
+        
+        .shop-card.low-priority {
+            border-left: 5px solid #28a745;
+        }
+        
+        .shop-card .priority-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        
+        .shop-card .priority-badge.high {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .shop-card .priority-badge.medium {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .shop-card .priority-badge.low {
+            background: #28a745;
+            color: white;
+        }
+        
+        .shop-card .shop-name {
+            font-weight: 600;
+            color: #2d3561;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+        
+        .shop-card .shop-info {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .shop-card .last-inspection {
+            font-size: 0.85em;
+            color: #999;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .selected-shops {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .selected-shops h3 {
+            color: #1565c0;
+            margin-bottom: 15px;
+        }
+        
+        .selected-shops-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .selected-shop-tag {
+            background: #667eea;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .selected-shop-tag .remove {
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .selected-shop-tag .remove:hover {
+            color: #ffcccc;
+        }
+        
+        .filter-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-box {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .stat-box .value {
+            font-size: 2em;
+            font-weight: 700;
+            color: #667eea;
+        }
+        
+        .stat-box .label {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .inspection-preview {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border: 2px solid #667eea;
+        }
+        
+        .inspection-preview h3 {
+            color: #2d3561;
+            margin-bottom: 15px;
+        }
+        
+        .inspection-preview .preview-item {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .inspection-preview .preview-item strong {
+            color: #667eea;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 أداة التخطيط الذكية للتفتيش الشهري</h1>
+            <p>نظام ذكي ومرن لتحديث خطة التفتيش مباشرة وفوراً مع فلترة المحلات ذات الأولوية</p>
+        </div>
+        
+        <div class="features">
+            <div class="feature-card">
+                <div class="icon">⚡</div>
+                <h3>تحديث فوري</h3>
+                <p>التحديثات تظهر مباشرة دون رفع ملفات</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon">🎯</div>
+                <h3>الأولوية الذكية</h3>
+                <p>المحلات ذات الأولوية العالية تظهر أولاً</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon">🚫</div>
+                <h3>منع التكرار</h3>
+                <p>تجنب المحلات المكررة في نفس اليوم</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon">📅</div>
+                <h3>فترة الانتظار</h3>
+                <p>أسبوع واحد قبل إعادة التفتيش</p>
+            </div>
+        </div>
+        
+        <!-- Login Section -->
+        <div class="section" id="loginSection">
+            <h2 class="section-title">🔐 تسجيل الدخول كمطور</h2>
+            <div class="form-group">
+                <label class="form-label">GitHub Token (للحفظ المباشر)</label>
+                <input type="password" id="githubToken" class="form-control" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+                <small style="color: #666; display: block; margin-top: 5px;">
+                    احصل على التوكن من: GitHub Settings → Developer Settings → Personal Access Tokens
+                </small>
+            </div>
+            <button class="btn btn-primary" onclick="loginDeveloper()">
+                <span>✓</span>
+                <span>تسجيل الدخول</span>
+            </button>
+            <div class="status-message" id="loginStatus"></div>
+        </div>
+        
+        <!-- Planning Section -->
+        <div class="section" id="planningSection" style="display: none;">
+            <h2 class="section-title">📝 إضافة تفتيش جديد</h2>
+            
+            <div class="form-group">
+                <label class="form-label">المفتش</label>
+                <select id="inspectorSelect" class="form-control" onchange="updateAvailableShops()">
+                    <option value="">اختر المفتش...</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">التاريخ</label>
+                <input type="date" id="inspectionDate" class="form-control" onchange="updateAvailableShops()">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">المناوبة</label>
+                <select id="shiftSelect" class="form-control">
+                    <option value="صباحية">صباحية</option>
+                    <option value="مسائية">مسائية</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">المنطقة</label>
+                <select id="areaSelect" class="form-control" onchange="updateAvailableShops()">
+                    <option value="">اختر المنطقة...</option>
+                </select>
+            </div>
+            
+            <!-- Filter Statistics -->
+            <div class="filter-stats">
+                <div class="stat-box">
+                    <div class="value" id="totalShopsCount">0</div>
+                    <div class="label">إجمالي المحلات</div>
+                </div>
+                <div class="stat-box">
+                    <div class="value" id="availableShopsCount">0</div>
+                    <div class="label">المحلات المتاحة</div>
+                </div>
+                <div class="stat-box">
+                    <div class="value" id="highPriorityCount">0</div>
+                    <div class="label">أولوية عالية</div>
+                </div>
+                <div class="stat-box">
+                    <div class="value" id="selectedShopsCount">0</div>
+                    <div class="label">المحلات المختارة</div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">المحلات المتاحة (مرتبة حسب الأولوية)</label>
+                <div id="shopsListContainer">
+                    <p style="text-align: center; color: #999; padding: 20px;">
+                        اختر المفتش والتاريخ والمنطقة لعرض المحلات المتاحة
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Selected Shops -->
+            <div class="selected-shops" id="selectedShopsContainer" style="display: none;">
+                <h3>المحلات المختارة للتفتيش</h3>
+                <div class="selected-shops-list" id="selectedShopsList"></div>
+            </div>
+            
+            <!-- Inspection Preview -->
+            <div class="inspection-preview" id="inspectionPreview" style="display: none;">
+                <h3>معاينة التفتيش</h3>
+                <div class="preview-item">
+                    <strong>المفتش:</strong> <span id="previewInspector">-</span>
+                </div>
+                <div class="preview-item">
+                    <strong>التاريخ:</strong> <span id="previewDate">-</span>
+                </div>
+                <div class="preview-item">
+                    <strong>المناوبة:</strong> <span id="previewShift">-</span>
+                </div>
+                <div class="preview-item">
+                    <strong>المنطقة:</strong> <span id="previewArea">-</span>
+                </div>
+                <div class="preview-item">
+                    <strong>عدد المحلات:</strong> <span id="previewShopsCount">0</span>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="btn btn-success" onclick="saveInspection()" id="saveBtn" disabled>
+                    <span>💾</span>
+                    <span>حفظ التفتيش فوراً</span>
+                </button>
+                <button class="btn btn-warning" onclick="resetForm()">
+                    <span>🔄</span>
+                    <span>إعادة تعيين</span>
+                </button>
+            </div>
+            
+            <div class="status-message" id="planningStatus"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Global variables
+        let planData = null;
+        let shopsDetails = null;
+        let selectedShops = [];
+        let githubToken = null;
+        const repo = "aliabdelaal-adm/Monthly_inspection_plan";
+        
+        // Login developer
+        async function loginDeveloper() {
+            const token = document.getElementById('githubToken').value.trim();
+            
+            if (!token) {
+                showMessage('loginStatus', 'error', '❌ يرجى إدخال GitHub Token');
+                return;
+            }
+            
+            githubToken = token;
+            localStorage.setItem('devToken', token);
+            
+            showMessage('loginStatus', 'info', '⏳ جاري التحقق من الصلاحيات...');
+            
+            try {
+                // Load data from GitHub
+                await loadPlanData();
+                await loadShopsDetails();
+                
+                // Initialize UI
+                populateInspectors();
+                populateAreas();
+                
+                // Set default date to today
+                document.getElementById('inspectionDate').valueAsDate = new Date();
+                
+                // Hide login section and show planning section
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('planningSection').style.display = 'block';
+                
+                showMessage('loginStatus', 'success', '✅ تم تسجيل الدخول بنجاح!');
+                
+            } catch (error) {
+                showMessage('loginStatus', 'error', '❌ فشل تحميل البيانات: ' + error.message);
+                githubToken = null;
+            }
+        }
+        
+        // Load plan data from GitHub
+        async function loadPlanData() {
+            const res = await fetch(`https://api.github.com/repos/${repo}/contents/plan-data.json`, {
+                headers: {
+                    'Authorization': `Bearer ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+            
+            if (!res.ok) {
+                throw new Error('فشل تحميل plan-data.json');
+            }
+            
+            const file = await res.json();
+            planData = JSON.parse(decodeURIComponent(escape(atob(file.content))));
+        }
+        
+        // Load shops details from GitHub
+        async function loadShopsDetails() {
+            const res = await fetch(`https://api.github.com/repos/${repo}/contents/shops_details.json`, {
+                headers: {
+                    'Authorization': `Bearer ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+            
+            if (!res.ok) {
+                throw new Error('فشل تحميل shops_details.json');
+            }
+            
+            const file = await res.json();
+            shopsDetails = JSON.parse(decodeURIComponent(escape(atob(file.content))));
+        }
+        
+        // Populate inspectors dropdown
+        function populateInspectors() {
+            const select = document.getElementById('inspectorSelect');
+            select.innerHTML = '<option value="">اختر المفتش...</option>';
+            
+            if (planData && planData.inspectors) {
+                planData.inspectors.forEach(inspector => {
+                    const option = document.createElement('option');
+                    option.value = inspector.name;
+                    option.textContent = inspector.name;
+                    select.appendChild(option);
+                });
+            }
+        }
+        
+        // Populate areas dropdown
+        function populateAreas() {
+            const select = document.getElementById('areaSelect');
+            select.innerHTML = '<option value="">اختر المنطقة...</option>';
+            
+            if (planData && planData.areas) {
+                planData.areas.forEach(area => {
+                    const option = document.createElement('option');
+                    option.value = area.name;
+                    option.textContent = area.name;
+                    select.appendChild(option);
+                });
+            }
+        }
+        
+        // Update available shops based on selection
+        function updateAvailableShops() {
+            const inspector = document.getElementById('inspectorSelect').value;
+            const date = document.getElementById('inspectionDate').value;
+            const area = document.getElementById('areaSelect').value;
+            
+            if (!inspector || !date || !area) {
+                document.getElementById('shopsListContainer').innerHTML = 
+                    '<p style="text-align: center; color: #999; padding: 20px;">اختر المفتش والتاريخ والمنطقة لعرض المحلات المتاحة</p>';
+                return;
+            }
+            
+            // Get all shops for the selected area
+            const allShops = getAllShopsInArea(area);
+            
+            // Filter shops based on smart rules
+            const availableShops = filterSmartShops(allShops, inspector, date);
+            
+            // Sort shops by priority
+            const sortedShops = sortShopsByPriority(availableShops, inspector, date);
+            
+            // Update statistics
+            updateStatistics(allShops.length, availableShops.length, sortedShops);
+            
+            // Display shops
+            displayShops(sortedShops);
+        }
+        
+        // Get all shops in an area
+        function getAllShopsInArea(area) {
+            const shops = [];
+            
+            if (!planData || !planData.inspectionData) return shops;
+            
+            // Collect all unique shops from the area
+            const shopSet = new Set();
+            planData.inspectionData.forEach(inspection => {
+                if (inspection.area === area && inspection.shops) {
+                    inspection.shops.forEach(shop => shopSet.add(shop));
+                }
+            });
+            
+            return Array.from(shopSet);
+        }
+        
+        // Filter shops based on smart rules
+        function filterSmartShops(shops, inspector, date) {
+            const available = [];
+            
+            shops.forEach(shop => {
+                // Rule 1: Check if shop is already assigned to ANY inspector on the same day
+                const assignedToday = isShopAssignedToday(shop, date);
+                
+                // Rule 2: Check if shop was inspected by THIS inspector in the last 7 days
+                const recentlyInspected = wasShopRecentlyInspected(shop, inspector, date);
+                
+                // If shop passes both rules, it's available
+                if (!assignedToday && !recentlyInspected) {
+                    available.push(shop);
+                }
+            });
+            
+            return available;
+        }
+        
+        // Check if shop is already assigned to any inspector on the same day
+        function isShopAssignedToday(shop, date) {
+            if (!planData || !planData.inspectionData) return false;
+            
+            return planData.inspectionData.some(inspection => {
+                return inspection.day === date && 
+                       inspection.shops && 
+                       inspection.shops.includes(shop);
+            });
+        }
+        
+        // Check if shop was recently inspected by the same inspector (within 7 days)
+        function wasShopRecentlyInspected(shop, inspector, date) {
+            if (!planData || !planData.inspectionData) return false;
+            
+            const targetDate = new Date(date);
+            const sevenDaysAgo = new Date(targetDate);
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            
+            return planData.inspectionData.some(inspection => {
+                if (inspection.inspector !== inspector) return false;
+                if (!inspection.shops || !inspection.shops.includes(shop)) return false;
+                
+                const inspectionDate = new Date(inspection.day);
+                return inspectionDate > sevenDaysAgo && inspectionDate < targetDate;
+            });
+        }
+        
+        // Sort shops by priority
+        function sortShopsByPriority(shops, inspector, date) {
+            return shops.map(shop => {
+                const priority = calculateShopPriority(shop, inspector, date);
+                return { name: shop, priority: priority.level, score: priority.score, reason: priority.reason };
+            }).sort((a, b) => b.score - a.score);
+        }
+        
+        // Calculate shop priority
+        function calculateShopPriority(shop, inspector, date) {
+            let score = 0;
+            let reasons = [];
+            
+            // Find last inspection date for this shop (by any inspector)
+            const lastInspection = getLastInspectionDate(shop);
+            
+            if (!lastInspection) {
+                score += 100; // Never inspected = highest priority
+                reasons.push('لم يتم تفتيشه من قبل');
+            } else {
+                const targetDate = new Date(date);
+                const lastDate = new Date(lastInspection);
+                const daysSince = Math.floor((targetDate - lastDate) / (1000 * 60 * 60 * 24));
+                
+                if (daysSince > 30) {
+                    score += 80;
+                    reasons.push(`آخر تفتيش قبل ${daysSince} يوم`);
+                } else if (daysSince > 21) {
+                    score += 60;
+                    reasons.push(`آخر تفتيش قبل ${daysSince} يوم`);
+                } else if (daysSince > 14) {
+                    score += 40;
+                    reasons.push(`آخر تفتيش قبل ${daysSince} يوم`);
+                } else {
+                    score += 20;
+                    reasons.push(`آخر تفتيش قبل ${daysSince} يوم`);
+                }
+            }
+            
+            // Priority based on shop type (if available in shops_details)
+            if (shopsDetails && shopsDetails[shop]) {
+                const activity = shopsDetails[shop].activity || '';
+                if (activity.includes('يجب تسجيلها')) {
+                    score += 30;
+                    reasons.push('نشاط يتطلب التسجيل');
+                }
+            }
+            
+            // Determine priority level
+            let level = 'low';
+            if (score >= 80) level = 'high';
+            else if (score >= 50) level = 'medium';
+            
+            return { level, score, reason: reasons.join(' - ') };
+        }
+        
+        // Get last inspection date for a shop
+        function getLastInspectionDate(shop) {
+            if (!planData || !planData.inspectionData) return null;
+            
+            let lastDate = null;
+            
+            planData.inspectionData.forEach(inspection => {
+                if (inspection.shops && inspection.shops.includes(shop)) {
+                    if (!lastDate || inspection.day > lastDate) {
+                        lastDate = inspection.day;
+                    }
+                }
+            });
+            
+            return lastDate;
+        }
+        
+        // Update statistics
+        function updateStatistics(total, available, sortedShops) {
+            document.getElementById('totalShopsCount').textContent = total;
+            document.getElementById('availableShopsCount').textContent = available;
+            
+            const highPriority = sortedShops.filter(s => s.priority === 'high').length;
+            document.getElementById('highPriorityCount').textContent = highPriority;
+            
+            document.getElementById('selectedShopsCount').textContent = selectedShops.length;
+        }
+        
+        // Display shops
+        function displayShops(shops) {
+            const container = document.getElementById('shopsListContainer');
+            
+            if (shops.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">لا توجد محلات متاحة حسب المعايير المحددة</p>';
+                return;
+            }
+            
+            const shopsHTML = shops.map(shop => {
+                const isSelected = selectedShops.includes(shop.name);
+                const lastInspection = getLastInspectionDate(shop.name);
+                
+                return `
+                    <div class="shop-card ${shop.priority}-priority ${isSelected ? 'selected' : ''}" 
+                         onclick="toggleShop('${shop.name.replace(/'/g, "\\'")}')">
+                        <div class="priority-badge ${shop.priority}">
+                            ${shop.priority === 'high' ? 'أولوية عالية' : 
+                              shop.priority === 'medium' ? 'أولوية متوسطة' : 'أولوية منخفضة'}
+                        </div>
+                        <div class="shop-name">${shop.name}</div>
+                        <div class="shop-info">📊 النقاط: ${shop.score}</div>
+                        <div class="shop-info">📝 ${shop.reason}</div>
+                        <div class="last-inspection">
+                            📅 آخر تفتيش: ${lastInspection || 'لم يتم التفتيش بعد'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = `<div class="shops-list">${shopsHTML}</div>`;
+        }
+        
+        // Toggle shop selection
+        function toggleShop(shopName) {
+            const index = selectedShops.indexOf(shopName);
+            
+            if (index > -1) {
+                selectedShops.splice(index, 1);
+            } else {
+                selectedShops.push(shopName);
+            }
+            
+            updateSelectedShopsDisplay();
+            updateAvailableShops();
+            updatePreview();
+        }
+        
+        // Update selected shops display
+        function updateSelectedShopsDisplay() {
+            const container = document.getElementById('selectedShopsContainer');
+            const list = document.getElementById('selectedShopsList');
+            
+            if (selectedShops.length === 0) {
+                container.style.display = 'none';
+                document.getElementById('saveBtn').disabled = true;
+                return;
+            }
+            
+            container.style.display = 'block';
+            document.getElementById('saveBtn').disabled = false;
+            
+            list.innerHTML = selectedShops.map(shop => `
+                <div class="selected-shop-tag">
+                    <span>${shop}</span>
+                    <span class="remove" onclick="toggleShop('${shop.replace(/'/g, "\\'")}')">×</span>
+                </div>
+            `).join('');
+            
+            document.getElementById('selectedShopsCount').textContent = selectedShops.length;
+        }
+        
+        // Update preview
+        function updatePreview() {
+            const inspector = document.getElementById('inspectorSelect').value;
+            const date = document.getElementById('inspectionDate').value;
+            const shift = document.getElementById('shiftSelect').value;
+            const area = document.getElementById('areaSelect').value;
+            
+            if (!inspector || !date || !area || selectedShops.length === 0) {
+                document.getElementById('inspectionPreview').style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('inspectionPreview').style.display = 'block';
+            document.getElementById('previewInspector').textContent = inspector;
+            document.getElementById('previewDate').textContent = date;
+            document.getElementById('previewShift').textContent = shift;
+            document.getElementById('previewArea').textContent = area;
+            document.getElementById('previewShopsCount').textContent = selectedShops.length;
+        }
+        
+        // Save inspection to GitHub
+        async function saveInspection() {
+            const inspector = document.getElementById('inspectorSelect').value;
+            const date = document.getElementById('inspectionDate').value;
+            const shift = document.getElementById('shiftSelect').value;
+            const area = document.getElementById('areaSelect').value;
+            
+            if (!inspector || !date || !area || selectedShops.length === 0) {
+                showMessage('planningStatus', 'error', '❌ يرجى ملء جميع الحقول واختيار المحلات');
+                return;
+            }
+            
+            if (!confirm(`هل أنت متأكد من إضافة هذا التفتيش؟\n\nالمفتش: ${inspector}\nالتاريخ: ${date}\nالمحلات: ${selectedShops.length}`)) {
+                return;
+            }
+            
+            showMessage('planningStatus', 'info', '⏳ جاري حفظ التفتيش...');
+            document.getElementById('saveBtn').disabled = true;
+            
+            try {
+                // Create new inspection entry
+                const newInspection = {
+                    inspector: inspector,
+                    day: date,
+                    shift: shift,
+                    area: area,
+                    shops: [...selectedShops]
+                };
+                
+                // Add to plan data
+                planData.inspectionData.push(newInspection);
+                
+                // Update lastUpdate timestamp
+                planData.lastUpdate = new Date().toISOString();
+                
+                // Save to GitHub
+                await savePlanDataToGitHub();
+                
+                showMessage('planningStatus', 'success', 
+                    `✅ تم حفظ التفتيش بنجاح!\n\n📊 المفتش: ${inspector}\n📅 التاريخ: ${date}\n🏪 عدد المحلات: ${selectedShops.length}\n\n✨ التحديثات ستظهر فوراً في الموقع!`);
+                
+                // Reset form
+                setTimeout(() => {
+                    resetForm();
+                }, 3000);
+                
+            } catch (error) {
+                showMessage('planningStatus', 'error', '❌ فشل حفظ التفتيش: ' + error.message);
+                document.getElementById('saveBtn').disabled = false;
+            }
+        }
+        
+        // Save plan data to GitHub
+        async function savePlanDataToGitHub() {
+            // Get current file SHA
+            const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/plan-data.json`, {
+                headers: {
+                    'Authorization': `Bearer ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+            
+            if (!getRes.ok) {
+                throw new Error('فشل الحصول على ملف plan-data.json');
+            }
+            
+            const file = await getRes.json();
+            const sha = file.sha;
+            
+            // Prepare content
+            const content = btoa(unescape(encodeURIComponent(JSON.stringify(planData, null, 2))));
+            
+            // Update file
+            const updateRes = await fetch(`https://api.github.com/repos/${repo}/contents/plan-data.json`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: `إضافة تفتيش جديد - ${document.getElementById('inspectorSelect').value} - ${document.getElementById('inspectionDate').value}`,
+                    content: content,
+                    sha: sha
+                })
+            });
+            
+            if (!updateRes.ok) {
+                throw new Error('فشل تحديث ملف plan-data.json');
+            }
+        }
+        
+        // Reset form
+        function resetForm() {
+            document.getElementById('inspectorSelect').value = '';
+            document.getElementById('inspectionDate').valueAsDate = new Date();
+            document.getElementById('shiftSelect').value = 'صباحية';
+            document.getElementById('areaSelect').value = '';
+            selectedShops = [];
+            
+            document.getElementById('shopsListContainer').innerHTML = 
+                '<p style="text-align: center; color: #999; padding: 20px;">اختر المفتش والتاريخ والمنطقة لعرض المحلات المتاحة</p>';
+            
+            document.getElementById('selectedShopsContainer').style.display = 'none';
+            document.getElementById('inspectionPreview').style.display = 'none';
+            document.getElementById('saveBtn').disabled = true;
+            
+            updateStatistics(0, 0, []);
+        }
+        
+        // Show message
+        function showMessage(elementId, type, message) {
+            const el = document.getElementById(elementId);
+            el.className = `status-message ${type} show`;
+            el.textContent = message;
+            
+            setTimeout(() => {
+                el.classList.remove('show');
+            }, type === 'success' ? 5000 : 10000);
+        }
+        
+        // Check if user is already logged in
+        window.onload = function() {
+            const savedToken = localStorage.getItem('devToken');
+            if (savedToken) {
+                document.getElementById('githubToken').value = savedToken;
+            }
+        };
+    </script>
+</body>
+</html>

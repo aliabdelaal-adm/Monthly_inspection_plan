@@ -3140,6 +3140,95 @@
                 font-size: 1.1em;
             }
         }
+        
+        /* ============================================ */
+        /* 🔔 TOAST NOTIFICATION SYSTEM FOR DEVELOPER */
+        /* ============================================ */
+        .dev-toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            font-family: 'Cairo', Arial, sans-serif;
+            font-size: 1.1em;
+            font-weight: 600;
+            z-index: 999999998;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            animation: slideInRight 0.4s ease-out;
+            max-width: 400px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .dev-toast.success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+        
+        .dev-toast.error {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+        
+        .dev-toast.warning {
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+            color: #000;
+        }
+        
+        .dev-toast.info {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        }
+        
+        .dev-toast-icon {
+            font-size: 2em;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .dev-toast-close {
+            margin-left: auto;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: inherit;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .dev-toast-close:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(1.1);
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
 
         /* Shop Priority Button Animations - تأثيرات زر أولوية المحلات */
         @keyframes priority-glow-pulse {
@@ -5386,6 +5475,15 @@ document.addEventListener('DOMContentLoaded', function() {
         // 🚨 Show emergency developer control panel
         showEmergencyPanel();
         console.log('✅ Emergency developer control panel initialized');
+        
+        // 🔔 Start monitoring maintenance changes
+        monitorMaintenanceChanges();
+        console.log('✅ Maintenance change monitoring initialized');
+        
+        // Show welcome toast
+        setTimeout(() => {
+            showDevToast('👋 مرحباً بك! لوحة التحكم الطارئة جاهزة', 'success', 6000, '👋');
+        }, 1000);
     }
     
     // Start periodic maintenance mode checker
@@ -5402,22 +5500,43 @@ function initializeAudioElements() {
         document.getElementById('sheikhZayedAudio')
     ];
     
+    // Detect browser type for specific optimizations
+    const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+    const isChromeMobile = /Chrome/.test(navigator.userAgent) && /Mobile/.test(navigator.userAgent);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    
+    console.log(`🎵 Initializing audio for browser: Safari=${isSafari}, ChromeMobile=${isChromeMobile}, iOS=${isIOS}`);
+    
     audioElements.forEach(audio => {
         if (!audio) return;
+        
+        // Set critical attributes for cross-browser compatibility
+        audio.setAttribute('playsinline', '');
+        audio.setAttribute('webkit-playsinline', '');
+        audio.preload = 'metadata';
+        
+        // iOS Safari specific: set inline playback
+        if (isIOS) {
+            audio.setAttribute('x-webkit-airplay', 'allow');
+            audio.setAttribute('playsinline', 'true');
+        }
         
         // Add error handling
         audio.addEventListener('error', function(e) {
             console.error('🎵 Audio error for', audio.id, ':', e);
-            // Try to reload the audio
-            if (audio.readyState === 0) {
-                audio.load();
-            }
+            // Try to reload the audio after a delay
+            setTimeout(() => {
+                if (audio.readyState === 0) {
+                    console.log('🎵 Attempting to reload audio:', audio.id);
+                    audio.load();
+                }
+            }, 1000);
         });
         
         // Handle stalling (common in Safari)
         audio.addEventListener('stalled', function() {
             console.warn('🎵 Audio stalled for', audio.id, '- attempting to resume');
-            audio.load();
+            setTimeout(() => audio.load(), 500);
         });
         
         // Handle waiting/buffering
@@ -5431,12 +5550,13 @@ function initializeAudioElements() {
         });
         
         // Safari-specific: Prevent interruptions
-        audio.addEventListener('pause', function() {
-            // If audio paused unexpectedly (not by user), try to resume
+        audio.addEventListener('pause', function(e) {
+            // If audio paused unexpectedly (not by user action), try to resume
             if (audio.id === 'maintenanceAudio' && maintenanceConfig.musicEnabled) {
                 const overlay = document.getElementById('maintenanceOverlay');
                 if (overlay && overlay.style.display === 'flex') {
                     // Maintenance is active but audio paused - try to resume after short delay
+                    console.log('🎵 Audio paused unexpectedly - attempting to resume');
                     setTimeout(() => {
                         if (audio.paused && overlay.style.display === 'flex') {
                             audio.play().catch(err => {
@@ -5448,10 +5568,11 @@ function initializeAudioElements() {
             }
         });
         
-        // Safari-specific: Handle ended event for loop
+        // Safari-specific: Handle ended event for loop (backup for loop attribute)
         audio.addEventListener('ended', function() {
             if (audio.id === 'splashAudio' || (audio.id === 'maintenanceAudio' && maintenanceConfig.musicDuration === 0)) {
                 // Should loop, restart it
+                console.log('🎵 Audio ended - restarting for loop:', audio.id);
                 audio.currentTime = 0;
                 audio.play().catch(err => {
                     console.log('🎵 Could not loop audio:', err);
@@ -5459,13 +5580,34 @@ function initializeAudioElements() {
             }
         });
         
+        // Mobile Safari specific: Handle suspension
+        if (isIOS || isSafari) {
+            audio.addEventListener('suspend', function() {
+                console.log('🎵 Audio suspended (Safari) for', audio.id);
+            });
+            
+            // Attempt to keep alive
+            setInterval(() => {
+                if (!audio.paused && audio.id === 'maintenanceAudio') {
+                    const overlay = document.getElementById('maintenanceOverlay');
+                    if (overlay && overlay.style.display === 'flex' && maintenanceConfig.musicEnabled) {
+                        // Touch the audio to keep it alive
+                        const vol = audio.volume;
+                        audio.volume = vol; // Dummy operation to prevent suspension
+                    }
+                }
+            }, 5000);
+        }
+        
         // Preload audio for faster playback
         if (audio.readyState < 2) {
             audio.load();
         }
+        
+        console.log(`✅ Audio element initialized: ${audio.id}`);
     });
     
-    console.log('✅ Audio elements initialized with cross-browser compatibility');
+    console.log('✅ All audio elements initialized with cross-browser compatibility');
 }
 
 </script>
@@ -7030,6 +7172,7 @@ async function emergencyEnableMaintenance() {
     try {
         // Show progress immediately
         showMaintenanceProgress('⚡ جاري التفعيل الفوري...');
+        showDevToast('🔒 جاري تفعيل وضع الصيانة...', 'warning', 3000, '⚡');
         
         // Enable immediately
         await enableMaintenanceModeForAll();
@@ -7037,9 +7180,11 @@ async function emergencyEnableMaintenance() {
         // Update status
         updateEmergencyStatusIndicator();
         
+        showDevToast('✅ تم تفعيل وضع الصيانة بنجاح!', 'success', 5000, '✅');
         console.log('✅ EMERGENCY: Maintenance enabled successfully');
     } catch (error) {
         console.error('❌ EMERGENCY: Error enabling maintenance:', error);
+        showDevToast('❌ خطأ: ' + error.message, 'error', 7000, '❌');
         alert('⚠️ حدث خطأ: ' + error.message);
     }
 }
@@ -7051,6 +7196,7 @@ async function emergencyDisableMaintenance() {
     try {
         // Show progress immediately
         showMaintenanceProgress('⚡ جاري الإلغاء الفوري...');
+        showDevToast('⏳ جاري إلغاء وضع الصيانة...', 'info', 3000, '⚡');
         
         // Disable immediately on this device
         localStorage.removeItem('systemMaintenanceMode');
@@ -7061,8 +7207,10 @@ async function emergencyDisableMaintenance() {
         // Try to save to GitHub (but don't wait)
         disableMaintenanceModeForAll().then(() => {
             console.log('✅ EMERGENCY: Maintenance disabled and synced to GitHub');
+            showDevToast('✅ تم المزامنة مع GitHub بنجاح', 'success', 5000, '✅');
         }).catch(err => {
             console.warn('⚠️ EMERGENCY: Local disable succeeded, GitHub sync failed:', err);
+            showDevToast('⚠️ الإلغاء المحلي نجح - فشل المزامنة مع GitHub', 'warning', 7000, '⚠️');
         });
         
         // Update status immediately
@@ -7071,13 +7219,11 @@ async function emergencyDisableMaintenance() {
         // Clear all caches for instant propagation
         await clearAllCaches();
         
+        showDevToast('✅ تم الإلغاء الفوري بنجاح!', 'success', 5000, '✅');
         console.log('✅ EMERGENCY: Maintenance disabled immediately on this device');
-        alert('✅ تم الإلغاء الفوري!\n\n' +
-              '• تم الإلغاء على هذا الجهاز فوراً\n' +
-              '• يتم المزامنة مع GitHub في الخلفية\n' +
-              '• تم مسح الكاش للتحديث الفوري');
     } catch (error) {
         console.error('❌ EMERGENCY: Error disabling maintenance:', error);
+        showDevToast('❌ خطأ: ' + error.message, 'error', 7000, '❌');
         alert('⚠️ حدث خطأ: ' + error.message);
     }
 }
@@ -7118,10 +7264,11 @@ function emergencyHideMessage() {
         // Update status
         updateEmergencyStatusIndicator();
         
+        showDevToast('✅ تم إخفاء جميع الرسائل فوراً!', 'success', 5000, '✅');
         console.log('✅ EMERGENCY: All messages hidden successfully');
-        alert('✅ تم إخفاء جميع الرسائل فوراً!');
     } catch (error) {
         console.error('❌ EMERGENCY: Error hiding message:', error);
+        showDevToast('❌ خطأ: ' + error.message, 'error', 7000, '❌');
         alert('⚠️ حدث خطأ: ' + error.message);
     }
 }
@@ -7132,6 +7279,7 @@ async function emergencyClearCache() {
     
     try {
         showMaintenanceProgress('🧹 جاري مسح الكاش...');
+        showDevToast('🧹 جاري مسح جميع الكاش...', 'info', 3000, '🧹');
         
         // Clear service worker caches
         if ('serviceWorker' in navigator && 'caches' in window) {
@@ -7162,12 +7310,8 @@ async function emergencyClearCache() {
         
         hideMaintenanceProgress();
         
+        showDevToast('✅ تم مسح الكاش - سيتم التحديث الآن', 'success', 3000, '✅');
         console.log('✅ EMERGENCY: All caches cleared successfully');
-        alert('✅ تم مسح جميع الكاش بنجاح!\n\n' +
-              '• Service Worker Cache: ✓\n' +
-              '• LocalStorage Cache: ✓\n' +
-              '• SessionStorage: ✓\n\n' +
-              'سيتم تحديث الصفحة الآن للحصول على أحدث البيانات');
         
         // Wait a moment then reload
         setTimeout(() => {
@@ -7176,7 +7320,7 @@ async function emergencyClearCache() {
     } catch (error) {
         console.error('❌ EMERGENCY: Error clearing cache:', error);
         hideMaintenanceProgress();
-        alert('⚠️ حدث خطأ: ' + error.message + '\n\nسيتم محاولة إعادة تحميل الصفحة...');
+        showDevToast('❌ خطأ في مسح الكاش - سيتم إعادة التحميل', 'error', 3000, '❌');
         setTimeout(() => window.location.reload(true), 1000);
     }
 }
@@ -7225,6 +7369,68 @@ function hideEmergencyPanel() {
     const panel = document.getElementById('emergencyDevPanel');
     if (panel) {
         panel.style.display = 'none';
+    }
+}
+
+// ============================================================================
+// 🔔 TOAST NOTIFICATION SYSTEM - Visual feedback for developer actions
+// ============================================================================
+
+function showDevToast(message, type = 'info', duration = 5000, icon = '🔔') {
+    // Only show for developers
+    if (!isDev && !window.isDev) return;
+    
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `dev-toast ${type}`;
+    toast.innerHTML = `
+        <div class="dev-toast-icon">${icon}</div>
+        <div class="dev-toast-message">${message}</div>
+        <button class="dev-toast-close" onclick="this.parentElement.remove()">×</button>
+    `;
+    
+    // Add to document
+    document.body.appendChild(toast);
+    
+    // Auto remove after duration
+    setTimeout(() => {
+        toast.style.animation = 'slideOutRight 0.4s ease-out';
+        setTimeout(() => toast.remove(), 400);
+    }, duration);
+    
+    console.log(`🔔 Toast [${type}]: ${message}`);
+}
+
+// Enhanced versions of existing functions with toast notifications
+const originalEnableMaintenanceForAll = typeof enableMaintenanceModeForAll !== 'undefined' ? enableMaintenanceModeForAll : null;
+const originalDisableMaintenanceForAll = typeof disableMaintenanceModeForAll !== 'undefined' ? disableMaintenanceModeForAll : null;
+
+// Monitor maintenance status changes with toasts
+function monitorMaintenanceChanges() {
+    // Listen for localStorage changes (from other tabs/windows)
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'systemMaintenanceMode') {
+            if (e.newValue === 'true') {
+                showDevToast('🔒 تم تفعيل وضع الصيانة على جهاز آخر', 'warning', 7000, '🔒');
+                updateEmergencyStatusIndicator();
+            } else if (e.newValue === null || e.newValue === 'false') {
+                showDevToast('✅ تم إلغاء وضع الصيانة على جهاز آخر', 'success', 7000, '✅');
+                updateEmergencyStatusIndicator();
+            }
+        }
+        
+        if (e.key === 'maintenanceBroadcast') {
+            showDevToast('📡 تم استلام إشارة تحديث من المطور', 'info', 5000, '📡');
+        }
+    });
+    
+    // Listen for service worker updates
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'CACHE_UPDATED') {
+                showDevToast('🔄 تم تحديث الكاش - البيانات محدّثة', 'info', 4000, '🔄');
+            }
+        });
     }
 }
 

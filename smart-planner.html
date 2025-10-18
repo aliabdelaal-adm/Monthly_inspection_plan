@@ -858,6 +858,13 @@
             document.getElementById('selectedShopsCount').textContent = selectedShops.length;
         }
         
+        // HTML escape function to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
         // Display shops
         function displayShops(shops) {
             const container = document.getElementById('shopsListContainer');
@@ -867,28 +874,59 @@
                 return;
             }
             
-            const shopsHTML = shops.map(shop => {
+            // Clear container
+            container.innerHTML = '';
+            
+            // Create shops list container
+            const shopsListDiv = document.createElement('div');
+            shopsListDiv.className = 'shops-list';
+            
+            shops.forEach(shop => {
                 const isSelected = selectedShops.includes(shop.name);
                 const lastInspection = getLastInspectionDate(shop.name);
                 
-                return `
-                    <div class="shop-card ${shop.priority}-priority ${isSelected ? 'selected' : ''}" 
-                         onclick="toggleShop('${shop.name.replace(/'/g, "\\'")}')">
-                        <div class="priority-badge ${shop.priority}">
-                            ${shop.priority === 'high' ? 'أولوية عالية' : 
-                              shop.priority === 'medium' ? 'أولوية متوسطة' : 'أولوية منخفضة'}
-                        </div>
-                        <div class="shop-name">${shop.name}</div>
-                        <div class="shop-info">📊 النقاط: ${shop.score}</div>
-                        <div class="shop-info">📝 ${shop.reason}</div>
-                        <div class="last-inspection">
-                            📅 آخر تفتيش: ${lastInspection || 'لم يتم التفتيش بعد'}
-                        </div>
-                    </div>
-                `;
-            }).join('');
+                // Create shop card element
+                const shopCard = document.createElement('div');
+                shopCard.className = `shop-card ${shop.priority}-priority ${isSelected ? 'selected' : ''}`;
+                shopCard.onclick = function() { toggleShop(shop.name); };
+                
+                // Priority badge
+                const priorityBadge = document.createElement('div');
+                priorityBadge.className = `priority-badge ${shop.priority}`;
+                priorityBadge.textContent = shop.priority === 'high' ? 'أولوية عالية' : 
+                                            shop.priority === 'medium' ? 'أولوية متوسطة' : 'أولوية منخفضة';
+                
+                // Shop name
+                const shopName = document.createElement('div');
+                shopName.className = 'shop-name';
+                shopName.textContent = shop.name;
+                
+                // Shop info - score
+                const shopScore = document.createElement('div');
+                shopScore.className = 'shop-info';
+                shopScore.textContent = '📊 النقاط: ' + shop.score;
+                
+                // Shop info - reason
+                const shopReason = document.createElement('div');
+                shopReason.className = 'shop-info';
+                shopReason.textContent = '📝 ' + shop.reason;
+                
+                // Last inspection
+                const lastInspectionDiv = document.createElement('div');
+                lastInspectionDiv.className = 'last-inspection';
+                lastInspectionDiv.textContent = '📅 آخر تفتيش: ' + (lastInspection || 'لم يتم التفتيش بعد');
+                
+                // Append all elements
+                shopCard.appendChild(priorityBadge);
+                shopCard.appendChild(shopName);
+                shopCard.appendChild(shopScore);
+                shopCard.appendChild(shopReason);
+                shopCard.appendChild(lastInspectionDiv);
+                
+                shopsListDiv.appendChild(shopCard);
+            });
             
-            container.innerHTML = `<div class="shops-list">${shopsHTML}</div>`;
+            container.appendChild(shopsListDiv);
         }
         
         // Toggle shop selection
@@ -920,12 +958,26 @@
             container.style.display = 'block';
             document.getElementById('saveBtn').disabled = false;
             
-            list.innerHTML = selectedShops.map(shop => `
-                <div class="selected-shop-tag">
-                    <span>${shop}</span>
-                    <span class="remove" onclick="toggleShop('${shop.replace(/'/g, "\\'")}')">×</span>
-                </div>
-            `).join('');
+            // Clear list
+            list.innerHTML = '';
+            
+            // Create shop tags safely
+            selectedShops.forEach(shop => {
+                const tag = document.createElement('div');
+                tag.className = 'selected-shop-tag';
+                
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = shop;
+                
+                const removeSpan = document.createElement('span');
+                removeSpan.className = 'remove';
+                removeSpan.textContent = '×';
+                removeSpan.onclick = function() { toggleShop(shop); };
+                
+                tag.appendChild(nameSpan);
+                tag.appendChild(removeSpan);
+                list.appendChild(tag);
+            });
             
             document.getElementById('selectedShopsCount').textContent = selectedShops.length;
         }

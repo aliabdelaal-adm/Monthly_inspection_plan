@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار مستوى الصوت 40%</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #2336a0;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #2336a0;
+        }
+        .test-section h3 {
+            color: #2336a0;
+            margin-top: 0;
+        }
+        button {
+            background: #2336a0;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #1a2770;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(35, 54, 160, 0.3);
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .info { background: #d1ecf1; color: #0c5460; }
+        .success { background: #d4edda; color: #155724; }
+        .warning { background: #fff3cd; color: #856404; }
+        .volume-display {
+            font-size: 24px;
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .comparison-item {
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .old-volume {
+            background: #ffe5e5;
+            border: 2px solid #ff6b6b;
+        }
+        .new-volume {
+            background: #e5f5e5;
+            border: 2px solid #51cf66;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 اختبار مستوى الصوت الجديد (40%)</h1>
+        
+        <div class="test-section">
+            <h3>📋 ملخص التعديل</h3>
+            <div class="comparison">
+                <div class="comparison-item old-volume">
+                    <h4>❌ القيمة القديمة</h4>
+                    <div style="font-size: 32px; font-weight: bold;">15%</div>
+                    <div>مستوى صوت منخفض جداً</div>
+                </div>
+                <div class="comparison-item new-volume">
+                    <h4>✅ القيمة الجديدة</h4>
+                    <div style="font-size: 32px; font-weight: bold;">40%</div>
+                    <div>مستوى صوت مريح ومسموع</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 الهدف من التعديل</h3>
+            <ul>
+                <li>✅ تقليل حدة صوت الموسيقى المدمج مع رسالة "جاري التحديث الآن"</li>
+                <li>✅ جعل الصوت هادئ ومسموع ومريح وغير صاخب</li>
+                <li>✅ عند زيادة صوت الهاتف إلى 100%، يكون صوت الموسيقى أقل من 50%</li>
+                <li>✅ تحسين تجربة المستخدم أثناء وضع الصيانة</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>🎵 اختبار تشغيل الموسيقى</h3>
+            <div class="volume-display">
+                <div>مستوى الصوت الحالي</div>
+                <div id="volumeLevel" style="font-size: 48px; font-weight: bold;">40%</div>
+                <div style="font-size: 14px; margin-top: 10px;">(0.40 من المستوى الكامل)</div>
+            </div>
+            
+            <div style="text-align: center;">
+                <button onclick="playMusic()">▶️ تشغيل الموسيقى بمستوى 40%</button>
+                <button onclick="stopMusic()">⏹️ إيقاف الموسيقى</button>
+                <button onclick="playOldVolume()">🔉 تشغيل بالمستوى القديم (15%)</button>
+                <button onclick="playHighVolume()">🔊 تشغيل بمستوى 50%</button>
+            </div>
+            
+            <div id="status" style="margin-top: 20px;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 التفاصيل التقنية</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <td style="padding: 10px; font-weight: bold;">الملف المعدل:</td>
+                    <td style="padding: 10px;">admin-dashboard.html</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <td style="padding: 10px; font-weight: bold;">القيمة الافتراضية القديمة:</td>
+                    <td style="padding: 10px;">value="15" (15%)</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <td style="padding: 10px; font-weight: bold;">القيمة الافتراضية الجديدة:</td>
+                    <td style="padding: 10px;">value="40" (40%)</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <td style="padding: 10px; font-weight: bold;">القيمة في الكود:</td>
+                    <td style="padding: 10px;">0.40 (من 0.0 إلى 1.0)</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; font-weight: bold;">الموسيقى المستخدمة:</td>
+                    <td style="padding: 10px;">Classical-Music-for-Relaxation-Mozart-Bach-Tchaikovsky...-128Kbps-44KHz(mp3)1الجزء(4).mp3</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="test-section">
+            <h3>✅ معايير النجاح</h3>
+            <div class="status info">
+                <strong>اختبر الآتي:</strong>
+                <ul style="margin: 10px 0;">
+                    <li>الموسيقى تشتغل بشكل تلقائي عند ظهور رسالة "جاري التحديث"</li>
+                    <li>مستوى الصوت مريح وغير صاخب (40% من حجم السماعة)</li>
+                    <li>عند رفع صوت الهاتف إلى 100%، الموسيقى لا تزال أقل من 50%</li>
+                    <li>الموسيقى مسموعة بوضوح ولكن ليست عالية</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <audio id="testAudio" loop>
+        <source src="Classical-Music-for-Relaxation-Mozart-Bach-Tchaikovsky...-128Kbps-44KHz(mp3)1الجزء(4).mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        const audio = document.getElementById('testAudio');
+        const statusDiv = document.getElementById('status');
+        
+        function showStatus(message, type) {
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+        
+        function playMusic() {
+            audio.volume = 0.40; // New default volume (40%)
+            audio.currentTime = 0;
+            audio.play().then(() => {
+                showStatus('✅ الموسيقى تعمل بمستوى 40% - هذا هو المستوى الجديد الافتراضي', 'success');
+                document.getElementById('volumeLevel').textContent = '40%';
+            }).catch(err => {
+                showStatus('⚠️ يرجى النقر على زر التشغيل للسماح بتشغيل الصوت (قيود المتصفح)', 'warning');
+            });
+        }
+        
+        function stopMusic() {
+            audio.pause();
+            audio.currentTime = 0;
+            showStatus('⏹️ تم إيقاف الموسيقى', 'info');
+        }
+        
+        function playOldVolume() {
+            audio.volume = 0.15; // Old volume (15%)
+            audio.currentTime = 0;
+            audio.play().then(() => {
+                showStatus('🔉 الموسيقى تعمل بمستوى 15% - هذا هو المستوى القديم (للمقارنة)', 'warning');
+                document.getElementById('volumeLevel').textContent = '15%';
+            }).catch(err => {
+                showStatus('⚠️ يرجى النقر على زر التشغيل للسماح بتشغيل الصوت', 'warning');
+            });
+        }
+        
+        function playHighVolume() {
+            audio.volume = 0.50; // 50% volume for comparison
+            audio.currentTime = 0;
+            audio.play().then(() => {
+                showStatus('🔊 الموسيقى تعمل بمستوى 50% - للمقارنة (أعلى من المستوى المطلوب)', 'warning');
+                document.getElementById('volumeLevel').textContent = '50%';
+            }).catch(err => {
+                showStatus('⚠️ يرجى النقر على زر التشغيل للسماح بتشغيل الصوت', 'warning');
+            });
+        }
+        
+        // Show initial info
+        showStatus('ℹ️ انقر على أحد الأزرار أعلاه لاختبار مستويات الصوت المختلفة', 'info');
+    </script>
+</body>
+</html>

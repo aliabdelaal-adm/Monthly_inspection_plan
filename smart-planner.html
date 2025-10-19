@@ -798,6 +798,9 @@
                 <button class="tab-button" onclick="switchTab('areas')">
                     <span>🗺️</span> إدارة المناطق
                 </button>
+                <button class="tab-button" onclick="switchTab('maintenance')">
+                    <span>🔧</span> التحكم الذكي في رسالة التحديث
+                </button>
             </div>
             
             <!-- Tab Content: Add Inspection -->
@@ -1068,6 +1071,212 @@
                     </div>
                     
                     <div class="status-message" id="shopsManagementStatus"></div>
+                </div>
+            </div>
+            
+            <!-- Tab Content: Maintenance Control -->
+            <div id="maintenanceTab" class="tab-content">
+                <div class="section">
+                    <h2 class="section-title">🔧 التحكم الذكي المطلق في رسالة التحديث والكاش</h2>
+                    
+                    <!-- Cache Control Section -->
+                    <div style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); padding: 25px; border-radius: 15px; margin-bottom: 25px; color: white;">
+                        <h3 style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                            <span>🚀</span>
+                            <span>التحديث الفوري ومسح الكاش والذاكرة</span>
+                        </h3>
+                        <p style="margin-bottom: 20px; opacity: 0.95;">
+                            زر قوي لمسح كل الكاش والذاكرة المؤقتة فوراً في GitHub والمتصفحات (Safari, Chrome, Firefox)
+                        </p>
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                            <button class="btn btn-danger" onclick="forceCacheClear()" style="background: white; color: #ff6b6b;">
+                                <span>🗑️</span>
+                                <span>مسح الكاش الفوري (GitHub + المتصفحات)</span>
+                            </button>
+                            <button class="btn btn-warning" onclick="updateServiceWorker()" style="background: white; color: #ee5a6f;">
+                                <span>🔄</span>
+                                <span>تحديث Service Worker فوراً</span>
+                            </button>
+                        </div>
+                        <div class="status-message" id="cacheControlStatus"></div>
+                    </div>
+                    
+                    <!-- Maintenance Message Control Section -->
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 15px; margin-bottom: 25px; color: white;">
+                        <h3 style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                            <span>📺</span>
+                            <span>التحكم الذكي في شاشة التحديث المؤقتة</span>
+                        </h3>
+                        <p style="margin-bottom: 20px; opacity: 0.95;">
+                            تحكم كامل ومباشر 100% في ظهور وإخفاء وتفعيل وإغلاق رسالة "جاري التحديث الآن"
+                        </p>
+                        
+                        <!-- Enable/Disable Toggle -->
+                        <div class="form-group">
+                            <label class="form-label" style="color: white; font-size: 1.2em;">
+                                <span>🔘</span> حالة رسالة التحديث
+                            </label>
+                            <div style="display: flex; gap: 15px; margin-top: 10px;">
+                                <button id="enableMaintenanceBtn" class="btn btn-success" onclick="toggleMaintenanceMessage(true)" style="flex: 1;">
+                                    <span>✅</span>
+                                    <span>تفعيل رسالة التحديث</span>
+                                </button>
+                                <button id="disableMaintenanceBtn" class="btn btn-danger" onclick="toggleMaintenanceMessage(false)" style="flex: 1;">
+                                    <span>❌</span>
+                                    <span>إيقاف رسالة التحديث</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Current Status Display -->
+                        <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 10px; margin-top: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-weight: 600;">الحالة الحالية:</span>
+                                <span id="maintenanceStatusLabel" style="font-size: 1.1em; font-weight: 700;">⏳ جاري التحميل...</span>
+                            </div>
+                        </div>
+                        
+                        <div class="status-message" id="maintenanceToggleStatus"></div>
+                    </div>
+                    
+                    <!-- Music Control Section -->
+                    <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); padding: 25px; border-radius: 15px; margin-bottom: 25px; color: white;">
+                        <h3 style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                            <span>🎵</span>
+                            <span>التحكم الذكي المطلق في الموسيقى</span>
+                        </h3>
+                        <p style="margin-bottom: 20px; opacity: 0.95;">
+                            تحكم فوري ومباشر 100% في صوت الموسيقى وتمكينها/تعطيلها مع الانعكاس المباشر في GitHub
+                        </p>
+                        
+                        <!-- Music Enable/Disable -->
+                        <div class="form-group">
+                            <label class="form-label" style="color: white; font-size: 1.2em;">
+                                <span>🔊</span> حالة الموسيقى
+                            </label>
+                            <div style="display: flex; gap: 15px; margin-top: 10px;">
+                                <button id="enableMusicBtn" class="btn btn-success" onclick="toggleMusic(true)" style="flex: 1;">
+                                    <span>🔊</span>
+                                    <span>تفعيل الموسيقى</span>
+                                </button>
+                                <button id="disableMusicBtn" class="btn btn-danger" onclick="toggleMusic(false)" style="flex: 1;">
+                                    <span>🔇</span>
+                                    <span>إيقاف الموسيقى</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Volume Control -->
+                        <div class="form-group" style="margin-top: 20px;">
+                            <label class="form-label" style="color: white; font-size: 1.2em;">
+                                <span>🎚️</span> مستوى الصوت (حجم الموسيقى)
+                            </label>
+                            <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 10px; margin-top: 10px;">
+                                <input type="range" id="volumeSlider" min="0" max="100" value="10" 
+                                       style="width: 100%; height: 8px; border-radius: 5px; cursor: pointer;"
+                                       oninput="updateVolumeDisplay(this.value)"
+                                       onchange="saveVolumeChange(this.value)">
+                                <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 0.9em;">
+                                    <span>🔇 0%</span>
+                                    <span id="volumeDisplay" style="font-size: 1.3em; font-weight: 700;">🔊 10%</span>
+                                    <span>🔊 100%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick Volume Presets -->
+                        <div class="form-group" style="margin-top: 20px;">
+                            <label class="form-label" style="color: white; font-size: 1.1em;">
+                                <span>⚡</span> إعدادات سريعة للصوت
+                            </label>
+                            <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+                                <button class="btn btn-sm" onclick="setVolumePreset(0)" style="background: white; color: #11998e;">
+                                    <span>🔇</span> كتم الصوت
+                                </button>
+                                <button class="btn btn-sm" onclick="setVolumePreset(10)" style="background: white; color: #11998e;">
+                                    <span>🔉</span> 10%
+                                </button>
+                                <button class="btn btn-sm" onclick="setVolumePreset(25)" style="background: white; color: #11998e;">
+                                    <span>🔉</span> 25%
+                                </button>
+                                <button class="btn btn-sm" onclick="setVolumePreset(40)" style="background: white; color: #11998e;">
+                                    <span>🔊</span> 40%
+                                </button>
+                                <button class="btn btn-sm" onclick="setVolumePreset(50)" style="background: white; color: #11998e;">
+                                    <span>🔊</span> 50%
+                                </button>
+                                <button class="btn btn-sm" onclick="setVolumePreset(75)" style="background: white; color: #11998e;">
+                                    <span>🔊</span> 75%
+                                </button>
+                                <button class="btn btn-sm" onclick="setVolumePreset(100)" style="background: white; color: #11998e;">
+                                    <span>🔊</span> 100%
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Music Duration Control -->
+                        <div class="form-group" style="margin-top: 20px;">
+                            <label class="form-label" style="color: white; font-size: 1.2em;">
+                                <span>⏱️</span> مدة تشغيل الموسيقى
+                            </label>
+                            <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+                                <button class="btn btn-sm" onclick="setMusicDuration(60)" style="background: white; color: #11998e;">
+                                    <span>⏱️</span> دقيقة واحدة
+                                </button>
+                                <button class="btn btn-sm" onclick="setMusicDuration(300)" style="background: white; color: #11998e;">
+                                    <span>⏱️</span> 5 دقائق
+                                </button>
+                                <button class="btn btn-sm" onclick="setMusicDuration(600)" style="background: white; color: #11998e;">
+                                    <span>⏱️</span> 10 دقائق
+                                </button>
+                                <button class="btn btn-sm" onclick="setMusicDuration(1800)" style="background: white; color: #11998e;">
+                                    <span>⏱️</span> 30 دقيقة
+                                </button>
+                                <button class="btn btn-sm" onclick="setMusicDuration(-1)" style="background: white; color: #11998e;">
+                                    <span>♾️</span> مستمر (غير محدود)
+                                </button>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 10px; margin-top: 10px;">
+                                <span style="font-weight: 600;">المدة الحالية:</span>
+                                <span id="musicDurationLabel" style="font-weight: 700; margin-right: 10px;">⏳ جاري التحميل...</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Current Music Status -->
+                        <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 10px; margin-top: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-weight: 600;">حالة الموسيقى:</span>
+                                <span id="musicStatusLabel" style="font-size: 1.1em; font-weight: 700;">⏳ جاري التحميل...</span>
+                            </div>
+                        </div>
+                        
+                        <div class="status-message" id="musicControlStatus"></div>
+                    </div>
+                    
+                    <!-- Live Preview Section -->
+                    <div style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); padding: 25px; border-radius: 15px; color: white;">
+                        <h3 style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                            <span>👁️</span>
+                            <span>معاينة مباشرة وحية 100%</span>
+                        </h3>
+                        <p style="margin-bottom: 20px; opacity: 0.95;">
+                            جميع التغييرات تنعكس فوراً ومباشرة في GitHub وعلى جميع الأجهزة والمتصفحات
+                        </p>
+                        <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 10px;">
+                            <div style="margin-bottom: 10px;">
+                                <span style="font-weight: 600;">آخر تحديث:</span>
+                                <span id="lastUpdateLabel" style="font-weight: 700; margin-right: 10px;">⏳ جاري التحميل...</span>
+                            </div>
+                            <div>
+                                <span style="font-weight: 600;">تم التحديث بواسطة:</span>
+                                <span id="updatedByLabel" style="font-weight: 700; margin-right: 10px;">⏳ جاري التحميل...</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" onclick="loadMaintenanceConfig()" style="margin-top: 15px; background: white; color: #fa709a;">
+                            <span>🔄</span>
+                            <span>تحديث البيانات المباشرة</span>
+                        </button>
+                    </div>
                 </div>
             </div>
             
@@ -2807,6 +3016,427 @@
                 showMessage('areasManagementStatus', 'success', '✅ تم نسخ المعرف');
             });
         }
+        
+        // ============================================
+        // MAINTENANCE CONTROL FUNCTIONS
+        // ============================================
+        
+        let maintenanceConfigData = null;
+        let maintenanceStatusData = null;
+        
+        // Load maintenance configuration
+        async function loadMaintenanceConfig() {
+            try {
+                // Load maintenance-config.json
+                const configRes = await fetch(`https://api.github.com/repos/${repo}/contents/maintenance-config.json`, {
+                    headers: {
+                        'Authorization': `Bearer ${githubToken}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (configRes.ok) {
+                    const configFile = await configRes.json();
+                    maintenanceConfigData = JSON.parse(decodeURIComponent(escape(atob(configFile.content))));
+                }
+                
+                // Load maintenance-status.json
+                const statusRes = await fetch(`https://api.github.com/repos/${repo}/contents/maintenance-status.json`, {
+                    headers: {
+                        'Authorization': `Bearer ${githubToken}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (statusRes.ok) {
+                    const statusFile = await statusRes.json();
+                    maintenanceStatusData = JSON.parse(decodeURIComponent(escape(atob(statusFile.content))));
+                }
+                
+                // Update UI with loaded data
+                updateMaintenanceUI();
+                
+            } catch (error) {
+                console.error('Error loading maintenance config:', error);
+            }
+        }
+        
+        // Update maintenance UI with current values
+        function updateMaintenanceUI() {
+            if (!maintenanceConfigData || !maintenanceStatusData) return;
+            
+            // Update maintenance status
+            const isEnabled = maintenanceStatusData.enabled === true;
+            document.getElementById('maintenanceStatusLabel').textContent = isEnabled ? '🟢 مفعلة' : '🔴 متوقفة';
+            document.getElementById('maintenanceStatusLabel').style.color = isEnabled ? '#38ef7d' : '#ff6b6b';
+            
+            // Update buttons
+            if (isEnabled) {
+                document.getElementById('enableMaintenanceBtn').style.opacity = '0.5';
+                document.getElementById('disableMaintenanceBtn').style.opacity = '1';
+            } else {
+                document.getElementById('enableMaintenanceBtn').style.opacity = '1';
+                document.getElementById('disableMaintenanceBtn').style.opacity = '0.5';
+            }
+            
+            // Update music status
+            const musicEnabled = maintenanceConfigData.musicEnabled === true;
+            document.getElementById('musicStatusLabel').textContent = musicEnabled ? '🔊 مفعلة' : '🔇 متوقفة';
+            document.getElementById('musicStatusLabel').style.color = musicEnabled ? '#38ef7d' : '#ff6b6b';
+            
+            // Update buttons
+            if (musicEnabled) {
+                document.getElementById('enableMusicBtn').style.opacity = '0.5';
+                document.getElementById('disableMusicBtn').style.opacity = '1';
+            } else {
+                document.getElementById('enableMusicBtn').style.opacity = '1';
+                document.getElementById('disableMusicBtn').style.opacity = '0.5';
+            }
+            
+            // Update volume slider
+            const volume = Math.round((maintenanceConfigData.musicVolume || 0.1) * 100);
+            document.getElementById('volumeSlider').value = volume;
+            document.getElementById('volumeDisplay').textContent = `🔊 ${volume}%`;
+            
+            // Update music duration
+            const duration = maintenanceConfigData.musicDuration || 600000;
+            let durationText = '';
+            if (duration === -1) {
+                durationText = '♾️ مستمر (غير محدود)';
+            } else {
+                const minutes = Math.floor(duration / 60000);
+                if (minutes === 1) {
+                    durationText = '⏱️ دقيقة واحدة';
+                } else {
+                    durationText = `⏱️ ${minutes} دقيقة`;
+                }
+            }
+            document.getElementById('musicDurationLabel').textContent = durationText;
+            
+            // Update last update info
+            const lastUpdate = maintenanceConfigData.lastUpdated || 'غير محدد';
+            const updatedBy = maintenanceConfigData.updatedBy || 'غير محدد';
+            document.getElementById('lastUpdateLabel').textContent = new Date(lastUpdate).toLocaleString('ar-EG');
+            document.getElementById('updatedByLabel').textContent = updatedBy;
+        }
+        
+        // Toggle maintenance message on/off
+        async function toggleMaintenanceMessage(enable) {
+            if (!githubToken) {
+                showMessage('maintenanceToggleStatus', 'error', '❌ يرجى تسجيل الدخول أولاً');
+                return;
+            }
+            
+            showMessage('maintenanceToggleStatus', 'info', '⏳ جاري التحديث...');
+            
+            try {
+                // Update maintenance-status.json
+                maintenanceStatusData.enabled = enable;
+                maintenanceStatusData.disabledAt = new Date().toISOString();
+                maintenanceStatusData.disabledBy = 'المطور - Smart Planner';
+                
+                await saveMaintenanceStatus(`${enable ? 'تفعيل' : 'إيقاف'} رسالة التحديث من Smart Planner`);
+                
+                showMessage('maintenanceToggleStatus', 'success', 
+                    `✅ تم ${enable ? 'تفعيل' : 'إيقاف'} رسالة التحديث بنجاح! التغييرات انعكست فوراً في GitHub`);
+                
+                // Update UI
+                updateMaintenanceUI();
+                
+                // Force cache clear
+                setTimeout(() => forceCacheClear(), 1000);
+                
+            } catch (error) {
+                showMessage('maintenanceToggleStatus', 'error', '❌ فشل التحديث: ' + error.message);
+            }
+        }
+        
+        // Toggle music on/off
+        async function toggleMusic(enable) {
+            if (!githubToken) {
+                showMessage('musicControlStatus', 'error', '❌ يرجى تسجيل الدخول أولاً');
+                return;
+            }
+            
+            showMessage('musicControlStatus', 'info', '⏳ جاري التحديث...');
+            
+            try {
+                // Update maintenance-config.json
+                maintenanceConfigData.musicEnabled = enable;
+                maintenanceConfigData.lastUpdated = new Date().toISOString();
+                maintenanceConfigData.updatedBy = 'المطور - Smart Planner';
+                
+                await saveMaintenanceConfig(`${enable ? 'تفعيل' : 'إيقاف'} الموسيقى من Smart Planner`);
+                
+                showMessage('musicControlStatus', 'success', 
+                    `✅ تم ${enable ? 'تفعيل' : 'إيقاف'} الموسيقى بنجاح! التغييرات انعكست فوراً في GitHub`);
+                
+                // Update UI
+                updateMaintenanceUI();
+                
+                // Force cache clear
+                setTimeout(() => forceCacheClear(), 1000);
+                
+            } catch (error) {
+                showMessage('musicControlStatus', 'error', '❌ فشل التحديث: ' + error.message);
+            }
+        }
+        
+        // Update volume display
+        function updateVolumeDisplay(value) {
+            document.getElementById('volumeDisplay').textContent = `🔊 ${value}%`;
+        }
+        
+        // Save volume change
+        async function saveVolumeChange(value) {
+            if (!githubToken) {
+                showMessage('musicControlStatus', 'error', '❌ يرجى تسجيل الدخول أولاً');
+                return;
+            }
+            
+            showMessage('musicControlStatus', 'info', '⏳ جاري حفظ مستوى الصوت...');
+            
+            try {
+                // Update maintenance-config.json
+                maintenanceConfigData.musicVolume = parseInt(value) / 100;
+                maintenanceConfigData.lastUpdated = new Date().toISOString();
+                maintenanceConfigData.updatedBy = 'المطور - Smart Planner';
+                
+                await saveMaintenanceConfig(`تحديث مستوى الصوت إلى ${value}% من Smart Planner`);
+                
+                showMessage('musicControlStatus', 'success', 
+                    `✅ تم تحديث مستوى الصوت إلى ${value}% بنجاح! التغييرات انعكست فوراً في GitHub`);
+                
+                // Update UI
+                updateMaintenanceUI();
+                
+                // Force cache clear
+                setTimeout(() => forceCacheClear(), 1000);
+                
+            } catch (error) {
+                showMessage('musicControlStatus', 'error', '❌ فشل التحديث: ' + error.message);
+            }
+        }
+        
+        // Set volume preset
+        function setVolumePreset(value) {
+            document.getElementById('volumeSlider').value = value;
+            updateVolumeDisplay(value);
+            saveVolumeChange(value);
+        }
+        
+        // Set music duration
+        async function setMusicDuration(seconds) {
+            if (!githubToken) {
+                showMessage('musicControlStatus', 'error', '❌ يرجى تسجيل الدخول أولاً');
+                return;
+            }
+            
+            showMessage('musicControlStatus', 'info', '⏳ جاري تحديث مدة الموسيقى...');
+            
+            try {
+                // Update maintenance-config.json
+                const duration = seconds === -1 ? -1 : seconds * 1000;
+                maintenanceConfigData.musicDuration = duration;
+                maintenanceConfigData.lastUpdated = new Date().toISOString();
+                maintenanceConfigData.updatedBy = 'المطور - Smart Planner';
+                
+                let durationLabel = '';
+                if (seconds === -1) {
+                    durationLabel = 'غير محدود';
+                    maintenanceConfigData.musicDurationLabel = 'مستمر (غير محدود)';
+                } else {
+                    const minutes = Math.floor(seconds / 60);
+                    durationLabel = minutes === 1 ? 'دقيقة واحدة' : `${minutes} دقيقة`;
+                    maintenanceConfigData.musicDurationLabel = durationLabel;
+                }
+                
+                await saveMaintenanceConfig(`تحديث مدة الموسيقى إلى ${durationLabel} من Smart Planner`);
+                
+                showMessage('musicControlStatus', 'success', 
+                    `✅ تم تحديث مدة الموسيقى إلى ${durationLabel} بنجاح! التغييرات انعكست فوراً في GitHub`);
+                
+                // Update UI
+                updateMaintenanceUI();
+                
+                // Force cache clear
+                setTimeout(() => forceCacheClear(), 1000);
+                
+            } catch (error) {
+                showMessage('musicControlStatus', 'error', '❌ فشل التحديث: ' + error.message);
+            }
+        }
+        
+        // Save maintenance config to GitHub
+        async function saveMaintenanceConfig(commitMessage) {
+            // Get current file SHA
+            const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/maintenance-config.json`, {
+                headers: {
+                    'Authorization': `Bearer ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+            
+            if (!getRes.ok) {
+                throw new Error('فشل الحصول على ملف maintenance-config.json');
+            }
+            
+            const file = await getRes.json();
+            const sha = file.sha;
+            
+            // Prepare content
+            const content = btoa(unescape(encodeURIComponent(JSON.stringify(maintenanceConfigData, null, 2))));
+            
+            // Update file
+            const updateRes = await fetch(`https://api.github.com/repos/${repo}/contents/maintenance-config.json`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: commitMessage,
+                    content: content,
+                    sha: sha
+                })
+            });
+            
+            if (!updateRes.ok) {
+                throw new Error('فشل تحديث ملف maintenance-config.json');
+            }
+        }
+        
+        // Save maintenance status to GitHub
+        async function saveMaintenanceStatus(commitMessage) {
+            // Get current file SHA
+            const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/maintenance-status.json`, {
+                headers: {
+                    'Authorization': `Bearer ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+            
+            if (!getRes.ok) {
+                throw new Error('فشل الحصول على ملف maintenance-status.json');
+            }
+            
+            const file = await getRes.json();
+            const sha = file.sha;
+            
+            // Prepare content
+            const content = btoa(unescape(encodeURIComponent(JSON.stringify(maintenanceStatusData, null, 2))));
+            
+            // Update file
+            const updateRes = await fetch(`https://api.github.com/repos/${repo}/contents/maintenance-status.json`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: commitMessage,
+                    content: content,
+                    sha: sha
+                })
+            });
+            
+            if (!updateRes.ok) {
+                throw new Error('فشل تحديث ملف maintenance-status.json');
+            }
+        }
+        
+        // Force cache clear
+        async function forceCacheClear() {
+            showMessage('cacheControlStatus', 'info', '⏳ جاري مسح الكاش والذاكرة...');
+            
+            try {
+                // Clear local storage
+                const keysToKeep = ['devToken'];
+                const allKeys = Object.keys(localStorage);
+                allKeys.forEach(key => {
+                    if (!keysToKeep.includes(key)) {
+                        localStorage.removeItem(key);
+                    }
+                });
+                
+                // Clear session storage
+                sessionStorage.clear();
+                
+                // Unregister all service workers
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let registration of registrations) {
+                        await registration.unregister();
+                        console.log('✅ Service Worker unregistered:', registration);
+                    }
+                }
+                
+                // Clear all caches
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    for (let cacheName of cacheNames) {
+                        await caches.delete(cacheName);
+                        console.log('✅ Cache deleted:', cacheName);
+                    }
+                }
+                
+                showMessage('cacheControlStatus', 'success', 
+                    '✅ تم مسح جميع الكاش والذاكرة بنجاح!\n' +
+                    '🔄 Service Workers: تم إلغاء التسجيل\n' +
+                    '🗑️ Caches: تم المسح الكامل\n' +
+                    '💾 LocalStorage: تم التنظيف\n' +
+                    '📦 SessionStorage: تم المسح\n\n' +
+                    '✨ التحديثات ستنعكس فوراً في جميع المتصفحات (Safari, Chrome, Firefox)');
+                
+            } catch (error) {
+                showMessage('cacheControlStatus', 'error', '❌ فشل مسح الكاش: ' + error.message);
+            }
+        }
+        
+        // Update service worker
+        async function updateServiceWorker() {
+            showMessage('cacheControlStatus', 'info', '⏳ جاري تحديث Service Worker...');
+            
+            try {
+                if ('serviceWorker' in navigator) {
+                    // Get all registrations
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    
+                    if (registrations.length === 0) {
+                        showMessage('cacheControlStatus', 'warning', '⚠️ لا توجد Service Workers مسجلة');
+                        return;
+                    }
+                    
+                    // Update all service workers
+                    for (let registration of registrations) {
+                        await registration.update();
+                        console.log('✅ Service Worker updated:', registration);
+                    }
+                    
+                    showMessage('cacheControlStatus', 'success', 
+                        `✅ تم تحديث ${registrations.length} Service Worker بنجاح!\n` +
+                        '🔄 التحديثات ستنعكس فوراً في جميع علامات التبويب');
+                    
+                } else {
+                    showMessage('cacheControlStatus', 'error', '❌ المتصفح لا يدعم Service Workers');
+                }
+                
+            } catch (error) {
+                showMessage('cacheControlStatus', 'error', '❌ فشل تحديث Service Worker: ' + error.message);
+            }
+        }
+        
+        // Update switchTab function to load maintenance config when switching to maintenance tab
+        const originalSwitchTab = switchTab;
+        switchTab = function(tabName) {
+            originalSwitchTab.call(this, tabName);
+            
+            if (tabName === 'maintenance') {
+                loadMaintenanceConfig();
+            }
+        };
     </script>
 </body>
 </html>

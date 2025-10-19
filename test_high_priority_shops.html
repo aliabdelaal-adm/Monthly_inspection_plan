@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>Test High Priority Shops Feature</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Cairo', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      direction: rtl;
+    }
+    
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+    
+    h1 {
+      text-align: center;
+      color: #2d3561;
+      margin-bottom: 30px;
+    }
+    
+    .test-section {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    .form-label {
+      display: block;
+      font-weight: 600;
+      color: #2d3561;
+      margin-bottom: 8px;
+    }
+    
+    .form-control {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-family: 'Cairo', Arial, sans-serif;
+      font-size: 14px;
+    }
+    
+    .info-box {
+      background: #e3f2fd;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      border-left: 4px solid #2196f3;
+    }
+    
+    .success-box {
+      background: #e8f5e9;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+      border-left: 4px solid #4caf50;
+    }
+    
+    .result {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+      border: 2px solid #ddd;
+    }
+    
+    optgroup {
+      font-weight: bold;
+      font-size: 15px;
+    }
+    
+    option {
+      padding: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧪 اختبار ميزة المحلات ذات الأولوية العالية</h1>
+    
+    <div class="info-box">
+      <strong>📋 الهدف من الاختبار:</strong>
+      <p>التحقق من أن المحلات تظهر مصنفة حسب الأولوية والتوافر، وأن المحلات ذات الأولوية العالية تظهر دائماً حتى لو كانت محجوزة أو تم تفتيشها مؤخراً.</p>
+    </div>
+    
+    <div class="test-section">
+      <h2 style="margin-bottom: 15px;">⚙️ بيانات الاختبار</h2>
+      
+      <div class="form-group">
+        <label class="form-label">المفتش</label>
+        <select id="testInspector" class="form-control" onchange="updateTestShops()">
+          <option value="">-- اختر المفتش --</option>
+          <option value="د. آمنه بن صرم">د. آمنه بن صرم</option>
+          <option value="د. آيه سلامة">د. آيه سلامة</option>
+          <option value="د. حسينة العامري">د. حسينة العامري</option>
+          <option value="د. حصة العلي">د. حصة العلي</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">التاريخ</label>
+        <input type="date" id="testDate" class="form-control" value="2025-10-20" onchange="updateTestShops()">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">المنطقة</label>
+        <select id="testArea" class="form-control" onchange="updateTestShops()">
+          <option value="">-- اختر المنطقة --</option>
+          <option value="سوق الميناء">سوق الميناء</option>
+          <option value="الحصن">الحصن</option>
+          <option value="شمال الوثبة">شمال الوثبة</option>
+          <option value="المصفح">المصفح</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">المحلات المتاحة</label>
+        <div class="info-box" style="margin-bottom: 10px; background: #fff3e0; border-left-color: #ff9800;">
+          <small>
+            <strong>التصنيف:</strong>
+            <br>🔴 <strong>أولوية عالية:</strong> محلات لم يتم تفتيشها منذ فترة طويلة
+            <br>🟡🟢 <strong>محلات متاحة:</strong> محلات لم يتم حجزها اليوم ولم يتم تفتيشها مؤخراً
+          </small>
+        </div>
+        <select id="testShops" class="form-control" multiple size="12" disabled>
+          <option value="">-- اختر المنطقة أولاً --</option>
+        </select>
+      </div>
+    </div>
+    
+    <div id="resultSection" class="result" style="display: none;">
+      <h3 style="margin-bottom: 10px; color: #2d3561;">📊 نتائج الاختبار</h3>
+      <div id="resultContent"></div>
+    </div>
+    
+    <div class="success-box">
+      <strong>✅ معايير النجاح:</strong>
+      <ul style="margin-top: 10px; padding-right: 20px;">
+        <li>يجب أن تظهر المحلات ذات الأولوية العالية في القسم الأول</li>
+        <li>يجب أن تظهر المحلات المتاحة في القسم الثاني</li>
+        <li>يجب أن تظهر جميع المحلات حتى لو كانت محجوزة أو تم تفتيشها مؤخراً</li>
+        <li>التصنيف يتغير ديناميكياً عند تغيير المفتش أو التاريخ</li>
+      </ul>
+    </div>
+  </div>
+  
+  <script>
+    // Test data
+    let planData = {
+      inspectionData: [
+        {
+          inspector: "د. آمنه بن صرم",
+          day: "2025-09-26",
+          shift: "صباحية",
+          area: "سوق الميناء",
+          shops: ["محل بيت الطيور", "محل الميناء للطيور", "محل السحر للطيور"]
+        },
+        {
+          inspector: "د. آيه سلامة",
+          day: "2025-10-15",
+          shift: "صباحية",
+          area: "سوق الميناء",
+          shops: ["محل جرين لندز", "محل عصافير الخليج"]
+        },
+        {
+          inspector: "د. حسينة العامري",
+          day: "2025-10-20",
+          shift: "صباحية",
+          area: "سوق الميناء",
+          shops: ["محل بيت الطيور"]
+        }
+      ]
+    };
+    
+    let shopsDetails = {
+      "محل بيت الطيور": { address: "سوق الميناء", activity: "تجارة الطيور" },
+      "محل الميناء للطيور": { address: "سوق الميناء", activity: "تجارة الطيور" },
+      "محل السحر للطيور": { address: "سوق الميناء", activity: "تجارة الحيوانات" },
+      "محل جرين لندز": { address: "سوق الميناء", activity: "تجارة الطيور" },
+      "محل عصافير الخليج": { address: "سوق الميناء", activity: "تجارة الطيور" },
+      "محل جراح للطيور": { address: "سوق الميناء", activity: "تجارة الحيوانات" },
+      "محل نجمة الشرق لأسماك الزينة": { address: "سوق الميناء", activity: "تجارة الأسماك" },
+      "محل اختبار الوثبة": { address: "شمال الوثبة", activity: "تجارة الحيوانات" },
+      "محل اختبار المصفح": { address: "المصفح", activity: "تجارة الطيور" }
+    };
+    
+    // Helper functions (same as in admin-dashboard.html)
+    function getAllShopsInArea(area) {
+      const shops = new Set();
+      
+      if (shopsDetails) {
+        Object.entries(shopsDetails).forEach(([name, details]) => {
+          if (details.address === area) {
+            shops.add(name);
+          }
+        });
+      }
+      
+      if (planData && planData.inspectionData) {
+        planData.inspectionData.forEach(inspection => {
+          if (inspection.area === area && inspection.shops) {
+            inspection.shops.forEach(shop => shops.add(shop));
+          }
+        });
+      }
+      
+      return Array.from(shops);
+    }
+    
+    function isShopAssignedOnDate(shop, date) {
+      if (!planData || !planData.inspectionData) return false;
+      
+      return planData.inspectionData.some(inspection => {
+        return inspection.day === date && 
+               inspection.shops && 
+               inspection.shops.includes(shop);
+      });
+    }
+    
+    function wasShopRecentlyInspectedByInspector(shop, inspector, date) {
+      if (!planData || !planData.inspectionData || !date) return false;
+      
+      const targetDate = new Date(date);
+      const sevenDaysAgo = new Date(targetDate);
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      return planData.inspectionData.some(inspection => {
+        if (inspection.inspector !== inspector) return false;
+        if (!inspection.shops || !inspection.shops.includes(shop)) return false;
+        
+        const inspectionDate = new Date(inspection.day);
+        return inspectionDate > sevenDaysAgo && inspectionDate < targetDate;
+      });
+    }
+    
+    function getLastInspectionDate(shop) {
+      if (!planData || !planData.inspectionData) return null;
+      
+      let lastDate = null;
+      
+      planData.inspectionData.forEach(inspection => {
+        if (inspection.shops && inspection.shops.includes(shop)) {
+          if (!lastDate || inspection.day > lastDate) {
+            lastDate = inspection.day;
+          }
+        }
+      });
+      
+      return lastDate;
+    }
+    
+    function calculateShopPriority(shop, inspector, date) {
+      let score = 0;
+      
+      const lastInspection = getLastInspectionDate(shop);
+      
+      if (!lastInspection) {
+        score += 100;
+      } else {
+        const targetDate = new Date(date || new Date());
+        const lastDate = new Date(lastInspection);
+        const daysSince = Math.floor((targetDate - lastDate) / (1000 * 60 * 60 * 24));
+        
+        if (daysSince > 30) {
+          score += 80;
+        } else if (daysSince > 21) {
+          score += 60;
+        } else if (daysSince > 14) {
+          score += 40;
+        } else {
+          score += 20;
+        }
+      }
+      
+      if (shopsDetails && shopsDetails[shop]) {
+        const activity = shopsDetails[shop].activity || '';
+        if (activity.includes('يجب تسجيلها')) {
+          score += 30;
+        }
+      }
+      
+      let level = 'low';
+      if (score >= 80) level = 'high';
+      else if (score >= 50) level = 'medium';
+      
+      return { level, score };
+    }
+    
+    function updateTestShops() {
+      const areaSelect = document.getElementById('testArea');
+      const shopsSelect = document.getElementById('testShops');
+      const inspectorSelect = document.getElementById('testInspector');
+      const dateInput = document.getElementById('testDate');
+      const resultSection = document.getElementById('resultSection');
+      const resultContent = document.getElementById('resultContent');
+      
+      const selectedArea = areaSelect.value;
+      const inspector = inspectorSelect.value;
+      const date = dateInput.value;
+      
+      if (!selectedArea) {
+        shopsSelect.innerHTML = '<option value="">-- اختر المنطقة أولاً --</option>';
+        shopsSelect.disabled = true;
+        resultSection.style.display = 'none';
+        return;
+      }
+      
+      const allShopsInArea = getAllShopsInArea(selectedArea);
+      
+      if (allShopsInArea.length === 0) {
+        shopsSelect.innerHTML = '<option value="">-- لا توجد محلات في هذه المنطقة --</option>';
+        shopsSelect.disabled = true;
+        resultSection.style.display = 'none';
+        return;
+      }
+      
+      const availableShops = [];
+      const highPriorityShops = [];
+      const otherShops = [];
+      
+      allShopsInArea.forEach(shop => {
+        const priority = calculateShopPriority(shop, inspector, date);
+        const assignedToday = date ? isShopAssignedOnDate(shop, date) : false;
+        const recentlyInspected = inspector && date ? wasShopRecentlyInspectedByInspector(shop, inspector, date) : false;
+        
+        const shopInfo = {
+          name: shop,
+          priority: priority.level,
+          score: priority.score,
+          assignedToday,
+          recentlyInspected
+        };
+        
+        if (!assignedToday && !recentlyInspected) {
+          if (priority.level === 'high') {
+            highPriorityShops.push(shopInfo);
+          } else {
+            availableShops.push(shopInfo);
+          }
+        } else {
+          if (priority.level === 'high') {
+            highPriorityShops.push(shopInfo);
+          } else {
+            otherShops.push(shopInfo);
+          }
+        }
+      });
+      
+      const sortByScore = (a, b) => b.score - a.score;
+      highPriorityShops.sort(sortByScore);
+      availableShops.sort(sortByScore);
+      otherShops.sort(sortByScore);
+      
+      let options = '';
+      
+      if (highPriorityShops.length > 0) {
+        options += '<optgroup label="━━━ محلات ذات أولوية عالية ━━━">';
+        highPriorityShops.forEach(shop => {
+          const status = shop.assignedToday ? ' [محجوز اليوم]' : 
+                        shop.recentlyInspected ? ' [تم التفتيش مؤخراً]' : 
+                        ' [متاح]';
+          options += `<option value="${shop.name}" style="background-color: #ffe6e6;">🔴 ${shop.name}${status}</option>`;
+        });
+        options += '</optgroup>';
+      }
+      
+      if (availableShops.length > 0) {
+        options += '<optgroup label="━━━ محلات متاحة ━━━">';
+        availableShops.forEach(shop => {
+          const priorityIcon = shop.priority === 'medium' ? '🟡' : '🟢';
+          options += `<option value="${shop.name}">${priorityIcon} ${shop.name} [متاح]</option>`;
+        });
+        options += '</optgroup>';
+      }
+      
+      if (otherShops.length > 0) {
+        options += '<optgroup label="━━━ محلات أخرى ━━━">';
+        otherShops.forEach(shop => {
+          const status = shop.assignedToday ? ' [محجوز اليوم]' : 
+                        shop.recentlyInspected ? ' [تم التفتيش مؤخراً]' : '';
+          options += `<option value="${shop.name}" style="color: #999;">${shop.name}${status}</option>`;
+        });
+        options += '</optgroup>';
+      }
+      
+      if (options === '') {
+        shopsSelect.innerHTML = '<option value="">-- لا توجد محلات في هذه المنطقة --</option>';
+        shopsSelect.disabled = true;
+        resultSection.style.display = 'none';
+        return;
+      }
+      
+      shopsSelect.innerHTML = options;
+      shopsSelect.disabled = false;
+      
+      // Display results
+      resultSection.style.display = 'block';
+      resultContent.innerHTML = `
+        <p><strong>إجمالي المحلات:</strong> ${allShopsInArea.length}</p>
+        <p><strong>محلات ذات أولوية عالية:</strong> ${highPriorityShops.length}</p>
+        <p><strong>محلات متاحة:</strong> ${availableShops.length}</p>
+        <p><strong>محلات أخرى:</strong> ${otherShops.length}</p>
+        <hr style="margin: 10px 0; border: none; border-top: 1px solid #ddd;">
+        <p style="color: #4caf50;"><strong>✅ النتيجة:</strong> جميع المحلات تظهر بشكل صحيح مصنفة حسب الأولوية!</p>
+      `;
+    }
+  </script>
+</body>
+</html>

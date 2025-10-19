@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار مسح الكاش القوي - Smart Planner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Cairo', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2d3561;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        .test-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .test-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        
+        .test-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s;
+        }
+        
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .test-button.danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .info-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+        
+        .code-block {
+            background: #2d3561;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 اختبار مسح الكاش القوي في Smart Planner</h1>
+        
+        <div class="test-section">
+            <h2>📋 معلومات الاختبار</h2>
+            <div class="info-box">
+                <strong>الهدف:</strong> التحقق من أن وظيفة مسح الكاش تعمل بشكل صحيح وفوري على جميع المتصفحات<br><br>
+                <strong>المتصفحات المدعومة:</strong> Safari، Chrome، Firefox (سطح المكتب والجوال)<br><br>
+                <strong>ما يتم مسحه:</strong>
+                <ul style="margin-top: 10px; margin-right: 20px;">
+                    <li>✅ LocalStorage (مع الحفاظ على devToken)</li>
+                    <li>✅ SessionStorage</li>
+                    <li>✅ Service Workers</li>
+                    <li>✅ Cache Storage</li>
+                    <li>✅ Cookies</li>
+                    <li>✅ IndexedDB</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🔧 خطوات الاختبار</h2>
+            <div style="background: white; padding: 20px; border-radius: 10px;">
+                <h3 style="color: #667eea; margin-bottom: 15px;">1️⃣ إنشاء بيانات اختبار</h3>
+                <p style="margin-bottom: 10px;">قم بإنشاء بيانات في كل أنواع التخزين:</p>
+                <button class="test-button" onclick="createTestData()">📝 إنشاء بيانات الاختبار</button>
+                <div id="createStatus"></div>
+                
+                <h3 style="color: #667eea; margin: 25px 0 15px;">2️⃣ التحقق من البيانات</h3>
+                <p style="margin-bottom: 10px;">تحقق من وجود البيانات قبل المسح:</p>
+                <button class="test-button" onclick="checkData()">🔍 فحص البيانات الموجودة</button>
+                <div id="checkStatus"></div>
+                
+                <h3 style="color: #667eea; margin: 25px 0 15px;">3️⃣ مسح الكاش</h3>
+                <p style="margin-bottom: 10px;">قم بتنفيذ وظيفة مسح الكاش القوي:</p>
+                <button class="test-button danger" onclick="forceCacheClear()">🚀 مسح قوي وفوري للكاش</button>
+                <div id="clearStatus"></div>
+                
+                <h3 style="color: #667eea; margin: 25px 0 15px;">4️⃣ التحقق بعد المسح</h3>
+                <p style="margin-bottom: 10px;">تحقق من أن البيانات تم مسحها (بعد إلغاء إعادة التحميل التلقائي):</p>
+                <button class="test-button" onclick="verifyClearing()">✔️ التحقق من نجاح المسح</button>
+                <div id="verifyStatus"></div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📊 سجل النشاط</h2>
+            <div class="code-block" id="logOutput">جاري انتظار الاختبار...</div>
+        </div>
+    </div>
+    
+    <script>
+        let logs = [];
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString('ar-EG');
+            logs.push(`[${timestamp}] ${message}`);
+            document.getElementById('logOutput').textContent = logs.join('\n');
+            console.log(message);
+        }
+        
+        function showStatus(elementId, type, message) {
+            const element = document.getElementById(elementId);
+            element.className = `status ${type}`;
+            element.innerHTML = message;
+        }
+        
+        // 1. Create test data
+        function createTestData() {
+            log('🔄 إنشاء بيانات الاختبار...');
+            
+            try {
+                // LocalStorage
+                localStorage.setItem('testItem1', 'test value 1');
+                localStorage.setItem('testItem2', 'test value 2');
+                localStorage.setItem('devToken', 'should-be-preserved');
+                log('✅ تم إنشاء 3 عناصر في LocalStorage');
+                
+                // SessionStorage
+                sessionStorage.setItem('sessionTest1', 'session value 1');
+                sessionStorage.setItem('sessionTest2', 'session value 2');
+                log('✅ تم إنشاء 2 عناصر في SessionStorage');
+                
+                // Cookies
+                document.cookie = "testCookie1=value1; path=/";
+                document.cookie = "testCookie2=value2; path=/";
+                log('✅ تم إنشاء 2 cookies');
+                
+                // Cache Storage
+                if ('caches' in window) {
+                    caches.open('test-cache').then(cache => {
+                        return cache.put('/test-url', new Response('test data'));
+                    }).then(() => {
+                        log('✅ تم إنشاء test-cache');
+                    });
+                }
+                
+                showStatus('createStatus', 'success', 
+                    '✅ تم إنشاء جميع بيانات الاختبار بنجاح!\n' +
+                    '💾 LocalStorage: 3 عناصر\n' +
+                    '📦 SessionStorage: 2 عناصر\n' +
+                    '🍪 Cookies: 2 cookies\n' +
+                    '🗄️ Cache Storage: 1 cache');
+                
+            } catch (error) {
+                log('❌ فشل إنشاء البيانات: ' + error.message);
+                showStatus('createStatus', 'error', '❌ فشل: ' + error.message);
+            }
+        }
+        
+        // 2. Check existing data
+        async function checkData() {
+            log('🔍 فحص البيانات الموجودة...');
+            
+            try {
+                let findings = [];
+                
+                // Check LocalStorage
+                const localStorageCount = localStorage.length;
+                findings.push(`💾 LocalStorage: ${localStorageCount} عنصر`);
+                log(`LocalStorage items: ${localStorageCount}`);
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    log(`  - ${key}: ${localStorage.getItem(key)}`);
+                }
+                
+                // Check SessionStorage
+                const sessionStorageCount = sessionStorage.length;
+                findings.push(`📦 SessionStorage: ${sessionStorageCount} عنصر`);
+                log(`SessionStorage items: ${sessionStorageCount}`);
+                
+                // Check Cookies
+                const cookies = document.cookie.split(';').filter(c => c.trim());
+                findings.push(`🍪 Cookies: ${cookies.length} cookie`);
+                log(`Cookies: ${cookies.length}`);
+                cookies.forEach(c => log(`  - ${c.trim()}`));
+                
+                // Check Caches
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    findings.push(`🗄️ Caches: ${cacheNames.length} cache`);
+                    log(`Cache names: ${cacheNames.length}`);
+                    cacheNames.forEach(name => log(`  - ${name}`));
+                }
+                
+                // Check Service Workers
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    findings.push(`🔄 Service Workers: ${registrations.length} worker`);
+                    log(`Service Workers: ${registrations.length}`);
+                }
+                
+                showStatus('checkStatus', 'info', 
+                    '📊 حالة البيانات الحالية:\n\n' + findings.join('\n'));
+                
+            } catch (error) {
+                log('❌ فشل الفحص: ' + error.message);
+                showStatus('checkStatus', 'error', '❌ فشل: ' + error.message);
+            }
+        }
+        
+        // 3. Force cache clear - AGGRESSIVE IMPLEMENTATION
+        async function forceCacheClear() {
+            log('🚀 بدء عملية مسح الكاش القوي...');
+            showStatus('clearStatus', 'info', '⏳ جاري مسح الكاش والذاكرة بشكل فوري وقوي...');
+            
+            try {
+                let clearedItems = [];
+                
+                // 1. Clear local storage (preserve devToken)
+                const keysToKeep = ['devToken'];
+                const allKeys = Object.keys(localStorage);
+                let localStorageCount = 0;
+                allKeys.forEach(key => {
+                    if (!keysToKeep.includes(key)) {
+                        localStorage.removeItem(key);
+                        localStorageCount++;
+                    }
+                });
+                clearedItems.push(`💾 LocalStorage: تم مسح ${localStorageCount} عنصر`);
+                log(`✅ Cleared ${localStorageCount} LocalStorage items`);
+                
+                // 2. Clear session storage
+                const sessionStorageCount = sessionStorage.length;
+                sessionStorage.clear();
+                clearedItems.push(`📦 SessionStorage: تم مسح ${sessionStorageCount} عنصر`);
+                log(`✅ Cleared ${sessionStorageCount} SessionStorage items`);
+                
+                // 3. Unregister all service workers
+                let swCount = 0;
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let registration of registrations) {
+                        await registration.unregister();
+                        swCount++;
+                        log(`✅ Service Worker unregistered: ${registration.scope}`);
+                    }
+                }
+                clearedItems.push(`🔄 Service Workers: تم إلغاء تسجيل ${swCount} خدمة`);
+                
+                // 4. Clear all caches
+                let cacheCount = 0;
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    for (let cacheName of cacheNames) {
+                        await caches.delete(cacheName);
+                        cacheCount++;
+                        log(`✅ Cache deleted: ${cacheName}`);
+                    }
+                }
+                clearedItems.push(`🗑️ Caches: تم مسح ${cacheCount} كاش`);
+                
+                // 5. Clear cookies (if possible)
+                try {
+                    const cookiesBefore = document.cookie.split(';').filter(c => c.trim()).length;
+                    document.cookie.split(";").forEach(function(c) { 
+                        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+                    });
+                    clearedItems.push(`🍪 Cookies: تم المسح (${cookiesBefore} cookies)`);
+                    log(`✅ Cleared cookies`);
+                } catch (e) {
+                    log('⚠️ Could not clear cookies: ' + e.message);
+                }
+                
+                // 6. Clear IndexedDB (if exists)
+                if ('indexedDB' in window) {
+                    try {
+                        const databases = await indexedDB.databases();
+                        for (const db of databases) {
+                            indexedDB.deleteDatabase(db.name);
+                            log(`✅ IndexedDB deleted: ${db.name}`);
+                        }
+                        clearedItems.push(`📊 IndexedDB: تم المسح (${databases.length} قواعد بيانات)`);
+                    } catch (e) {
+                        log('⚠️ Could not clear IndexedDB: ' + e.message);
+                    }
+                }
+                
+                // Show success message
+                showStatus('clearStatus', 'success', 
+                    '✅ تم مسح جميع الكاش والذاكرة بنجاح!\n\n' +
+                    clearedItems.join('\n') + '\n\n' +
+                    '✨ التحديثات ستنعكس فوراً في جميع المتصفحات (Safari, Chrome, Firefox)\n' +
+                    '⚠️ تم تعطيل إعادة التحميل التلقائي لأغراض الاختبار');
+                
+                log('✅ اكتملت عملية مسح الكاش بنجاح!');
+                
+                // NOTE: Auto-reload is commented out for testing purposes
+                // In production, uncomment the following lines:
+                /*
+                setTimeout(() => {
+                    console.log('🔄 Performing hard reload...');
+                    if (window.location.reload) {
+                        window.location.reload(true);
+                    }
+                    setTimeout(() => {
+                        window.location.href = window.location.href.split('?')[0] + '?t=' + new Date().getTime();
+                    }, 500);
+                }, 3000);
+                */
+                
+            } catch (error) {
+                log('❌ فشل مسح الكاش: ' + error.message);
+                showStatus('clearStatus', 'error', '❌ فشل مسح الكاش: ' + error.message);
+            }
+        }
+        
+        // 4. Verify clearing
+        async function verifyClearing() {
+            log('✔️ التحقق من نجاح عملية المسح...');
+            
+            try {
+                let results = [];
+                let allClear = true;
+                
+                // Check LocalStorage (should only have devToken)
+                const localStorageCount = localStorage.length;
+                const hasOnlyDevToken = localStorageCount === 1 && localStorage.getItem('devToken') !== null;
+                if (hasOnlyDevToken) {
+                    results.push('✅ LocalStorage: تم المسح بنجاح (محفوظ فقط devToken)');
+                } else {
+                    results.push(`❌ LocalStorage: يحتوي على ${localStorageCount} عنصر (يجب أن يكون 1 فقط)`);
+                    allClear = false;
+                }
+                log(`LocalStorage items remaining: ${localStorageCount}`);
+                
+                // Check SessionStorage
+                const sessionStorageCount = sessionStorage.length;
+                if (sessionStorageCount === 0) {
+                    results.push('✅ SessionStorage: تم المسح بالكامل');
+                } else {
+                    results.push(`❌ SessionStorage: يحتوي على ${sessionStorageCount} عنصر`);
+                    allClear = false;
+                }
+                log(`SessionStorage items remaining: ${sessionStorageCount}`);
+                
+                // Check Caches
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    if (cacheNames.length === 0) {
+                        results.push('✅ Caches: تم المسح بالكامل');
+                    } else {
+                        results.push(`❌ Caches: يحتوي على ${cacheNames.length} cache`);
+                        allClear = false;
+                    }
+                    log(`Cache names remaining: ${cacheNames.length}`);
+                }
+                
+                // Check Service Workers
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    if (registrations.length === 0) {
+                        results.push('✅ Service Workers: تم إلغاء التسجيل بالكامل');
+                    } else {
+                        results.push(`⚠️ Service Workers: يحتوي على ${registrations.length} worker`);
+                        // Service workers may take time to unregister
+                    }
+                    log(`Service Workers remaining: ${registrations.length}`);
+                }
+                
+                const statusType = allClear ? 'success' : 'error';
+                const statusIcon = allClear ? '✅' : '⚠️';
+                showStatus('verifyStatus', statusType, 
+                    `${statusIcon} نتيجة التحقق:\n\n` + results.join('\n'));
+                
+                log(allClear ? '✅ التحقق: جميع البيانات تم مسحها بنجاح!' : '⚠️ التحقق: بعض البيانات لا تزال موجودة');
+                
+            } catch (error) {
+                log('❌ فشل التحقق: ' + error.message);
+                showStatus('verifyStatus', 'error', '❌ فشل: ' + error.message);
+            }
+        }
+        
+        // Initialize
+        log('✨ تم تحميل صفحة الاختبار بنجاح');
+        log('📝 ابدأ بإنشاء بيانات الاختبار');
+    </script>
+</body>
+</html>

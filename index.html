@@ -6920,8 +6920,7 @@ async function enableMaintenanceModeForAll() {
     // Prevent concurrent execution (debouncing)
     if (isMaintenanceOperationInProgress) {
         console.log('⚠️ عملية أخرى قيد التنفيذ - يرجى الانتظار');
-        showMaintenanceProgress('⚠️ عملية أخرى قيد التنفيذ\nيرجى الانتظار حتى تنتهي...', 'warning');
-        setTimeout(() => hideMaintenanceProgress(), 2000);
+        showMaintenanceProgress('⚠️ عملية أخرى قيد التنفيذ\nيرجى الانتظار حتى تنتهي...', 'warning', false, 3000);
         return;
     }
     
@@ -7048,8 +7047,7 @@ async function disableMaintenanceModeForAll() {
     // Prevent concurrent execution (debouncing)
     if (isMaintenanceOperationInProgress) {
         console.log('⚠️ عملية أخرى قيد التنفيذ - يرجى الانتظار');
-        showMaintenanceProgress('⚠️ عملية أخرى قيد التنفيذ\nيرجى الانتظار حتى تنتهي...', 'warning');
-        setTimeout(() => hideMaintenanceProgress(), 2000);
+        showMaintenanceProgress('⚠️ عملية أخرى قيد التنفيذ\nيرجى الانتظار حتى تنتهي...', 'warning', false, 3000);
         return;
     }
     
@@ -8251,11 +8249,16 @@ function showUpdateMessage(message) {
 }
 
 // Show persistent progress message for maintenance mode operations
-function showMaintenanceProgress(message, type = 'loading', persist = false) {
+// duration: time in milliseconds to display the message (0 = persist forever until manually hidden)
+function showMaintenanceProgress(message, type = 'loading', persist = false, duration = 5000) {
     // Remove any existing maintenance progress message
     const existing = document.getElementById('maintenanceProgressMsg');
     if (existing) {
         existing.remove();
+        // Clear any existing auto-hide timeout
+        if (existing._hideTimeout) {
+            clearTimeout(existing._hideTimeout);
+        }
     }
     
     // Create new progress message
@@ -8264,6 +8267,7 @@ function showMaintenanceProgress(message, type = 'loading', persist = false) {
     
     // Store persist flag as data attribute
     messageDiv.setAttribute('data-persist', persist.toString());
+    messageDiv.setAttribute('data-duration', duration.toString());
     
     // Choose background color based on type
     let bgColor = '#ffc107'; // warning/loading color (yellow)
@@ -8274,9 +8278,9 @@ function showMaintenanceProgress(message, type = 'loading', persist = false) {
     
     messageDiv.style.cssText = `
         position: fixed;
-        top: 20px;
+        top: 50%;
         left: 50%;
-        transform: translateX(-50%);
+        transform: translate(-50%, -50%);
         background: ${bgColor};
         color: white;
         padding: 18px 30px;
@@ -8287,15 +8291,23 @@ function showMaintenanceProgress(message, type = 'loading', persist = false) {
         box-shadow: 0 6px 20px rgba(0,0,0,0.4);
         text-align: center;
         min-width: 350px;
-        max-width: 550px;
+        max-width: 90%;
         white-space: pre-line;
-        animation: slideDown 0.3s ease-out, ${persist ? 'pulse 2s ease-in-out infinite' : 'none'};
+        animation: fadeIn 0.3s ease-out, ${persist ? 'pulse 2s ease-in-out infinite' : 'none'};
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 12px;
         border: 3px solid rgba(255,255,255,0.3);
     `;
+    
+    // Add responsive styles for mobile
+    if (window.innerWidth <= 768) {
+        messageDiv.style.minWidth = '280px';
+        messageDiv.style.maxWidth = '90%';
+        messageDiv.style.padding = '15px 20px';
+        messageDiv.style.fontSize = '16px';
+    }
     
     // Add loading spinner if type is 'loading' or 'warning'
     if (type === 'loading' || type === 'warning') {
@@ -8310,8 +8322,8 @@ function showMaintenanceProgress(message, type = 'loading', persist = false) {
     
     document.body.appendChild(messageDiv);
     
-    console.log(`📢 Maintenance progress message shown - persist: ${persist}`);
-    console.log(`📍 Message position: top: 20px, z-index: 10001`);
+    console.log(`📢 Maintenance progress message shown - persist: ${persist}, duration: ${duration}ms`);
+    console.log(`📍 Message position: centered (top: 50%, left: 50%), z-index: 10001`);
     console.log(`🎨 Message style: ${type} (${bgColor})`);
     console.log(`📝 Message text: ${message}`);
     
@@ -8325,6 +8337,16 @@ function showMaintenanceProgress(message, type = 'loading', persist = false) {
         }
     }, 100);
     
+    // Auto-hide after duration if duration > 0 and not persistent
+    if (duration > 0 && !persist) {
+        const hideTimeout = setTimeout(() => {
+            console.log(`⏰ Auto-hiding message after ${duration}ms`);
+            hideMaintenanceProgress();
+        }, duration);
+        // Store timeout reference so it can be cleared if needed
+        messageDiv._hideTimeout = hideTimeout;
+    }
+    
     return messageDiv;
 }
 
@@ -8334,7 +8356,14 @@ function hideMaintenanceProgress() {
     if (existing) {
         const isPersistent = existing.getAttribute('data-persist') === 'true';
         console.log(`🗑️ Hiding maintenance progress message (was persistent: ${isPersistent})`);
-        existing.style.animation = 'slideUp 0.3s ease-in';
+        
+        // Clear any auto-hide timeout
+        if (existing._hideTimeout) {
+            clearTimeout(existing._hideTimeout);
+            console.log('⏰ Cleared auto-hide timeout');
+        }
+        
+        existing.style.animation = 'fadeOut 0.3s ease-in';
         setTimeout(() => existing.remove(), 300);
     } else {
         console.log('ℹ️ No maintenance progress message to hide');
@@ -8346,6 +8375,26 @@ if (!document.getElementById('maintenanceProgressStyles')) {
     const style = document.createElement('style');
     style.id = 'maintenanceProgressStyles';
     style.textContent = `
+        @keyframes fadeIn {
+            from { 
+                opacity: 0; 
+                transform: translate(-50%, -50%) scale(0.9);
+            }
+            to { 
+                opacity: 1; 
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+        @keyframes fadeOut {
+            from { 
+                opacity: 1; 
+                transform: translate(-50%, -50%) scale(1);
+            }
+            to { 
+                opacity: 0; 
+                transform: translate(-50%, -50%) scale(0.9);
+            }
+        }
         @keyframes slideDown {
             from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
             to { transform: translateX(-50%) translateY(0); opacity: 1; }
@@ -8361,11 +8410,11 @@ if (!document.getElementById('maintenanceProgressStyles')) {
         @keyframes pulse {
             0%, 100% { 
                 box-shadow: 0 6px 20px rgba(0,0,0,0.4);
-                transform: translateX(-50%) scale(1);
+                transform: translate(-50%, -50%) scale(1);
             }
             50% { 
                 box-shadow: 0 8px 30px rgba(0,0,0,0.6);
-                transform: translateX(-50%) scale(1.02);
+                transform: translate(-50%, -50%) scale(1.02);
             }
         }
         .progress-spinner {
@@ -8376,6 +8425,25 @@ if (!document.getElementById('maintenanceProgressStyles')) {
             height: 20px;
             animation: spin 0.8s linear infinite;
             flex-shrink: 0;
+        }
+        
+        /* Mobile responsive styles for update message */
+        @media (max-width: 768px) {
+            #maintenanceProgressMsg {
+                min-width: 280px !important;
+                max-width: 90% !important;
+                padding: 15px 20px !important;
+                font-size: 16px !important;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            #maintenanceProgressMsg {
+                min-width: 250px !important;
+                max-width: 95% !important;
+                padding: 12px 15px !important;
+                font-size: 14px !important;
+            }
         }
     `;
     document.head.appendChild(style);

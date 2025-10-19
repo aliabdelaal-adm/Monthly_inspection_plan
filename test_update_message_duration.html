@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار مدة عرض رسالة التحديث - Update Message Duration Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+        }
+        
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .test-section h3 {
+            color: #333;
+            margin-top: 0;
+        }
+        
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        button {
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            color: white;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .btn-success { background: #28a745; }
+        .btn-warning { background: #ffc107; color: #333; }
+        .btn-error { background: #dc3545; }
+        .btn-info { background: #17a2b8; }
+        .btn-primary { background: #007bff; }
+        
+        .info-box {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #2196f3;
+        }
+        
+        .success-box {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #4caf50;
+        }
+        
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔔 اختبار مدة عرض رسالة التحديث</h1>
+        <p class="subtitle">Update Message Duration Test</p>
+        
+        <div class="test-section">
+            <h3>✅ التحسينات الجديدة - New Enhancements</h3>
+            <div class="success-box">
+                <strong>تم تطبيق التحسينات التالية:</strong>
+                <ul>
+                    <li>✓ الرسالة الآن تظهر في <strong>منتصف الشاشة</strong> (عمودياً وأفقياً)</li>
+                    <li>✓ مدة عرض الرسالة قابلة للتحكم (افتراضياً 5 ثوان)</li>
+                    <li>✓ تصميم متجاوب يعمل على الجوال والكمبيوتر</li>
+                    <li>✓ اختفاء تلقائي بعد المدة المحددة</li>
+                    <li>✓ رسوم متحركة محسّنة (fadeIn/fadeOut)</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🧪 اختبار مدد عرض مختلفة - Test Different Durations</h3>
+            <div class="button-grid">
+                <button class="btn-success" onclick="testMessage(3000)">
+                    3 ثوان<br>3 Seconds
+                </button>
+                <button class="btn-success" onclick="testMessage(5000)">
+                    5 ثوان (افتراضي)<br>5 Seconds (Default)
+                </button>
+                <button class="btn-warning" onclick="testMessage(7000)">
+                    7 ثوان<br>7 Seconds
+                </button>
+                <button class="btn-info" onclick="testMessage(10000)">
+                    10 ثوان<br>10 Seconds
+                </button>
+                <button class="btn-error" onclick="testMessage(15000)">
+                    15 ثانية<br>15 Seconds
+                </button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🎨 اختبار أنواع الرسائل - Test Message Types</h3>
+            <div class="button-grid">
+                <button class="btn-success" onclick="testMessageType('success')">
+                    ✅ نجاح<br>Success
+                </button>
+                <button class="btn-warning" onclick="testMessageType('loading')">
+                    ⏳ جاري التحميل<br>Loading
+                </button>
+                <button class="btn-error" onclick="testMessageType('error')">
+                    ❌ خطأ<br>Error
+                </button>
+                <button class="btn-info" onclick="testMessageType('info')">
+                    ℹ️ معلومات<br>Info
+                </button>
+                <button class="btn-warning" onclick="testMessageType('warning')">
+                    ⚠️ تحذير<br>Warning
+                </button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📱 اختبار الاستجابة للشاشات - Responsive Test</h3>
+            <div class="info-box">
+                <p><strong>للاختبار على الجوال:</strong></p>
+                <ol>
+                    <li>افتح أدوات المطور (F12)</li>
+                    <li>فعّل وضع الجوال (Toggle device toolbar)</li>
+                    <li>اختر جهاز (iPhone, iPad, etc.)</li>
+                    <li>اضغط على أي زر لاختبار الرسالة</li>
+                </ol>
+                <p><strong>To test on mobile:</strong></p>
+                <ol>
+                    <li>Open DevTools (F12)</li>
+                    <li>Toggle device toolbar</li>
+                    <li>Select a device (iPhone, iPad, etc.)</li>
+                    <li>Click any button to test the message</li>
+                </ol>
+            </div>
+            <div class="button-grid">
+                <button class="btn-primary" onclick="testMobile('iPhone SE')">
+                    📱 iPhone SE<br>(375x667)
+                </button>
+                <button class="btn-primary" onclick="testMobile('iPhone 12 Pro')">
+                    📱 iPhone 12 Pro<br>(390x844)
+                </button>
+                <button class="btn-primary" onclick="testMobile('iPad')">
+                    📱 iPad<br>(768x1024)
+                </button>
+                <button class="btn-primary" onclick="testMobile('Desktop')">
+                    🖥️ Desktop<br>(1920x1080)
+                </button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🎯 اختبار الرسائل المستمرة - Persistent Messages Test</h3>
+            <div class="button-grid">
+                <button class="btn-warning" onclick="testPersistent()">
+                    📌 رسالة مستمرة<br>Persistent Message
+                </button>
+                <button class="btn-error" onclick="hideTestMessage()">
+                    ❌ إخفاء الرسالة<br>Hide Message
+                </button>
+            </div>
+        </div>
+        
+        <div class="info-box">
+            <strong>📋 ملاحظات التطوير - Development Notes:</strong>
+            <ul>
+                <li>الدالة المحدثة: <code>showMaintenanceProgress(message, type, persist, duration)</code></li>
+                <li>المدة الافتراضية: <code>5000ms</code> (5 ثوان)</li>
+                <li>الموضع: <code>top: 50%; left: 50%; transform: translate(-50%, -50%)</code></li>
+                <li>الرسوم المتحركة: <code>fadeIn</code> و <code>fadeOut</code></li>
+                <li>الاستجابة: <code>max-width: 90%</code> على الجوال</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Copy of the updated showMaintenanceProgress function
+        function showMaintenanceProgress(message, type = 'loading', persist = false, duration = 5000) {
+            // Remove any existing maintenance progress message
+            const existing = document.getElementById('maintenanceProgressMsg');
+            if (existing) {
+                existing.remove();
+                // Clear any existing auto-hide timeout
+                if (existing._hideTimeout) {
+                    clearTimeout(existing._hideTimeout);
+                }
+            }
+            
+            // Create new progress message
+            const messageDiv = document.createElement('div');
+            messageDiv.id = 'maintenanceProgressMsg';
+            
+            // Store persist flag as data attribute
+            messageDiv.setAttribute('data-persist', persist.toString());
+            messageDiv.setAttribute('data-duration', duration.toString());
+            
+            // Choose background color based on type
+            let bgColor = '#ffc107'; // warning/loading color (yellow)
+            if (type === 'success') bgColor = '#28a745'; // green
+            if (type === 'error') bgColor = '#dc3545'; // red
+            if (type === 'info') bgColor = '#17a2b8'; // blue
+            if (type === 'warning') bgColor = '#ff9800'; // orange
+            
+            messageDiv.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: ${bgColor};
+                color: white;
+                padding: 18px 30px;
+                border-radius: 10px;
+                z-index: 10001;
+                font-size: 18px;
+                font-weight: bold;
+                box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+                text-align: center;
+                min-width: 350px;
+                max-width: 90%;
+                white-space: pre-line;
+                animation: fadeIn 0.3s ease-out, ${persist ? 'pulse 2s ease-in-out infinite' : 'none'};
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 12px;
+                border: 3px solid rgba(255,255,255,0.3);
+            `;
+            
+            // Add responsive styles for mobile
+            if (window.innerWidth <= 768) {
+                messageDiv.style.minWidth = '280px';
+                messageDiv.style.maxWidth = '90%';
+                messageDiv.style.padding = '15px 20px';
+                messageDiv.style.fontSize = '16px';
+            }
+            
+            // Add loading spinner if type is 'loading' or 'warning'
+            if (type === 'loading' || type === 'warning') {
+                const spinner = document.createElement('div');
+                spinner.className = 'progress-spinner';
+                messageDiv.appendChild(spinner);
+            }
+            
+            const textSpan = document.createElement('span');
+            textSpan.textContent = message;
+            messageDiv.appendChild(textSpan);
+            
+            document.body.appendChild(messageDiv);
+            
+            console.log(`📢 Maintenance progress message shown - persist: ${persist}, duration: ${duration}ms`);
+            console.log(`📍 Message position: centered (top: 50%, left: 50%), z-index: 10001`);
+            console.log(`🎨 Message style: ${type} (${bgColor})`);
+            console.log(`📝 Message text: ${message}`);
+            
+            // Auto-hide after duration if duration > 0 and not persistent
+            if (duration > 0 && !persist) {
+                const hideTimeout = setTimeout(() => {
+                    console.log(`⏰ Auto-hiding message after ${duration}ms`);
+                    hideMaintenanceProgress();
+                }, duration);
+                // Store timeout reference so it can be cleared if needed
+                messageDiv._hideTimeout = hideTimeout;
+            }
+            
+            return messageDiv;
+        }
+
+        function hideMaintenanceProgress() {
+            const existing = document.getElementById('maintenanceProgressMsg');
+            if (existing) {
+                const isPersistent = existing.getAttribute('data-persist') === 'true';
+                console.log(`🗑️ Hiding maintenance progress message (was persistent: ${isPersistent})`);
+                
+                // Clear any auto-hide timeout
+                if (existing._hideTimeout) {
+                    clearTimeout(existing._hideTimeout);
+                    console.log('⏰ Cleared auto-hide timeout');
+                }
+                
+                existing.style.animation = 'fadeOut 0.3s ease-in';
+                setTimeout(() => existing.remove(), 300);
+            } else {
+                console.log('ℹ️ No maintenance progress message to hide');
+            }
+        }
+
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeIn {
+                from { 
+                    opacity: 0; 
+                    transform: translate(-50%, -50%) scale(0.9);
+                }
+                to { 
+                    opacity: 1; 
+                    transform: translate(-50%, -50%) scale(1);
+                }
+            }
+            @keyframes fadeOut {
+                from { 
+                    opacity: 1; 
+                    transform: translate(-50%, -50%) scale(1);
+                }
+                to { 
+                    opacity: 0; 
+                    transform: translate(-50%, -50%) scale(0.9);
+                }
+            }
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            @keyframes pulse {
+                0%, 100% { 
+                    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+                    transform: translate(-50%, -50%) scale(1);
+                }
+                50% { 
+                    box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+                    transform: translate(-50%, -50%) scale(1.02);
+                }
+            }
+            .progress-spinner {
+                border: 2px solid rgba(255, 255, 255, 0.3);
+                border-top: 2px solid white;
+                border-radius: 50%;
+                width: 20px;
+                height: 20px;
+                animation: spin 0.8s linear infinite;
+                flex-shrink: 0;
+            }
+            
+            /* Mobile responsive styles */
+            @media (max-width: 768px) {
+                #maintenanceProgressMsg {
+                    min-width: 280px !important;
+                    max-width: 90% !important;
+                    padding: 15px 20px !important;
+                    font-size: 16px !important;
+                }
+            }
+            
+            @media (max-width: 480px) {
+                #maintenanceProgressMsg {
+                    min-width: 250px !important;
+                    max-width: 95% !important;
+                    padding: 12px 15px !important;
+                    font-size: 14px !important;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Test functions
+        function testMessage(duration) {
+            const seconds = duration / 1000;
+            showMaintenanceProgress(
+                `⏱️ جاري التحديث الآن...\nسيتم الاختفاء بعد ${seconds} ثانية\n\nUpdating now...\nWill disappear after ${seconds} seconds`,
+                'loading',
+                false,
+                duration
+            );
+        }
+
+        function testMessageType(type) {
+            const messages = {
+                'success': '✅ تم التحديث بنجاح!\n\nUpdate completed successfully!',
+                'loading': '⏳ جاري التحديث الآن...\n\nUpdating now...',
+                'error': '❌ حدث خطأ في التحديث\n\nUpdate error occurred',
+                'info': 'ℹ️ معلومات التحديث\n\nUpdate information',
+                'warning': '⚠️ تحذير: جاري التحديث\n\nWarning: Updating'
+            };
+            
+            showMaintenanceProgress(messages[type], type, false, 5000);
+        }
+
+        function testMobile(device) {
+            showMaintenanceProgress(
+                `📱 اختبار ${device}\n\nTesting ${device}\n\nالرسالة في المنتصف\nMessage is centered`,
+                'info',
+                false,
+                7000
+            );
+        }
+
+        function testPersistent() {
+            showMaintenanceProgress(
+                '📌 رسالة مستمرة - لن تختفي تلقائياً\nاستخدم زر "إخفاء الرسالة" لإخفائها\n\nPersistent message - Won\'t auto-hide\nUse "Hide Message" button to dismiss',
+                'warning',
+                true,
+                0
+            );
+        }
+
+        function hideTestMessage() {
+            hideMaintenanceProgress();
+        }
+
+        // Show welcome message
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                showMaintenanceProgress(
+                    '🎉 مرحباً! اختبر الأزرار أدناه\n\nWelcome! Test the buttons below',
+                    'success',
+                    false,
+                    4000
+                );
+            }, 500);
+        });
+    </script>
+</body>
+</html>

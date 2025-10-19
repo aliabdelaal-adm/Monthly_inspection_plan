@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>Test PR #468 Fix</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 2px solid #ddd; border-radius: 8px; }
+        .test-pass { background-color: #d4edda; border-color: #c3e6cb; }
+        .test-fail { background-color: #f8d7da; border-color: #f5c6cb; }
+        .test-pending { background-color: #fff3cd; border-color: #ffeeba; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Test PR #468 Fix - HTML Structure and Shops Management</h1>
+    
+    <div class="test-section test-pending" id="test1">
+        <h2>Test 1: Check for Duplicate IDs</h2>
+        <p id="test1-result">Running...</p>
+        <button onclick="runTest1()">Run Test 1</button>
+    </div>
+    
+    <div class="test-section test-pending" id="test2">
+        <h2>Test 2: Verify System Services Container Exists</h2>
+        <p id="test2-result">Not run yet</p>
+        <button onclick="runTest2()">Run Test 2</button>
+    </div>
+    
+    <div class="test-section test-pending" id="test3">
+        <h2>Test 3: Verify Shops Management Modal Exists</h2>
+        <p id="test3-result">Not run yet</p>
+        <button onclick="runTest3()">Run Test 3</button>
+    </div>
+    
+    <div class="test-section test-pending" id="test4">
+        <h2>Test 4: Check Developer-Only Categories</h2>
+        <p id="test4-result">Not run yet</p>
+        <button onclick="runTest4()">Run Test 4</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Summary</h2>
+        <div id="summary">Run tests above to see results</div>
+    </div>
+    
+    <script>
+        function setTestResult(testId, passed, message) {
+            const testDiv = document.getElementById(testId);
+            const resultP = document.getElementById(testId + '-result');
+            
+            if (passed) {
+                testDiv.className = 'test-section test-pass';
+                resultP.innerHTML = '✅ PASS: ' + message;
+            } else {
+                testDiv.className = 'test-section test-fail';
+                resultP.innerHTML = '❌ FAIL: ' + message;
+            }
+        }
+        
+        function runTest1() {
+            // Load index.html and check for duplicate IDs
+            fetch('index.html')
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    
+                    // Get all elements with IDs
+                    const allIds = {};
+                    const duplicates = [];
+                    
+                    doc.querySelectorAll('[id]').forEach(el => {
+                        const id = el.getAttribute('id');
+                        if (allIds[id]) {
+                            allIds[id]++;
+                            if (allIds[id] === 2) {
+                                duplicates.push(id);
+                            }
+                        } else {
+                            allIds[id] = 1;
+                        }
+                    });
+                    
+                    if (duplicates.length === 0) {
+                        setTestResult('test1', true, 'No duplicate IDs found!');
+                    } else {
+                        setTestResult('test1', false, 'Found ' + duplicates.length + ' duplicate IDs: ' + duplicates.join(', '));
+                    }
+                })
+                .catch(err => {
+                    setTestResult('test1', false, 'Error loading index.html: ' + err.message);
+                });
+        }
+        
+        function runTest2() {
+            fetch('index.html')
+                .then(response => response.text())
+                .then(html => {
+                    const hasContainer = html.includes('id="systemServicesContainer"');
+                    
+                    if (hasContainer) {
+                        setTestResult('test2', true, 'systemServicesContainer found in HTML');
+                    } else {
+                        setTestResult('test2', false, 'systemServicesContainer NOT found in HTML');
+                    }
+                })
+                .catch(err => {
+                    setTestResult('test2', false, 'Error: ' + err.message);
+                });
+        }
+        
+        function runTest3() {
+            fetch('index.html')
+                .then(response => response.text())
+                .then(html => {
+                    const hasModal = html.includes('id="shopsManagementModal"');
+                    const hasFunction = html.includes('function showShopsManagementModal()');
+                    const hasButton = html.includes('showShopsManagementModal()');
+                    
+                    if (hasModal && hasFunction && hasButton) {
+                        setTestResult('test3', true, 'Shops Management Modal, function, and button all exist');
+                    } else {
+                        const missing = [];
+                        if (!hasModal) missing.push('modal');
+                        if (!hasFunction) missing.push('function');
+                        if (!hasButton) missing.push('button');
+                        setTestResult('test3', false, 'Missing: ' + missing.join(', '));
+                    }
+                })
+                .catch(err => {
+                    setTestResult('test3', false, 'Error: ' + err.message);
+                });
+        }
+        
+        function runTest4() {
+            fetch('index.html')
+                .then(response => response.text())
+                .then(html => {
+                    const hasCategoryClass = html.includes('developer-only-category');
+                    const hasDataManagement = html.includes('id="dataManagementCategory"');
+                    
+                    if (hasCategoryClass && hasDataManagement) {
+                        setTestResult('test4', true, 'Developer-only categories structure exists');
+                    } else {
+                        setTestResult('test4', false, 'Developer-only categories not properly structured');
+                    }
+                })
+                .catch(err => {
+                    setTestResult('test4', false, 'Error: ' + err.message);
+                });
+        }
+        
+        // Auto-run all tests
+        window.onload = function() {
+            setTimeout(() => {
+                runTest1();
+                setTimeout(() => {
+                    runTest2();
+                    setTimeout(() => {
+                        runTest3();
+                        setTimeout(() => {
+                            runTest4();
+                        }, 500);
+                    }, 500);
+                }, 500);
+            }, 1000);
+        };
+    </script>
+</body>
+</html>

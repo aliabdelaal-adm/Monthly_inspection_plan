@@ -713,6 +713,9 @@
             box-shadow: 0 8px 20px rgba(52,152,219,0.4);
         }
     </style>
+    
+    <!-- SheetJS library for Excel import/export -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -4324,40 +4327,327 @@
                   '\n\nاختر العملية من القائمة أعلاه (قريباً)');
         }
         
-        // Reload Shops from Excel
+        // Reload Shops from Excel - REAL IMPLEMENTATION
         async function reloadShopsFromExcel() {
             if (!githubToken) {
                 alert('❌ يرجى تسجيل الدخول أولاً');
                 return;
             }
             
-            if (!confirm('📥 هل تريد إعادة تحميل المحلات من ملفات Excel؟\n\nسيتم دمج البيانات مع المحلات الحالية.')) {
+            // Create file input
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.xlsx,.xls';
+            input.multiple = false;
+            
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                try {
+                    // Show merge options modal
+                    showExcelImportModal(file);
+                } catch (error) {
+                    alert('❌ خطأ في قراءة الملف: ' + error.message);
+                }
+            };
+            
+            input.click();
+        }
+        
+        // Show Excel Import Modal with merge options
+        async function showExcelImportModal(file) {
+            const modal = document.createElement('div');
+            modal.id = 'excelImportModal';
+            modal.style.cssText = `
+                display: block;
+                position: fixed;
+                z-index: 10000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                overflow: auto;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; margin: 2% auto; padding: 30px; border-radius: 15px; max-width: 800px; max-height: 90vh; overflow: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2 style="color: #2d3561; margin: 0;">📥 تحميل المحلات من Excel</h2>
+                        <button onclick="document.getElementById('excelImportModal').remove()" style="font-size: 2em; border: none; background: none; cursor: pointer; color: #999;">×</button>
+                    </div>
+                    
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; margin-bottom: 20px; color: white;">
+                        <h3 style="margin: 0 0 10px 0;">📋 معلومات الملف</h3>
+                        <p style="margin: 0;">📄 <strong>اسم الملف:</strong> ${file.name}</p>
+                        <p style="margin: 5px 0 0 0;">📊 <strong>الحجم:</strong> ${(file.size / 1024).toFixed(2)} KB</p>
+                    </div>
+                    
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                        <h3 style="color: #2d3561; margin-bottom: 15px;">⚙️ خيارات الدمج</h3>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="radio" name="mergeMode" value="add" checked style="width: 20px; height: 20px;">
+                                <div>
+                                    <strong>إضافة فقط</strong>
+                                    <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9em;">إضافة المحلات الجديدة فقط وتجاهل المكرر</p>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="radio" name="mergeMode" value="update" style="width: 20px; height: 20px;">
+                                <div>
+                                    <strong>تحديث الموجود</strong>
+                                    <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9em;">تحديث بيانات المحلات الموجودة بالبيانات الجديدة</p>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="radio" name="mergeMode" value="replace" style="width: 20px; height: 20px;">
+                                <div>
+                                    <strong>استبدال كامل</strong>
+                                    <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9em;">حذف جميع المحلات الحالية واستبدالها بالبيانات الجديدة</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div style="background: #fff3cd; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 2px solid #ffc107;">
+                        <h4 style="color: #856404; margin: 0 0 10px 0;">📌 متطلبات ملف Excel</h4>
+                        <ul style="margin: 0; padding-right: 20px; color: #856404;">
+                            <li>يجب أن يحتوي الملف على الأعمدة التالية: اسم المحل، المنطقة، رقم الترخيص</li>
+                            <li>يمكن إضافة أعمدة اختيارية: رقم التعريف ADM، العنوان، جهة الاتصال، النشاط</li>
+                            <li>يجب أن تكون البيانات في الصف الثاني وما بعده (الصف الأول للعناوين)</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="display: flex; gap: 15px; justify-content: center;">
+                        <button onclick="processExcelImport('${file.name}')" style="padding: 15px 30px; border: none; border-radius: 10px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; font-family: 'Cairo', sans-serif; font-weight: 600; font-size: 1.1em; cursor: pointer;">
+                            ✅ بدء التحميل
+                        </button>
+                        <button onclick="document.getElementById('excelImportModal').remove()" style="padding: 15px 30px; border: none; border-radius: 10px; background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; font-family: 'Cairo', sans-serif; font-weight: 600; font-size: 1.1em; cursor: pointer;">
+                            ❌ إلغاء
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Store file data for processing
+            window.excelImportFile = file;
+        }
+        
+        // Process Excel Import
+        async function processExcelImport(fileName) {
+            const file = window.excelImportFile;
+            if (!file) {
+                alert('❌ خطأ: لم يتم العثور على الملف');
                 return;
             }
             
-            alert('⏳ جاري تحميل المحلات من ملفات Excel...\n\nهذه العملية قد تستغرق بضع ثوانٍ.\n\nسيتم عرض النتيجة عند الانتهاء.');
+            // Get merge mode
+            const mergeMode = document.querySelector('input[name="mergeMode"]:checked').value;
             
-            // Reload data from shops_details.json which has been updated
+            // Close modal
+            document.getElementById('excelImportModal').remove();
+            
+            // Show loading message
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'loadingExcelImport';
+            loadingDiv.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: white;
+                padding: 30px;
+                border-radius: 15px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+                z-index: 10001;
+                text-align: center;
+            `;
+            loadingDiv.innerHTML = `
+                <h3 style="color: #2d3561; margin-bottom: 15px;">⏳ جاري معالجة الملف...</h3>
+                <p style="color: #666;">يرجى الانتظار</p>
+            `;
+            document.body.appendChild(loadingDiv);
+            
             try {
-                const response = await fetch('shops_details.json?' + new Date().getTime());
-                if (!response.ok) throw new Error('فشل تحميل shops_details.json');
+                // Read file
+                const data = await file.arrayBuffer();
+                const workbook = XLSX.read(data, { type: 'array' });
                 
-                const shopsDetails = await response.json();
-                const shopCount = Object.keys(shopsDetails).length;
+                // Get first sheet
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
                 
-                alert(`✅ تم تحميل ${shopCount} محل من ملفات Excel بنجاح!\n\n` +
-                      '🔄 قم بتحديث القائمة لرؤية جميع المحلات الجديدة.');
+                // Convert to JSON
+                const jsonData = XLSX.utils.sheet_to_json(sheet);
                 
-                // Refresh the shops list
+                if (!jsonData || jsonData.length === 0) {
+                    throw new Error('الملف فارغ أو لا يحتوي على بيانات صالحة');
+                }
+                
+                // Process the data
+                const result = await processShopsData(jsonData, mergeMode);
+                
+                // Remove loading
+                document.getElementById('loadingExcelImport').remove();
+                
+                // Show result
+                alert(`✅ تم معالجة الملف بنجاح!\n\n` +
+                      `📊 المحلات المعالجة: ${result.processed}\n` +
+                      `➕ المحلات المضافة: ${result.added}\n` +
+                      `🔄 المحلات المحدثة: ${result.updated}\n` +
+                      `⏭️  المحلات المتجاهلة: ${result.skipped}\n\n` +
+                      `سيتم حفظ البيانات الآن...`);
+                
+                // Save to GitHub
+                await savePlanData();
+                
+                // Refresh the list
                 refreshShopsList();
+                
             } catch (error) {
-                alert('❌ فشل تحميل المحلات: ' + error.message);
+                document.getElementById('loadingExcelImport')?.remove();
+                alert('❌ خطأ في معالجة الملف: ' + error.message);
+                console.error('Excel import error:', error);
             }
         }
         
-        // Export Shops to Excel
+        // Process shops data from Excel
+        async function processShopsData(jsonData, mergeMode) {
+            let processed = 0;
+            let added = 0;
+            let updated = 0;
+            let skipped = 0;
+            
+            // Ensure planData.shops exists
+            if (!planData.shops) {
+                planData.shops = [];
+            }
+            
+            // If replace mode, clear existing shops
+            if (mergeMode === 'replace') {
+                planData.shops = [];
+            }
+            
+            // Get existing shop names for duplicate checking
+            const existingShops = new Set(planData.shops.map(shop => shop.name));
+            
+            // Process each row
+            for (const row of jsonData) {
+                processed++;
+                
+                // Extract shop data (try different possible column names)
+                const shopName = row['اسم المحل'] || row['name'] || row['shopName'] || row['الاسم'];
+                const area = row['المنطقة'] || row['area'] || row['المنطقة'];
+                const licenseNo = row['رقم الترخيص'] || row['license'] || row['licenseNo'] || '';
+                const admCode = row['رقم التعريف'] || row['admCode'] || row['ADM'] || '';
+                const address = row['العنوان'] || row['address'] || '';
+                const contact = row['جهة الاتصال'] || row['contact'] || '';
+                const activity = row['النشاط'] || row['activity'] || '';
+                
+                if (!shopName) {
+                    skipped++;
+                    continue;
+                }
+                
+                // Check if shop exists
+                const existingIndex = planData.shops.findIndex(s => s.name === shopName);
+                const exists = existingIndex !== -1;
+                
+                if (exists && mergeMode === 'add') {
+                    // Skip existing shops in add mode
+                    skipped++;
+                    continue;
+                }
+                
+                // Create shop object
+                const shopData = {
+                    name: shopName,
+                    area: area || 'غير محدد',
+                    id: admCode || licenseNo || `SHOP${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                };
+                
+                // Add optional fields if available
+                if (licenseNo) shopData.licenseNo = licenseNo;
+                if (address) shopData.address = address;
+                if (contact) shopData.contact = contact;
+                if (activity) shopData.activity = activity;
+                
+                if (exists && mergeMode === 'update') {
+                    // Update existing shop
+                    planData.shops[existingIndex] = { ...planData.shops[existingIndex], ...shopData };
+                    updated++;
+                } else {
+                    // Add new shop
+                    planData.shops.push(shopData);
+                    added++;
+                }
+            }
+            
+            return { processed, added, updated, skipped };
+        }
+        
+        // Export Shops to Excel - REAL IMPLEMENTATION
         function exportShopsToExcel() {
-            alert('📊 تصدير إلى Excel\n\nسيتم إضافة هذه الميزة قريباً.\n\nحالياً يمكنك استخدام تصدير JSON ثم تحويله إلى Excel.');
+            if (!planData || !planData.shops || planData.shops.length === 0) {
+                alert('⚠️ لا توجد محلات للتصدير');
+                return;
+            }
+            
+            try {
+                // Prepare data for export
+                const exportData = planData.shops.map(shop => ({
+                    'اسم المحل': shop.name,
+                    'المنطقة': shop.area,
+                    'رقم التعريف': shop.id || '',
+                    'رقم الترخيص': shop.licenseNo || '',
+                    'العنوان': shop.address || '',
+                    'جهة الاتصال': shop.contact || '',
+                    'النشاط': shop.activity || ''
+                }));
+                
+                // Create workbook
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.json_to_sheet(exportData);
+                
+                // Set column widths
+                ws['!cols'] = [
+                    { wch: 30 }, // اسم المحل
+                    { wch: 20 }, // المنطقة
+                    { wch: 15 }, // رقم التعريف
+                    { wch: 15 }, // رقم الترخيص
+                    { wch: 25 }, // العنوان
+                    { wch: 20 }, // جهة الاتصال
+                    { wch: 25 }  // النشاط
+                ];
+                
+                // Add worksheet to workbook
+                XLSX.utils.book_append_sheet(wb, ws, 'المحلات');
+                
+                // Generate filename with timestamp
+                const timestamp = new Date().toISOString().split('T')[0];
+                const filename = `محلات_${timestamp}.xlsx`;
+                
+                // Download file
+                XLSX.writeFile(wb, filename);
+                
+                alert(`✅ تم تصدير ${exportData.length} محل إلى ملف Excel بنجاح!\n\n` +
+                      `📄 اسم الملف: ${filename}`);
+                
+            } catch (error) {
+                alert('❌ خطأ في تصدير البيانات: ' + error.message);
+                console.error('Excel export error:', error);
+            }
         }
         
         // Bulk Edit Shops - FULL IMPLEMENTATION

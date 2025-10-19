@@ -3527,6 +3527,9 @@
             <button onclick="emergencyForceRefresh()" style="background:#fd7e14; color:#fff; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:1em; box-shadow:0 2px 8px rgba(0,0,0,0.3); transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                 🔄 تحديث فوري
             </button>
+            <button onclick="emergencySaveShopsToGitHub()" style="background:#20c997; color:#fff; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:1em; box-shadow:0 2px 8px rgba(0,0,0,0.3); transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                💾 حفظ المحلات
+            </button>
         </div>
     </div>
 </div>
@@ -7427,6 +7430,101 @@ function emergencyForceRefresh() {
         console.error('❌ EMERGENCY: Error forcing refresh:', error);
         // Ultimate fallback
         window.location.href = window.location.href + '?_=' + Date.now();
+    }
+}
+
+// Emergency save shops to GitHub - INSTANT
+async function emergencySaveShopsToGitHub() {
+    console.log('🚨 EMERGENCY: Saving shops data to GitHub NOW...');
+    
+    try {
+        showDevToast('💾 جاري حفظ بيانات المحلات...', 'info', 3000, '💾');
+        
+        const repo = "aliabdelaal-adm/Monthly_inspection_plan";
+        let token = localStorage.getItem("devToken");
+        
+        if (!token) {
+            const defaultToken = "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";
+            localStorage.setItem("devToken", defaultToken);
+            token = defaultToken;
+        }
+        
+        if (!token) {
+            showTokenPopup();
+            throw new Error('لا يوجد توكن GitHub');
+        }
+        
+        // جلب المحتوى الحالي لـ plan-data.json
+        showDevToast('⏳ جاري قراءة البيانات الحالية...', 'info', 2000, '📥');
+        
+        const getResponse = await fetch(`https://api.github.com/repos/${repo}/contents/plan-data.json`, {
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        });
+        
+        if (!getResponse.ok) {
+            let errorMsg = `فشل في قراءة plan-data.json: ${getResponse.status}`;
+            
+            if (getResponse.status === 401 || getResponse.status === 403) {
+                errorMsg = '🔑 التوكن غير صالح أو منتهي الصلاحية';
+                showTokenPopup();
+            }
+            
+            throw new Error(errorMsg);
+        }
+        
+        const currentFile = await getResponse.json();
+        const sha = currentFile.sha;
+        
+        // تحضير البيانات الجديدة
+        const planData = {
+            inspectionData: inspectionData,
+            inspectors: inspectorsData,
+            areas: areasData,
+            shops: shopsData,
+            lastUpdate: new Date().toISOString(),
+            bellNotes: bellNotesData || []
+        };
+        
+        const jsonContent = JSON.stringify(planData, null, 2);
+        const base64Content = btoa(unescape(encodeURIComponent(jsonContent)));
+        
+        // رفع البيانات المحدثة
+        showDevToast('⏳ جاري رفع التغييرات إلى GitHub...', 'info', 2000, '📤');
+        
+        const updateResponse = await fetch(`https://api.github.com/repos/${repo}/contents/plan-data.json`, {
+            method: "PUT",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                message: `حفظ بيانات المحلات من لوحة التحكم الطارئة - ${new Date().toLocaleString('ar-EG')}`,
+                content: base64Content,
+                sha: sha
+            })
+        });
+        
+        if (updateResponse.ok) {
+            showDevToast(`✅ تم حفظ ${shopsData.length} محل بنجاح في GitHub!`, 'success', 7000, '✅');
+            console.log('✅ EMERGENCY: Shops data saved successfully to GitHub');
+            console.log(`📊 Total shops saved: ${shopsData.length}`);
+        } else {
+            let errorMsg = `فشل الحفظ: ${updateResponse.status}`;
+            
+            if (updateResponse.status === 401 || updateResponse.status === 403) {
+                errorMsg = '🔑 التوكن غير صالح أو منتهي الصلاحية';
+                showTokenPopup();
+            }
+            
+            throw new Error(errorMsg);
+        }
+    } catch (error) {
+        console.error('❌ EMERGENCY: Error saving shops data:', error);
+        showDevToast('❌ خطأ: ' + error.message, 'error', 7000, '❌');
+        alert('⚠️ حدث خطأ في حفظ البيانات:\n\n' + error.message);
     }
 }
 

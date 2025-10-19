@@ -1116,6 +1116,9 @@
                         <button class="btn btn-warning" onclick="viewShopsOnMap()">
                             <span>🗺️</span> عرض على الخريطة
                         </button>
+                        <button class="btn btn-success" onclick="openSmartShopListModal()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; font-weight: bold;">
+                            <span>📋</span> قائمة المحلات الذكية
+                        </button>
                     </div>
                     
                     <!-- Filter and Search -->
@@ -1561,6 +1564,105 @@
                     </button>
                 </div>
                 <div class="status-message" id="areaModalStatus"></div>
+            </div>
+        </div>
+        
+        <!-- Smart Shop List Modal -->
+        <div id="smartShopListModal" class="modal">
+            <div class="modal-content" style="max-width: 95%; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-header">
+                    <h2>📋 قائمة المحلات الذكية</h2>
+                    <span class="modal-close" onclick="closeSmartShopListModal()">&times;</span>
+                </div>
+                
+                <!-- Filters and Controls -->
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; margin-bottom: 20px; color: white;">
+                    <h3 style="margin-bottom: 15px;">⚙️ خيارات التنظيم والترتيب</h3>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">الترتيب الرئيسي:</label>
+                            <select id="primarySort" class="form-control" onchange="updateSmartShopList()">
+                                <option value="rating">حسب التقييم (الأعلى أولاً)</option>
+                                <option value="area">حسب المنطقة</option>
+                                <option value="activity">حسب النشاط</option>
+                                <option value="alphabetical">أبجدي (أ-ي)</option>
+                                <option value="lastInspection">حسب آخر تفتيش</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">فلترة حسب المنطقة:</label>
+                            <select id="smartListAreaFilter" class="form-control" onchange="updateSmartShopList()">
+                                <option value="">جميع المناطق</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">فلترة حسب التقييم:</label>
+                            <select id="ratingFilter" class="form-control" onchange="updateSmartShopList()">
+                                <option value="">جميع التقييمات</option>
+                                <option value="excellent">ممتاز (90+)</option>
+                                <option value="good">جيد (70-89)</option>
+                                <option value="fair">مقبول (50-69)</option>
+                                <option value="poor">ضعيف (أقل من 50)</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">عرض الجداول:</label>
+                            <select id="tableView" class="form-control" onchange="updateSmartShopList()">
+                                <option value="unified">جدول موحد</option>
+                                <option value="byArea">جدول لكل منطقة</option>
+                                <option value="byActivity">جدول حسب النشاط</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
+                        <button class="btn btn-success" onclick="exportSmartShopList('excel')" style="background: white; color: #667eea;">
+                            <span>📊</span> تصدير Excel
+                        </button>
+                        <button class="btn btn-primary" onclick="exportSmartShopList('pdf')" style="background: white; color: #667eea;">
+                            <span>📄</span> تصدير PDF
+                        </button>
+                        <button class="btn btn-info" onclick="exportSmartShopList('json')" style="background: white; color: #667eea;">
+                            <span>💾</span> تصدير JSON
+                        </button>
+                        <button class="btn btn-warning" onclick="printSmartShopList()" style="background: white; color: #667eea;">
+                            <span>🖨️</span> طباعة
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Statistics Summary -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px;">
+                    <div style="background: #667eea; color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 2em; font-weight: bold;" id="smartListTotalShops">0</div>
+                        <div>إجمالي المحلات</div>
+                    </div>
+                    <div style="background: #11998e; color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 2em; font-weight: bold;" id="smartListAvgRating">0</div>
+                        <div>متوسط التقييم</div>
+                    </div>
+                    <div style="background: #3498db; color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 2em; font-weight: bold;" id="smartListAreas">0</div>
+                        <div>عدد المناطق</div>
+                    </div>
+                    <div style="background: #e74c3c; color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 2em; font-weight: bold;" id="smartListHighPriority">0</div>
+                        <div>أولوية عالية</div>
+                    </div>
+                </div>
+                
+                <!-- Shop List Content -->
+                <div id="smartShopListContent" style="margin-top: 20px;">
+                    <p style="text-align: center; padding: 40px; color: #999;">
+                        جاري تحميل القائمة الذكية...
+                    </p>
+                </div>
+                
+                <div class="status-message" id="smartShopListStatus"></div>
             </div>
         </div>
     </div>
@@ -5594,6 +5696,534 @@
             URL.revokeObjectURL(url);
             
             alert('✅ تم إنشاء تقرير المناطق!');
+        }
+        
+        // ==================== Smart Shop List Functions ====================
+        
+        /**
+         * Calculate shop rating based on multiple criteria
+         * Rating criteria:
+         * 1. Compliance (الالتزام) - 30 points
+         * 2. Last inspection date (آخر تفتيش) - 25 points
+         * 3. Inspection frequency (تكرار التفتيش) - 20 points
+         * 4. Data completeness (اكتمال البيانات) - 15 points
+         * 5. Activity type priority (أولوية النشاط) - 10 points
+         */
+        function calculateShopRating(shopName) {
+            let rating = 0;
+            let details = {
+                compliance: 0,
+                lastInspection: 0,
+                frequency: 0,
+                dataCompleteness: 0,
+                activityPriority: 0
+            };
+            
+            // Get shop details
+            const shopDetails = shopsDetails ? shopsDetails[shopName] : null;
+            
+            // 1. Data Completeness (15 points)
+            if (shopDetails) {
+                let completeness = 0;
+                if (shopDetails.nameAr) completeness += 2;
+                if (shopDetails.nameEn) completeness += 2;
+                if (shopDetails.licenseNo) completeness += 3;
+                if (shopDetails.admCode) completeness += 2;
+                if (shopDetails.address) completeness += 2;
+                if (shopDetails.contact) completeness += 2;
+                if (shopDetails.activity) completeness += 2;
+                details.dataCompleteness = completeness;
+                rating += completeness;
+            }
+            
+            // 2. Activity Type Priority (10 points)
+            if (shopDetails && shopDetails.activity) {
+                const activity = shopDetails.activity.toLowerCase();
+                // High priority activities
+                if (activity.includes('animal') || activity.includes('حيوان') || 
+                    activity.includes('veterinar') || activity.includes('بيطر')) {
+                    details.activityPriority = 10;
+                    rating += 10;
+                } else if (activity.includes('pet') || activity.includes('أليف')) {
+                    details.activityPriority = 8;
+                    rating += 8;
+                } else if (activity.includes('bird') || activity.includes('طيور')) {
+                    details.activityPriority = 7;
+                    rating += 7;
+                } else {
+                    details.activityPriority = 5;
+                    rating += 5;
+                }
+            }
+            
+            // 3. Last Inspection Date (25 points)
+            const lastInspection = getLastInspectionForShop(shopName);
+            if (lastInspection) {
+                const daysSince = Math.floor((new Date() - new Date(lastInspection.day)) / (1000 * 60 * 60 * 24));
+                if (daysSince <= 7) {
+                    details.lastInspection = 25;
+                    rating += 25;
+                } else if (daysSince <= 14) {
+                    details.lastInspection = 20;
+                    rating += 20;
+                } else if (daysSince <= 30) {
+                    details.lastInspection = 15;
+                    rating += 15;
+                } else if (daysSince <= 60) {
+                    details.lastInspection = 10;
+                    rating += 10;
+                } else {
+                    details.lastInspection = 5;
+                    rating += 5;
+                }
+            }
+            
+            // 4. Inspection Frequency (20 points)
+            const inspectionCount = getInspectionCountForShop(shopName);
+            if (inspectionCount >= 10) {
+                details.frequency = 20;
+                rating += 20;
+            } else if (inspectionCount >= 7) {
+                details.frequency = 16;
+                rating += 16;
+            } else if (inspectionCount >= 5) {
+                details.frequency = 12;
+                rating += 12;
+            } else if (inspectionCount >= 3) {
+                details.frequency = 8;
+                rating += 8;
+            } else if (inspectionCount >= 1) {
+                details.frequency = 4;
+                rating += 4;
+            }
+            
+            // 5. Compliance Score (30 points) - Based on consistent inspections
+            // Good compliance = regular inspections without long gaps
+            if (inspectionCount > 0) {
+                const inspections = getInspectionsForShop(shopName);
+                if (inspections.length >= 2) {
+                    // Calculate consistency
+                    const dates = inspections.map(i => new Date(i.day)).sort((a, b) => b - a);
+                    const gaps = [];
+                    for (let i = 0; i < dates.length - 1; i++) {
+                        gaps.push(Math.floor((dates[i] - dates[i + 1]) / (1000 * 60 * 60 * 24)));
+                    }
+                    const avgGap = gaps.reduce((a, b) => a + b, 0) / gaps.length;
+                    
+                    if (avgGap <= 14) {
+                        details.compliance = 30;
+                        rating += 30;
+                    } else if (avgGap <= 21) {
+                        details.compliance = 25;
+                        rating += 25;
+                    } else if (avgGap <= 30) {
+                        details.compliance = 20;
+                        rating += 20;
+                    } else {
+                        details.compliance = 15;
+                        rating += 15;
+                    }
+                } else if (inspectionCount === 1) {
+                    details.compliance = 10;
+                    rating += 10;
+                }
+            }
+            
+            return { rating, details };
+        }
+        
+        function getLastInspectionForShop(shopName) {
+            if (!planData || !planData.inspectionData) return null;
+            
+            const inspections = planData.inspectionData
+                .filter(i => i.shops && i.shops.includes(shopName))
+                .sort((a, b) => new Date(b.day) - new Date(a.day));
+            
+            return inspections.length > 0 ? inspections[0] : null;
+        }
+        
+        function getInspectionCountForShop(shopName) {
+            if (!planData || !planData.inspectionData) return 0;
+            
+            return planData.inspectionData.filter(i => i.shops && i.shops.includes(shopName)).length;
+        }
+        
+        function getInspectionsForShop(shopName) {
+            if (!planData || !planData.inspectionData) return [];
+            
+            return planData.inspectionData.filter(i => i.shops && i.shops.includes(shopName));
+        }
+        
+        // Open Smart Shop List Modal
+        async function openSmartShopListModal() {
+            // Load shops details if not loaded
+            if (!shopsDetails) {
+                try {
+                    const response = await fetch('shops_details.json?' + new Date().getTime());
+                    if (response.ok) {
+                        shopsDetails = await response.json();
+                    }
+                } catch (error) {
+                    console.error('Error loading shops_details.json:', error);
+                }
+            }
+            
+            // Populate area filter
+            const areaFilter = document.getElementById('smartListAreaFilter');
+            areaFilter.innerHTML = '<option value="">جميع المناطق</option>';
+            if (planData && planData.areas) {
+                planData.areas.forEach(area => {
+                    const option = document.createElement('option');
+                    option.value = area.id;
+                    option.textContent = area.name;
+                    areaFilter.appendChild(option);
+                });
+            }
+            
+            // Show modal
+            document.getElementById('smartShopListModal').style.display = 'block';
+            
+            // Generate initial list
+            updateSmartShopList();
+        }
+        
+        // Close Smart Shop List Modal
+        function closeSmartShopListModal() {
+            document.getElementById('smartShopListModal').style.display = 'none';
+        }
+        
+        // Update Smart Shop List based on filters
+        function updateSmartShopList() {
+            const primarySort = document.getElementById('primarySort').value;
+            const areaFilter = document.getElementById('smartListAreaFilter').value;
+            const ratingFilter = document.getElementById('ratingFilter').value;
+            const tableView = document.getElementById('tableView').value;
+            
+            // Collect all shops
+            let allShops = [];
+            
+            if (shopsDetails) {
+                Object.entries(shopsDetails).forEach(([shopName, shopInfo]) => {
+                    const area = planData?.areas?.find(a => a.name === shopInfo.address || a.id === shopInfo.areaId);
+                    const ratingData = calculateShopRating(shopName);
+                    
+                    allShops.push({
+                        name: shopInfo.nameAr || shopName,
+                        nameEn: shopInfo.nameEn || '',
+                        licenseNo: shopInfo.licenseNo || '',
+                        admCode: shopInfo.admCode || '',
+                        address: shopInfo.address || '',
+                        contact: shopInfo.contact || '',
+                        activity: shopInfo.activity || '',
+                        area: area ? area.name : shopInfo.address || 'غير محدد',
+                        areaId: area ? area.id : '',
+                        rating: ratingData.rating,
+                        ratingDetails: ratingData.details,
+                        lastInspection: getLastInspectionForShop(shopName),
+                        inspectionCount: getInspectionCountForShop(shopName)
+                    });
+                });
+            }
+            
+            // Apply filters
+            if (areaFilter) {
+                const selectedArea = planData?.areas?.find(a => a.id === areaFilter);
+                if (selectedArea) {
+                    allShops = allShops.filter(s => s.area === selectedArea.name || s.areaId === areaFilter);
+                }
+            }
+            
+            if (ratingFilter) {
+                allShops = allShops.filter(shop => {
+                    if (ratingFilter === 'excellent') return shop.rating >= 90;
+                    if (ratingFilter === 'good') return shop.rating >= 70 && shop.rating < 90;
+                    if (ratingFilter === 'fair') return shop.rating >= 50 && shop.rating < 70;
+                    if (ratingFilter === 'poor') return shop.rating < 50;
+                    return true;
+                });
+            }
+            
+            // Apply sorting
+            if (primarySort === 'rating') {
+                allShops.sort((a, b) => b.rating - a.rating);
+            } else if (primarySort === 'area') {
+                allShops.sort((a, b) => a.area.localeCompare(b.area, 'ar'));
+            } else if (primarySort === 'activity') {
+                allShops.sort((a, b) => (a.activity || '').localeCompare(b.activity || '', 'ar'));
+            } else if (primarySort === 'alphabetical') {
+                allShops.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+            } else if (primarySort === 'lastInspection') {
+                allShops.sort((a, b) => {
+                    const dateA = a.lastInspection ? new Date(a.lastInspection.day) : new Date(0);
+                    const dateB = b.lastInspection ? new Date(b.lastInspection.day) : new Date(0);
+                    return dateB - dateA;
+                });
+            }
+            
+            // Update statistics
+            const totalShops = allShops.length;
+            const avgRating = totalShops > 0 ? (allShops.reduce((sum, s) => sum + s.rating, 0) / totalShops).toFixed(1) : 0;
+            const uniqueAreas = new Set(allShops.map(s => s.area)).size;
+            const highPriority = allShops.filter(s => s.rating >= 70).length;
+            
+            document.getElementById('smartListTotalShops').textContent = totalShops;
+            document.getElementById('smartListAvgRating').textContent = avgRating;
+            document.getElementById('smartListAreas').textContent = uniqueAreas;
+            document.getElementById('smartListHighPriority').textContent = highPriority;
+            
+            // Generate tables based on view mode
+            const content = document.getElementById('smartShopListContent');
+            
+            if (tableView === 'unified') {
+                content.innerHTML = generateUnifiedTable(allShops);
+            } else if (tableView === 'byArea') {
+                content.innerHTML = generateTablesByArea(allShops);
+            } else if (tableView === 'byActivity') {
+                content.innerHTML = generateTablesByActivity(allShops);
+            }
+        }
+        
+        // Generate unified table
+        function generateUnifiedTable(shops) {
+            if (shops.length === 0) {
+                return '<p style="text-align: center; padding: 40px; color: #999;">لا توجد محلات مطابقة للفلاتر المحددة</p>';
+            }
+            
+            let html = '<div style="overflow-x: auto;">';
+            html += '<table class="inspections-table" style="width: 100%;">';
+            html += '<thead><tr>';
+            html += '<th>#</th>';
+            html += '<th>اسم المحل</th>';
+            html += '<th>المنطقة</th>';
+            html += '<th>النشاط</th>';
+            html += '<th>التقييم</th>';
+            html += '<th>آخر تفتيش</th>';
+            html += '<th>عدد التفتيشات</th>';
+            html += '<th>التفاصيل</th>';
+            html += '</tr></thead><tbody>';
+            
+            shops.forEach((shop, idx) => {
+                const ratingClass = shop.rating >= 90 ? 'excellent' : 
+                                   shop.rating >= 70 ? 'good' : 
+                                   shop.rating >= 50 ? 'fair' : 'poor';
+                const ratingColor = shop.rating >= 90 ? '#27ae60' : 
+                                   shop.rating >= 70 ? '#3498db' : 
+                                   shop.rating >= 50 ? '#f39c12' : '#e74c3c';
+                
+                const lastInspectionText = shop.lastInspection ? 
+                    new Date(shop.lastInspection.day).toLocaleDateString('ar-EG') : 'لم يتم';
+                
+                const activityShort = shop.activity ? 
+                    (shop.activity.length > 50 ? shop.activity.substring(0, 50) + '...' : shop.activity) : 
+                    'غير محدد';
+                
+                html += '<tr>';
+                html += `<td>${idx + 1}</td>`;
+                html += `<td><strong>${escapeHtml(shop.name)}</strong><br><small style="color: #999;">${escapeHtml(shop.nameEn || '')}</small></td>`;
+                html += `<td>${escapeHtml(shop.area)}</td>`;
+                html += `<td title="${escapeHtml(shop.activity || '')}">${escapeHtml(activityShort)}</td>`;
+                html += `<td><div style="background: ${ratingColor}; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; text-align: center;">${shop.rating.toFixed(0)}</div></td>`;
+                html += `<td>${lastInspectionText}</td>`;
+                html += `<td style="text-align: center;">${shop.inspectionCount}</td>`;
+                html += `<td><button onclick="showShopRatingDetails('${escapeHtml(shop.name)}')" class="btn btn-sm btn-info" style="padding: 5px 10px;">عرض</button></td>`;
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table></div>';
+            return html;
+        }
+        
+        // Generate tables by area
+        function generateTablesByArea(shops) {
+            if (shops.length === 0) {
+                return '<p style="text-align: center; padding: 40px; color: #999;">لا توجد محلات مطابقة للفلاتر المحددة</p>';
+            }
+            
+            // Group shops by area
+            const shopsByArea = {};
+            shops.forEach(shop => {
+                if (!shopsByArea[shop.area]) {
+                    shopsByArea[shop.area] = [];
+                }
+                shopsByArea[shop.area].push(shop);
+            });
+            
+            let html = '';
+            Object.keys(shopsByArea).sort((a, b) => a.localeCompare(b, 'ar')).forEach(area => {
+                const areaShops = shopsByArea[area];
+                const avgRating = (areaShops.reduce((sum, s) => sum + s.rating, 0) / areaShops.length).toFixed(1);
+                
+                html += `<div style="margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">`;
+                html += `<h3 style="color: #667eea; margin-bottom: 15px;">🗺️ ${escapeHtml(area)} <span style="color: #999; font-size: 0.8em;">(${areaShops.length} محل - متوسط التقييم: ${avgRating})</span></h3>`;
+                html += generateUnifiedTable(areaShops);
+                html += '</div>';
+            });
+            
+            return html;
+        }
+        
+        // Generate tables by activity
+        function generateTablesByActivity(shops) {
+            if (shops.length === 0) {
+                return '<p style="text-align: center; padding: 40px; color: #999;">لا توجد محلات مطابقة للفلاتر المحددة</p>';
+            }
+            
+            // Group shops by main activity type
+            const shopsByActivity = {};
+            shops.forEach(shop => {
+                let activityType = 'أخرى';
+                const activity = (shop.activity || '').toLowerCase();
+                
+                if (activity.includes('animal') || activity.includes('حيوان')) {
+                    activityType = 'تجارة الحيوانات';
+                } else if (activity.includes('veterinar') || activity.includes('بيطر')) {
+                    activityType = 'خدمات بيطرية';
+                } else if (activity.includes('bird') || activity.includes('طيور')) {
+                    activityType = 'تجارة الطيور';
+                } else if (activity.includes('pet') || activity.includes('أليف')) {
+                    activityType = 'حيوانات أليفة';
+                } else if (activity.includes('fish') || activity.includes('أسماك')) {
+                    activityType = 'أسماك الزينة';
+                }
+                
+                if (!shopsByActivity[activityType]) {
+                    shopsByActivity[activityType] = [];
+                }
+                shopsByActivity[activityType].push(shop);
+            });
+            
+            let html = '';
+            Object.keys(shopsByActivity).sort((a, b) => a.localeCompare(b, 'ar')).forEach(activityType => {
+                const activityShops = shopsByActivity[activityType];
+                const avgRating = (activityShops.reduce((sum, s) => sum + s.rating, 0) / activityShops.length).toFixed(1);
+                
+                html += `<div style="margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">`;
+                html += `<h3 style="color: #667eea; margin-bottom: 15px;">💼 ${escapeHtml(activityType)} <span style="color: #999; font-size: 0.8em;">(${activityShops.length} محل - متوسط التقييم: ${avgRating})</span></h3>`;
+                html += generateUnifiedTable(activityShops);
+                html += '</div>';
+            });
+            
+            return html;
+        }
+        
+        // Show shop rating details
+        function showShopRatingDetails(shopName) {
+            const ratingData = calculateShopRating(shopName);
+            const shop = shopsDetails[shopName];
+            
+            let details = `📊 تفاصيل التقييم: ${shopName}\n`;
+            details += `${'='.repeat(50)}\n\n`;
+            details += `📈 التقييم الإجمالي: ${ratingData.rating.toFixed(0)}/100\n\n`;
+            details += `تفاصيل المحاور:\n`;
+            details += `• الالتزام: ${ratingData.details.compliance}/30\n`;
+            details += `• آخر تفتيش: ${ratingData.details.lastInspection}/25\n`;
+            details += `• تكرار التفتيش: ${ratingData.details.frequency}/20\n`;
+            details += `• اكتمال البيانات: ${ratingData.details.dataCompleteness}/15\n`;
+            details += `• أولوية النشاط: ${ratingData.details.activityPriority}/10\n\n`;
+            
+            const lastInspection = getLastInspectionForShop(shopName);
+            if (lastInspection) {
+                const daysSince = Math.floor((new Date() - new Date(lastInspection.day)) / (1000 * 60 * 60 * 24));
+                details += `📅 آخر تفتيش: ${new Date(lastInspection.day).toLocaleDateString('ar-EG')} (منذ ${daysSince} يوم)\n`;
+            } else {
+                details += `📅 آخر تفتيش: لم يتم التفتيش بعد\n`;
+            }
+            
+            details += `🔢 عدد التفتيشات الكلية: ${getInspectionCountForShop(shopName)}\n`;
+            
+            if (shop) {
+                details += `\n📍 معلومات المحل:\n`;
+                if (shop.licenseNo) details += `• رقم الرخصة: ${shop.licenseNo}\n`;
+                if (shop.admCode) details += `• كود ADM: ${shop.admCode}\n`;
+                if (shop.address) details += `• العنوان: ${shop.address}\n`;
+                if (shop.contact) details += `• الهاتف: ${shop.contact}\n`;
+            }
+            
+            alert(details);
+        }
+        
+        // Export Smart Shop List
+        function exportSmartShopList(format) {
+            const primarySort = document.getElementById('primarySort').value;
+            const areaFilter = document.getElementById('smartListAreaFilter').value;
+            const ratingFilter = document.getElementById('ratingFilter').value;
+            
+            // Get current filtered shops
+            let allShops = [];
+            
+            if (shopsDetails) {
+                Object.entries(shopsDetails).forEach(([shopName, shopInfo]) => {
+                    const area = planData?.areas?.find(a => a.name === shopInfo.address || a.id === shopInfo.areaId);
+                    const ratingData = calculateShopRating(shopName);
+                    
+                    allShops.push({
+                        name: shopInfo.nameAr || shopName,
+                        nameEn: shopInfo.nameEn || '',
+                        licenseNo: shopInfo.licenseNo || '',
+                        admCode: shopInfo.admCode || '',
+                        address: shopInfo.address || '',
+                        contact: shopInfo.contact || '',
+                        activity: shopInfo.activity || '',
+                        area: area ? area.name : shopInfo.address || 'غير محدد',
+                        rating: ratingData.rating,
+                        lastInspection: getLastInspectionForShop(shopName),
+                        inspectionCount: getInspectionCountForShop(shopName)
+                    });
+                });
+            }
+            
+            // Apply same filters
+            if (areaFilter) {
+                const selectedArea = planData?.areas?.find(a => a.id === areaFilter);
+                if (selectedArea) {
+                    allShops = allShops.filter(s => s.area === selectedArea.name);
+                }
+            }
+            
+            if (ratingFilter) {
+                allShops = allShops.filter(shop => {
+                    if (ratingFilter === 'excellent') return shop.rating >= 90;
+                    if (ratingFilter === 'good') return shop.rating >= 70 && shop.rating < 90;
+                    if (ratingFilter === 'fair') return shop.rating >= 50 && shop.rating < 70;
+                    if (ratingFilter === 'poor') return shop.rating < 50;
+                    return true;
+                });
+            }
+            
+            if (format === 'json') {
+                const dataStr = JSON.stringify(allShops, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `smart-shop-list-${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                URL.revokeObjectURL(url);
+                alert(`✅ تم تصدير ${allShops.length} محل بصيغة JSON`);
+            } else if (format === 'excel' || format === 'pdf') {
+                alert(`📊 تصدير ${format.toUpperCase()}\n\nسيتم إضافة هذه الميزة قريباً.\n\nيمكنك حالياً:\n• تصدير JSON\n• طباعة القائمة`);
+            }
+        }
+        
+        // Print Smart Shop List
+        function printSmartShopList() {
+            const content = document.getElementById('smartShopListContent').innerHTML;
+            const printWindow = window.open('', '', 'height=600,width=800');
+            printWindow.document.write('<html><head><title>قائمة المحلات الذكية</title>');
+            printWindow.document.write('<style>');
+            printWindow.document.write('body { font-family: "Cairo", Arial, sans-serif; direction: rtl; }');
+            printWindow.document.write('table { width: 100%; border-collapse: collapse; margin: 20px 0; }');
+            printWindow.document.write('th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }');
+            printWindow.document.write('th { background-color: #667eea; color: white; }');
+            printWindow.document.write('h3 { color: #667eea; }');
+            printWindow.document.write('</style>');
+            printWindow.document.write('</head><body>');
+            printWindow.document.write('<h1 style="text-align: center;">📋 قائمة المحلات الذكية</h1>');
+            printWindow.document.write('<p style="text-align: center;">تاريخ الطباعة: ' + new Date().toLocaleDateString('ar-EG') + '</p>');
+            printWindow.document.write(content);
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.print();
         }
     </script>
 </body>

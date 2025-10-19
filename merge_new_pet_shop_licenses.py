@@ -30,6 +30,43 @@ def contains_keyword(text, keywords):
             return True
     return False
 
+def extract_area_name(address):
+    """
+    Extract simplified area name from detailed address.
+    
+    Examples:
+        "شمال الوثبة, شمال الوثبة 59, ق 10 - مستودع 31" -> "شمال الوثبة"
+        "المصفح, م 43, 0 : ~, مبنى" -> "المصفح"
+        "أبو ظبي - شارع الميناء - بناية" -> "أبو ظبي"
+        "الوثبة, مسلخ الوثبة - زريبة 39" -> "الوثبة"
+        "مصفح جنوب, ايكاد 3, 0 : ~" -> "مصفح جنوب"
+        " أبو ظبي - شارع  الميناء -  بناية دائرة بلدية أبوظبي, " -> "أبو ظبي"
+    
+    Strategy:
+        1. Strip whitespace and trailing comma
+        2. If address contains comma, take the first part before comma
+        3. If no comma but contains dash, take first part before dash
+        4. Strip and return
+    """
+    if not address:
+        return ''
+    
+    # Strip whitespace and trailing commas
+    address_str = str(address).strip().rstrip(',').strip()
+    
+    # If address contains comma, extract first part
+    if ',' in address_str:
+        area = address_str.split(',')[0].strip()
+        return area
+    
+    # If address contains dash, extract first part
+    if '-' in address_str:
+        area = address_str.split('-')[0].strip()
+        return area
+    
+    # Return the address as is (already simple)
+    return address_str
+
 def extract_new_licenses():
     """Extract relevant rows from new licenses Excel file"""
     print("📖 Reading 'رخص المحلات الجديدة.xlsx'...")
@@ -92,13 +129,13 @@ def merge_to_excel(new_shops, existing_licenses):
             skipped_count += 1
             continue
         
-        # Add new row
+        # Add new row with simplified area name
         last_row += 1
         ws[f'A{last_row}'] = shop['A']  # LICENSE_NO
         ws[f'B{last_row}'] = shop['B']  # TRADE_NAME_AR
         ws[f'C{last_row}'] = shop['C']  # TRADE_NAME_EN
         ws[f'M{last_row}'] = shop['M']  # EMAIL
-        ws[f'Q{last_row}'] = shop['Q']  # ADDRESS
+        ws[f'Q{last_row}'] = extract_area_name(shop['Q'])  # ADDRESS (simplified)
         ws[f'S{last_row}'] = shop['S']  # ACTIVITY_NAME_AR
         ws[f'T{last_row}'] = shop['T']  # ACTIVITY_NAME_EN
         
@@ -158,14 +195,14 @@ def merge_to_json(new_shops, shops_details):
         if not name_ar:
             continue
         
-        # Create shop entry
+        # Create shop entry with simplified area name
         shop_entry = {
             'nameAr': name_ar,
             'nameEn': str(shop['C']).strip() if shop['C'] else name_ar,
             'licenseNo': license_no,
             'locationMap': '',  # Will be empty for new shops
             'admCode': generate_adm_code(existing_codes),
-            'address': str(shop['Q']).strip() if shop['Q'] else '',
+            'address': extract_area_name(shop['Q']),  # Simplified area name
             'contact': str(shop['M']).strip() if shop['M'] else '',
             'activity': str(shop['S']).strip() if shop['S'] else ''
         }

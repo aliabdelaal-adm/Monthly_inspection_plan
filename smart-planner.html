@@ -1189,13 +1189,13 @@
                             زر قوي لمسح كل الكاش والذاكرة المؤقتة فوراً في GitHub والمتصفحات (Safari, Chrome, Firefox)
                         </p>
                         <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                            <button class="btn btn-danger" onclick="forceCacheClear()" style="background: white; color: #ff6b6b; font-weight: bold;">
-                                <span>🚀</span>
-                                <span>مسح قوي وفوري للكاش (Safari + Chrome + Firefox)</span>
+                            <button id="clearCacheBtn" class="btn btn-danger" onclick="forceCacheClear()" style="background: white; color: #ff6b6b; font-weight: bold;">
+                                <span id="clearCacheIcon">🚀</span>
+                                <span id="clearCacheText">مسح قوي وفوري للكاش (Safari + Chrome + Firefox)</span>
                             </button>
-                            <button class="btn btn-warning" onclick="updateServiceWorker()" style="background: white; color: #ee5a6f;">
-                                <span>🔄</span>
-                                <span>تحديث Service Worker فوراً</span>
+                            <button id="updateSWBtn" class="btn btn-warning" onclick="updateServiceWorker()" style="background: white; color: #ee5a6f;">
+                                <span id="updateSWIcon">🔄</span>
+                                <span id="updateSWText">تحديث Service Worker فوراً</span>
                             </button>
                         </div>
                         <div class="status-message" id="cacheControlStatus"></div>
@@ -2822,6 +2822,10 @@
             const savedToken = localStorage.getItem('devToken');
             if (savedToken) {
                 document.getElementById('githubToken').value = savedToken;
+                // Auto-set the token in the global variable
+                githubToken = savedToken;
+                // Load maintenance config immediately if we have a token
+                loadMaintenanceConfig();
             }
         };
         
@@ -3496,6 +3500,13 @@
                 return;
             }
             
+            // Disable buttons and show immediate feedback
+            const enableBtn = document.getElementById('enableMaintenanceBtn');
+            const disableBtn = document.getElementById('disableMaintenanceBtn');
+            
+            if (enableBtn) enableBtn.disabled = true;
+            if (disableBtn) disableBtn.disabled = true;
+            
             showMessage('maintenanceToggleStatus', 'info', '⏳ جاري التحديث...');
             
             try {
@@ -3505,6 +3516,10 @@
                 maintenanceStatusData.disabledBy = 'المطور - Smart Planner';
                 
                 await saveMaintenanceStatus(`${enable ? 'تفعيل' : 'إيقاف'} رسالة التحديث من Smart Planner`);
+                
+                // Re-enable buttons
+                if (enableBtn) enableBtn.disabled = false;
+                if (disableBtn) disableBtn.disabled = false;
                 
                 showMessage('maintenanceToggleStatus', 'success', 
                     `✅ تم ${enable ? 'تفعيل' : 'إيقاف'} رسالة التحديث بنجاح! التغييرات انعكست فوراً في GitHub`);
@@ -3516,6 +3531,10 @@
                 setTimeout(() => forceCacheClear(), 1000);
                 
             } catch (error) {
+                // Re-enable buttons on error
+                if (enableBtn) enableBtn.disabled = false;
+                if (disableBtn) disableBtn.disabled = false;
+                
                 showMessage('maintenanceToggleStatus', 'error', '❌ فشل التحديث: ' + error.message);
             }
         }
@@ -3527,6 +3546,13 @@
                 return;
             }
             
+            // Disable buttons and show immediate feedback
+            const enableBtn = document.getElementById('enableMusicBtn');
+            const disableBtn = document.getElementById('disableMusicBtn');
+            
+            if (enableBtn) enableBtn.disabled = true;
+            if (disableBtn) disableBtn.disabled = true;
+            
             showMessage('musicControlStatus', 'info', '⏳ جاري التحديث...');
             
             try {
@@ -3536,6 +3562,10 @@
                 maintenanceConfigData.updatedBy = 'المطور - Smart Planner';
                 
                 await saveMaintenanceConfig(`${enable ? 'تفعيل' : 'إيقاف'} الموسيقى من Smart Planner`);
+                
+                // Re-enable buttons
+                if (enableBtn) enableBtn.disabled = false;
+                if (disableBtn) disableBtn.disabled = false;
                 
                 showMessage('musicControlStatus', 'success', 
                     `✅ تم ${enable ? 'تفعيل' : 'إيقاف'} الموسيقى بنجاح! التغييرات انعكست فوراً في GitHub`);
@@ -3547,6 +3577,10 @@
                 setTimeout(() => forceCacheClear(), 1000);
                 
             } catch (error) {
+                // Re-enable buttons on error
+                if (enableBtn) enableBtn.disabled = false;
+                if (disableBtn) disableBtn.disabled = false;
+                
                 showMessage('musicControlStatus', 'error', '❌ فشل التحديث: ' + error.message);
             }
         }
@@ -3718,6 +3752,18 @@
         
         // Force cache clear - AGGRESSIVE IMPLEMENTATION for all browsers
         async function forceCacheClear() {
+            // Disable button and show immediate feedback
+            const btn = document.getElementById('clearCacheBtn');
+            const icon = document.getElementById('clearCacheIcon');
+            const text = document.getElementById('clearCacheText');
+            
+            if (btn) {
+                btn.disabled = true;
+                btn.style.opacity = '0.6';
+            }
+            if (icon) icon.textContent = '⏳';
+            if (text) text.textContent = 'جاري المسح الفوري...';
+            
             showMessage('cacheControlStatus', 'info', '⏳ جاري مسح الكاش والذاكرة بشكل فوري وقوي...');
             
             try {
@@ -3787,12 +3833,26 @@
                     }
                 }
                 
+                // Re-enable button with success state
+                if (btn) {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                }
+                if (icon) icon.textContent = '✅';
+                if (text) text.textContent = 'تم المسح بنجاح!';
+                
                 // Show success message
                 showMessage('cacheControlStatus', 'success', 
                     '✅ تم مسح جميع الكاش والذاكرة بنجاح!\n\n' +
                     clearedItems.join('\n') + '\n\n' +
                     '✨ التحديثات ستنعكس فوراً في جميع المتصفحات (Safari, Chrome, Firefox)\n' +
                     '🔄 سيتم إعادة تحميل الصفحة بشكل قوي خلال 3 ثوانٍ...');
+                
+                // Reset button text after a moment
+                setTimeout(() => {
+                    if (icon) icon.textContent = '🚀';
+                    if (text) text.textContent = 'مسح قوي وفوري للكاش (Safari + Chrome + Firefox)';
+                }, 2000);
                 
                 // 7. Force hard reload after 3 seconds
                 setTimeout(() => {
@@ -3809,13 +3869,39 @@
                 }, 3000);
                 
             } catch (error) {
+                // Re-enable button on error
+                if (btn) {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                }
+                if (icon) icon.textContent = '❌';
+                if (text) text.textContent = 'فشل المسح - حاول مرة أخرى';
+                
                 showMessage('cacheControlStatus', 'error', '❌ فشل مسح الكاش: ' + error.message);
                 console.error('Cache clear error:', error);
+                
+                // Reset button text after a moment
+                setTimeout(() => {
+                    if (icon) icon.textContent = '🚀';
+                    if (text) text.textContent = 'مسح قوي وفوري للكاش (Safari + Chrome + Firefox)';
+                }, 3000);
             }
         }
         
         // Update service worker
         async function updateServiceWorker() {
+            // Disable button and show immediate feedback
+            const btn = document.getElementById('updateSWBtn');
+            const icon = document.getElementById('updateSWIcon');
+            const text = document.getElementById('updateSWText');
+            
+            if (btn) {
+                btn.disabled = true;
+                btn.style.opacity = '0.6';
+            }
+            if (icon) icon.textContent = '⏳';
+            if (text) text.textContent = 'جاري التحديث...';
+            
             showMessage('cacheControlStatus', 'info', '⏳ جاري تحديث Service Worker...');
             
             try {
@@ -3824,7 +3910,21 @@
                     const registrations = await navigator.serviceWorker.getRegistrations();
                     
                     if (registrations.length === 0) {
+                        // Re-enable button
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.style.opacity = '1';
+                        }
+                        if (icon) icon.textContent = '⚠️';
+                        if (text) text.textContent = 'لا توجد Service Workers';
+                        
                         showMessage('cacheControlStatus', 'warning', '⚠️ لا توجد Service Workers مسجلة');
+                        
+                        // Reset button text
+                        setTimeout(() => {
+                            if (icon) icon.textContent = '🔄';
+                            if (text) text.textContent = 'تحديث Service Worker فوراً';
+                        }, 2000);
                         return;
                     }
                     
@@ -3834,16 +3934,58 @@
                         console.log('✅ Service Worker updated:', registration);
                     }
                     
+                    // Re-enable button with success state
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                    }
+                    if (icon) icon.textContent = '✅';
+                    if (text) text.textContent = 'تم التحديث بنجاح!';
+                    
                     showMessage('cacheControlStatus', 'success', 
                         `✅ تم تحديث ${registrations.length} Service Worker بنجاح!\n` +
                         '🔄 التحديثات ستنعكس فوراً في جميع علامات التبويب');
                     
+                    // Reset button text after a moment
+                    setTimeout(() => {
+                        if (icon) icon.textContent = '🔄';
+                        if (text) text.textContent = 'تحديث Service Worker فوراً';
+                    }, 2000);
+                    
                 } else {
+                    // Re-enable button
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                    }
+                    if (icon) icon.textContent = '❌';
+                    if (text) text.textContent = 'المتصفح لا يدعم SW';
+                    
                     showMessage('cacheControlStatus', 'error', '❌ المتصفح لا يدعم Service Workers');
+                    
+                    // Reset button text
+                    setTimeout(() => {
+                        if (icon) icon.textContent = '🔄';
+                        if (text) text.textContent = 'تحديث Service Worker فوراً';
+                    }, 2000);
                 }
                 
             } catch (error) {
+                // Re-enable button on error
+                if (btn) {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                }
+                if (icon) icon.textContent = '❌';
+                if (text) text.textContent = 'فشل التحديث';
+                
                 showMessage('cacheControlStatus', 'error', '❌ فشل تحديث Service Worker: ' + error.message);
+                
+                // Reset button text after a moment
+                setTimeout(() => {
+                    if (icon) icon.textContent = '🔄';
+                    if (text) text.textContent = 'تحديث Service Worker فوراً';
+                }, 3000);
             }
         }
         

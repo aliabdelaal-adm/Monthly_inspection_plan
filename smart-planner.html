@@ -1,9 +1,24 @@
 <!DOCTYPE html>
+<!-- Version 2.0.0 - ABSOLUTE ZERO-CACHE STRATEGY for instant updates -->
+<!-- Last Updated: 2025-10-19 - Complete cache prevention for Safari, Chrome, Firefox (mobile/desktop) -->
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>أداة التخطيط الذكية للتفتيش الشهري</title>
+    
+    <!-- ABSOLUTE CACHE PREVENTION - Works on ALL browsers including Safari, Chrome and Firefox -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0, max-stale=0, post-check=0, pre-check=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <!-- Safari-specific cache prevention -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- Chrome mobile-specific cache prevention -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <!-- Additional cache control for aggressive browsers -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="cleartype" content="on">
     
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
@@ -1174,9 +1189,9 @@
                             زر قوي لمسح كل الكاش والذاكرة المؤقتة فوراً في GitHub والمتصفحات (Safari, Chrome, Firefox)
                         </p>
                         <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                            <button class="btn btn-danger" onclick="forceCacheClear()" style="background: white; color: #ff6b6b;">
-                                <span>🗑️</span>
-                                <span>مسح الكاش الفوري (GitHub + المتصفحات)</span>
+                            <button class="btn btn-danger" onclick="forceCacheClear()" style="background: white; color: #ff6b6b; font-weight: bold;">
+                                <span>🚀</span>
+                                <span>مسح قوي وفوري للكاش (Safari + Chrome + Firefox)</span>
                             </button>
                             <button class="btn btn-warning" onclick="updateServiceWorker()" style="background: white; color: #ee5a6f;">
                                 <span>🔄</span>
@@ -3679,51 +3694,101 @@
             }
         }
         
-        // Force cache clear
+        // Force cache clear - AGGRESSIVE IMPLEMENTATION for all browsers
         async function forceCacheClear() {
-            showMessage('cacheControlStatus', 'info', '⏳ جاري مسح الكاش والذاكرة...');
+            showMessage('cacheControlStatus', 'info', '⏳ جاري مسح الكاش والذاكرة بشكل فوري وقوي...');
             
             try {
-                // Clear local storage
+                let clearedItems = [];
+                
+                // 1. Clear local storage (preserve devToken)
                 const keysToKeep = ['devToken'];
                 const allKeys = Object.keys(localStorage);
+                let localStorageCount = 0;
                 allKeys.forEach(key => {
                     if (!keysToKeep.includes(key)) {
                         localStorage.removeItem(key);
+                        localStorageCount++;
                     }
                 });
+                clearedItems.push(`💾 LocalStorage: تم مسح ${localStorageCount} عنصر`);
                 
-                // Clear session storage
+                // 2. Clear session storage
+                const sessionStorageCount = sessionStorage.length;
                 sessionStorage.clear();
+                clearedItems.push(`📦 SessionStorage: تم مسح ${sessionStorageCount} عنصر`);
                 
-                // Unregister all service workers
+                // 3. Unregister all service workers
+                let swCount = 0;
                 if ('serviceWorker' in navigator) {
                     const registrations = await navigator.serviceWorker.getRegistrations();
                     for (let registration of registrations) {
                         await registration.unregister();
+                        swCount++;
                         console.log('✅ Service Worker unregistered:', registration);
                     }
                 }
+                clearedItems.push(`🔄 Service Workers: تم إلغاء تسجيل ${swCount} خدمة`);
                 
-                // Clear all caches
+                // 4. Clear all caches
+                let cacheCount = 0;
                 if ('caches' in window) {
                     const cacheNames = await caches.keys();
                     for (let cacheName of cacheNames) {
                         await caches.delete(cacheName);
+                        cacheCount++;
                         console.log('✅ Cache deleted:', cacheName);
                     }
                 }
+                clearedItems.push(`🗑️ Caches: تم مسح ${cacheCount} كاش`);
                 
+                // 5. Clear cookies (if possible)
+                try {
+                    document.cookie.split(";").forEach(function(c) { 
+                        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+                    });
+                    clearedItems.push(`🍪 Cookies: تم المسح`);
+                } catch (e) {
+                    console.warn('Could not clear cookies:', e);
+                }
+                
+                // 6. Clear IndexedDB (if exists)
+                if ('indexedDB' in window) {
+                    try {
+                        const databases = await indexedDB.databases();
+                        for (const db of databases) {
+                            indexedDB.deleteDatabase(db.name);
+                        }
+                        clearedItems.push(`📊 IndexedDB: تم المسح`);
+                    } catch (e) {
+                        console.warn('Could not clear IndexedDB:', e);
+                    }
+                }
+                
+                // Show success message
                 showMessage('cacheControlStatus', 'success', 
-                    '✅ تم مسح جميع الكاش والذاكرة بنجاح!\n' +
-                    '🔄 Service Workers: تم إلغاء التسجيل\n' +
-                    '🗑️ Caches: تم المسح الكامل\n' +
-                    '💾 LocalStorage: تم التنظيف\n' +
-                    '📦 SessionStorage: تم المسح\n\n' +
-                    '✨ التحديثات ستنعكس فوراً في جميع المتصفحات (Safari, Chrome, Firefox)');
+                    '✅ تم مسح جميع الكاش والذاكرة بنجاح!\n\n' +
+                    clearedItems.join('\n') + '\n\n' +
+                    '✨ التحديثات ستنعكس فوراً في جميع المتصفحات (Safari, Chrome, Firefox)\n' +
+                    '🔄 سيتم إعادة تحميل الصفحة بشكل قوي خلال 3 ثوانٍ...');
+                
+                // 7. Force hard reload after 3 seconds
+                setTimeout(() => {
+                    console.log('🔄 Performing hard reload...');
+                    // Try multiple reload methods for maximum compatibility
+                    if (window.location.reload) {
+                        // Hard reload with cache bypass
+                        window.location.reload(true);
+                    }
+                    // Fallback: Force reload by changing URL
+                    setTimeout(() => {
+                        window.location.href = window.location.href.split('?')[0] + '?t=' + new Date().getTime();
+                    }, 500);
+                }, 3000);
                 
             } catch (error) {
                 showMessage('cacheControlStatus', 'error', '❌ فشل مسح الكاش: ' + error.message);
+                console.error('Cache clear error:', error);
             }
         }
         

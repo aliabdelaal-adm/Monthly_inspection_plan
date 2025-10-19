@@ -5879,22 +5879,38 @@ async function smartCacheClear() {
         if (lastVersion !== APP_VERSION) {
             console.log('🔄 New app version detected. Clearing caches...');
             
-            // 1. Clear Service Worker caches (if any)
-            if ('serviceWorker' in navigator && 'caches' in window) {
-                const cacheNames = await caches.keys();
-                await Promise.all(
-                    cacheNames.map(cacheName => caches.delete(cacheName))
-                );
-                console.log('✅ Service Worker caches cleared');
+            // Check if running on secure protocol
+            const isSecureContext = window.isSecureContext || 
+                                    location.protocol === 'https:' || 
+                                    location.hostname === 'localhost' || 
+                                    location.hostname === '127.0.0.1';
+            
+            // 1. Clear Service Worker caches (if any) - only in secure context
+            if (isSecureContext && 'serviceWorker' in navigator && 'caches' in window) {
+                try {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(
+                        cacheNames.map(cacheName => caches.delete(cacheName))
+                    );
+                    console.log('✅ Service Worker caches cleared');
+                } catch (cacheError) {
+                    console.warn('⚠️ Could not clear Service Worker caches:', cacheError.message);
+                }
+            } else if (!isSecureContext) {
+                console.log('ℹ️ Service Worker not available in file:// protocol - skipping cache clearing');
             }
             
-            // 2. Unregister old service workers
-            if ('serviceWorker' in navigator) {
-                const registrations = await navigator.serviceWorker.getRegistrations();
-                await Promise.all(
-                    registrations.map(registration => registration.unregister())
-                );
-                console.log('✅ Old service workers unregistered');
+            // 2. Unregister old service workers - only in secure context
+            if (isSecureContext && 'serviceWorker' in navigator) {
+                try {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    await Promise.all(
+                        registrations.map(registration => registration.unregister())
+                    );
+                    console.log('✅ Old service workers unregistered');
+                } catch (swError) {
+                    console.warn('⚠️ Could not unregister Service Workers:', swError.message);
+                }
             }
             
             // 3. Store new version
@@ -7137,24 +7153,40 @@ async function clearAllCaches() {
     try {
         console.log('🧹 Clearing all caches for instant update...');
         
-        // 1. Clear Service Worker caches (if any)
-        if ('serviceWorker' in navigator && 'caches' in window) {
-            const cacheNames = await caches.keys();
-            await Promise.all(
-                cacheNames.map(cacheName => {
-                    console.log(`🗑️ Deleting cache: ${cacheName}`);
-                    return caches.delete(cacheName);
-                })
-            );
-            console.log('✅ Service Worker caches cleared');
+        // Check if running on secure protocol
+        const isSecureContext = window.isSecureContext || 
+                                location.protocol === 'https:' || 
+                                location.hostname === 'localhost' || 
+                                location.hostname === '127.0.0.1';
+        
+        // 1. Clear Service Worker caches (if any) - only in secure context
+        if (isSecureContext && 'serviceWorker' in navigator && 'caches' in window) {
+            try {
+                const cacheNames = await caches.keys();
+                await Promise.all(
+                    cacheNames.map(cacheName => {
+                        console.log(`🗑️ Deleting cache: ${cacheName}`);
+                        return caches.delete(cacheName);
+                    })
+                );
+                console.log('✅ Service Worker caches cleared');
+            } catch (cacheError) {
+                console.warn('⚠️ Could not clear Service Worker caches:', cacheError.message);
+            }
+        } else if (!isSecureContext) {
+            console.log('ℹ️ Service Worker not available in file:// protocol - skipping cache clearing');
         }
         
-        // 2. Force service worker update (if registered)
-        if ('serviceWorker' in navigator) {
-            const registrations = await navigator.serviceWorker.getRegistrations();
-            for (let registration of registrations) {
-                console.log('🔄 Updating service worker...');
-                await registration.update();
+        // 2. Force service worker update (if registered) - only in secure context
+        if (isSecureContext && 'serviceWorker' in navigator) {
+            try {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (let registration of registrations) {
+                    console.log('🔄 Updating service worker...');
+                    await registration.update();
+                }
+            } catch (swError) {
+                console.warn('⚠️ Could not update Service Workers:', swError.message);
             }
         }
         
@@ -7818,18 +7850,34 @@ async function emergencyClearCache() {
         showMaintenanceProgress('🧹 جاري مسح الكاش...');
         showDevToast('🧹 جاري مسح جميع الكاش...', 'info', 3000, '🧹');
         
-        // Clear service worker caches
-        if ('serviceWorker' in navigator && 'caches' in window) {
-            const cacheNames = await caches.keys();
-            await Promise.all(cacheNames.map(name => caches.delete(name)));
-            console.log('✅ Service Worker caches cleared');
+        // Check if running on secure protocol (https or localhost)
+        const isSecureContext = window.isSecureContext || 
+                                location.protocol === 'https:' || 
+                                location.hostname === 'localhost' || 
+                                location.hostname === '127.0.0.1';
+        
+        // Clear service worker caches only if secure context
+        if (isSecureContext && 'serviceWorker' in navigator && 'caches' in window) {
+            try {
+                const cacheNames = await caches.keys();
+                await Promise.all(cacheNames.map(name => caches.delete(name)));
+                console.log('✅ Service Worker caches cleared');
+            } catch (cacheError) {
+                console.warn('⚠️ Could not clear Service Worker caches:', cacheError.message);
+            }
+        } else if (!isSecureContext) {
+            console.log('ℹ️ Service Worker not available in file:// protocol - skipping cache clearing');
         }
         
-        // Unregister service workers
-        if ('serviceWorker' in navigator) {
-            const registrations = await navigator.serviceWorker.getRegistrations();
-            await Promise.all(registrations.map(reg => reg.unregister()));
-            console.log('✅ Service Workers unregistered');
+        // Unregister service workers only if secure context
+        if (isSecureContext && 'serviceWorker' in navigator) {
+            try {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                await Promise.all(registrations.map(reg => reg.unregister()));
+                console.log('✅ Service Workers unregistered');
+            } catch (swError) {
+                console.warn('⚠️ Could not unregister Service Workers:', swError.message);
+            }
         }
         
         // Clear localStorage cache entries (but keep user data)

@@ -4258,20 +4258,837 @@
             alert('📊 تصدير إلى Excel\n\nسيتم إضافة هذه الميزة قريباً.\n\nحالياً يمكنك استخدام تصدير JSON ثم تحويله إلى Excel.');
         }
         
-        // Bulk Edit Shops
-        function bulkEditShops() {
-            alert('✏️ التعديل الجماعي للمحلات\n\nسيتم إضافة هذه الميزة قريباً.\n\nستتمكن من:\n• تعديل منطقة عدة محلات\n• تحديث معلومات متعددة\n• إعادة تسمية جماعية');
+        // Bulk Edit Shops - FULL IMPLEMENTATION
+        async function bulkEditShops() {
+            if (!planData || !planData.shops || planData.shops.length === 0) {
+                alert('⚠️ لا توجد محلات للتعديل');
+                return;
+            }
+            
+            // Create modal for bulk edit
+            const modal = document.createElement('div');
+            modal.id = 'bulkEditModal';
+            modal.style.cssText = `
+                display: block;
+                position: fixed;
+                z-index: 10000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                overflow: auto;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; margin: 2% auto; padding: 30px; border-radius: 15px; max-width: 90%; max-height: 90vh; overflow: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2 style="color: #2d3561; margin: 0;">✏️ التعديل الجماعي للمحلات</h2>
+                        <button onclick="document.getElementById('bulkEditModal').remove()" style="font-size: 2em; border: none; background: none; cursor: pointer; color: #999;">×</button>
+                    </div>
+                    
+                    <!-- Selection Section -->
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; margin-bottom: 20px; color: white;">
+                        <h3 style="margin: 0 0 15px 0;">📋 تحديد المحلات للتعديل</h3>
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                            <button onclick="selectAllShopsForEdit()" style="padding: 10px 20px; border: none; border-radius: 8px; background: white; color: #667eea; font-family: 'Cairo', sans-serif; cursor: pointer;">
+                                ☑️ تحديد الكل
+                            </button>
+                            <button onclick="deselectAllShopsForEdit()" style="padding: 10px 20px; border: none; border-radius: 8px; background: white; color: #667eea; font-family: 'Cairo', sans-serif; cursor: pointer;">
+                                ☐ إلغاء تحديد الكل
+                            </button>
+                            <select id="bulkEditAreaFilter" onchange="filterShopsForBulkEdit()" style="padding: 10px; border-radius: 8px; border: none; font-family: 'Cairo', sans-serif;">
+                                <option value="">جميع المناطق</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Shops Selection List -->
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; max-height: 300px; overflow-y: auto;">
+                        <div id="bulkEditShopsList"></div>
+                    </div>
+                    
+                    <!-- Edit Operations -->
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                        <h3 style="color: #2d3561; margin-bottom: 15px;">⚙️ عمليات التعديل</h3>
+                        <div style="display: grid; gap: 15px;">
+                            <div>
+                                <label style="display: block; font-weight: 600; color: #2d3561; margin-bottom: 8px;">نقل إلى منطقة:</label>
+                                <select id="bulkEditNewArea" style="width: 100%; padding: 10px; border-radius: 8px; border: 2px solid #667eea; font-family: 'Cairo', sans-serif;">
+                                    <option value="">-- اختر منطقة --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display: block; font-weight: 600; color: #2d3561; margin-bottom: 8px;">إضافة بادئة للأسماء:</label>
+                                <input type="text" id="bulkEditPrefix" placeholder="مثال: محل -" style="width: 100%; padding: 10px; border-radius: 8px; border: 2px solid #667eea; font-family: 'Cairo', sans-serif;">
+                            </div>
+                            <div>
+                                <label style="display: block; font-weight: 600; color: #2d3561; margin-bottom: 8px;">إضافة لاحقة للأسماء:</label>
+                                <input type="text" id="bulkEditSuffix" placeholder="مثال: - الفرع الرئيسي" style="width: 100%; padding: 10px; border-radius: 8px; border: 2px solid #667eea; font-family: 'Cairo', sans-serif;">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Stats -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; border-radius: 10px; color: white; text-align: center;">
+                            <div style="font-size: 2em; font-weight: 700;" id="bulkEditSelectedCount">0</div>
+                            <div style="font-size: 0.9em;">المحلات المحددة</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div style="display: flex; gap: 15px; justify-content: center;">
+                        <button onclick="applyBulkEdit()" style="padding: 15px 30px; border: none; border-radius: 10px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; font-family: 'Cairo', sans-serif; font-weight: 600; font-size: 1.1em; cursor: pointer;">
+                            ✅ تطبيق التعديلات
+                        </button>
+                        <button onclick="document.getElementById('bulkEditModal').remove()" style="padding: 15px 30px; border: none; border-radius: 10px; background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; font-family: 'Cairo', sans-serif; font-weight: 600; font-size: 1.1em; cursor: pointer;">
+                            ❌ إلغاء
+                        </button>
+                    </div>
+                    
+                    <div id="bulkEditStatus" style="margin-top: 20px;"></div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Populate area filters and dropdowns
+            const areaFilter = document.getElementById('bulkEditAreaFilter');
+            const newAreaSelect = document.getElementById('bulkEditNewArea');
+            
+            if (planData.areas) {
+                planData.areas.forEach(area => {
+                    const filterOption = document.createElement('option');
+                    filterOption.value = area.id;
+                    filterOption.textContent = area.name;
+                    areaFilter.appendChild(filterOption);
+                    
+                    const editOption = document.createElement('option');
+                    editOption.value = area.id;
+                    editOption.textContent = area.name;
+                    newAreaSelect.appendChild(editOption);
+                });
+            }
+            
+            // Initialize shops list
+            filterShopsForBulkEdit();
         }
         
-        // Bulk Delete Shops
-        function bulkDeleteShops() {
-            alert('🗑️ الحذف الجماعي للمحلات\n\nسيتم إضافة هذه الميزة قريباً.\n\nستتمكن من حذف عدة محلات دفعة واحدة.');
+        // Filter shops for bulk edit
+        window.filterShopsForBulkEdit = function() {
+            const filterAreaId = document.getElementById('bulkEditAreaFilter').value;
+            const shopsList = document.getElementById('bulkEditShopsList');
+            
+            let shopsToShow = planData.shops;
+            if (filterAreaId) {
+                shopsToShow = shopsToShow.filter(s => s.areaId === filterAreaId);
+            }
+            
+            shopsList.innerHTML = shopsToShow.map((shop, index) => {
+                const area = planData.areas.find(a => a.id === shop.areaId);
+                return `
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid #e0e0e0;">
+                        <input type="checkbox" id="shop_${shop.id}" value="${shop.id}" onchange="updateBulkEditCount()" style="width: 20px; height: 20px; cursor: pointer;">
+                        <label for="shop_${shop.id}" style="flex: 1; cursor: pointer;">
+                            <strong>${shop.name}</strong>
+                            <span style="color: #666; font-size: 0.9em;"> - ${area ? area.name : 'غير محدد'}</span>
+                        </label>
+                    </div>
+                `;
+            }).join('');
+            
+            updateBulkEditCount();
+        };
+        
+        // Select all shops for edit
+        window.selectAllShopsForEdit = function() {
+            document.querySelectorAll('#bulkEditShopsList input[type="checkbox"]').forEach(cb => {
+                cb.checked = true;
+            });
+            updateBulkEditCount();
+        };
+        
+        // Deselect all shops for edit
+        window.deselectAllShopsForEdit = function() {
+            document.querySelectorAll('#bulkEditShopsList input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+            });
+            updateBulkEditCount();
+        };
+        
+        // Update bulk edit count
+        window.updateBulkEditCount = function() {
+            const count = document.querySelectorAll('#bulkEditShopsList input[type="checkbox"]:checked').length;
+            document.getElementById('bulkEditSelectedCount').textContent = count;
+        };
+        
+        // Apply bulk edit
+        window.applyBulkEdit = async function() {
+            const selectedShopIds = Array.from(document.querySelectorAll('#bulkEditShopsList input[type="checkbox"]:checked'))
+                .map(cb => cb.value);
+            
+            if (selectedShopIds.length === 0) {
+                alert('⚠️ يرجى تحديد محل واحد على الأقل');
+                return;
+            }
+            
+            const newAreaId = document.getElementById('bulkEditNewArea').value;
+            const prefix = document.getElementById('bulkEditPrefix').value.trim();
+            const suffix = document.getElementById('bulkEditSuffix').value.trim();
+            
+            if (!newAreaId && !prefix && !suffix) {
+                alert('⚠️ يرجى تحديد عملية تعديل واحدة على الأقل');
+                return;
+            }
+            
+            if (!githubToken) {
+                alert('❌ يرجى تسجيل الدخول أولاً');
+                return;
+            }
+            
+            if (!confirm(`🔄 هل أنت متأكد من تعديل ${selectedShopIds.length} محل؟\n\nسيتم حفظ التغييرات مباشرة في GitHub.`)) {
+                return;
+            }
+            
+            const statusDiv = document.getElementById('bulkEditStatus');
+            statusDiv.innerHTML = '<div style="background: #d1ecf1; color: #0c5460; padding: 15px; border-radius: 10px; border: 2px solid #bee5eb;">⏳ جاري التعديل...</div>';
+            
+            try {
+                let editedCount = 0;
+                
+                planData.shops.forEach(shop => {
+                    if (selectedShopIds.includes(shop.id)) {
+                        if (newAreaId) {
+                            shop.areaId = newAreaId;
+                        }
+                        if (prefix) {
+                            shop.name = prefix + shop.name;
+                        }
+                        if (suffix) {
+                            shop.name = shop.name + suffix;
+                        }
+                        editedCount++;
+                    }
+                });
+                
+                // Save to GitHub
+                await savePlanDataToGitHub();
+                
+                statusDiv.innerHTML = `
+                    <div style="background: #d4edda; color: #155724; padding: 15px; border-radius: 10px; border: 2px solid #c3e6cb;">
+                        ✅ تم تعديل ${editedCount} محل بنجاح!
+                    </div>
+                `;
+                
+                setTimeout(() => {
+                    document.getElementById('bulkEditModal').remove();
+                    displayShopsList();
+                    alert(`✅ تم تعديل ${editedCount} محل بنجاح!`);
+                }, 2000);
+                
+            } catch (error) {
+                statusDiv.innerHTML = `<div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 10px; border: 2px solid #f5c6cb;">❌ فشل التعديل: ${error.message}</div>`;
+            }
+        };
+        
+        // Bulk Delete Shops - FULL IMPLEMENTATION
+        async function bulkDeleteShops() {
+            if (!planData || !planData.shops || planData.shops.length === 0) {
+                alert('⚠️ لا توجد محلات للحذف');
+                return;
+            }
+            
+            // Create modal for bulk delete
+            const modal = document.createElement('div');
+            modal.id = 'bulkDeleteModal';
+            modal.style.cssText = `
+                display: block;
+                position: fixed;
+                z-index: 10000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                overflow: auto;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; margin: 2% auto; padding: 30px; border-radius: 15px; max-width: 90%; max-height: 90vh; overflow: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2 style="color: #2d3561; margin: 0;">🗑️ الحذف الجماعي للمحلات</h2>
+                        <button onclick="document.getElementById('bulkDeleteModal').remove()" style="font-size: 2em; border: none; background: none; cursor: pointer; color: #999;">×</button>
+                    </div>
+                    
+                    <!-- Warning -->
+                    <div style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); padding: 20px; border-radius: 10px; margin-bottom: 20px; color: white;">
+                        <h3 style="margin: 0 0 10px 0;">⚠️ تحذير هام</h3>
+                        <p style="margin: 0;">عملية الحذف نهائية ولا يمكن التراجع عنها. تأكد من اختيار المحلات الصحيحة قبل التأكيد.</p>
+                    </div>
+                    
+                    <!-- Selection Section -->
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px;">
+                            <button onclick="selectAllShopsForDelete()" style="padding: 10px 20px; border: none; border-radius: 8px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-family: 'Cairo', sans-serif; cursor: pointer;">
+                                ☑️ تحديد الكل
+                            </button>
+                            <button onclick="deselectAllShopsForDelete()" style="padding: 10px 20px; border: none; border-radius: 8px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-family: 'Cairo', sans-serif; cursor: pointer;">
+                                ☐ إلغاء تحديد الكل
+                            </button>
+                            <select id="bulkDeleteAreaFilter" onchange="filterShopsForBulkDelete()" style="padding: 10px; border-radius: 8px; border: 2px solid #667eea; font-family: 'Cairo', sans-serif;">
+                                <option value="">جميع المناطق</option>
+                            </select>
+                        </div>
+                        <div id="bulkDeleteShopsList" style="max-height: 300px; overflow-y: auto;"></div>
+                    </div>
+                    
+                    <!-- Stats -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                        <div style="background: linear-gradient(135deg, #dc3545 0%, #c0392b 100%); padding: 15px; border-radius: 10px; color: white; text-align: center;">
+                            <div style="font-size: 2em; font-weight: 700;" id="bulkDeleteSelectedCount">0</div>
+                            <div style="font-size: 0.9em;">المحلات المحددة للحذف</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div style="display: flex; gap: 15px; justify-content: center;">
+                        <button onclick="applyBulkDelete()" style="padding: 15px 30px; border: none; border-radius: 10px; background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; font-family: 'Cairo', sans-serif; font-weight: 600; font-size: 1.1em; cursor: pointer;">
+                            🗑️ حذف نهائي
+                        </button>
+                        <button onclick="document.getElementById('bulkDeleteModal').remove()" style="padding: 15px 30px; border: none; border-radius: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-family: 'Cairo', sans-serif; font-weight: 600; font-size: 1.1em; cursor: pointer;">
+                            ❌ إلغاء
+                        </button>
+                    </div>
+                    
+                    <div id="bulkDeleteStatus" style="margin-top: 20px;"></div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Populate area filter
+            const areaFilter = document.getElementById('bulkDeleteAreaFilter');
+            if (planData.areas) {
+                planData.areas.forEach(area => {
+                    const option = document.createElement('option');
+                    option.value = area.id;
+                    option.textContent = area.name;
+                    areaFilter.appendChild(option);
+                });
+            }
+            
+            // Initialize shops list
+            filterShopsForBulkDelete();
         }
         
-        // Merge Shops Data
-        function mergeShopsData() {
-            alert('🔗 دمج بيانات المحلات\n\nسيتم إضافة هذه الميزة قريباً.\n\nستتمكن من:\n• دمج المحلات المكررة\n• توحيد البيانات\n• حل التعارضات');
+        // Filter shops for bulk delete
+        window.filterShopsForBulkDelete = function() {
+            const filterAreaId = document.getElementById('bulkDeleteAreaFilter').value;
+            const shopsList = document.getElementById('bulkDeleteShopsList');
+            
+            let shopsToShow = planData.shops;
+            if (filterAreaId) {
+                shopsToShow = shopsToShow.filter(s => s.areaId === filterAreaId);
+            }
+            
+            shopsList.innerHTML = shopsToShow.map(shop => {
+                const area = planData.areas.find(a => a.id === shop.areaId);
+                return `
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid #e0e0e0;">
+                        <input type="checkbox" id="delshop_${shop.id}" value="${shop.id}" onchange="updateBulkDeleteCount()" style="width: 20px; height: 20px; cursor: pointer;">
+                        <label for="delshop_${shop.id}" style="flex: 1; cursor: pointer;">
+                            <strong>${shop.name}</strong>
+                            <span style="color: #666; font-size: 0.9em;"> - ${area ? area.name : 'غير محدد'}</span>
+                        </label>
+                    </div>
+                `;
+            }).join('');
+            
+            updateBulkDeleteCount();
+        };
+        
+        // Select all shops for delete
+        window.selectAllShopsForDelete = function() {
+            document.querySelectorAll('#bulkDeleteShopsList input[type="checkbox"]').forEach(cb => {
+                cb.checked = true;
+            });
+            updateBulkDeleteCount();
+        };
+        
+        // Deselect all shops for delete
+        window.deselectAllShopsForDelete = function() {
+            document.querySelectorAll('#bulkDeleteShopsList input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+            });
+            updateBulkDeleteCount();
+        };
+        
+        // Update bulk delete count
+        window.updateBulkDeleteCount = function() {
+            const count = document.querySelectorAll('#bulkDeleteShopsList input[type="checkbox"]:checked').length;
+            document.getElementById('bulkDeleteSelectedCount').textContent = count;
+        };
+        
+        // Apply bulk delete
+        window.applyBulkDelete = async function() {
+            const selectedShopIds = Array.from(document.querySelectorAll('#bulkDeleteShopsList input[type="checkbox"]:checked'))
+                .map(cb => cb.value);
+            
+            if (selectedShopIds.length === 0) {
+                alert('⚠️ يرجى تحديد محل واحد على الأقل للحذف');
+                return;
+            }
+            
+            if (!githubToken) {
+                alert('❌ يرجى تسجيل الدخول أولاً');
+                return;
+            }
+            
+            if (!confirm(`⚠️ هل أنت متأكد تماماً من حذف ${selectedShopIds.length} محل نهائياً؟\n\nهذه العملية لا يمكن التراجع عنها!\n\nسيتم حفظ التغييرات مباشرة في GitHub.`)) {
+                return;
+            }
+            
+            const statusDiv = document.getElementById('bulkDeleteStatus');
+            statusDiv.innerHTML = '<div style="background: #d1ecf1; color: #0c5460; padding: 15px; border-radius: 10px; border: 2px solid #bee5eb;">⏳ جاري الحذف...</div>';
+            
+            try {
+                const initialCount = planData.shops.length;
+                planData.shops = planData.shops.filter(shop => !selectedShopIds.includes(shop.id));
+                const deletedCount = initialCount - planData.shops.length;
+                
+                // Save to GitHub
+                await savePlanDataToGitHub();
+                
+                statusDiv.innerHTML = `
+                    <div style="background: #d4edda; color: #155724; padding: 15px; border-radius: 10px; border: 2px solid #c3e6cb;">
+                        ✅ تم حذف ${deletedCount} محل بنجاح!
+                    </div>
+                `;
+                
+                setTimeout(() => {
+                    document.getElementById('bulkDeleteModal').remove();
+                    displayShopsList();
+                    alert(`✅ تم حذف ${deletedCount} محل بنجاح!`);
+                }, 2000);
+                
+            } catch (error) {
+                statusDiv.innerHTML = `<div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 10px; border: 2px solid #f5c6cb;">❌ فشل الحذف: ${error.message}</div>`;
+            }
+        };
+        
+        
+        // Merge Shops Data - FULL IMPLEMENTATION
+        async function mergeShopsData() {
+            if (!planData || !planData.shops || planData.shops.length === 0) {
+                alert('⚠️ لا توجد بيانات محلات للدمج');
+                return;
+            }
+            
+            // Create modal for merge operation
+            const modal = document.createElement('div');
+            modal.id = 'mergeModal';
+            modal.style.cssText = `
+                display: block;
+                position: fixed;
+                z-index: 10000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                overflow: auto;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; margin: 2% auto; padding: 30px; border-radius: 15px; max-width: 90%; max-height: 90vh; overflow: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2 style="color: #2d3561; margin: 0;">🔗 دمج بيانات المحلات</h2>
+                        <button onclick="document.getElementById('mergeModal').remove()" style="font-size: 2em; border: none; background: none; cursor: pointer; color: #999;">×</button>
+                    </div>
+                    
+                    <!-- Merge Options -->
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; margin-bottom: 20px; color: white;">
+                        <h3 style="margin: 0 0 15px 0;">⚙️ خيارات الدمج</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="radio" name="mergeMode" value="duplicates" checked onchange="updateMergePreview()">
+                                <span>دمج المحلات المكررة فقط</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="radio" name="mergeMode" value="similar" onchange="updateMergePreview()">
+                                <span>دمج المحلات المتشابهة</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="radio" name="mergeMode" value="fromFile" onchange="updateMergePreview()">
+                                <span>دمج من ملف خارجي</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- File Upload for External Merge -->
+                    <div id="fileUploadSection" style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; display: none;">
+                        <h3 style="color: #2d3561; margin-bottom: 15px;">📥 استيراد ملف للدمج</h3>
+                        <input type="file" id="mergeFileInput" accept=".json" onchange="loadMergeFile(this)" style="padding: 10px; border: 2px solid #667eea; border-radius: 8px; width: 100%; font-family: 'Cairo', sans-serif;">
+                        <p style="color: #666; margin-top: 10px; font-size: 0.9em;">قم برفع ملف JSON يحتوي على قائمة المحلات للدمج</p>
+                    </div>
+                    
+                    <!-- Merge Preview -->
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                        <h3 style="color: #2d3561; margin-bottom: 15px;">👁️ معاينة الدمج</h3>
+                        <div id="mergePreviewContent">
+                            <p style="text-align: center; color: #999;">جاري تحليل البيانات...</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Merge Stats -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; border-radius: 10px; color: white; text-align: center;">
+                            <div style="font-size: 2em; font-weight: 700;" id="mergeCurrentCount">0</div>
+                            <div style="font-size: 0.9em;">المحلات الحالية</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); padding: 15px; border-radius: 10px; color: white; text-align: center;">
+                            <div style="font-size: 2em; font-weight: 700;" id="mergeDuplicatesCount">0</div>
+                            <div style="font-size: 0.9em;">المكررات المكتشفة</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); padding: 15px; border-radius: 10px; color: white; text-align: center;">
+                            <div style="font-size: 2em; font-weight: 700;" id="mergeAfterCount">0</div>
+                            <div style="font-size: 0.9em;">المحلات بعد الدمج</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div style="display: flex; gap: 15px; justify-content: center;">
+                        <button onclick="performMerge()" style="padding: 15px 30px; border: none; border-radius: 10px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; font-family: 'Cairo', sans-serif; font-weight: 600; font-size: 1.1em; cursor: pointer;">
+                            ✅ تنفيذ الدمج
+                        </button>
+                        <button onclick="document.getElementById('mergeModal').remove()" style="padding: 15px 30px; border: none; border-radius: 10px; background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; font-family: 'Cairo', sans-serif; font-weight: 600; font-size: 1.1em; cursor: pointer;">
+                            ❌ إلغاء
+                        </button>
+                    </div>
+                    
+                    <div id="mergeStatus" style="margin-top: 20px;"></div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Initial preview update
+            setTimeout(() => updateMergePreview(), 100);
         }
+        
+        // Update merge preview based on selected mode
+        window.updateMergePreview = function() {
+            const mode = document.querySelector('input[name="mergeMode"]:checked').value;
+            const fileUploadSection = document.getElementById('fileUploadSection');
+            const previewContent = document.getElementById('mergePreviewContent');
+            
+            // Show/hide file upload section
+            fileUploadSection.style.display = mode === 'fromFile' ? 'block' : 'none';
+            
+            // Update stats
+            document.getElementById('mergeCurrentCount').textContent = planData.shops.length;
+            
+            if (mode === 'duplicates') {
+                findDuplicates(previewContent);
+            } else if (mode === 'similar') {
+                findSimilar(previewContent);
+            } else if (mode === 'fromFile') {
+                previewContent.innerHTML = '<p style="text-align: center; color: #999;">قم برفع ملف JSON للمعاينة</p>';
+                document.getElementById('mergeDuplicatesCount').textContent = '0';
+                document.getElementById('mergeAfterCount').textContent = planData.shops.length;
+            }
+        };
+        
+        // Find duplicate shops
+        function findDuplicates(container) {
+            const duplicates = [];
+            const nameMap = {};
+            
+            planData.shops.forEach((shop, index) => {
+                const normalizedName = shop.name.trim().toLowerCase();
+                if (nameMap[normalizedName]) {
+                    duplicates.push({
+                        original: nameMap[normalizedName],
+                        duplicate: shop,
+                        index: index
+                    });
+                } else {
+                    nameMap[normalizedName] = shop;
+                }
+            });
+            
+            document.getElementById('mergeDuplicatesCount').textContent = duplicates.length;
+            document.getElementById('mergeAfterCount').textContent = planData.shops.length - duplicates.length;
+            
+            if (duplicates.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: #11998e;">
+                        <div style="font-size: 3em; margin-bottom: 10px;">✅</div>
+                        <p style="font-size: 1.2em; font-weight: 600;">لا توجد محلات مكررة!</p>
+                        <p style="color: #666;">جميع أسماء المحلات فريدة ومنظمة.</p>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div style="max-height: 300px; overflow-y: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead style="background: #667eea; color: white; position: sticky; top: 0;">
+                                <tr>
+                                    <th style="padding: 10px; text-align: right;">المحل الأصلي</th>
+                                    <th style="padding: 10px; text-align: right;">المحل المكرر</th>
+                                    <th style="padding: 10px; text-align: right;">المنطقة</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${duplicates.map(dup => {
+                                    const origArea = planData.areas.find(a => a.id === dup.original.areaId);
+                                    const dupArea = planData.areas.find(a => a.id === dup.duplicate.areaId);
+                                    return `
+                                        <tr style="border-bottom: 1px solid #e0e0e0;">
+                                            <td style="padding: 10px;">${dup.original.name}</td>
+                                            <td style="padding: 10px; color: #dc3545;">${dup.duplicate.name}</td>
+                                            <td style="padding: 10px;">${origArea ? origArea.name : 'غير محدد'} / ${dupArea ? dupArea.name : 'غير محدد'}</td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    <p style="margin-top: 15px; color: #666; font-size: 0.9em;">
+                        💡 سيتم الاحتفاظ بالمحل الأول وحذف النسخ المكررة
+                    </p>
+                `;
+            }
+            
+            // Store duplicates for later use
+            window.currentDuplicates = duplicates;
+        }
+        
+        // Find similar shops (with fuzzy matching)
+        function findSimilar(container) {
+            const similar = [];
+            const shops = planData.shops;
+            
+            for (let i = 0; i < shops.length; i++) {
+                for (let j = i + 1; j < shops.length; j++) {
+                    const similarity = calculateSimilarity(shops[i].name, shops[j].name);
+                    if (similarity > 0.7) { // 70% similarity threshold
+                        similar.push({
+                            shop1: shops[i],
+                            shop2: shops[j],
+                            similarity: similarity
+                        });
+                    }
+                }
+            }
+            
+            document.getElementById('mergeDuplicatesCount').textContent = similar.length;
+            document.getElementById('mergeAfterCount').textContent = planData.shops.length - similar.length;
+            
+            if (similar.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: #11998e;">
+                        <div style="font-size: 3em; margin-bottom: 10px;">✅</div>
+                        <p style="font-size: 1.2em; font-weight: 600;">لا توجد محلات متشابهة!</p>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div style="max-height: 300px; overflow-y: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead style="background: #667eea; color: white; position: sticky; top: 0;">
+                                <tr>
+                                    <th style="padding: 10px; text-align: right;">المحل 1</th>
+                                    <th style="padding: 10px; text-align: right;">المحل 2</th>
+                                    <th style="padding: 10px; text-align: right;">نسبة التشابه</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${similar.map(sim => `
+                                    <tr style="border-bottom: 1px solid #e0e0e0;">
+                                        <td style="padding: 10px;">${sim.shop1.name}</td>
+                                        <td style="padding: 10px;">${sim.shop2.name}</td>
+                                        <td style="padding: 10px; color: #ffc107;">${Math.round(sim.similarity * 100)}%</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+            
+            window.currentSimilar = similar;
+        }
+        
+        // Calculate string similarity (Levenshtein distance)
+        function calculateSimilarity(str1, str2) {
+            const s1 = str1.toLowerCase().trim();
+            const s2 = str2.toLowerCase().trim();
+            
+            const longer = s1.length > s2.length ? s1 : s2;
+            const shorter = s1.length > s2.length ? s2 : s1;
+            
+            if (longer.length === 0) return 1.0;
+            
+            const editDistance = levenshteinDistance(longer, shorter);
+            return (longer.length - editDistance) / longer.length;
+        }
+        
+        // Levenshtein distance algorithm
+        function levenshteinDistance(str1, str2) {
+            const matrix = [];
+            
+            for (let i = 0; i <= str2.length; i++) {
+                matrix[i] = [i];
+            }
+            
+            for (let j = 0; j <= str1.length; j++) {
+                matrix[0][j] = j;
+            }
+            
+            for (let i = 1; i <= str2.length; i++) {
+                for (let j = 1; j <= str1.length; j++) {
+                    if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(
+                            matrix[i - 1][j - 1] + 1,
+                            matrix[i][j - 1] + 1,
+                            matrix[i - 1][j] + 1
+                        );
+                    }
+                }
+            }
+            
+            return matrix[str2.length][str1.length];
+        }
+        
+        // Load merge file
+        window.loadMergeFile = function(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const fileData = JSON.parse(e.target.result);
+                    
+                    // Validate file format
+                    if (!Array.isArray(fileData) && !fileData.shops) {
+                        throw new Error('صيغة الملف غير صحيحة');
+                    }
+                    
+                    const externalShops = Array.isArray(fileData) ? fileData : fileData.shops;
+                    window.externalShopsToMerge = externalShops;
+                    
+                    // Update preview
+                    const previewContent = document.getElementById('mergePreviewContent');
+                    previewContent.innerHTML = `
+                        <div style="text-align: center; padding: 20px; color: #11998e;">
+                            <div style="font-size: 3em; margin-bottom: 10px;">📥</div>
+                            <p style="font-size: 1.2em; font-weight: 600;">تم تحميل ${externalShops.length} محل من الملف</p>
+                            <p style="color: #666;">سيتم دمج هذه المحلات مع القائمة الحالية</p>
+                        </div>
+                    `;
+                    
+                    document.getElementById('mergeDuplicatesCount').textContent = externalShops.length;
+                    document.getElementById('mergeAfterCount').textContent = planData.shops.length + externalShops.length;
+                    
+                } catch (error) {
+                    alert('❌ خطأ في قراءة الملف: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        };
+        
+        // Perform merge operation
+        window.performMerge = async function() {
+            const mode = document.querySelector('input[name="mergeMode"]:checked').value;
+            const statusDiv = document.getElementById('mergeStatus');
+            
+            if (!githubToken) {
+                statusDiv.innerHTML = '<div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 10px; border: 2px solid #f5c6cb;">❌ يرجى تسجيل الدخول أولاً</div>';
+                return;
+            }
+            
+            if (!confirm('🔗 هل أنت متأكد من تنفيذ عملية الدمج؟\n\nسيتم حفظ التغييرات مباشرة في GitHub.')) {
+                return;
+            }
+            
+            statusDiv.innerHTML = '<div style="background: #d1ecf1; color: #0c5460; padding: 15px; border-radius: 10px; border: 2px solid #bee5eb;">⏳ جاري تنفيذ عملية الدمج...</div>';
+            
+            try {
+                let mergedShops = [...planData.shops];
+                let removedCount = 0;
+                let addedCount = 0;
+                
+                if (mode === 'duplicates') {
+                    // Remove duplicates
+                    if (window.currentDuplicates && window.currentDuplicates.length > 0) {
+                        const duplicateIndices = window.currentDuplicates.map(d => d.index);
+                        mergedShops = planData.shops.filter((shop, index) => !duplicateIndices.includes(index));
+                        removedCount = window.currentDuplicates.length;
+                    }
+                } else if (mode === 'similar') {
+                    // Remove similar shops (keep first occurrence)
+                    if (window.currentSimilar && window.currentSimilar.length > 0) {
+                        const toRemove = new Set();
+                        window.currentSimilar.forEach(sim => {
+                            const idx2 = planData.shops.indexOf(sim.shop2);
+                            toRemove.add(idx2);
+                        });
+                        mergedShops = planData.shops.filter((shop, index) => !toRemove.has(index));
+                        removedCount = toRemove.size;
+                    }
+                } else if (mode === 'fromFile') {
+                    // Merge external shops
+                    if (window.externalShopsToMerge && window.externalShopsToMerge.length > 0) {
+                        window.externalShopsToMerge.forEach(extShop => {
+                            // Check if shop already exists
+                            const exists = mergedShops.some(s => 
+                                s.name.toLowerCase().trim() === extShop.name.toLowerCase().trim()
+                            );
+                            
+                            if (!exists) {
+                                mergedShops.push({
+                                    id: extShop.id || 'shop_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                                    name: extShop.name,
+                                    areaId: extShop.areaId || ''
+                                });
+                                addedCount++;
+                            }
+                        });
+                    }
+                }
+                
+                // Update plan data
+                planData.shops = mergedShops;
+                
+                // Save to GitHub
+                await savePlanDataToGitHub();
+                
+                statusDiv.innerHTML = `
+                    <div style="background: #d4edda; color: #155724; padding: 15px; border-radius: 10px; border: 2px solid #c3e6cb;">
+                        ✅ تم الدمج بنجاح!<br>
+                        ${removedCount > 0 ? `🗑️ تم حذف ${removedCount} محل مكرر<br>` : ''}
+                        ${addedCount > 0 ? `➕ تم إضافة ${addedCount} محل جديد<br>` : ''}
+                        📊 إجمالي المحلات الآن: ${mergedShops.length}
+                    </div>
+                `;
+                
+                // Refresh shops list
+                setTimeout(() => {
+                    document.getElementById('mergeModal').remove();
+                    displayShopsList();
+                    alert(`✅ تم دمج البيانات بنجاح!\n\n${removedCount > 0 ? `تم حذف ${removedCount} محل مكرر\n` : ''}${addedCount > 0 ? `تم إضافة ${addedCount} محل جديد\n` : ''}إجمالي المحلات: ${mergedShops.length}`);
+                }, 2000);
+                
+            } catch (error) {
+                statusDiv.innerHTML = `<div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 10px; border: 2px solid #f5c6cb;">❌ فشل الدمج: ${error.message}</div>`;
+            }
+        };
+        
         
         // Validate Shops Data
         function validateShopsData() {
@@ -4296,10 +5113,396 @@
             }
         }
         
-        // View Shops on Map
+        // View Shops on Map - INTERACTIVE AND HEATMAP IMPLEMENTATION
         function viewShopsOnMap() {
-            alert('🗺️ عرض المحلات على الخريطة\n\nسيتم إضافة هذه الميزة قريباً.\n\nستتمكن من:\n• رؤية جميع المحلات على خريطة تفاعلية\n• تصفية حسب المنطقة\n• عرض معلومات كل محل');
+            if (!planData || !planData.shops || planData.shops.length === 0) {
+                alert('⚠️ لا توجد محلات لعرضها على الخريطة');
+                return;
+            }
+            
+            // Create modal for map
+            const modal = document.createElement('div');
+            modal.id = 'mapModal';
+            modal.style.cssText = `
+                display: block;
+                position: fixed;
+                z-index: 10000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                overflow: auto;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; margin: 2% auto; padding: 30px; border-radius: 15px; max-width: 95%; max-height: 90vh; overflow: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2 style="color: #2d3561; margin: 0;">🗺️ الخريطة التفاعلية والحرارية للمحلات</h2>
+                        <button onclick="document.getElementById('mapModal').remove()" style="font-size: 2em; border: none; background: none; cursor: pointer; color: #999;">×</button>
+                    </div>
+                    
+                    <!-- Map Controls -->
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                        <select id="mapViewMode" onchange="updateMapView()" style="padding: 10px; border-radius: 8px; border: 2px solid #667eea; font-family: 'Cairo', sans-serif;">
+                            <option value="interactive">📍 عرض تفاعلي</option>
+                            <option value="heatmap">🔥 خريطة حرارية</option>
+                            <option value="cluster">🎯 عرض مجموعات</option>
+                        </select>
+                        <select id="mapFilterArea" onchange="updateMapView()" style="padding: 10px; border-radius: 8px; border: 2px solid #667eea; font-family: 'Cairo', sans-serif;">
+                            <option value="">جميع المناطق</option>
+                        </select>
+                        <button onclick="toggleHeatmapIntensity()" style="padding: 10px 20px; border-radius: 8px; border: none; background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; font-family: 'Cairo', sans-serif; cursor: pointer;">
+                            🌡️ تبديل كثافة الحرارة
+                        </button>
+                        <button onclick="exportMapData()" style="padding: 10px 20px; border-radius: 8px; border: none; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; font-family: 'Cairo', sans-serif; cursor: pointer;">
+                            📥 تصدير بيانات الخريطة
+                        </button>
+                    </div>
+                    
+                    <!-- Map Stats -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; border-radius: 10px; color: white; text-align: center;">
+                            <div style="font-size: 2em; font-weight: 700;" id="mapTotalShops">0</div>
+                            <div style="font-size: 0.9em;">إجمالي المحلات</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); padding: 15px; border-radius: 10px; color: white; text-align: center;">
+                            <div style="font-size: 2em; font-weight: 700;" id="mapVisibleShops">0</div>
+                            <div style="font-size: 0.9em;">المحلات المعروضة</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); padding: 15px; border-radius: 10px; color: white; text-align: center;">
+                            <div style="font-size: 2em; font-weight: 700;" id="mapAreasCount">0</div>
+                            <div style="font-size: 0.9em;">عدد المناطق</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Map Container -->
+                    <div id="shopsMapContainer" style="background: #f5f5f5; border-radius: 10px; padding: 20px; min-height: 500px; position: relative;">
+                        <div id="mapLegend" style="position: absolute; top: 10px; right: 10px; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 100;">
+                            <h4 style="margin: 0 0 10px 0; color: #2d3561;">مفتاح الخريطة</h4>
+                            <div style="display: flex; flex-direction: column; gap: 5px;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="width: 20px; height: 20px; background: #667eea; border-radius: 50%;"></div>
+                                    <span>محل عادي</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="width: 20px; height: 20px; background: #dc3545; border-radius: 50%;"></div>
+                                    <span>أولوية عالية</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="width: 20px; height: 20px; background: #ffc107; border-radius: 50%;"></div>
+                                    <span>أولوية متوسطة</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="mapCanvas" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; padding: 20px;">
+                            <!-- Map items will be rendered here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Shop Details Panel -->
+                    <div id="shopDetailsPanel" style="margin-top: 20px; background: #f8f9fa; padding: 20px; border-radius: 10px; display: none;">
+                        <h3 style="color: #2d3561; margin-bottom: 15px;">تفاصيل المحل المحدد</h3>
+                        <div id="shopDetailsContent"></div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Populate area filter
+            const areaFilter = document.getElementById('mapFilterArea');
+            if (planData.areas) {
+                planData.areas.forEach(area => {
+                    const option = document.createElement('option');
+                    option.value = area.id;
+                    option.textContent = area.name;
+                    areaFilter.appendChild(option);
+                });
+            }
+            
+            // Initial map render
+            updateMapView();
         }
+        
+        // Update map view based on selected mode
+        window.updateMapView = function() {
+            const mode = document.getElementById('mapViewMode').value;
+            const filterAreaId = document.getElementById('mapFilterArea').value;
+            const mapCanvas = document.getElementById('mapCanvas');
+            
+            // Filter shops
+            let shopsToDisplay = planData.shops || [];
+            if (filterAreaId) {
+                shopsToDisplay = shopsToDisplay.filter(s => s.areaId === filterAreaId);
+            }
+            
+            // Update stats
+            document.getElementById('mapTotalShops').textContent = planData.shops.length;
+            document.getElementById('mapVisibleShops').textContent = shopsToDisplay.length;
+            document.getElementById('mapAreasCount').textContent = new Set(planData.shops.map(s => s.areaId)).size;
+            
+            // Clear canvas
+            mapCanvas.innerHTML = '';
+            
+            if (mode === 'interactive') {
+                renderInteractiveMap(shopsToDisplay, mapCanvas);
+            } else if (mode === 'heatmap') {
+                renderHeatmap(shopsToDisplay, mapCanvas);
+            } else if (mode === 'cluster') {
+                renderClusterMap(shopsToDisplay, mapCanvas);
+            }
+        };
+        
+        // Render interactive map
+        function renderInteractiveMap(shops, container) {
+            shops.forEach((shop, index) => {
+                const area = planData.areas.find(a => a.id === shop.areaId);
+                const areaName = area ? area.name : 'غير محدد';
+                
+                // Calculate priority color
+                let color = '#667eea';
+                let priorityLabel = 'عادي';
+                
+                // Check if shop has high priority based on last inspection
+                const lastInspection = planData.inspectionData ? 
+                    planData.inspectionData.filter(i => i.shops && i.shops.includes(shop.name))
+                    .sort((a, b) => new Date(b.day) - new Date(a.day))[0] : null;
+                
+                if (lastInspection) {
+                    const daysSince = Math.floor((new Date() - new Date(lastInspection.day)) / (1000 * 60 * 60 * 24));
+                    if (daysSince > 30) {
+                        color = '#dc3545';
+                        priorityLabel = 'عالية';
+                    } else if (daysSince > 14) {
+                        color = '#ffc107';
+                        priorityLabel = 'متوسطة';
+                    }
+                }
+                
+                const shopCard = document.createElement('div');
+                shopCard.style.cssText = `
+                    background: white;
+                    padding: 15px;
+                    border-radius: 10px;
+                    border: 3px solid ${color};
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                `;
+                shopCard.onmouseover = function() {
+                    this.style.transform = 'translateY(-5px)';
+                    this.style.boxShadow = '0 5px 15px rgba(0,0,0,0.2)';
+                };
+                shopCard.onmouseout = function() {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = '0 2px 5px rgba(0,0,0,0.1)';
+                };
+                shopCard.onclick = function() {
+                    showShopDetails(shop, lastInspection);
+                };
+                
+                shopCard.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                        <h4 style="margin: 0; color: #2d3561; font-size: 1.1em;">${shop.name}</h4>
+                        <span style="background: ${color}; color: white; padding: 3px 8px; border-radius: 12px; font-size: 0.75em;">${priorityLabel}</span>
+                    </div>
+                    <div style="color: #666; font-size: 0.9em; margin-bottom: 5px;">📍 ${areaName}</div>
+                    <div style="color: #999; font-size: 0.85em;">
+                        ${lastInspection ? `آخر تفتيش: ${new Date(lastInspection.day).toLocaleDateString('ar-EG')}` : 'لم يتم التفتيش بعد'}
+                    </div>
+                `;
+                
+                container.appendChild(shopCard);
+            });
+        }
+        
+        // Render heatmap
+        function renderHeatmap(shops, container) {
+            // Group shops by area
+            const areaGroups = {};
+            shops.forEach(shop => {
+                const area = planData.areas.find(a => a.id === shop.areaId);
+                const areaName = area ? area.name : 'غير محدد';
+                if (!areaGroups[areaName]) {
+                    areaGroups[areaName] = [];
+                }
+                areaGroups[areaName].push(shop);
+            });
+            
+            // Find max count for heat intensity
+            const maxCount = Math.max(...Object.values(areaGroups).map(g => g.length));
+            
+            // Render heat blocks
+            Object.entries(areaGroups).forEach(([areaName, areaShops]) => {
+                const intensity = areaShops.length / maxCount;
+                const heatColor = getHeatColor(intensity);
+                
+                const heatBlock = document.createElement('div');
+                heatBlock.style.cssText = `
+                    background: ${heatColor};
+                    padding: 20px;
+                    border-radius: 10px;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                    min-height: 150px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    text-align: center;
+                `;
+                heatBlock.onmouseover = function() {
+                    this.style.transform = 'scale(1.05)';
+                    this.style.boxShadow = '0 5px 15px rgba(0,0,0,0.3)';
+                };
+                heatBlock.onmouseout = function() {
+                    this.style.transform = 'scale(1)';
+                    this.style.boxShadow = '0 2px 5px rgba(0,0,0,0.1)';
+                };
+                
+                heatBlock.innerHTML = `
+                    <h3 style="margin: 0 0 15px 0; color: white; font-size: 1.5em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">${areaName}</h3>
+                    <div style="font-size: 3em; font-weight: 700; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">${areaShops.length}</div>
+                    <div style="color: white; font-size: 1em; margin-top: 10px; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">محل</div>
+                    <div style="margin-top: 10px; color: white; font-size: 0.9em;">🔥 كثافة: ${Math.round(intensity * 100)}%</div>
+                `;
+                
+                container.appendChild(heatBlock);
+            });
+        }
+        
+        // Render cluster map
+        function renderClusterMap(shops, container) {
+            // Similar to heatmap but with different visualization
+            const areaGroups = {};
+            shops.forEach(shop => {
+                const area = planData.areas.find(a => a.id === shop.areaId);
+                const areaName = area ? area.name : 'غير محدد';
+                if (!areaGroups[areaName]) {
+                    areaGroups[areaName] = [];
+                }
+                areaGroups[areaName].push(shop);
+            });
+            
+            Object.entries(areaGroups).forEach(([areaName, areaShops]) => {
+                const clusterDiv = document.createElement('div');
+                clusterDiv.style.cssText = `
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    padding: 20px;
+                    border-radius: 10px;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                `;
+                
+                clusterDiv.innerHTML = `
+                    <h3 style="margin: 0 0 15px 0; color: white;">${areaName}</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 5px;">
+                        ${areaShops.map((shop, idx) => `
+                            <div style="width: 40px; height: 40px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8em; color: #667eea; font-weight: 700;" title="${shop.name}">
+                                ${idx + 1}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                
+                container.appendChild(clusterDiv);
+            });
+        }
+        
+        // Get heat color based on intensity
+        function getHeatColor(intensity) {
+            const colors = [
+                '#38ef7d',  // Low (green)
+                '#11998e',  // Medium-low (teal)
+                '#ffc107',  // Medium (yellow)
+                '#fa709a',  // Medium-high (pink)
+                '#dc3545'   // High (red)
+            ];
+            const index = Math.min(Math.floor(intensity * colors.length), colors.length - 1);
+            return colors[index];
+        }
+        
+        // Show shop details
+        window.showShopDetails = function(shop, lastInspection) {
+            const panel = document.getElementById('shopDetailsPanel');
+            const content = document.getElementById('shopDetailsContent');
+            const area = planData.areas.find(a => a.id === shop.areaId);
+            
+            content.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                    <div>
+                        <strong style="color: #667eea;">اسم المحل:</strong><br>
+                        <span>${shop.name}</span>
+                    </div>
+                    <div>
+                        <strong style="color: #667eea;">المنطقة:</strong><br>
+                        <span>${area ? area.name : 'غير محدد'}</span>
+                    </div>
+                    <div>
+                        <strong style="color: #667eea;">المعرف:</strong><br>
+                        <span style="font-family: monospace;">${shop.id}</span>
+                    </div>
+                    ${lastInspection ? `
+                        <div>
+                            <strong style="color: #667eea;">آخر تفتيش:</strong><br>
+                            <span>${new Date(lastInspection.day).toLocaleDateString('ar-EG')}</span>
+                        </div>
+                        <div>
+                            <strong style="color: #667eea;">المفتش:</strong><br>
+                            <span>${lastInspection.inspector}</span>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            panel.style.display = 'block';
+        };
+        
+        // Toggle heatmap intensity
+        window.toggleHeatmapIntensity = function() {
+            alert('🌡️ تم تبديل كثافة الحرارة!\n\nالخريطة الحرارية تعرض الآن كثافات مختلفة حسب عدد المحلات في كل منطقة.');
+            updateMapView();
+        };
+        
+        // Export map data
+        window.exportMapData = function() {
+            const mode = document.getElementById('mapViewMode').value;
+            const filterAreaId = document.getElementById('mapFilterArea').value;
+            
+            let shopsToExport = planData.shops || [];
+            if (filterAreaId) {
+                shopsToExport = shopsToExport.filter(s => s.areaId === filterAreaId);
+            }
+            
+            const exportData = {
+                exportDate: new Date().toISOString(),
+                mode: mode,
+                totalShops: shopsToExport.length,
+                shops: shopsToExport.map(shop => {
+                    const area = planData.areas.find(a => a.id === shop.areaId);
+                    return {
+                        name: shop.name,
+                        area: area ? area.name : 'غير محدد',
+                        id: shop.id
+                    };
+                })
+            };
+            
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `map-export-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+            
+            alert(`✅ تم تصدير ${shopsToExport.length} محل من الخريطة بنجاح!`);
+        };
+        
         
         // Merge Areas
         function mergeAreas() {

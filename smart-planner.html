@@ -776,6 +776,12 @@
                 <button class="tab-button" onclick="switchTab('calendar')">
                     <span>📅</span> التقويم الشهري
                 </button>
+                <button class="tab-button" onclick="switchTab('shops')">
+                    <span>🏪</span> إدارة المحلات
+                </button>
+                <button class="tab-button" onclick="switchTab('areas')">
+                    <span>🗺️</span> إدارة المناطق
+                </button>
             </div>
             
             <!-- Tab Content: Add Inspection -->
@@ -974,6 +980,145 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Tab Content: Shops Management -->
+            <div id="shopsTab" class="tab-content">
+                <div class="section">
+                    <h2 class="section-title">🏪 إدارة المحلات الكاملة</h2>
+                    
+                    <!-- Smart Action Buttons -->
+                    <div style="display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap;">
+                        <button class="btn btn-success" onclick="openAddShopModal()">
+                            <span>➕</span> إضافة محل جديد
+                        </button>
+                        <button class="btn btn-primary" onclick="refreshShopsList()">
+                            <span>🔄</span> تحديث القائمة
+                        </button>
+                        <button class="btn btn-warning" onclick="exportShopsData()">
+                            <span>📥</span> تصدير البيانات
+                        </button>
+                    </div>
+                    
+                    <!-- Filter and Search -->
+                    <div class="filter-bar">
+                        <div class="filter-item">
+                            <label class="form-label">البحث عن محل</label>
+                            <input type="text" id="searchShop" class="form-control" 
+                                   placeholder="ابحث بالاسم..." oninput="filterShopsList()">
+                        </div>
+                        <div class="filter-item">
+                            <label class="form-label">فلترة حسب المنطقة</label>
+                            <select id="filterShopArea" class="form-control" onchange="filterShopsList()">
+                                <option value="">جميع المناطق</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Shops Stats -->
+                    <div class="inspector-stats">
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalShopsManagement">0</div>
+                            <div class="stat-label">إجمالي المحلات</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="filteredShopsCount">0</div>
+                            <div class="stat-label">المحلات المعروضة</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalAreasInShops">0</div>
+                            <div class="stat-label">عدد المناطق</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Shops List Table -->
+                    <div style="overflow-x: auto; margin-top: 20px;">
+                        <table class="inspections-table" id="shopsManagementTable">
+                            <thead>
+                                <tr>
+                                    <th>اسم المحل</th>
+                                    <th>المنطقة</th>
+                                    <th>رقم التعريف</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="shopsManagementBody">
+                                <tr>
+                                    <td colspan="4" style="text-align: center; padding: 40px;">
+                                        جاري تحميل البيانات...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="status-message" id="shopsManagementStatus"></div>
+                </div>
+            </div>
+            
+            <!-- Tab Content: Areas Management -->
+            <div id="areasTab" class="tab-content">
+                <div class="section">
+                    <h2 class="section-title">🗺️ إدارة المناطق الكاملة</h2>
+                    
+                    <!-- Smart Action Buttons -->
+                    <div style="display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap;">
+                        <button class="btn btn-success" onclick="openAddAreaModal()">
+                            <span>➕</span> إضافة منطقة جديدة
+                        </button>
+                        <button class="btn btn-primary" onclick="refreshAreasList()">
+                            <span>🔄</span> تحديث القائمة
+                        </button>
+                        <button class="btn btn-warning" onclick="sortAreasByName()">
+                            <span>🔤</span> ترتيب أبجدياً
+                        </button>
+                    </div>
+                    
+                    <!-- Search -->
+                    <div class="search-box">
+                        <input type="text" id="searchArea" placeholder="ابحث عن منطقة..." oninput="filterAreasList()">
+                        <span class="search-icon">🔍</span>
+                    </div>
+                    
+                    <!-- Areas Stats -->
+                    <div class="inspector-stats">
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalAreasManagement">0</div>
+                            <div class="stat-label">إجمالي المناطق</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="filteredAreasCount">0</div>
+                            <div class="stat-label">المناطق المعروضة</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalShopsInAreas">0</div>
+                            <div class="stat-label">إجمالي المحلات</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Areas List Table -->
+                    <div style="overflow-x: auto; margin-top: 20px;">
+                        <table class="inspections-table" id="areasManagementTable">
+                            <thead>
+                                <tr>
+                                    <th>اسم المنطقة</th>
+                                    <th>رقم التعريف</th>
+                                    <th>عدد المحلات</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="areasManagementBody">
+                                <tr>
+                                    <td colspan="4" style="text-align: center; padding: 40px;">
+                                        جاري تحميل البيانات...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="status-message" id="areasManagementStatus"></div>
+                </div>
+            </div>
         </div>
         
         <!-- Edit Modal -->
@@ -1021,6 +1166,60 @@
                 <div class="status-message" id="editStatus"></div>
             </div>
         </div>
+        
+        <!-- Add/Edit Shop Modal -->
+        <div id="shopModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="shopModalTitle">➕ إضافة محل جديد</h2>
+                    <span class="modal-close" onclick="closeShopModal()">&times;</span>
+                </div>
+                <input type="hidden" id="shopModalId">
+                <div class="form-group">
+                    <label class="form-label">اسم المحل <span style="color: red;">*</span></label>
+                    <input type="text" id="shopModalName" class="form-control" placeholder="أدخل اسم المحل">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">المنطقة <span style="color: red;">*</span></label>
+                    <select id="shopModalArea" class="form-control">
+                        <option value="">اختر المنطقة...</option>
+                    </select>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-success" onclick="saveShop()">
+                        <span>💾</span> حفظ
+                    </button>
+                    <button class="btn btn-warning" onclick="closeShopModal()">
+                        <span>✕</span> إلغاء
+                    </button>
+                </div>
+                <div class="status-message" id="shopModalStatus"></div>
+            </div>
+        </div>
+        
+        <!-- Add/Edit Area Modal -->
+        <div id="areaModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="areaModalTitle">➕ إضافة منطقة جديدة</h2>
+                    <span class="modal-close" onclick="closeAreaModal()">&times;</span>
+                </div>
+                <input type="hidden" id="areaModalId">
+                <div class="form-group">
+                    <label class="form-label">اسم المنطقة <span style="color: red;">*</span></label>
+                    <input type="text" id="areaModalName" class="form-control" placeholder="أدخل اسم المنطقة">
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-success" onclick="saveArea()">
+                        <span>💾</span> حفظ
+                    </button>
+                    <button class="btn btn-warning" onclick="closeAreaModal()">
+                        <span>✕</span> إلغاء
+                    </button>
+                </div>
+                <div class="status-message" id="areaModalStatus"></div>
+            </div>
+        </div>
     </div>
     
     <script>
@@ -1058,6 +1257,10 @@
                 document.getElementById('calendarMonth').value = 
                     `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
                 loadCalendar();
+            } else if (tabName === 'shops') {
+                loadShopsManagement();
+            } else if (tabName === 'areas') {
+                loadAreasManagement();
             }
         }
         
@@ -2136,6 +2339,441 @@
                 document.getElementById('githubToken').value = savedToken;
             }
         };
+        
+        // ============================================
+        // SHOPS MANAGEMENT FUNCTIONS
+        // ============================================
+        
+        // Load shops management tab
+        function loadShopsManagement() {
+            populateShopAreaFilter();
+            displayShopsList();
+        }
+        
+        // Populate area filter for shops
+        function populateShopAreaFilter() {
+            const select = document.getElementById('filterShopArea');
+            select.innerHTML = '<option value="">جميع المناطق</option>';
+            
+            if (planData && planData.areas) {
+                planData.areas.forEach(area => {
+                    const option = document.createElement('option');
+                    option.value = area.id;
+                    option.textContent = area.name;
+                    select.appendChild(option);
+                });
+            }
+        }
+        
+        // Display shops list
+        function displayShopsList() {
+            const tbody = document.getElementById('shopsManagementBody');
+            const searchTerm = document.getElementById('searchShop').value.toLowerCase();
+            const filterAreaId = document.getElementById('filterShopArea').value;
+            
+            if (!planData || !planData.shops) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">لا توجد بيانات</td></tr>';
+                return;
+            }
+            
+            let filteredShops = planData.shops.filter(shop => {
+                const matchesSearch = shop.name.toLowerCase().includes(searchTerm);
+                const matchesArea = !filterAreaId || shop.areaId === filterAreaId;
+                return matchesSearch && matchesArea;
+            });
+            
+            // Update statistics
+            document.getElementById('totalShopsManagement').textContent = planData.shops.length;
+            document.getElementById('filteredShopsCount').textContent = filteredShops.length;
+            document.getElementById('totalAreasInShops').textContent = planData.areas ? planData.areas.length : 0;
+            
+            if (filteredShops.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">لا توجد محلات مطابقة</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = '';
+            filteredShops.forEach(shop => {
+                const area = planData.areas.find(a => a.id === shop.areaId);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${shop.name}</td>
+                    <td>${area ? area.name : 'غير محدد'}</td>
+                    <td style="font-family: monospace; font-size: 0.85em;">${shop.id}</td>
+                    <td>
+                        <span class="action-icon edit-icon" onclick="openEditShopModal('${shop.id}')" title="تعديل">✏️</span>
+                        <span class="action-icon delete-icon" onclick="deleteShop('${shop.id}')" title="حذف">🗑️</span>
+                        <span class="action-icon copy-icon" onclick="copyShopId('${shop.id}')" title="نسخ المعرف">📋</span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        
+        // Filter shops list
+        function filterShopsList() {
+            displayShopsList();
+        }
+        
+        // Refresh shops list
+        async function refreshShopsList() {
+            showMessage('shopsManagementStatus', 'info', '⏳ جاري تحديث البيانات...');
+            try {
+                await loadPlanData();
+                displayShopsList();
+                showMessage('shopsManagementStatus', 'success', '✅ تم تحديث القائمة بنجاح');
+            } catch (error) {
+                showMessage('shopsManagementStatus', 'error', '❌ فشل تحديث البيانات: ' + error.message);
+            }
+        }
+        
+        // Open add shop modal
+        function openAddShopModal() {
+            document.getElementById('shopModalTitle').innerHTML = '➕ إضافة محل جديد';
+            document.getElementById('shopModalId').value = '';
+            document.getElementById('shopModalName').value = '';
+            document.getElementById('shopModalArea').value = '';
+            
+            // Populate areas dropdown
+            const select = document.getElementById('shopModalArea');
+            select.innerHTML = '<option value="">اختر المنطقة...</option>';
+            if (planData && planData.areas) {
+                planData.areas.forEach(area => {
+                    const option = document.createElement('option');
+                    option.value = area.id;
+                    option.textContent = area.name;
+                    select.appendChild(option);
+                });
+            }
+            
+            document.getElementById('shopModal').style.display = 'block';
+        }
+        
+        // Open edit shop modal
+        function openEditShopModal(shopId) {
+            const shop = planData.shops.find(s => s.id === shopId);
+            if (!shop) return;
+            
+            document.getElementById('shopModalTitle').innerHTML = '✏️ تعديل محل';
+            document.getElementById('shopModalId').value = shop.id;
+            document.getElementById('shopModalName').value = shop.name;
+            
+            // Populate areas dropdown
+            const select = document.getElementById('shopModalArea');
+            select.innerHTML = '<option value="">اختر المنطقة...</option>';
+            if (planData && planData.areas) {
+                planData.areas.forEach(area => {
+                    const option = document.createElement('option');
+                    option.value = area.id;
+                    option.textContent = area.name;
+                    select.appendChild(option);
+                });
+            }
+            select.value = shop.areaId;
+            
+            document.getElementById('shopModal').style.display = 'block';
+        }
+        
+        // Close shop modal
+        function closeShopModal() {
+            document.getElementById('shopModal').style.display = 'none';
+        }
+        
+        // Save shop (add or edit)
+        async function saveShop() {
+            const shopId = document.getElementById('shopModalId').value;
+            const shopName = document.getElementById('shopModalName').value.trim();
+            const areaId = document.getElementById('shopModalArea').value;
+            
+            if (!shopName) {
+                showMessage('shopModalStatus', 'error', '❌ يرجى إدخال اسم المحل');
+                return;
+            }
+            
+            if (!areaId) {
+                showMessage('shopModalStatus', 'error', '❌ يرجى اختيار المنطقة');
+                return;
+            }
+            
+            showMessage('shopModalStatus', 'info', '⏳ جاري الحفظ...');
+            
+            try {
+                if (shopId) {
+                    // Edit existing shop
+                    const shopIndex = planData.shops.findIndex(s => s.id === shopId);
+                    if (shopIndex !== -1) {
+                        planData.shops[shopIndex].name = shopName;
+                        planData.shops[shopIndex].areaId = areaId;
+                    }
+                } else {
+                    // Add new shop
+                    const newShop = {
+                        id: 'shop_' + Date.now(),
+                        name: shopName,
+                        areaId: areaId
+                    };
+                    planData.shops.push(newShop);
+                }
+                
+                // Save to GitHub
+                await savePlanDataToGitHub();
+                
+                showMessage('shopModalStatus', 'success', '✅ تم الحفظ بنجاح');
+                setTimeout(() => {
+                    closeShopModal();
+                    displayShopsList();
+                    populateAreas(); // Refresh main form areas
+                }, 1000);
+                
+            } catch (error) {
+                showMessage('shopModalStatus', 'error', '❌ فشل الحفظ: ' + error.message);
+            }
+        }
+        
+        // Delete shop
+        async function deleteShop(shopId) {
+            const shop = planData.shops.find(s => s.id === shopId);
+            if (!shop) return;
+            
+            if (!confirm(`هل أنت متأكد من حذف المحل "${shop.name}"؟`)) {
+                return;
+            }
+            
+            showMessage('shopsManagementStatus', 'info', '⏳ جاري الحذف...');
+            
+            try {
+                // Remove shop from array
+                planData.shops = planData.shops.filter(s => s.id !== shopId);
+                
+                // Save to GitHub
+                await savePlanDataToGitHub();
+                
+                showMessage('shopsManagementStatus', 'success', '✅ تم حذف المحل بنجاح');
+                displayShopsList();
+                populateAreas(); // Refresh main form areas
+                
+            } catch (error) {
+                showMessage('shopsManagementStatus', 'error', '❌ فشل الحذف: ' + error.message);
+            }
+        }
+        
+        // Copy shop ID
+        function copyShopId(shopId) {
+            navigator.clipboard.writeText(shopId).then(() => {
+                showMessage('shopsManagementStatus', 'success', '✅ تم نسخ المعرف');
+            });
+        }
+        
+        // Export shops data
+        function exportShopsData() {
+            if (!planData || !planData.shops) return;
+            
+            const dataStr = JSON.stringify(planData.shops, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'shops-export-' + new Date().toISOString().split('T')[0] + '.json';
+            link.click();
+            URL.revokeObjectURL(url);
+            
+            showMessage('shopsManagementStatus', 'success', '✅ تم تصدير البيانات');
+        }
+        
+        // ============================================
+        // AREAS MANAGEMENT FUNCTIONS
+        // ============================================
+        
+        // Load areas management tab
+        function loadAreasManagement() {
+            displayAreasList();
+        }
+        
+        // Display areas list
+        function displayAreasList() {
+            const tbody = document.getElementById('areasManagementBody');
+            const searchTerm = document.getElementById('searchArea').value.toLowerCase();
+            
+            if (!planData || !planData.areas) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">لا توجد بيانات</td></tr>';
+                return;
+            }
+            
+            let filteredAreas = planData.areas.filter(area => {
+                return area.name.toLowerCase().includes(searchTerm);
+            });
+            
+            // Update statistics
+            const totalShops = planData.shops ? planData.shops.length : 0;
+            document.getElementById('totalAreasManagement').textContent = planData.areas.length;
+            document.getElementById('filteredAreasCount').textContent = filteredAreas.length;
+            document.getElementById('totalShopsInAreas').textContent = totalShops;
+            
+            if (filteredAreas.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">لا توجد مناطق مطابقة</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = '';
+            filteredAreas.forEach(area => {
+                const shopsCount = planData.shops.filter(s => s.areaId === area.id).length;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${area.name}</td>
+                    <td style="font-family: monospace; font-size: 0.85em;">${area.id}</td>
+                    <td>${shopsCount} محل</td>
+                    <td>
+                        <span class="action-icon edit-icon" onclick="openEditAreaModal('${area.id}')" title="تعديل">✏️</span>
+                        <span class="action-icon delete-icon" onclick="deleteArea('${area.id}')" title="حذف">🗑️</span>
+                        <span class="action-icon copy-icon" onclick="copyAreaId('${area.id}')" title="نسخ المعرف">📋</span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        
+        // Filter areas list
+        function filterAreasList() {
+            displayAreasList();
+        }
+        
+        // Refresh areas list
+        async function refreshAreasList() {
+            showMessage('areasManagementStatus', 'info', '⏳ جاري تحديث البيانات...');
+            try {
+                await loadPlanData();
+                displayAreasList();
+                showMessage('areasManagementStatus', 'success', '✅ تم تحديث القائمة بنجاح');
+            } catch (error) {
+                showMessage('areasManagementStatus', 'error', '❌ فشل تحديث البيانات: ' + error.message);
+            }
+        }
+        
+        // Sort areas by name
+        function sortAreasByName() {
+            if (!planData || !planData.areas) return;
+            
+            planData.areas.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+            displayAreasList();
+            showMessage('areasManagementStatus', 'success', '✅ تم ترتيب المناطق أبجدياً');
+        }
+        
+        // Open add area modal
+        function openAddAreaModal() {
+            document.getElementById('areaModalTitle').innerHTML = '➕ إضافة منطقة جديدة';
+            document.getElementById('areaModalId').value = '';
+            document.getElementById('areaModalName').value = '';
+            document.getElementById('areaModal').style.display = 'block';
+        }
+        
+        // Open edit area modal
+        function openEditAreaModal(areaId) {
+            const area = planData.areas.find(a => a.id === areaId);
+            if (!area) return;
+            
+            document.getElementById('areaModalTitle').innerHTML = '✏️ تعديل منطقة';
+            document.getElementById('areaModalId').value = area.id;
+            document.getElementById('areaModalName').value = area.name;
+            document.getElementById('areaModal').style.display = 'block';
+        }
+        
+        // Close area modal
+        function closeAreaModal() {
+            document.getElementById('areaModal').style.display = 'none';
+        }
+        
+        // Save area (add or edit)
+        async function saveArea() {
+            const areaId = document.getElementById('areaModalId').value;
+            const areaName = document.getElementById('areaModalName').value.trim();
+            
+            if (!areaName) {
+                showMessage('areaModalStatus', 'error', '❌ يرجى إدخال اسم المنطقة');
+                return;
+            }
+            
+            showMessage('areaModalStatus', 'info', '⏳ جاري الحفظ...');
+            
+            try {
+                if (areaId) {
+                    // Edit existing area
+                    const areaIndex = planData.areas.findIndex(a => a.id === areaId);
+                    if (areaIndex !== -1) {
+                        planData.areas[areaIndex].name = areaName;
+                    }
+                } else {
+                    // Add new area
+                    const newArea = {
+                        id: 'area_' + Date.now(),
+                        name: areaName
+                    };
+                    planData.areas.push(newArea);
+                }
+                
+                // Save to GitHub
+                await savePlanDataToGitHub();
+                
+                showMessage('areaModalStatus', 'success', '✅ تم الحفظ بنجاح');
+                setTimeout(() => {
+                    closeAreaModal();
+                    displayAreasList();
+                    populateAreas(); // Refresh main form areas
+                    populateShopAreaFilter(); // Refresh shops filter
+                }, 1000);
+                
+            } catch (error) {
+                showMessage('areaModalStatus', 'error', '❌ فشل الحفظ: ' + error.message);
+            }
+        }
+        
+        // Delete area
+        async function deleteArea(areaId) {
+            const area = planData.areas.find(a => a.id === areaId);
+            if (!area) return;
+            
+            // Check if area has shops
+            const shopsInArea = planData.shops.filter(s => s.areaId === areaId).length;
+            if (shopsInArea > 0) {
+                if (!confirm(`المنطقة "${area.name}" تحتوي على ${shopsInArea} محل. هل أنت متأكد من الحذف؟\nسيتم نقل المحلات إلى "غير محدد".`)) {
+                    return;
+                }
+            } else {
+                if (!confirm(`هل أنت متأكد من حذف المنطقة "${area.name}"؟`)) {
+                    return;
+                }
+            }
+            
+            showMessage('areasManagementStatus', 'info', '⏳ جاري الحذف...');
+            
+            try {
+                // Remove area from array
+                planData.areas = planData.areas.filter(a => a.id !== areaId);
+                
+                // Update shops that belong to this area (set to null or empty)
+                planData.shops.forEach(shop => {
+                    if (shop.areaId === areaId) {
+                        shop.areaId = '';
+                    }
+                });
+                
+                // Save to GitHub
+                await savePlanDataToGitHub();
+                
+                showMessage('areasManagementStatus', 'success', '✅ تم حذف المنطقة بنجاح');
+                displayAreasList();
+                populateAreas(); // Refresh main form areas
+                
+            } catch (error) {
+                showMessage('areasManagementStatus', 'error', '❌ فشل الحذف: ' + error.message);
+            }
+        }
+        
+        // Copy area ID
+        function copyAreaId(areaId) {
+            navigator.clipboard.writeText(areaId).then(() => {
+                showMessage('areasManagementStatus', 'success', '✅ تم نسخ المعرف');
+            });
+        }
     </script>
 </body>
 </html>

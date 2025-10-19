@@ -2295,63 +2295,59 @@
     }
     
     // ========================
-    // Shops Management
+    // Shops Management - Enhanced with shops_details.json
     // ========================
-    function loadShopsList() {
-      if (!planData || !planData.inspectionData) {
-        document.getElementById("shopsList").innerHTML = '<p style="text-align: center; color: #999;">لا توجد بيانات</p>';
+    async function loadShopsList() {
+      // Load shops details if not already loaded
+      if (!shopsDetails || Object.keys(shopsDetails).length === 0) {
+        await loadShopsDetails();
+      }
+      
+      if (!shopsDetails || Object.keys(shopsDetails).length === 0) {
+        document.getElementById("shopsList").innerHTML = '<p style="text-align: center; color: #999;">لا توجد محلات في قاعدة البيانات</p>';
         return;
       }
       
-      const inspections = planData.inspectionData;
-      const shopStats = {};
-      
-      inspections.forEach(i => {
-        if (i.shops && Array.isArray(i.shops)) {
-          i.shops.forEach(shop => {
-            if (!shopStats[shop]) {
-              shopStats[shop] = {
-                name: shop,
-                totalInspections: 0,
-                areas: new Set(),
-                inspectors: new Set()
-              };
-            }
-            shopStats[shop].totalInspections++;
-            shopStats[shop].areas.add(i.area);
-            shopStats[shop].inspectors.add(i.inspector);
-          });
-        }
-      });
-      
+      // Build shop statistics from shops_details.json
       let html = `
         <table class="data-table">
           <thead>
             <tr>
               <th>المحل</th>
-              <th>عدد التفتيشات</th>
-              <th>عدد المناطق</th>
-              <th>عدد المفتشين</th>
+              <th>المنطقة</th>
+              <th>رقم الرخصة</th>
+              <th>الهاتف</th>
+              <th>النشاط</th>
               <th>الإجراءات</th>
             </tr>
           </thead>
           <tbody>
       `;
       
-      Object.values(shopStats).forEach(shop => {
+      // Sort shops by name
+      const sortedShops = Object.entries(shopsDetails).sort((a, b) => 
+        a[0].localeCompare(b[0], 'ar')
+      );
+      
+      sortedShops.forEach(([shopName, shopData]) => {
         html += `
           <tr>
-            <td><i class="fas fa-store"></i> ${shop.name}</td>
-            <td>${shop.totalInspections}</td>
-            <td>${shop.areas.size}</td>
-            <td>${shop.inspectors.size}</td>
+            <td><i class="fas fa-store"></i> ${shopData.nameAr || shopName}</td>
+            <td><i class="fas fa-map-marker-alt"></i> ${shopData.address || 'غير محدد'}</td>
+            <td>${shopData.licenseNo || '-'}</td>
+            <td>${shopData.contact || '-'}</td>
+            <td>${shopData.activity || '-'}</td>
             <td>
+              <button class="btn btn-info" style="padding: 5px 10px; font-size: 0.85em; margin-left: 5px;" 
+                      onclick="viewShopDetails('${shopName.replace(/'/g, "\\'")}')">
+                <i class="fas fa-eye"></i> عرض
+              </button>
               <button class="btn btn-warning" style="padding: 5px 10px; font-size: 0.85em; margin-left: 5px;" 
-                      onclick="editShop('${shop.name.replace(/'/g, "\\'")}')">
+                      onclick="editShopDetails('${shopName.replace(/'/g, "\\'")}')">
                 <i class="fas fa-edit"></i> تعديل
               </button>
               <button class="btn btn-danger" style="padding: 5px 10px; font-size: 0.85em;" 
-                      onclick="deleteShop('${shop.name.replace(/'/g, "\\'")}')">
+                      onclick="deleteShopFromDetails('${shopName.replace(/'/g, "\\'")}')">
                 <i class="fas fa-trash"></i> حذف
               </button>
             </td>
@@ -2436,19 +2432,18 @@
         return;
       }
       
-      if (!planData || !planData.inspectionData) {
-        showMessage("shopsStatus", "error", "لا توجد بيانات للحفظ!");
-        return;
-      }
-      
       try {
-        showMessage("shopsStatus", "info", "جاري حفظ المحلات في GitHub...");
+        showMessage("shopsStatus", "info", "جاري حفظ بيانات المحلات في GitHub...");
         document.getElementById("saveShopsBtn").disabled = true;
         
-        await savePlanToGitHub();
+        // Save both plan-data.json and shops_details.json
+        await Promise.all([
+          savePlanToGitHub(),
+          saveShopsDetailsToGitHub()
+        ]);
         
-        showMessage("shopsStatus", "success", "✅ تم حفظ بيانات المحلات في GitHub بنجاح!");
-        logActivity("حفظ المحلات", "تم حفظ بيانات المحلات مباشرة في GitHub");
+        showMessage("shopsStatus", "success", "✅ تم حفظ جميع بيانات المحلات في GitHub بنجاح!");
+        logActivity("حفظ المحلات", "تم حفظ plan-data.json و shops_details.json");
         
       } catch (error) {
         showMessage("shopsStatus", "error", "❌ فشل حفظ البيانات: " + error.message);
@@ -2505,8 +2500,8 @@
       return await putRes.json();
     }
     
-    // Filter shops by area
-    function filterShopsByArea() {
+    // Filter shops by area - Enhanced with shops_details.json
+    async function filterShopsByArea() {
       const selectedArea = document.getElementById("areaFilterSelect").value;
       const container = document.getElementById("areaShopsList");
       
@@ -2515,53 +2510,72 @@
         return;
       }
       
-      if (!planData || !planData.inspectionData) {
-        container.innerHTML = '<p style="text-align: center; color: #999;">لا توجد بيانات</p>';
+      // Load shops details if not already loaded
+      if (!shopsDetails || Object.keys(shopsDetails).length === 0) {
+        await loadShopsDetails();
+      }
+      
+      if (!shopsDetails || Object.keys(shopsDetails).length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #999;">لا توجد بيانات للمحلات</p>';
         return;
       }
       
-      // Collect shops for selected area
-      const areaShops = new Set();
-      planData.inspectionData.forEach(inspection => {
-        if (inspection.area === selectedArea && inspection.shops) {
-          inspection.shops.forEach(shop => areaShops.add(shop));
-        }
-      });
+      // Filter shops from shops_details.json by area
+      const areaShops = Object.entries(shopsDetails)
+        .filter(([name, details]) => details.address === selectedArea)
+        .map(([name, details]) => ({ name, ...details }))
+        .sort((a, b) => a.name.localeCompare(b.name, 'ar'));
       
-      if (areaShops.size === 0) {
+      if (areaShops.length === 0) {
         container.innerHTML = `<p style="text-align: center; color: #999;">لا توجد محلات مسجلة في منطقة "${selectedArea}"</p>`;
         return;
       }
       
-      // Display shops
+      // Display shops with enhanced details
       let html = `
         <div style="background: #e8f5e9; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
           <h4 style="margin-bottom: 10px; color: #2e7d32;">
             <i class="fas fa-map-marked-alt"></i> المحلات في منطقة: ${selectedArea}
           </h4>
-          <p style="color: #555;">عدد المحلات: <strong>${areaShops.size}</strong></p>
+          <p style="color: #555;">عدد المحلات: <strong>${areaShops.length}</strong></p>
         </div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">
       `;
       
-      Array.from(areaShops).sort().forEach((shop, index) => {
+      areaShops.forEach((shop, index) => {
         html += `
-          <div style="background: #fff; border: 2px solid #4caf50; border-radius: 10px; padding: 15px; transition: all 0.3s ease;">
-            <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="background: #fff; border: 2px solid #4caf50; border-radius: 10px; padding: 15px; transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
               <div style="background: linear-gradient(135deg, #4caf50 0%, #81c784 100%); 
                           width: 40px; height: 40px; border-radius: 50%; 
                           display: flex; align-items: center; justify-content: center; 
-                          color: white; font-weight: bold;">
+                          color: white; font-weight: bold; font-size: 1.1em;">
                 ${index + 1}
               </div>
               <div style="flex: 1;">
-                <div style="font-weight: 600; color: #1a1f36; margin-bottom: 5px;">
-                  <i class="fas fa-store"></i> ${shop}
+                <div style="font-weight: 600; color: #1a1f36; margin-bottom: 3px;">
+                  <i class="fas fa-store"></i> ${shop.name}
                 </div>
                 <div style="font-size: 0.85em; color: #666;">
                   <i class="fas fa-map-marker-alt"></i> ${selectedArea}
                 </div>
               </div>
+            </div>
+            <div style="border-top: 1px solid #eee; padding-top: 10px; font-size: 0.85em; color: #555;">
+              ${shop.licenseNo ? `<div style="margin-bottom: 5px;"><i class="fas fa-id-card"></i> <strong>الرخصة:</strong> ${shop.licenseNo}</div>` : ''}
+              ${shop.contact ? `<div style="margin-bottom: 5px;"><i class="fas fa-phone"></i> <strong>الهاتف:</strong> ${shop.contact}</div>` : ''}
+              ${shop.activity ? `<div style="margin-bottom: 5px;"><i class="fas fa-briefcase"></i> <strong>النشاط:</strong> ${shop.activity}</div>` : ''}
+              ${shop.locationMap ? `<div style="margin-top: 8px;"><a href="${shop.locationMap}" target="_blank" style="color: #4caf50; text-decoration: none;"><i class="fas fa-map-marked-alt"></i> عرض الموقع</a></div>` : ''}
+            </div>
+            <div style="margin-top: 10px; display: flex; gap: 5px;">
+              <button class="btn btn-warning" style="padding: 5px 10px; font-size: 0.8em; flex: 1;" 
+                      onclick="editShopDetails('${shop.name.replace(/'/g, "\\'")}')">
+                <i class="fas fa-edit"></i> تعديل
+              </button>
+              <button class="btn btn-info" style="padding: 5px 10px; font-size: 0.8em; flex: 1;" 
+                      onclick="viewShopDetails('${shop.name.replace(/'/g, "\\'")}')">
+                <i class="fas fa-eye"></i> تفاصيل
+              </button>
             </div>
           </div>
         `;
@@ -2571,22 +2585,38 @@
       container.innerHTML = html;
     }
     
-    // Populate area filter dropdown
-    function populateAreaFilter() {
-      if (!planData || !planData.inspectionData) return;
+    // Populate area filter dropdown - Enhanced with shops_details.json
+    async function populateAreaFilter() {
+      // Load shops details if not already loaded
+      if (!shopsDetails || Object.keys(shopsDetails).length === 0) {
+        await loadShopsDetails();
+      }
       
       const areas = new Set();
-      planData.inspectionData.forEach(inspection => {
-        if (inspection.area) {
-          areas.add(inspection.area);
-        }
-      });
+      
+      // Get areas from plan data
+      if (planData && planData.inspectionData) {
+        planData.inspectionData.forEach(inspection => {
+          if (inspection.area) {
+            areas.add(inspection.area);
+          }
+        });
+      }
+      
+      // Also get areas from shops_details.json
+      if (shopsDetails) {
+        Object.values(shopsDetails).forEach(shop => {
+          if (shop.address) {
+            areas.add(shop.address);
+          }
+        });
+      }
       
       const select = document.getElementById("areaFilterSelect");
       if (!select) return;
       
       select.innerHTML = '<option value="">-- اختر منطقة --</option>';
-      Array.from(areas).sort().forEach(area => {
+      Array.from(areas).sort((a, b) => a.localeCompare(b, 'ar')).forEach(area => {
         const option = document.createElement('option');
         option.value = area;
         option.textContent = area;
@@ -2790,6 +2820,334 @@
       
       showMessage("shopsStatus", "success", `✅ تم حذف المحل "${name}" من ${deleteCount} سجل! اضغط "حفظ في GitHub" لحفظ التغييرات.`);
       logActivity("حذف محل", `تم حذف المحل "${name}" من ${deleteCount} سجل`);
+    }
+    
+    // ========================
+    // Enhanced Shop Details Management - shops_details.json
+    // ========================
+    
+    // View Shop Details
+    window.viewShopDetails = function(shopName) {
+      if (!shopsDetails || !shopsDetails[shopName]) {
+        alert('❌ لم يتم العثور على بيانات المحل!');
+        return;
+      }
+      
+      const shop = shopsDetails[shopName];
+      const modal = document.createElement('div');
+      modal.className = 'modal show';
+      modal.id = 'viewShopModal';
+      modal.innerHTML = `
+        <div class="modal-content" style="max-width: 700px;">
+          <div class="modal-header">
+            <h3 class="modal-title">تفاصيل المحل</h3>
+            <button class="modal-close" onclick="closeModal('viewShopModal')">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; color: white; margin-bottom: 20px;">
+              <h3 style="margin: 0 0 10px 0;"><i class="fas fa-store"></i> ${shop.nameAr || shopName}</h3>
+              <p style="margin: 0; opacity: 0.9;">${shop.nameEn || ''}</p>
+            </div>
+            <div style="display: grid; gap: 15px;">
+              <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-right: 4px solid #667eea;">
+                <div style="font-weight: 600; color: #667eea; margin-bottom: 5px;">
+                  <i class="fas fa-map-marker-alt"></i> المنطقة
+                </div>
+                <div>${shop.address || 'غير محدد'}</div>
+              </div>
+              <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-right: 4px solid #4caf50;">
+                <div style="font-weight: 600; color: #4caf50; margin-bottom: 5px;">
+                  <i class="fas fa-id-card"></i> رقم الرخصة
+                </div>
+                <div>${shop.licenseNo || 'غير محدد'}</div>
+              </div>
+              <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-right: 4px solid #2196f3;">
+                <div style="font-weight: 600; color: #2196f3; margin-bottom: 5px;">
+                  <i class="fas fa-phone"></i> رقم الهاتف
+                </div>
+                <div>${shop.contact || 'غير محدد'}</div>
+              </div>
+              <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-right: 4px solid #ff9800;">
+                <div style="font-weight: 600; color: #ff9800; margin-bottom: 5px;">
+                  <i class="fas fa-briefcase"></i> النشاط
+                </div>
+                <div>${shop.activity || 'غير محدد'}</div>
+              </div>
+              <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-right: 4px solid #9c27b0;">
+                <div style="font-weight: 600; color: #9c27b0; margin-bottom: 5px;">
+                  <i class="fas fa-code"></i> كود ADM
+                </div>
+                <div>${shop.admCode || 'غير محدد'}</div>
+              </div>
+              ${shop.locationMap ? `
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-right: 4px solid #00bcd4;">
+                  <div style="font-weight: 600; color: #00bcd4; margin-bottom: 5px;">
+                    <i class="fas fa-map-marked-alt"></i> الموقع على الخريطة
+                  </div>
+                  <div><a href="${shop.locationMap}" target="_blank" style="color: #00bcd4; text-decoration: none;">عرض على Google Maps <i class="fas fa-external-link-alt"></i></a></div>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-warning" onclick="closeModal('viewShopModal'); editShopDetails('${shopName.replace(/'/g, "\\'")}')">
+              <i class="fas fa-edit"></i> تعديل
+            </button>
+            <button class="btn btn-secondary" onclick="closeModal('viewShopModal')">
+              إغلاق
+            </button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+    
+    // Edit Shop Details
+    window.editShopDetails = function(shopName) {
+      if (!shopsDetails || !shopsDetails[shopName]) {
+        alert('❌ لم يتم العثور على بيانات المحل!');
+        return;
+      }
+      
+      const shop = shopsDetails[shopName];
+      const modal = document.createElement('div');
+      modal.className = 'modal show';
+      modal.id = 'editShopModal';
+      modal.innerHTML = `
+        <div class="modal-content" style="max-width: 700px;">
+          <div class="modal-header">
+            <h3 class="modal-title">تعديل بيانات المحل</h3>
+            <button class="modal-close" onclick="closeModal('editShopModal')">&times;</button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="editShopOriginalName" value="${shopName}">
+            <div class="form-group">
+              <label class="form-label">اسم المحل (عربي) *</label>
+              <input type="text" id="editShopNameAr" class="form-control" value="${shop.nameAr || shopName}" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">اسم المحل (إنجليزي)</label>
+              <input type="text" id="editShopNameEn" class="form-control" value="${shop.nameEn || ''}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">المنطقة *</label>
+              <input type="text" id="editShopArea" class="form-control" value="${shop.address || ''}" 
+                     list="areasList" required>
+              <datalist id="areasList">
+                ${getAreasForDatalist()}
+              </datalist>
+            </div>
+            <div class="form-group">
+              <label class="form-label">رقم الرخصة</label>
+              <input type="text" id="editShopLicense" class="form-control" value="${shop.licenseNo || ''}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">رقم الهاتف</label>
+              <input type="text" id="editShopPhone" class="form-control" value="${shop.contact || ''}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">النشاط</label>
+              <input type="text" id="editShopActivity" class="form-control" value="${shop.activity || ''}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">كود ADM</label>
+              <input type="text" id="editShopAdmCode" class="form-control" value="${shop.admCode || ''}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">رابط الموقع (Google Maps)</label>
+              <input type="text" id="editShopLocation" class="form-control" value="${shop.locationMap || ''}">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-success" onclick="saveShopDetails()">
+              <i class="fas fa-save"></i> حفظ التعديلات
+            </button>
+            <button class="btn btn-secondary" onclick="closeModal('editShopModal')">
+              إلغاء
+            </button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+    
+    // Get areas for datalist
+    function getAreasForDatalist() {
+      const areas = new Set();
+      
+      // Get areas from plan data
+      if (planData && planData.inspectionData) {
+        planData.inspectionData.forEach(inspection => {
+          if (inspection.area) areas.add(inspection.area);
+        });
+      }
+      
+      // Get areas from shops_details
+      if (shopsDetails) {
+        Object.values(shopsDetails).forEach(shop => {
+          if (shop.address) areas.add(shop.address);
+        });
+      }
+      
+      return Array.from(areas).sort((a, b) => a.localeCompare(b, 'ar'))
+        .map(area => `<option value="${area}">`)
+        .join('');
+    }
+    
+    // Save Shop Details
+    window.saveShopDetails = async function() {
+      const originalName = document.getElementById('editShopOriginalName').value;
+      const nameAr = document.getElementById('editShopNameAr').value.trim();
+      const nameEn = document.getElementById('editShopNameEn').value.trim();
+      const area = document.getElementById('editShopArea').value.trim();
+      const license = document.getElementById('editShopLicense').value.trim();
+      const phone = document.getElementById('editShopPhone').value.trim();
+      const activity = document.getElementById('editShopActivity').value.trim();
+      const admCode = document.getElementById('editShopAdmCode').value.trim();
+      const location = document.getElementById('editShopLocation').value.trim();
+      
+      if (!nameAr) {
+        alert('❌ يجب إدخال اسم المحل بالعربي!');
+        return;
+      }
+      
+      if (!area) {
+        alert('❌ يجب تحديد المنطقة!');
+        return;
+      }
+      
+      // Update shops details
+      const updatedShop = {
+        nameAr: nameAr,
+        nameEn: nameEn,
+        licenseNo: license,
+        address: area,
+        contact: phone,
+        activity: activity,
+        admCode: admCode,
+        locationMap: location
+      };
+      
+      // If name changed, we need to update the key
+      if (nameAr !== originalName) {
+        delete shopsDetails[originalName];
+        shopsDetails[nameAr] = updatedShop;
+        
+        // Also update plan data references
+        if (planData && planData.inspectionData) {
+          planData.inspectionData.forEach(inspection => {
+            if (inspection.shops && Array.isArray(inspection.shops)) {
+              const index = inspection.shops.indexOf(originalName);
+              if (index !== -1) {
+                inspection.shops[index] = nameAr;
+              }
+            }
+          });
+        }
+      } else {
+        shopsDetails[nameAr] = updatedShop;
+      }
+      
+      closeModal('editShopModal');
+      
+      // Reload shops list
+      await loadShopsList();
+      populateAreaFilter();
+      filterShopsByArea();
+      
+      showMessage("shopsStatus", "success", `✅ تم تحديث بيانات المحل "${nameAr}" بنجاح! اضغط "حفظ في GitHub" لحفظ التغييرات.`);
+      logActivity("تعديل محل", `تم تعديل بيانات المحل: ${nameAr}`);
+    }
+    
+    // Delete Shop from Details
+    window.deleteShopFromDetails = async function(shopName) {
+      if (!confirm(`⚠️ هل أنت متأكد من حذف المحل "${shopName}"؟\n\nسيتم حذفه من قاعدة البيانات ومن جميع السجلات!\n\nهذا الإجراء لا يمكن التراجع عنه!`)) {
+        return;
+      }
+      
+      // Delete from shops details
+      if (shopsDetails[shopName]) {
+        delete shopsDetails[shopName];
+      }
+      
+      // Also delete from plan data
+      let deleteCount = 0;
+      if (planData && planData.inspectionData) {
+        planData.inspectionData.forEach(inspection => {
+          if (inspection.shops && Array.isArray(inspection.shops)) {
+            const beforeLength = inspection.shops.length;
+            inspection.shops = inspection.shops.filter(shop => shop !== shopName);
+            if (inspection.shops.length < beforeLength) {
+              deleteCount++;
+            }
+          }
+        });
+      }
+      
+      // Reload shops list
+      await loadShopsList();
+      populateAreaFilter();
+      filterShopsByArea();
+      
+      showMessage("shopsStatus", "success", `✅ تم حذف المحل "${shopName}" بنجاح! (تم حذفه من ${deleteCount} سجل تفتيش)\n\nاضغط "حفظ في GitHub" لحفظ التغييرات.`);
+      logActivity("حذف محل", `تم حذف المحل "${shopName}" من قاعدة البيانات`);
+    }
+    
+    // Save Shops to GitHub - Save shops_details.json
+    async function saveShopsDetailsToGitHub() {
+      const token = getToken();
+      if (!token) return;
+      
+      try {
+        showMessage("shopsStatus", "info", "جاري حفظ بيانات المحلات...");
+        
+        // Get current file SHA
+        const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/shops_details.json`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+        
+        let sha = null;
+        if (getRes.ok) {
+          const fileData = await getRes.json();
+          sha = fileData.sha;
+        }
+        
+        // Prepare content with UTF-8 encoding for Arabic
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(shopsDetails, null, 2))));
+        
+        // Save to GitHub
+        const saveData = {
+          message: `تحديث بيانات المحلات - ${new Date().toLocaleString('ar-EG')}`,
+          content: content
+        };
+        
+        if (sha) {
+          saveData.sha = sha;
+        }
+        
+        const putRes = await fetch(`https://api.github.com/repos/${repo}/contents/shops_details.json`, {
+          method: "PUT",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(saveData)
+        });
+        
+        if (putRes.ok) {
+          showMessage("shopsStatus", "success", "✅ تم حفظ بيانات المحلات في GitHub بنجاح!");
+          logActivity("حفظ بيانات المحلات", "تم حفظ ملف shops_details.json");
+        } else {
+          const error = await putRes.json();
+          throw new Error(error.message || "فشل في الحفظ");
+        }
+      } catch (error) {
+        console.error("خطأ في حفظ بيانات المحلات:", error);
+        showMessage("shopsStatus", "error", `❌ خطأ في الحفظ: ${error.message}`);
+      }
     }
     
     // ========================
@@ -3529,6 +3887,11 @@
     }
     
     async function addShop() {
+      // Load shops details if not already loaded
+      if (!shopsDetails || Object.keys(shopsDetails).length === 0) {
+        await loadShopsDetails();
+      }
+      
       const modal = document.createElement('div');
       modal.className = 'modal show';
       modal.id = 'addShopModal';
@@ -3540,20 +3903,24 @@
           </div>
           <div class="modal-body">
             <div class="form-group">
-              <label class="form-label">اسم المحل (عربي)</label>
-              <input type="text" id="newShopNameAr" class="form-control" placeholder="اسم المحل بالعربي">
+              <label class="form-label">اسم المحل (عربي) *</label>
+              <input type="text" id="newShopNameAr" class="form-control" placeholder="اسم المحل بالعربي" required>
             </div>
             <div class="form-group">
               <label class="form-label">اسم المحل (إنجليزي)</label>
               <input type="text" id="newShopNameEn" class="form-control" placeholder="Shop Name in English">
             </div>
             <div class="form-group">
-              <label class="form-label">رقم الرخصة</label>
-              <input type="text" id="newShopLicense" class="form-control" placeholder="CN-xxxxxxx">
+              <label class="form-label">المنطقة *</label>
+              <input type="text" id="newShopArea" class="form-control" placeholder="سوق الميناء" 
+                     list="areasListAdd" required>
+              <datalist id="areasListAdd">
+                ${getAreasForDatalist()}
+              </datalist>
             </div>
             <div class="form-group">
-              <label class="form-label">المنطقة</label>
-              <input type="text" id="newShopArea" class="form-control" placeholder="سوق الميناء">
+              <label class="form-label">رقم الرخصة</label>
+              <input type="text" id="newShopLicense" class="form-control" placeholder="CN-xxxxxxx">
             </div>
             <div class="form-group">
               <label class="form-label">رقم الهاتف</label>
@@ -3564,13 +3931,17 @@
               <input type="text" id="newShopActivity" class="form-control" placeholder="بيع الحيوانات">
             </div>
             <div class="form-group">
+              <label class="form-label">كود ADM (اختياري)</label>
+              <input type="text" id="newShopAdmCode" class="form-control" placeholder="ADMxxxx">
+            </div>
+            <div class="form-group">
               <label class="form-label">رابط الموقع (Google Maps)</label>
               <input type="text" id="newShopLocation" class="form-control" placeholder="https://maps.google.com/...">
             </div>
           </div>
           <div class="modal-footer">
-            <button class="btn btn-success" onclick="saveNewShop()">
-              <i class="fas fa-save"></i> حفظ
+            <button class="btn btn-success" onclick="saveNewShopToDetails()">
+              <i class="fas fa-save"></i> حفظ المحل
             </button>
             <button class="btn btn-secondary" onclick="closeModal('addShopModal')">
               إلغاء
@@ -3581,30 +3952,56 @@
       document.body.appendChild(modal);
     }
     
-    window.saveNewShop = async function() {
+    window.saveNewShopToDetails = async function() {
       const nameAr = document.getElementById('newShopNameAr').value.trim();
       const nameEn = document.getElementById('newShopNameEn').value.trim();
+      const area = document.getElementById('newShopArea').value.trim();
       const license = document.getElementById('newShopLicense').value.trim();
+      const phone = document.getElementById('newShopPhone').value.trim();
+      const activity = document.getElementById('newShopActivity').value.trim();
+      const admCode = document.getElementById('newShopAdmCode').value.trim();
+      const location = document.getElementById('newShopLocation').value.trim();
       
       if (!nameAr) {
         alert('❌ يجب إدخال اسم المحل بالعربي!');
         return;
       }
       
+      if (!area) {
+        alert('❌ يجب تحديد المنطقة!');
+        return;
+      }
+      
+      // Check if shop already exists
+      if (shopsDetails[nameAr]) {
+        if (!confirm(`⚠️ المحل "${nameAr}" موجود بالفعل!\n\nهل تريد تحديث بياناته؟`)) {
+          return;
+        }
+      }
+      
+      // Create shop data
       const shopData = {
         nameAr: nameAr,
         nameEn: nameEn,
         licenseNo: license,
-        address: document.getElementById('newShopArea').value.trim(),
-        contact: document.getElementById('newShopPhone').value.trim(),
-        activity: document.getElementById('newShopActivity').value.trim(),
-        locationMap: document.getElementById('newShopLocation').value.trim(),
-        admCode: 'ADM' + Date.now().toString().slice(-4)
+        address: area,
+        contact: phone,
+        activity: activity,
+        admCode: admCode || 'ADM' + String(Date.now()).slice(-4),
+        locationMap: location
       };
       
-      logActivity("إضافة محل", `تم إضافة المحل: ${nameAr}`);
-      alert(`✅ تم إضافة المحل: ${nameAr}\n\nالبيانات:\n${JSON.stringify(shopData, null, 2)}\n\nيمكنك الآن استخدامه في المحرر المرئي`);
+      // Add to shops details
+      shopsDetails[nameAr] = shopData;
+      
       closeModal('addShopModal');
+      
+      // Reload shops list
+      await loadShopsList();
+      populateAreaFilter();
+      
+      showMessage("shopsStatus", "success", `✅ تم إضافة المحل "${nameAr}" بنجاح!\n\nاضغط "حفظ في GitHub" لحفظ التغييرات.`);
+      logActivity("إضافة محل", `تم إضافة المحل: ${nameAr} في منطقة ${area}`);
     }
     
     function generateMonthlyReport() {

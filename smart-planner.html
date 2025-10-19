@@ -856,7 +856,13 @@
             </div>
             
             <div class="form-group">
-                <label class="form-label">المحلات المتاحة (مرتبة حسب الأولوية)</label>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <label class="form-label" style="margin-bottom: 0;">المحلات المتاحة (مرتبة حسب الأولوية)</label>
+                    <button id="showHighPriorityBtn" class="btn btn-warning btn-sm" onclick="toggleHighPriorityShops()" style="display: none; padding: 8px 16px;">
+                        <span id="highPriorityBtnIcon">👁️</span>
+                        <span id="highPriorityBtnText">عرض المحلات ذات الأولوية العالية</span>
+                    </button>
+                </div>
                 <div id="shopsListContainer">
                     <p style="text-align: center; color: #999; padding: 20px;">
                         اختر المفتش والتاريخ والمنطقة لعرض المحلات المتاحة
@@ -1456,6 +1462,9 @@
         const repo = "aliabdelaal-adm/Monthly_inspection_plan";
         let currentEditingIndex = -1;
         let selectedInspectionsForDelete = [];
+        let showingHighPriority = false;
+        let currentAvailableShops = [];
+        let currentHighPriorityShops = [];
         
         // Tab switching
         function switchTab(tabName) {
@@ -1601,6 +1610,7 @@
             if (!inspector || !date || !area) {
                 document.getElementById('shopsListContainer').innerHTML = 
                     '<p style="text-align: center; color: #999; padding: 20px;">اختر المفتش والتاريخ والمنطقة لعرض المحلات المتاحة</p>';
+                document.getElementById('showHighPriorityBtn').style.display = 'none';
                 return;
             }
             
@@ -1612,6 +1622,28 @@
             
             // Sort shops by priority
             const sortedShops = sortShopsByPriority(availableShops, inspector, date);
+            
+            // Get high-priority shops that were filtered out
+            const unavailableShops = allShops.filter(shop => !availableShops.includes(shop));
+            const highPriorityUnavailable = sortShopsByPriority(unavailableShops, inspector, date)
+                .filter(shop => shop.priority === 'very-high' || shop.priority === 'high');
+            
+            // Store for later use
+            currentAvailableShops = sortedShops;
+            currentHighPriorityShops = highPriorityUnavailable;
+            
+            // Show/hide the high priority button based on availability
+            const highPriorityBtn = document.getElementById('showHighPriorityBtn');
+            if (currentHighPriorityShops.length > 0) {
+                highPriorityBtn.style.display = 'inline-flex';
+            } else {
+                highPriorityBtn.style.display = 'none';
+            }
+            
+            // Reset showing state
+            showingHighPriority = false;
+            document.getElementById('highPriorityBtnText').textContent = 'عرض المحلات ذات الأولوية العالية';
+            document.getElementById('highPriorityBtnIcon').textContent = '👁️';
             
             // Update statistics
             updateStatistics(allShops.length, availableShops.length, sortedShops);
@@ -1793,7 +1825,7 @@
         }
         
         // Display shops
-        function displayShops(shops) {
+        function displayShops(shops, showingHighPriority = false) {
             const container = document.getElementById('shopsListContainer');
             
             if (shops.length === 0) {
@@ -1801,20 +1833,37 @@
                 return;
             }
             
-            // Clear container
+            // Clear container (except info message if it exists)
+            const infoDiv = document.getElementById('highPriorityInfo');
             container.innerHTML = '';
+            if (infoDiv && showingHighPriority) {
+                container.appendChild(infoDiv);
+            }
             
             // Create shops list container
             const shopsListDiv = document.createElement('div');
             shopsListDiv.className = 'shops-list';
             
+            const inspector = document.getElementById('inspectorSelect').value;
+            const date = document.getElementById('inspectionDate').value;
+            
             shops.forEach(shop => {
                 const isSelected = selectedShops.includes(shop.name);
                 const lastInspection = getLastInspectionDate(shop.name);
                 
+                // Check if this shop is from the high-priority unavailable list
+                const isHighPriorityUnavailable = currentHighPriorityShops.some(s => s.name === shop.name);
+                
                 // Create shop card element
                 const shopCard = document.createElement('div');
                 shopCard.className = `shop-card ${shop.priority}-priority ${isSelected ? 'selected' : ''}`;
+                
+                // Add visual indicator for high-priority unavailable shops
+                if (isHighPriorityUnavailable) {
+                    shopCard.style.border = '3px solid #ff6b6b';
+                    shopCard.style.opacity = '0.85';
+                }
+                
                 shopCard.onclick = function() { toggleShop(shop.name); };
                 
                 // Priority badge
@@ -1839,6 +1888,23 @@
                 shopReason.className = 'shop-info';
                 shopReason.textContent = '📝 ' + shop.reason;
                 
+                // Warning for high-priority unavailable shops
+                let warningDiv = null;
+                if (isHighPriorityUnavailable) {
+                    warningDiv = document.createElement('div');
+                    warningDiv.style.cssText = 'background: #fff3cd; color: #856404; padding: 8px; border-radius: 5px; font-size: 0.85em; margin-top: 8px;';
+                    
+                    // Check why it's unavailable
+                    const assignedToday = isShopAssignedToday(shop.name, date);
+                    const recentlyInspected = wasShopRecentlyInspected(shop.name, inspector, date);
+                    
+                    if (assignedToday) {
+                        warningDiv.textContent = '⚠️ مكرر: تم تعيينه لمفتش آخر اليوم';
+                    } else if (recentlyInspected) {
+                        warningDiv.textContent = '⚠️ تم التفتيش: آخر 7 أيام';
+                    }
+                }
+                
                 // Last inspection
                 const lastInspectionDiv = document.createElement('div');
                 lastInspectionDiv.className = 'last-inspection';
@@ -1849,6 +1915,9 @@
                 shopCard.appendChild(shopName);
                 shopCard.appendChild(shopScore);
                 shopCard.appendChild(shopReason);
+                if (warningDiv) {
+                    shopCard.appendChild(warningDiv);
+                }
                 shopCard.appendChild(lastInspectionDiv);
                 
                 shopsListDiv.appendChild(shopCard);
@@ -1928,6 +1997,46 @@
             document.getElementById('previewShift').textContent = shift;
             document.getElementById('previewArea').textContent = area;
             document.getElementById('previewShopsCount').textContent = selectedShops.length;
+        }
+        
+        // Toggle high priority shops display
+        function toggleHighPriorityShops() {
+            showingHighPriority = !showingHighPriority;
+            
+            if (showingHighPriority) {
+                // Show both available and high-priority shops
+                const combinedShops = [...currentAvailableShops, ...currentHighPriorityShops];
+                displayShops(combinedShops, true);
+                
+                // Update button text
+                document.getElementById('highPriorityBtnText').textContent = 'إخفاء المحلات ذات الأولوية العالية';
+                document.getElementById('highPriorityBtnIcon').textContent = '🚫';
+                
+                // Show info message
+                const container = document.getElementById('shopsListContainer');
+                const infoDiv = document.createElement('div');
+                infoDiv.id = 'highPriorityInfo';
+                infoDiv.style.cssText = 'background: #fff3cd; border: 2px solid #ffc107; padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: center;';
+                infoDiv.innerHTML = `
+                    <strong>⚠️ تنبيه:</strong> يتم عرض المحلات ذات الأولوية العالية بجانب المحلات المتاحة.
+                    <br>
+                    <small style="color: #856404;">هذه المحلات قد لا تتوافق مع قواعد التوزيع الذكي (تم تفتيشها مؤخراً أو مكررة في نفس اليوم)</small>
+                `;
+                container.insertBefore(infoDiv, container.firstChild);
+            } else {
+                // Show only available shops
+                displayShops(currentAvailableShops);
+                
+                // Update button text
+                document.getElementById('highPriorityBtnText').textContent = 'عرض المحلات ذات الأولوية العالية';
+                document.getElementById('highPriorityBtnIcon').textContent = '👁️';
+                
+                // Remove info message
+                const infoDiv = document.getElementById('highPriorityInfo');
+                if (infoDiv) {
+                    infoDiv.remove();
+                }
+            }
         }
         
         // Populate filter dropdowns

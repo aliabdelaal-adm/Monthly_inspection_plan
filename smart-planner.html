@@ -1656,17 +1656,39 @@
         function getAllShopsInArea(area) {
             const shops = [];
             
-            if (!planData || !planData.inspectionData) return shops;
+            if (!planData) return shops;
             
-            // Collect all unique shops from the area
-            const shopSet = new Set();
-            planData.inspectionData.forEach(inspection => {
-                if (inspection.area === area && inspection.shops) {
-                    inspection.shops.forEach(shop => shopSet.add(shop));
+            // First, try to get shops from the planData.shops array (primary source)
+            if (planData.shops && planData.areas) {
+                // Find the area ID for the given area name
+                const areaObj = planData.areas.find(a => a.name === area);
+                
+                if (areaObj) {
+                    // Get all shops that belong to this area
+                    const shopsInArea = planData.shops
+                        .filter(shop => shop.areaId === areaObj.id)
+                        .map(shop => shop.name);
+                    
+                    if (shopsInArea.length > 0) {
+                        return shopsInArea;
+                    }
                 }
-            });
+            }
             
-            return Array.from(shopSet);
+            // Fallback: Collect all unique shops from inspection history
+            // This ensures backward compatibility if shops array is not available
+            if (planData.inspectionData) {
+                const shopSet = new Set();
+                planData.inspectionData.forEach(inspection => {
+                    if (inspection.area === area && inspection.shops) {
+                        inspection.shops.forEach(shop => shopSet.add(shop));
+                    }
+                });
+                
+                return Array.from(shopSet);
+            }
+            
+            return shops;
         }
         
         // Filter shops based on smart rules

@@ -17988,6 +17988,14 @@ document.addEventListener('DOMContentLoaded', function() {
 // ===== وظائف أداة التخطيط الذكية مع الربط التلقائي =====
 // Smart Planner with Automatic Shop-Area Linking
 
+// Utility function to escape HTML and prevent XSS attacks
+function escapeHtml(text) {
+    if (typeof text !== 'string') return text;
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 // Global variables for Smart Planner
 let smartPlannerSelectedShops = [];
 let smartPlannerShopsData = {};
@@ -18107,6 +18115,19 @@ function buildShopsAreaMapping() {
 
 // Switch Smart Planner Tabs
 function switchSmartPlannerTab(tabName) {
+    // Map tab names to their actual IDs
+    const tabButtonIdMap = {
+        'add': 'AddInspection',
+        'links': 'ManageLinks',
+        'stats': 'Statistics'
+    };
+    
+    const tabContentIdMap = {
+        'add': 'Add',
+        'links': 'Links',
+        'stats': 'Stats'
+    };
+    
     // Hide all tabs
     document.querySelectorAll('.smart-planner-tab').forEach(tab => {
         tab.classList.remove('active');
@@ -18116,8 +18137,11 @@ function switchSmartPlannerTab(tabName) {
     });
     
     // Show selected tab
-    document.getElementById('tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).classList.add('active');
-    document.getElementById('tabContent' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).classList.add('active');
+    const tabButton = document.getElementById('tab' + tabButtonIdMap[tabName]);
+    const tabContent = document.getElementById('tabContent' + tabContentIdMap[tabName]);
+    
+    if (tabButton) tabButton.classList.add('active');
+    if (tabContent) tabContent.classList.add('active');
     
     // Load data for specific tabs
     if (tabName === 'links') {

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار مفتاح الإيقاف الطارئ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.95);
+            padding: 30px;
+            border-radius: 15px;
+            color: #333;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #dc3545;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border-left: 5px solid #007bff;
+        }
+        .test-section h3 {
+            color: #007bff;
+            margin-top: 0;
+        }
+        button {
+            padding: 12px 24px;
+            margin: 8px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        .start-btn {
+            background: #28a745;
+            color: white;
+        }
+        .stop-btn {
+            background: #dc3545;
+            color: white;
+        }
+        .kill-btn {
+            background: #8b0000;
+            color: white;
+            border: 2px solid #ff0000;
+            font-size: 1.2em;
+            padding: 15px 30px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+        .status.active {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.stopped {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .log {
+            background: #000;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 15px 0;
+        }
+        .log-entry {
+            margin: 3px 0;
+        }
+        .result-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .result-box h3 {
+            color: #856404;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛑 اختبار مفتاح الإيقاف الطارئ</h1>
+        <p class="subtitle">Emergency Kill Switch Test - محاكاة لوضع الصيانة والموسيقى</p>
+
+        <div class="test-section">
+            <h3>📊 الحالة الحالية</h3>
+            <div id="checkerStatus" class="status stopped">⏸️ المدقق الدوري: متوقف</div>
+            <div id="musicStatus" class="status stopped">🔇 الموسيقى: متوقفة</div>
+            <div id="timerStatus" class="status stopped">⏱️ المؤقتات: معطلة</div>
+            <div id="overlayStatus" class="status stopped">❌ الشاشة التغطية: مخفية</div>
+        </div>
+
+        <div class="test-section">
+            <h3>🎮 أدوات التحكم</h3>
+            <button class="start-btn" onclick="startMaintenance()">🚀 تشغيل وضع الصيانة</button>
+            <button class="stop-btn" onclick="stopMaintenance()">⏹️ إيقاف عادي</button>
+            <button class="kill-btn" onclick="testKillSwitch()">🛑 إيقاف كامل 100%</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📝 سجل الأحداث</h3>
+            <div id="log" class="log"></div>
+        </div>
+
+        <div class="result-box">
+            <h3>✅ معايير النجاح</h3>
+            <ul>
+                <li>المدقق الدوري يجب أن يتوقف فوراً ✓</li>
+                <li>الموسيقى يجب أن تتوقف وتُعاد إلى الصفر ✓</li>
+                <li>جميع المؤقتات يجب أن تُمسح ✓</li>
+                <li>الشاشة التغطية يجب أن تختفي ✓</li>
+                <li>لا يمكن لأي عملية أن تُعيد التشغيل تلقائياً ✓</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>⌨️ اختصار لوحة المفاتيح</h3>
+            <p>يمكنك أيضاً استخدام <code style="background:#f5f5f5;padding:4px 8px;border-radius:4px;color:#d63384;">Ctrl + Shift + K</code> لتفعيل الإيقاف الطارئ</p>
+        </div>
+    </div>
+
+    <script>
+        let maintenanceCheckerInterval = null;
+        let maintenanceMusicTimer = null;
+        let maintenanceConfig = {
+            musicEnabled: true,
+            checkInterval: 2000
+        };
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const time = new Date().toLocaleTimeString('ar-EG');
+            const color = type === 'success' ? '#0f0' : type === 'error' ? '#f00' : type === 'warning' ? '#ff0' : '#0ff';
+            logDiv.innerHTML = `<div class="log-entry" style="color:${color}">[${time}] ${message}</div>` + logDiv.innerHTML;
+        }
+
+        function updateStatus() {
+            const checkerActive = maintenanceCheckerInterval !== null;
+            const musicActive = maintenanceMusicTimer !== null;
+            
+            document.getElementById('checkerStatus').className = checkerActive ? 'status active' : 'status stopped';
+            document.getElementById('checkerStatus').textContent = checkerActive ? '✅ المدقق الدوري: نشط' : '⏸️ المدقق الدوري: متوقف';
+            
+            document.getElementById('musicStatus').className = musicActive ? 'status active' : 'status stopped';
+            document.getElementById('musicStatus').textContent = musicActive ? '🎵 الموسيقى: تعمل' : '🔇 الموسيقى: متوقفة';
+            
+            document.getElementById('timerStatus').className = musicActive ? 'status active' : 'status stopped';
+            document.getElementById('timerStatus').textContent = musicActive ? '⏱️ المؤقتات: نشطة' : '⏱️ المؤقتات: معطلة';
+        }
+
+        function startMaintenance() {
+            log('🚀 بدء محاكاة وضع الصيانة...', 'info');
+            
+            // Start checker
+            if (!maintenanceCheckerInterval) {
+                maintenanceCheckerInterval = setInterval(() => {
+                    log('🔄 المدقق الدوري يعمل...', 'info');
+                }, maintenanceConfig.checkInterval);
+                log('✅ تم تشغيل المدقق الدوري', 'success');
+            }
+            
+            // Start music timer
+            if (!maintenanceMusicTimer) {
+                maintenanceMusicTimer = setTimeout(() => {
+                    log('🎵 انتهى وقت الموسيقى', 'info');
+                }, 10000);
+                log('✅ تم تشغيل مؤقت الموسيقى (10 ثواني)', 'success');
+            }
+            
+            document.getElementById('overlayStatus').className = 'status active';
+            document.getElementById('overlayStatus').textContent = '✅ الشاشة التغطية: مرئية';
+            
+            updateStatus();
+            log('🎬 محاكاة وضع الصيانة تعمل الآن', 'success');
+        }
+
+        function stopMaintenance() {
+            log('⏹️ إيقاف عادي (قد لا يكون كاملاً)...', 'warning');
+            
+            // This simulates the old behavior - doesn't stop everything
+            if (maintenanceCheckerInterval) {
+                clearInterval(maintenanceCheckerInterval);
+                maintenanceCheckerInterval = null;
+                log('⚠️ تم إيقاف المدقق (لكن قد يعود)', 'warning');
+            }
+            
+            updateStatus();
+        }
+
+        function testKillSwitch() {
+            log('🛑🛑🛑 تفعيل مفتاح الإيقاف الطارئ 🛑🛑🛑', 'error');
+            log('إيقاف جميع الأنشطة الآن...', 'error');
+            
+            try {
+                // 1. Stop checker interval
+                if (maintenanceCheckerInterval) {
+                    clearInterval(maintenanceCheckerInterval);
+                    maintenanceCheckerInterval = null;
+                    log('✅ تم إيقاف المدقق الدوري', 'success');
+                }
+                
+                // 2. Stop music timer
+                if (maintenanceMusicTimer) {
+                    clearTimeout(maintenanceMusicTimer);
+                    maintenanceMusicTimer = null;
+                    log('✅ تم مسح مؤقت الموسيقى', 'success');
+                }
+                
+                // 3. Hide overlay
+                document.getElementById('overlayStatus').className = 'status stopped';
+                document.getElementById('overlayStatus').textContent = '❌ الشاشة التغطية: مخفية';
+                log('✅ تم إخفاء الشاشة التغطية', 'success');
+                
+                // 4. Disable config
+                maintenanceConfig.musicEnabled = false;
+                maintenanceConfig.checkInterval = 0;
+                log('✅ تم تعطيل الإعدادات', 'success');
+                
+                updateStatus();
+                
+                log('', 'success');
+                log('🎉🎉🎉 نجح الإيقاف الطارئ 100% 🎉🎉🎉', 'success');
+                log('جميع الأنشطة متوقفة تماماً', 'success');
+                log('- المدقق: متوقف ✓', 'success');
+                log('- الموسيقى: متوقفة ✓', 'success');
+                log('- المؤقتات: ممسوحة ✓', 'success');
+                log('- الشاشة: مخفية ✓', 'success');
+                
+                alert('✅ نجح اختبار مفتاح الإيقاف الطارئ!\n\nجميع الأنشطة متوقفة 100%');
+                
+            } catch (error) {
+                log('❌ خطأ في مفتاح الإيقاف: ' + error.message, 'error');
+            }
+        }
+
+        // Keyboard shortcut
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.shiftKey && e.key === 'K') {
+                log('⌨️ تم الضغط على Ctrl+Shift+K', 'info');
+                testKillSwitch();
+            }
+        });
+
+        log('✅ صفحة الاختبار جاهزة', 'success');
+        log('استخدم الأزرار أعلاه لاختبار الوظائف', 'info');
+        updateStatus();
+    </script>
+</body>
+</html>

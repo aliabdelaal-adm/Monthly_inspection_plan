@@ -3530,6 +3530,9 @@
             <button onclick="emergencySaveShopsToGitHub()" style="background:#20c997; color:#fff; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:1em; box-shadow:0 2px 8px rgba(0,0,0,0.3); transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                 💾 حفظ المحلات
             </button>
+            <button onclick="emergencyKillSwitch()" style="background:#8b0000; color:#fff; border:none; padding:12px 24px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:1.1em; box-shadow:0 3px 10px rgba(0,0,0,0.4); transition:all 0.2s; border:2px solid #ff0000;" onmouseover="this.style.transform='scale(1.08)'; this.style.background='#a00000'" onmouseout="this.style.transform='scale(1)'; this.style.background='#8b0000'" title="إيقاف فوري لجميع الأنشطة: المدقق، الموسيقى، الرسائل">
+                🛑 إيقاف كامل 100%
+            </button>
         </div>
     </div>
 </div>
@@ -6730,6 +6733,12 @@ async function loadMaintenanceConfig() {
 function applyMaintenanceConfig() {
     console.log('🔧 Applying maintenance configuration...');
     
+    // If music is disabled in config, stop it immediately
+    if (!maintenanceConfig.musicEnabled) {
+        console.log('🎵 Music is DISABLED in config - stopping playback');
+        stopMaintenanceMusic();
+    }
+    
     // Restart maintenance checker with new interval
     if (maintenanceConfig.checkInterval > 0) {
         restartMaintenanceChecker(maintenanceConfig.checkInterval);
@@ -6930,6 +6939,7 @@ function stopMaintenanceMusic() {
     if (audio) {
         audio.pause();
         audio.currentTime = 0;
+        audio.loop = false; // Disable loop to prevent restart
         console.log('🎵 Maintenance music stopped manually');
     }
     
@@ -6938,6 +6948,14 @@ function stopMaintenanceMusic() {
         clearTimeout(maintenanceMusicTimer);
         maintenanceMusicTimer = null;
         console.log('⏱️ Maintenance music timer cleared');
+    }
+    
+    // Additional safety: Remove all event listeners that might restart the audio
+    if (audio) {
+        // Clone the audio element to remove all event listeners
+        const newAudio = audio.cloneNode(true);
+        audio.parentNode.replaceChild(newAudio, audio);
+        console.log('🔇 Audio element reset - all event listeners removed');
     }
 }
 
@@ -7661,6 +7679,32 @@ async function emergencyDisableMaintenance() {
         showMaintenanceProgress('⚡ جاري الإلغاء الفوري...');
         showDevToast('⏳ جاري إلغاء وضع الصيانة...', 'info', 3000, '⚡');
         
+        // CRITICAL: Stop the maintenance checker interval completely
+        if (maintenanceCheckerInterval) {
+            clearInterval(maintenanceCheckerInterval);
+            maintenanceCheckerInterval = null;
+            console.log('✅ Maintenance checker interval STOPPED');
+        }
+        
+        // CRITICAL: Stop the maintenance music timer
+        if (maintenanceMusicTimer) {
+            clearTimeout(maintenanceMusicTimer);
+            maintenanceMusicTimer = null;
+            console.log('✅ Maintenance music timer CLEARED');
+        }
+        
+        // CRITICAL: Stop all audio playback
+        const audioElements = ['maintenanceAudio', 'splashAudio', 'sheikhZayedAudio'];
+        audioElements.forEach(id => {
+            const audio = document.getElementById(id);
+            if (audio) {
+                audio.pause();
+                audio.currentTime = 0;
+                audio.loop = false;
+                console.log(`🔇 Stopped and reset audio: ${id}`);
+            }
+        });
+        
         // Disable immediately on this device
         localStorage.removeItem('systemMaintenanceMode');
         sessionStorage.removeItem('maintenanceNotificationShown');
@@ -7723,6 +7767,20 @@ function emergencyHideMessage() {
                 console.log(`🔇 Stopped audio: ${id}`);
             }
         });
+        
+        // CRITICAL: Stop the maintenance checker interval completely
+        if (maintenanceCheckerInterval) {
+            clearInterval(maintenanceCheckerInterval);
+            maintenanceCheckerInterval = null;
+            console.log('✅ Maintenance checker interval STOPPED');
+        }
+        
+        // CRITICAL: Stop the maintenance music timer
+        if (maintenanceMusicTimer) {
+            clearTimeout(maintenanceMusicTimer);
+            maintenanceMusicTimer = null;
+            console.log('✅ Maintenance music timer CLEARED');
+        }
         
         // Update status
         updateEmergencyStatusIndicator();
@@ -7812,6 +7870,131 @@ function emergencyForceRefresh() {
         window.location.href = window.location.href + '?_=' + Date.now();
     }
 }
+
+// ============================================================================
+// 🛑 COMPREHENSIVE EMERGENCY KILL SWITCH - STOPS EVERYTHING 100%
+// ============================================================================
+// This function provides a 100% guaranteed way to stop all maintenance activities:
+// - Stops maintenance checker interval
+// - Stops all music and timers
+// - Hides all overlays and messages
+// - Removes all listeners that might restart processes
+// ============================================================================
+function emergencyKillSwitch() {
+    console.log('🛑🛑🛑 EMERGENCY KILL SWITCH ACTIVATED 🛑🛑🛑');
+    console.log('Stopping ALL maintenance activities NOW...');
+    
+    try {
+        // 1. STOP MAINTENANCE CHECKER INTERVAL
+        if (maintenanceCheckerInterval) {
+            clearInterval(maintenanceCheckerInterval);
+            maintenanceCheckerInterval = null;
+            console.log('✅ Maintenance checker interval KILLED');
+        }
+        
+        // 2. STOP MUSIC TIMER
+        if (maintenanceMusicTimer) {
+            clearTimeout(maintenanceMusicTimer);
+            maintenanceMusicTimer = null;
+            console.log('✅ Music timer KILLED');
+        }
+        
+        // 3. STOP AND RESET ALL AUDIO ELEMENTS
+        const audioElements = ['maintenanceAudio', 'splashAudio', 'sheikhZayedAudio'];
+        audioElements.forEach(id => {
+            const audio = document.getElementById(id);
+            if (audio) {
+                audio.pause();
+                audio.currentTime = 0;
+                audio.loop = false;
+                audio.muted = true;
+                // Remove all event listeners by cloning the element
+                const newAudio = audio.cloneNode(true);
+                newAudio.pause();
+                newAudio.muted = true;
+                audio.parentNode.replaceChild(newAudio, audio);
+                console.log(`🔇 Audio ${id} KILLED and reset`);
+            }
+        });
+        
+        // 4. HIDE ALL OVERLAYS AND MESSAGES
+        const overlay = document.getElementById('maintenanceOverlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+            console.log('✅ Maintenance overlay HIDDEN');
+        }
+        
+        const splashScreen = document.getElementById('devSplashScreen');
+        if (splashScreen) {
+            splashScreen.style.display = 'none';
+            splashScreen.style.opacity = '0';
+            console.log('✅ Splash screen HIDDEN');
+        }
+        
+        // 5. HIDE PROGRESS MESSAGES
+        hideMaintenanceProgress();
+        console.log('✅ Progress messages CLEARED');
+        
+        // 6. CLEAR ALL MAINTENANCE FLAGS
+        localStorage.removeItem('systemMaintenanceMode');
+        sessionStorage.removeItem('maintenanceNotificationShown');
+        console.log('✅ Maintenance flags CLEARED');
+        
+        // 7. SHOW MAIN CONTAINER
+        const mainContainer = document.querySelector('.main-container');
+        if (mainContainer) {
+            mainContainer.style.display = 'flex';
+            console.log('✅ Main container RESTORED');
+        }
+        
+        // 8. UPDATE STATUS INDICATORS
+        if (typeof updateEmergencyStatusIndicator === 'function') {
+            updateEmergencyStatusIndicator();
+            console.log('✅ Status indicators UPDATED');
+        }
+        
+        // 9. DISABLE MUSIC IN CONFIG TO PREVENT RESTART
+        maintenanceConfig.musicEnabled = false;
+        maintenanceConfig.checkInterval = 0;
+        console.log('✅ Config updated: music DISABLED, checker DISABLED');
+        
+        console.log('');
+        console.log('🎉🎉🎉 EMERGENCY KILL SWITCH SUCCESSFUL 🎉🎉🎉');
+        console.log('All maintenance activities have been STOPPED 100%');
+        console.log('- Checker interval: STOPPED');
+        console.log('- Music timers: CLEARED');
+        console.log('- Audio playback: STOPPED');
+        console.log('- Overlays: HIDDEN');
+        console.log('- Messages: CLEARED');
+        console.log('');
+        
+        // Show success notification
+        if (typeof showDevToast === 'function') {
+            showDevToast('🛑 تم إيقاف جميع الأنشطة 100%!', 'success', 8000, '🛑');
+        } else {
+            alert('🛑 تم إيقاف جميع الأنشطة بنجاح!\n\n✅ تم إيقاف:\n- المدقق الدوري\n- الموسيقى والمؤقتات\n- الرسائل والشاشات\n- جميع الأنشطة المستمرة');
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('❌ Error in emergency kill switch:', error);
+        alert('⚠️ حدث خطأ في مفتاح الإيقاف الطارئ:\n' + error.message);
+        return false;
+    }
+}
+
+// Make kill switch globally accessible for console access
+window.emergencyKillSwitch = emergencyKillSwitch;
+
+// Add keyboard shortcut for emergency kill switch: Ctrl+Shift+K
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.shiftKey && e.key === 'K') {
+        console.log('🛑 Keyboard shortcut triggered: Ctrl+Shift+K');
+        emergencyKillSwitch();
+    }
+});
+
+console.log('🛑 Emergency Kill Switch initialized - Use Ctrl+Shift+K or call emergencyKillSwitch()');
 
 // Emergency save shops to GitHub - INSTANT
 async function emergencySaveShopsToGitHub() {

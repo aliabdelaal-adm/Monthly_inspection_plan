@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>اختبار أزرار الكاش والصيانة</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            direction: rtl;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2d3561;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .test-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .test-section h2 {
+            color: #2d3561;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 200px;
+            justify-content: center;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #feca57 0%, #ff9ff3 100%);
+            color: white;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+        
+        .status-message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-weight: 600;
+            white-space: pre-wrap;
+            display: none;
+        }
+        
+        .status-message.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .status-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status-message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .status-message.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        
+        .results {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+            border: 2px solid #e0e0e0;
+            font-size: 0.95em;
+        }
+        
+        .results h3 {
+            color: #2d3561;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        .results ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .results li {
+            padding: 5px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .results li:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 اختبار أزرار الكاش والصيانة</h1>
+        <p class="subtitle">تأكد من أن جميع الأزرار تعمل بشكل صحيح وتوفر تعليقات مرئية</p>
+        
+        <!-- Test Section 1: Cache Controls -->
+        <div class="test-section">
+            <h2>🚀 اختبار أزرار الكاش</h2>
+            <p style="margin-bottom: 15px; color: #666;">اختبر أزرار مسح الكاش وتحديث Service Worker</p>
+            
+            <div class="button-group">
+                <button id="clearCacheBtn" class="btn btn-danger" onclick="testCacheClear()">
+                    <span id="clearCacheIcon">🚀</span>
+                    <span id="clearCacheText">مسح الكاش والذاكرة</span>
+                </button>
+                
+                <button id="updateSWBtn" class="btn btn-warning" onclick="testUpdateSW()">
+                    <span id="updateSWIcon">🔄</span>
+                    <span id="updateSWText">تحديث Service Worker</span>
+                </button>
+            </div>
+            
+            <div class="status-message" id="cacheStatus"></div>
+            
+            <div class="results">
+                <h3>📊 النتائج:</h3>
+                <ul id="cacheResults">
+                    <li>⏳ انقر على الأزرار أعلاه لبدء الاختبار</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Test Section 2: Status Display -->
+        <div class="test-section">
+            <h2>📺 اختبار عرض الحالة</h2>
+            <p style="margin-bottom: 15px; color: #666;">تأكد من أن الحالة تتغير بشكل صحيح</p>
+            
+            <div style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <span style="font-weight: 600;">حالة رسالة التحديث:</span>
+                    <span id="maintenanceStatusLabel" style="font-size: 1.2em; font-weight: 700;">🔴 متوقفة</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 600;">حالة الموسيقى:</span>
+                    <span id="musicStatusLabel" style="font-size: 1.2em; font-weight: 700;">🔇 متوقفة</span>
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button class="btn btn-success" onclick="toggleStatus('maintenance', true)">
+                    ✅ تفعيل رسالة التحديث
+                </button>
+                <button class="btn btn-danger" onclick="toggleStatus('maintenance', false)">
+                    ❌ إيقاف رسالة التحديث
+                </button>
+            </div>
+            
+            <div class="button-group">
+                <button class="btn btn-success" onclick="toggleStatus('music', true)">
+                    🔊 تفعيل الموسيقى
+                </button>
+                <button class="btn btn-danger" onclick="toggleStatus('music', false)">
+                    🔇 إيقاف الموسيقى
+                </button>
+            </div>
+            
+            <div class="status-message" id="toggleStatus"></div>
+        </div>
+        
+        <!-- Test Section 3: Button Feedback -->
+        <div class="test-section">
+            <h2>💡 اختبار التعليقات المرئية</h2>
+            <p style="margin-bottom: 15px; color: #666;">تأكد من أن الأزرار تعطي تعليقات مرئية عند النقر</p>
+            
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="testButtonFeedback(this)">
+                    <span>✨</span>
+                    <span>اختبر هذا الزر</span>
+                </button>
+            </div>
+            
+            <div class="results">
+                <h3>📝 ملاحظات:</h3>
+                <ul>
+                    <li>✅ يجب أن تتغير أيقونة الزر عند النقر</li>
+                    <li>✅ يجب أن يتم تعطيل الزر أثناء المعالجة</li>
+                    <li>✅ يجب أن تظهر رسالة الحالة</li>
+                    <li>✅ يجب أن يعود الزر إلى حالته الأصلية بعد الانتهاء</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Show status message helper
+        function showMessage(elementId, type, message) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            
+            el.className = `status-message ${type} show`;
+            el.textContent = message;
+            
+            setTimeout(() => {
+                el.classList.remove('show');
+            }, type === 'success' ? 5000 : 10000);
+        }
+        
+        // Test cache clear
+        async function testCacheClear() {
+            const btn = document.getElementById('clearCacheBtn');
+            const icon = document.getElementById('clearCacheIcon');
+            const text = document.getElementById('clearCacheText');
+            const results = document.getElementById('cacheResults');
+            
+            // Disable button
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+            icon.textContent = '⏳';
+            text.textContent = 'جاري المسح...';
+            
+            showMessage('cacheStatus', 'info', '⏳ جاري مسح الكاش والذاكرة...');
+            
+            try {
+                let clearedItems = [];
+                
+                // Clear localStorage (preserve devToken)
+                const keysToKeep = ['devToken'];
+                const allKeys = Object.keys(localStorage);
+                let localStorageCount = 0;
+                allKeys.forEach(key => {
+                    if (!keysToKeep.includes(key)) {
+                        localStorage.removeItem(key);
+                        localStorageCount++;
+                    }
+                });
+                clearedItems.push(`💾 LocalStorage: ${localStorageCount} عنصر`);
+                
+                // Clear sessionStorage
+                const sessionStorageCount = sessionStorage.length;
+                sessionStorage.clear();
+                clearedItems.push(`📦 SessionStorage: ${sessionStorageCount} عنصر`);
+                
+                // Service Workers
+                let swCount = 0;
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    swCount = registrations.length;
+                }
+                clearedItems.push(`🔄 Service Workers: ${swCount} خدمة`);
+                
+                // Caches
+                let cacheCount = 0;
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    cacheCount = cacheNames.length;
+                }
+                clearedItems.push(`🗑️ Caches: ${cacheCount} كاش`);
+                
+                // Update results
+                results.innerHTML = clearedItems.map(item => `<li>✅ ${item}</li>`).join('');
+                
+                // Success state
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                icon.textContent = '✅';
+                text.textContent = 'تم المسح بنجاح!';
+                
+                showMessage('cacheStatus', 'success', '✅ تم مسح جميع الكاش والذاكرة بنجاح!');
+                
+                // Reset button
+                setTimeout(() => {
+                    icon.textContent = '🚀';
+                    text.textContent = 'مسح الكاش والذاكرة';
+                }, 2000);
+                
+            } catch (error) {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                icon.textContent = '❌';
+                text.textContent = 'فشل المسح';
+                
+                showMessage('cacheStatus', 'error', '❌ فشل مسح الكاش: ' + error.message);
+                
+                setTimeout(() => {
+                    icon.textContent = '🚀';
+                    text.textContent = 'مسح الكاش والذاكرة';
+                }, 3000);
+            }
+        }
+        
+        // Test Service Worker update
+        async function testUpdateSW() {
+            const btn = document.getElementById('updateSWBtn');
+            const icon = document.getElementById('updateSWIcon');
+            const text = document.getElementById('updateSWText');
+            
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+            icon.textContent = '⏳';
+            text.textContent = 'جاري التحديث...';
+            
+            showMessage('cacheStatus', 'info', '⏳ جاري تحديث Service Worker...');
+            
+            try {
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    
+                    if (registrations.length === 0) {
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                        icon.textContent = '⚠️';
+                        text.textContent = 'لا توجد Service Workers';
+                        
+                        showMessage('cacheStatus', 'warning', '⚠️ لا توجد Service Workers مسجلة');
+                        
+                        setTimeout(() => {
+                            icon.textContent = '🔄';
+                            text.textContent = 'تحديث Service Worker';
+                        }, 2000);
+                        return;
+                    }
+                    
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    icon.textContent = '✅';
+                    text.textContent = 'تم التحديث!';
+                    
+                    showMessage('cacheStatus', 'success', `✅ تم العثور على ${registrations.length} Service Worker`);
+                    
+                    setTimeout(() => {
+                        icon.textContent = '🔄';
+                        text.textContent = 'تحديث Service Worker';
+                    }, 2000);
+                    
+                } else {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    icon.textContent = '❌';
+                    text.textContent = 'غير مدعوم';
+                    
+                    showMessage('cacheStatus', 'error', '❌ المتصفح لا يدعم Service Workers');
+                    
+                    setTimeout(() => {
+                        icon.textContent = '🔄';
+                        text.textContent = 'تحديث Service Worker';
+                    }, 2000);
+                }
+                
+            } catch (error) {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                icon.textContent = '❌';
+                text.textContent = 'فشل التحديث';
+                
+                showMessage('cacheStatus', 'error', '❌ فشل التحديث: ' + error.message);
+                
+                setTimeout(() => {
+                    icon.textContent = '🔄';
+                    text.textContent = 'تحديث Service Worker';
+                }, 3000);
+            }
+        }
+        
+        // Toggle status display
+        function toggleStatus(type, enable) {
+            if (type === 'maintenance') {
+                const label = document.getElementById('maintenanceStatusLabel');
+                if (enable) {
+                    label.textContent = '🟢 مفعلة';
+                    label.style.color = '#38ef7d';
+                } else {
+                    label.textContent = '🔴 متوقفة';
+                    label.style.color = '#ff6b6b';
+                }
+                showMessage('toggleStatus', 'success', `✅ تم ${enable ? 'تفعيل' : 'إيقاف'} رسالة التحديث`);
+            } else if (type === 'music') {
+                const label = document.getElementById('musicStatusLabel');
+                if (enable) {
+                    label.textContent = '🔊 مفعلة';
+                    label.style.color = '#38ef7d';
+                } else {
+                    label.textContent = '🔇 متوقفة';
+                    label.style.color = '#ff6b6b';
+                }
+                showMessage('toggleStatus', 'success', `✅ تم ${enable ? 'تفعيل' : 'إيقاف'} الموسيقى`);
+            }
+        }
+        
+        // Test button feedback
+        async function testButtonFeedback(btn) {
+            const originalHTML = btn.innerHTML;
+            
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+            btn.innerHTML = '<span>⏳</span><span>جاري المعالجة...</span>';
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.innerHTML = '<span>✅</span><span>تم بنجاح!</span>';
+            
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+            }, 2000);
+        }
+        
+        // Test on load
+        window.onload = function() {
+            console.log('✅ Test page loaded successfully');
+            console.log('🧪 Ready to test cache and maintenance controls');
+        };
+    </script>
+</body>
+</html>

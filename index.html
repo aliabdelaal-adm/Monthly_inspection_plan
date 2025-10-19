@@ -9986,10 +9986,10 @@ function renderPlanTable() {
             const today = new Date().toLocaleDateString('ar-EG');
             if (selectedInspector) {
                 // عند اختيار مفتش: عرض جميع التفتيشات القادمة
-                searchResultsInfo.innerHTML = `<strong>تفتيشات ${selectedInspector} القادمة:</strong> <span id="searchResultsCount">${rows.length}</span> تفتيش`;
+                searchResultsInfo.innerHTML = `<strong>تفتيشات ${selectedInspector} القادمة:</strong> <span id="inspectorUpcomingCount">${rows.length}</span> تفتيش`;
             } else {
                 // بدون اختيار مفتش: عرض تفتيشات اليوم فقط
-                searchResultsInfo.innerHTML = `<strong>تفتيشات اليوم (${today}):</strong> <span id="searchResultsCount">${rows.length}</span> تفتيش`;
+                searchResultsInfo.innerHTML = `<strong>تفتيشات اليوم (${today}):</strong> <span id="todayInspectionsCount">${rows.length}</span> تفتيش`;
             }
         } else {
             searchResultsInfo.style.display = 'none';
@@ -14048,7 +14048,7 @@ function generateInspectorMonthlyReport(data, inspectorName) {
     });
     
     let html = `
-        <table class="stats-table" id="enhancedReportTable">
+        <table class="stats-table" id="enhancedReportTableByDate">
             <thead>
                 <tr>
                     <th>التاريخ</th>
@@ -14126,7 +14126,7 @@ function generateInspectorYearlyReport(data, inspectorName) {
     });
     
     let html = `
-        <table class="stats-table" id="enhancedReportTable">
+        <table class="stats-table" id="enhancedReportTableByMonth">
             <thead>
                 <tr>
                     <th>الشهر</th>
@@ -14203,7 +14203,7 @@ function generateAllInspectorsMonthlyReport(data) {
     });
     
     let html = `
-        <table class="stats-table" id="enhancedReportTable">
+        <table class="stats-table" id="enhancedReportTableByInspector">
             <thead>
                 <tr>
                     <th>المفتش</th>
@@ -14279,7 +14279,7 @@ function generateAllInspectorsYearlyReport(data) {
     const allInspectors = Array.from(new Set(data.map(item => item.inspector))).sort();
     
     let html = `
-        <table class="stats-table" id="enhancedReportTable">
+        <table class="stats-table" id="enhancedReportTableByInspectorMonth">
             <thead>
                 <tr>
                     <th>المفتش</th>
@@ -14498,7 +14498,7 @@ function generateShopAnalyticsReport(data, selectedYear, selectedMonth) {
         </div>
         
         <!-- Detailed Shop Analytics Table -->
-        <table class="stats-table" id="enhancedReportTable">
+        <table class="stats-table" id="enhancedReportTableShopAnalytics">
             <thead>
                 <tr>
                     <th>المحل</th>

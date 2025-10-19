@@ -253,6 +253,11 @@
             background: #d4edda;
         }
         
+        .shop-card.very-high-priority {
+            border-left: 5px solid #8b0000;
+            background: linear-gradient(135deg, #fff5f5 0%, #ffe0e0 100%);
+        }
+        
         .shop-card.high-priority {
             border-left: 5px solid #dc3545;
         }
@@ -273,6 +278,17 @@
             border-radius: 20px;
             font-size: 0.8em;
             font-weight: 600;
+        }
+        
+        .shop-card .priority-badge.very-high {
+            background: #8b0000;
+            color: white;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
         }
         
         .shop-card .priority-badge.high {
@@ -1508,9 +1524,24 @@
                 }
             }
             
+            // Check if we're in the second half of the month (from 15th onwards)
+            // Boost priority for high-priority shops to ensure they're inspected before month end
+            const targetDate = new Date(date);
+            const dayOfMonth = targetDate.getDate();
+            if (dayOfMonth >= 15) {
+                // From the 15th onwards, boost high priority shops to "very high"
+                if (score >= 80) {
+                    score += 50; // Boost very high priority shops even more
+                    reasons.push('أولوية النصف الثاني من الشهر');
+                } else if (score >= 50) {
+                    score += 20; // Moderate boost for medium priority
+                }
+            }
+            
             // Determine priority level
             let level = 'low';
-            if (score >= 80) level = 'high';
+            if (score >= 130) level = 'very-high'; // Very high priority (from 15th onwards)
+            else if (score >= 80) level = 'high';
             else if (score >= 50) level = 'medium';
             
             return { level, score, reason: reasons.join(' - ') };
@@ -1538,8 +1569,9 @@
             document.getElementById('totalShopsCount').textContent = total;
             document.getElementById('availableShopsCount').textContent = available;
             
+            const veryHighPriority = sortedShops.filter(s => s.priority === 'very-high').length;
             const highPriority = sortedShops.filter(s => s.priority === 'high').length;
-            document.getElementById('highPriorityCount').textContent = highPriority;
+            document.getElementById('highPriorityCount').textContent = veryHighPriority + highPriority;
             
             document.getElementById('selectedShopsCount').textContent = selectedShops.length;
         }
@@ -1579,7 +1611,8 @@
                 // Priority badge
                 const priorityBadge = document.createElement('div');
                 priorityBadge.className = `priority-badge ${shop.priority}`;
-                priorityBadge.textContent = shop.priority === 'high' ? 'أولوية عالية' : 
+                priorityBadge.textContent = shop.priority === 'very-high' ? 'أولوية عالية جداً' :
+                                            shop.priority === 'high' ? 'أولوية عالية' : 
                                             shop.priority === 'medium' ? 'أولوية متوسطة' : 'أولوية منخفضة';
                 
                 // Shop name

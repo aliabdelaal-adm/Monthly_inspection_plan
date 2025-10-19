@@ -1878,9 +1878,20 @@
                 shopName.className = 'shop-name';
                 shopName.textContent = shop.name;
                 
+                // Shop info - score
+                const shopScore = document.createElement('div');
+                shopScore.className = 'shop-info';
+                shopScore.textContent = '📊 النقاط: ' + shop.score;
+                
+                // Shop info - reason
+                const shopReason = document.createElement('div');
+                shopReason.className = 'shop-info';
+                shopReason.textContent = '📝 ' + shop.reason;
+                
                 // Warning for high-priority unavailable shops
+                let warningDiv = null;
                 if (isHighPriorityUnavailable) {
-                    const warningDiv = document.createElement('div');
+                    warningDiv = document.createElement('div');
                     warningDiv.style.cssText = 'background: #fff3cd; color: #856404; padding: 8px; border-radius: 5px; font-size: 0.85em; margin-top: 8px;';
                     
                     // Check why it's unavailable
@@ -1892,19 +1903,7 @@
                     } else if (recentlyInspected) {
                         warningDiv.textContent = '⚠️ تم التفتيش: آخر 7 أيام';
                     }
-                    
-                    shopCard.appendChild(warningDiv);
                 }
-                
-                // Shop info - score
-                const shopScore = document.createElement('div');
-                shopScore.className = 'shop-info';
-                shopScore.textContent = '📊 النقاط: ' + shop.score;
-                
-                // Shop info - reason
-                const shopReason = document.createElement('div');
-                shopReason.className = 'shop-info';
-                shopReason.textContent = '📝 ' + shop.reason;
                 
                 // Last inspection
                 const lastInspectionDiv = document.createElement('div');
@@ -1916,6 +1915,9 @@
                 shopCard.appendChild(shopName);
                 shopCard.appendChild(shopScore);
                 shopCard.appendChild(shopReason);
+                if (warningDiv) {
+                    shopCard.appendChild(warningDiv);
+                }
                 shopCard.appendChild(lastInspectionDiv);
                 
                 shopsListDiv.appendChild(shopCard);

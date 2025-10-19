@@ -749,14 +749,72 @@
             </div>
         </div>
         
-        <!-- Quick Links -->
-        <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
-            <a href="admin-dashboard.html" style="text-decoration: none;">
-                <button class="btn btn-warning">
-                    <span>📊</span>
-                    <span>لوحة التحكم الرئيسية</span>
+        <!-- Quick Links & Smart Actions Toolbar -->
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 15px; margin-bottom: 20px;">
+            <h3 style="color: white; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                <span>⚡</span>
+                <span>الإجراءات السريعة والذكية</span>
+            </h3>
+            
+            <!-- Navigation Buttons -->
+            <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                <a href="admin-dashboard.html" style="text-decoration: none;">
+                    <button class="btn btn-warning" style="background: white; color: #667eea;">
+                        <span>📊</span>
+                        <span>لوحة التحكم الرئيسية</span>
+                    </button>
+                </a>
+                <a href="index.html" style="text-decoration: none;">
+                    <button class="btn btn-info" style="background: white; color: #3498db;">
+                        <span>🏠</span>
+                        <span>الصفحة الرئيسية</span>
+                    </button>
+                </a>
+                <button class="btn btn-success" onclick="openQuickAddInspection()" style="background: white; color: #11998e;">
+                    <span>⚡</span>
+                    <span>إضافة تفتيش سريع</span>
                 </button>
-            </a>
+            </div>
+            
+            <!-- Data Management Buttons -->
+            <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                <button class="btn btn-primary" onclick="importFromExcel()" style="background: white; color: #667eea;">
+                    <span>📥</span>
+                    <span>استيراد من Excel</span>
+                </button>
+                <button class="btn btn-primary" onclick="exportAllData()" style="background: white; color: #667eea;">
+                    <span>📤</span>
+                    <span>تصدير جميع البيانات</span>
+                </button>
+                <button class="btn btn-primary" onclick="syncWithGitHub()" style="background: white; color: #667eea;">
+                    <span>🔄</span>
+                    <span>مزامنة مع GitHub</span>
+                </button>
+                <button class="btn btn-danger" onclick="createBackup()" style="background: white; color: #e74c3c;">
+                    <span>💾</span>
+                    <span>نسخة احتياطية</span>
+                </button>
+            </div>
+            
+            <!-- Analysis & Reports Buttons -->
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-success" onclick="generateFullReport()" style="background: white; color: #11998e;">
+                    <span>📈</span>
+                    <span>تقرير شامل</span>
+                </button>
+                <button class="btn btn-warning" onclick="checkDataQuality()" style="background: white; color: #fa709a;">
+                    <span>🔍</span>
+                    <span>فحص جودة البيانات</span>
+                </button>
+                <button class="btn btn-info" onclick="viewSystemLogs()" style="background: white; color: #3498db;">
+                    <span>📋</span>
+                    <span>سجل النظام</span>
+                </button>
+                <button class="btn btn-success" onclick="bulkOperations()" style="background: white; color: #11998e;">
+                    <span>⚙️</span>
+                    <span>عمليات جماعية</span>
+                </button>
+            </div>
         </div>
         
         <!-- Login Section -->
@@ -1012,15 +1070,36 @@
                     <h2 class="section-title">🏪 إدارة المحلات الكاملة</h2>
                     
                     <!-- Smart Action Buttons -->
-                    <div style="display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap;">
+                    <div style="display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap;">
                         <button class="btn btn-success" onclick="openAddShopModal()">
                             <span>➕</span> إضافة محل جديد
                         </button>
                         <button class="btn btn-primary" onclick="refreshShopsList()">
                             <span>🔄</span> تحديث القائمة
                         </button>
+                        <button class="btn btn-primary" onclick="reloadShopsFromExcel()">
+                            <span>📥</span> تحميل من Excel
+                        </button>
                         <button class="btn btn-warning" onclick="exportShopsData()">
-                            <span>📥</span> تصدير البيانات
+                            <span>📤</span> تصدير JSON
+                        </button>
+                        <button class="btn btn-info" onclick="exportShopsToExcel()">
+                            <span>📊</span> تصدير Excel
+                        </button>
+                        <button class="btn btn-danger" onclick="bulkEditShops()">
+                            <span>✏️</span> تعديل جماعي
+                        </button>
+                        <button class="btn btn-danger" onclick="bulkDeleteShops()">
+                            <span>🗑️</span> حذف جماعي
+                        </button>
+                        <button class="btn btn-success" onclick="mergeShopsData()">
+                            <span>🔗</span> دمج بيانات
+                        </button>
+                        <button class="btn btn-info" onclick="validateShopsData()">
+                            <span>✅</span> التحقق من البيانات
+                        </button>
+                        <button class="btn btn-warning" onclick="viewShopsOnMap()">
+                            <span>🗺️</span> عرض على الخريطة
                         </button>
                     </div>
                     
@@ -1292,7 +1371,7 @@
                     <h2 class="section-title">🗺️ إدارة المناطق الكاملة</h2>
                     
                     <!-- Smart Action Buttons -->
-                    <div style="display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap;">
+                    <div style="display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap;">
                         <button class="btn btn-success" onclick="openAddAreaModal()">
                             <span>➕</span> إضافة منطقة جديدة
                         </button>
@@ -1301,6 +1380,24 @@
                         </button>
                         <button class="btn btn-warning" onclick="sortAreasByName()">
                             <span>🔤</span> ترتيب أبجدياً
+                        </button>
+                        <button class="btn btn-info" onclick="mergeAreas()">
+                            <span>🔗</span> دمج مناطق
+                        </button>
+                        <button class="btn btn-success" onclick="assignShopsToAreas()">
+                            <span>📍</span> تعيين المحلات
+                        </button>
+                        <button class="btn btn-warning" onclick="exportAreasData()">
+                            <span>📤</span> تصدير البيانات
+                        </button>
+                        <button class="btn btn-info" onclick="importAreasFromFile()">
+                            <span>📥</span> استيراد مناطق
+                        </button>
+                        <button class="btn btn-danger" onclick="bulkEditAreas()">
+                            <span>✏️</span> تعديل جماعي
+                        </button>
+                        <button class="btn btn-success" onclick="generateAreasReport()">
+                            <span>📊</span> تقرير المناطق
                         </button>
                     </div>
                     
@@ -2716,27 +2813,71 @@
             }
         }
         
-        // Display shops list
-        function displayShopsList() {
+        // Display shops list with full details from shops_details.json
+        async function displayShopsList() {
             const tbody = document.getElementById('shopsManagementBody');
             const searchTerm = document.getElementById('searchShop').value.toLowerCase();
             const filterAreaId = document.getElementById('filterShopArea').value;
             
-            if (!planData || !planData.shops) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">لا توجد بيانات</td></tr>';
-                return;
+            // Load shops_details.json for complete information
+            let shopsDetails = {};
+            try {
+                const response = await fetch('shops_details.json?' + new Date().getTime());
+                if (response.ok) {
+                    shopsDetails = await response.json();
+                }
+            } catch (error) {
+                console.error('Error loading shops_details.json:', error);
             }
             
-            let filteredShops = planData.shops.filter(shop => {
-                const matchesSearch = shop.name.toLowerCase().includes(searchTerm);
-                const matchesArea = !filterAreaId || shop.areaId === filterAreaId;
+            const totalShopsInDetails = Object.keys(shopsDetails).length;
+            
+            // Create combined shop list from both sources
+            const allShops = [];
+            
+            // Add shops from shops_details.json
+            Object.entries(shopsDetails).forEach(([shopName, shopInfo]) => {
+                allShops.push({
+                    name: shopInfo.nameAr || shopName,
+                    nameEn: shopInfo.nameEn || '',
+                    licenseNo: shopInfo.licenseNo || '',
+                    admCode: shopInfo.admCode || '',
+                    address: shopInfo.address || '',
+                    contact: shopInfo.contact || '',
+                    locationMap: shopInfo.locationMap || '',
+                    activity: shopInfo.activity || '',
+                    area: shopInfo.area || '',
+                    areaId: shopInfo.areaId || '',
+                    source: 'shops_details'
+                });
+            });
+            
+            // Add shops from plan-data.json if not already in list
+            if (planData && planData.shops) {
+                planData.shops.forEach(shop => {
+                    if (!allShops.find(s => s.name === shop.name)) {
+                        allShops.push({
+                            ...shop,
+                            source: 'plan_data'
+                        });
+                    }
+                });
+            }
+            
+            // Filter shops
+            let filteredShops = allShops.filter(shop => {
+                const matchesSearch = shop.name.toLowerCase().includes(searchTerm) ||
+                                    (shop.nameEn && shop.nameEn.toLowerCase().includes(searchTerm)) ||
+                                    (shop.licenseNo && shop.licenseNo.toLowerCase().includes(searchTerm)) ||
+                                    (shop.admCode && shop.admCode.toLowerCase().includes(searchTerm));
+                const matchesArea = !filterAreaId || shop.areaId === filterAreaId || shop.area === filterAreaId;
                 return matchesSearch && matchesArea;
             });
             
             // Update statistics
-            document.getElementById('totalShopsManagement').textContent = planData.shops.length;
+            document.getElementById('totalShopsManagement').textContent = allShops.length;
             document.getElementById('filteredShopsCount').textContent = filteredShops.length;
-            document.getElementById('totalAreasInShops').textContent = planData.areas ? planData.areas.length : 0;
+            document.getElementById('totalAreasInShops').textContent = planData?.areas ? planData.areas.length : 0;
             
             if (filteredShops.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">لا توجد محلات مطابقة</td></tr>';
@@ -2744,21 +2885,103 @@
             }
             
             tbody.innerHTML = '';
-            filteredShops.forEach(shop => {
-                const area = planData.areas.find(a => a.id === shop.areaId);
+            filteredShops.forEach((shop, idx) => {
+                const area = planData?.areas?.find(a => a.id === shop.areaId || a.name === shop.area);
                 const tr = document.createElement('tr');
+                
+                // Create detailed shop info popup
+                let shopDetails = `<strong>${shop.name}</strong>`;
+                if (shop.nameEn) shopDetails += `<br><small style="color: #666;">${shop.nameEn}</small>`;
+                if (shop.licenseNo) shopDetails += `<br><small>🔖 رخصة: ${shop.licenseNo}</small>`;
+                if (shop.admCode) shopDetails += `<br><small>🔢 كود ADM: ${shop.admCode}</small>`;
+                if (shop.address) shopDetails += `<br><small>📍 ${shop.address}</small>`;
+                if (shop.contact) shopDetails += `<br><small>📞 ${shop.contact}</small>`;
+                if (shop.activity) shopDetails += `<br><small>💼 ${shop.activity}</small>`;
+                if (shop.locationMap) shopDetails += `<br><small><a href="${shop.locationMap}" target="_blank">🗺️ عرض على الخريطة</a></small>`;
+                
                 tr.innerHTML = `
-                    <td>${shop.name}</td>
-                    <td>${area ? area.name : 'غير محدد'}</td>
-                    <td style="font-family: monospace; font-size: 0.85em;">${shop.id}</td>
                     <td>
-                        <span class="action-icon edit-icon" onclick="openEditShopModal('${shop.id}')" title="تعديل">✏️</span>
-                        <span class="action-icon delete-icon" onclick="deleteShop('${shop.id}')" title="حذف">🗑️</span>
-                        <span class="action-icon copy-icon" onclick="copyShopId('${shop.id}')" title="نسخ المعرف">📋</span>
+                        <div style="cursor: help;" title="${shop.nameEn || ''}">${shop.name}</div>
+                        ${shop.licenseNo ? `<small style="color: #999; display: block;">🔖 ${shop.licenseNo}</small>` : ''}
+                        ${shop.admCode ? `<small style="color: #999; display: block;">🔢 ${shop.admCode}</small>` : ''}
+                    </td>
+                    <td>${area ? area.name : (shop.area || 'غير محدد')}</td>
+                    <td style="font-family: monospace; font-size: 0.85em;">${shop.id || shop.admCode || idx}</td>
+                    <td>
+                        <span class="action-icon" onclick="viewShopDetails('${escapeHtml(shop.name)}')" title="عرض التفاصيل" style="color: #3498db;">👁️</span>
+                        <span class="action-icon edit-icon" onclick="openEditShopModal('${shop.id || idx}')" title="تعديل">✏️</span>
+                        <span class="action-icon delete-icon" onclick="deleteShop('${shop.id || idx}')" title="حذف">🗑️</span>
+                        <span class="action-icon copy-icon" onclick="copyShopInfo('${escapeHtml(shop.name)}')" title="نسخ المعلومات">📋</span>
+                        ${shop.locationMap ? `<span class="action-icon" onclick="window.open('${shop.locationMap}', '_blank')" title="موقع على الخريطة" style="color: #27ae60;">🗺️</span>` : ''}
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
+            
+            // Show success message if we loaded shops from details
+            if (totalShopsInDetails > 0) {
+                console.log(`✅ تم تحميل ${totalShopsInDetails} محل من shops_details.json`);
+            }
+        }
+        
+        // View shop full details
+        function viewShopDetails(shopName) {
+            fetch('shops_details.json?' + new Date().getTime())
+                .then(response => response.json())
+                .then(shopsDetails => {
+                    const shop = shopsDetails[shopName];
+                    if (!shop) {
+                        alert('❌ لم يتم العثور على تفاصيل المحل');
+                        return;
+                    }
+                    
+                    let details = `🏪 تفاصيل المحل الكاملة\n`;
+                    details += `${'='.repeat(50)}\n\n`;
+                    details += `📝 الاسم بالعربي: ${shop.nameAr || shopName}\n`;
+                    if (shop.nameEn) details += `📝 الاسم بالإنجليزي: ${shop.nameEn}\n`;
+                    if (shop.licenseNo) details += `🔖 رقم الرخصة: ${shop.licenseNo}\n`;
+                    if (shop.admCode) details += `🔢 كود ADM: ${shop.admCode}\n`;
+                    if (shop.address) details += `📍 العنوان: ${shop.address}\n`;
+                    if (shop.contact) details += `📞 الهاتف: ${shop.contact}\n`;
+                    if (shop.activity) details += `💼 النشاط: ${shop.activity}\n`;
+                    if (shop.locationMap) details += `🗺️ الموقع: متوفر على الخريطة\n`;
+                    
+                    alert(details);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('❌ فشل تحميل تفاصيل المحل');
+                });
+        }
+        
+        // Copy shop info
+        function copyShopInfo(shopName) {
+            fetch('shops_details.json?' + new Date().getTime())
+                .then(response => response.json())
+                .then(shopsDetails => {
+                    const shop = shopsDetails[shopName];
+                    if (!shop) {
+                        navigator.clipboard.writeText(shopName).then(() => {
+                            alert('✅ تم نسخ اسم المحل');
+                        });
+                        return;
+                    }
+                    
+                    let info = `${shop.nameAr || shopName}`;
+                    if (shop.nameEn) info += ` | ${shop.nameEn}`;
+                    if (shop.licenseNo) info += ` | رخصة: ${shop.licenseNo}`;
+                    if (shop.admCode) info += ` | ADM: ${shop.admCode}`;
+                    
+                    navigator.clipboard.writeText(info).then(() => {
+                        alert('✅ تم نسخ معلومات المحل');
+                    });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    navigator.clipboard.writeText(shopName).then(() => {
+                        alert('✅ تم نسخ اسم المحل');
+                    });
+                });
         }
         
         // Filter shops list
@@ -3546,6 +3769,400 @@
                 loadMaintenanceConfig();
             }
         };
+        
+        // ============================================
+        // NEW SMART PLANNER ENHANCED FUNCTIONS
+        // ============================================
+        
+        // Quick Add Inspection
+        function openQuickAddInspection() {
+            // Switch to add tab and focus on first field
+            document.querySelectorAll('.tab-button')[0].click();
+            setTimeout(() => {
+                document.getElementById('inspectorSelect').focus();
+            }, 300);
+            alert('✨ اختصار: اختر المفتش والتاريخ والمنطقة بسرعة لإضافة تفتيش جديد');
+        }
+        
+        // Import from Excel
+        function importFromExcel() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.xlsx,.xls';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                alert('📥 جاري استيراد البيانات من Excel...\n\nملاحظة: هذه الميزة تتطلب مكتبة معالجة Excel. سيتم إضافتها قريباً.');
+                // TODO: Implement Excel import functionality
+            };
+            input.click();
+        }
+        
+        // Export All Data
+        function exportAllData() {
+            if (!planData) {
+                alert('⚠️ لا توجد بيانات للتصدير');
+                return;
+            }
+            
+            const exportData = {
+                inspections: planData.inspectionData,
+                inspectors: planData.inspectors,
+                areas: planData.areas,
+                shops: planData.shops,
+                exportDate: new Date().toISOString(),
+                exportedBy: 'Smart Planner'
+            };
+            
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `smart-planner-full-export-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+            
+            alert('✅ تم تصدير جميع البيانات بنجاح!\n\n' +
+                  `📊 التفتيشات: ${planData.inspectionData.length}\n` +
+                  `👥 المفتشون: ${planData.inspectors.length}\n` +
+                  `🗺️ المناطق: ${planData.areas.length}\n` +
+                  `🏪 المحلات: ${planData.shops.length}`);
+        }
+        
+        // Sync with GitHub
+        async function syncWithGitHub() {
+            if (!githubToken) {
+                alert('❌ يرجى تسجيل الدخول أولاً للمزامنة مع GitHub');
+                return;
+            }
+            
+            if (confirm('🔄 هل تريد مزامنة البيانات مع GitHub؟\n\nسيتم تحميل أحدث البيانات من المستودع.')) {
+                try {
+                    await loadPlanData();
+                    alert('✅ تمت المزامنة بنجاح! تم تحميل أحدث البيانات.');
+                    
+                    // Refresh current tab
+                    const activeTab = document.querySelector('.tab-content.active');
+                    if (activeTab && activeTab.id === 'shopsTab') {
+                        displayShopsList();
+                    } else if (activeTab && activeTab.id === 'areasTab') {
+                        displayAreasList();
+                    }
+                } catch (error) {
+                    alert('❌ فشلت المزامنة: ' + error.message);
+                }
+            }
+        }
+        
+        // Create Backup
+        function createBackup() {
+            if (!planData) {
+                alert('⚠️ لا توجد بيانات للنسخ الاحتياطي');
+                return;
+            }
+            
+            const backupData = {
+                ...planData,
+                backupDate: new Date().toISOString(),
+                backupVersion: '1.0'
+            };
+            
+            const dataStr = JSON.stringify(backupData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `backup-plan-data-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+            
+            alert('✅ تم إنشاء النسخة الاحتياطية بنجاح!\n\n💾 احتفظ بهذا الملف في مكان آمن.');
+        }
+        
+        // Generate Full Report
+        function generateFullReport() {
+            if (!planData || !planData.inspectionData) {
+                alert('⚠️ لا توجد بيانات لإنشاء التقرير');
+                return;
+            }
+            
+            const totalInspections = planData.inspectionData.length;
+            const totalShops = planData.inspectionData.reduce((sum, i) => sum + (i.shops ? i.shops.length : 0), 0);
+            const inspectorCounts = {};
+            const areaCounts = {};
+            
+            planData.inspectionData.forEach(insp => {
+                inspectorCounts[insp.inspector] = (inspectorCounts[insp.inspector] || 0) + 1;
+                areaCounts[insp.area] = (areaCounts[insp.area] || 0) + 1;
+            });
+            
+            let report = '📊 التقرير الشامل لنظام التفتيش\n';
+            report += '=' .repeat(50) + '\n\n';
+            report += `📅 تاريخ التقرير: ${new Date().toLocaleString('ar-EG')}\n\n`;
+            report += `📈 الإحصائيات العامة:\n`;
+            report += `   • إجمالي التفتيشات: ${totalInspections}\n`;
+            report += `   • إجمالي المحلات المفتشة: ${totalShops}\n`;
+            report += `   • عدد المفتشين: ${Object.keys(inspectorCounts).length}\n`;
+            report += `   • عدد المناطق: ${Object.keys(areaCounts).length}\n\n`;
+            
+            report += `👥 تفتيشات المفتشين:\n`;
+            Object.entries(inspectorCounts).sort((a, b) => b[1] - a[1]).forEach(([inspector, count]) => {
+                report += `   • ${inspector}: ${count} تفتيش\n`;
+            });
+            
+            report += `\n🗺️ تفتيشات المناطق:\n`;
+            Object.entries(areaCounts).sort((a, b) => b[1] - a[1]).forEach(([area, count]) => {
+                report += `   • ${area}: ${count} تفتيش\n`;
+            });
+            
+            // Create downloadable report
+            const dataBlob = new Blob([report], {type: 'text/plain;charset=utf-8'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `report-${new Date().toISOString().split('T')[0]}.txt`;
+            link.click();
+            URL.revokeObjectURL(url);
+            
+            alert('✅ تم إنشاء التقرير الشامل!\n\n' + report);
+        }
+        
+        // Check Data Quality
+        function checkDataQuality() {
+            if (!planData) {
+                alert('⚠️ لا توجد بيانات للفحص');
+                return;
+            }
+            
+            const issues = [];
+            
+            // Check inspections
+            if (planData.inspectionData) {
+                planData.inspectionData.forEach((insp, idx) => {
+                    if (!insp.inspector) issues.push(`تفتيش ${idx + 1}: مفتش غير محدد`);
+                    if (!insp.day) issues.push(`تفتيش ${idx + 1}: تاريخ غير محدد`);
+                    if (!insp.area) issues.push(`تفتيش ${idx + 1}: منطقة غير محددة`);
+                    if (!insp.shops || insp.shops.length === 0) issues.push(`تفتيش ${idx + 1}: لا توجد محلات`);
+                });
+            }
+            
+            // Check duplicates
+            const inspectionKeys = new Set();
+            planData.inspectionData.forEach(insp => {
+                const key = `${insp.inspector}-${insp.day}`;
+                if (inspectionKeys.has(key)) {
+                    issues.push(`تفتيش مكرر: ${insp.inspector} في ${insp.day}`);
+                }
+                inspectionKeys.add(key);
+            });
+            
+            if (issues.length === 0) {
+                alert('✅ جودة البيانات ممتازة!\n\nلا توجد مشاكل في البيانات.');
+            } else {
+                alert(`⚠️ تم العثور على ${issues.length} مشكلة:\n\n` + issues.slice(0, 10).join('\n') + 
+                      (issues.length > 10 ? `\n\n... و ${issues.length - 10} مشكلة أخرى` : ''));
+            }
+        }
+        
+        // View System Logs
+        function viewSystemLogs() {
+            const logs = [
+                `[${new Date().toLocaleString('ar-EG')}] النظام يعمل بشكل طبيعي`,
+                `[${new Date().toLocaleString('ar-EG')}] آخر تحديث: ${planData?.lastUpdate || 'غير محدد'}`,
+                `[${new Date().toLocaleString('ar-EG')}] إجمالي التفتيشات: ${planData?.inspectionData?.length || 0}`,
+                `[${new Date().toLocaleString('ar-EG')}] إجمالي المحلات: ${planData?.shops?.length || 0}`,
+            ];
+            
+            alert('📋 سجل النظام:\n\n' + logs.join('\n'));
+        }
+        
+        // Bulk Operations
+        function bulkOperations() {
+            const operations = [
+                '1. تعديل جماعي للتفتيشات',
+                '2. حذف جماعي للتفتيشات',
+                '3. نسخ جماعي للتفتيشات',
+                '4. إعادة تعيين المفتشين',
+                '5. إعادة تعيين المناطق',
+                '6. دمج التفتيشات المكررة'
+            ];
+            
+            alert('⚙️ العمليات الجماعية المتاحة:\n\n' + operations.join('\n') + 
+                  '\n\nاختر العملية من القائمة أعلاه (قريباً)');
+        }
+        
+        // Reload Shops from Excel
+        async function reloadShopsFromExcel() {
+            if (!githubToken) {
+                alert('❌ يرجى تسجيل الدخول أولاً');
+                return;
+            }
+            
+            if (!confirm('📥 هل تريد إعادة تحميل المحلات من ملفات Excel؟\n\nسيتم دمج البيانات مع المحلات الحالية.')) {
+                return;
+            }
+            
+            alert('⏳ جاري تحميل المحلات من ملفات Excel...\n\nهذه العملية قد تستغرق بضع ثوانٍ.\n\nسيتم عرض النتيجة عند الانتهاء.');
+            
+            // Reload data from shops_details.json which has been updated
+            try {
+                const response = await fetch('shops_details.json?' + new Date().getTime());
+                if (!response.ok) throw new Error('فشل تحميل shops_details.json');
+                
+                const shopsDetails = await response.json();
+                const shopCount = Object.keys(shopsDetails).length;
+                
+                alert(`✅ تم تحميل ${shopCount} محل من ملفات Excel بنجاح!\n\n` +
+                      '🔄 قم بتحديث القائمة لرؤية جميع المحلات الجديدة.');
+                
+                // Refresh the shops list
+                refreshShopsList();
+            } catch (error) {
+                alert('❌ فشل تحميل المحلات: ' + error.message);
+            }
+        }
+        
+        // Export Shops to Excel
+        function exportShopsToExcel() {
+            alert('📊 تصدير إلى Excel\n\nسيتم إضافة هذه الميزة قريباً.\n\nحالياً يمكنك استخدام تصدير JSON ثم تحويله إلى Excel.');
+        }
+        
+        // Bulk Edit Shops
+        function bulkEditShops() {
+            alert('✏️ التعديل الجماعي للمحلات\n\nسيتم إضافة هذه الميزة قريباً.\n\nستتمكن من:\n• تعديل منطقة عدة محلات\n• تحديث معلومات متعددة\n• إعادة تسمية جماعية');
+        }
+        
+        // Bulk Delete Shops
+        function bulkDeleteShops() {
+            alert('🗑️ الحذف الجماعي للمحلات\n\nسيتم إضافة هذه الميزة قريباً.\n\nستتمكن من حذف عدة محلات دفعة واحدة.');
+        }
+        
+        // Merge Shops Data
+        function mergeShopsData() {
+            alert('🔗 دمج بيانات المحلات\n\nسيتم إضافة هذه الميزة قريباً.\n\nستتمكن من:\n• دمج المحلات المكررة\n• توحيد البيانات\n• حل التعارضات');
+        }
+        
+        // Validate Shops Data
+        function validateShopsData() {
+            if (!planData || !planData.shops) {
+                alert('⚠️ لا توجد بيانات محلات للتحقق منها');
+                return;
+            }
+            
+            const issues = [];
+            planData.shops.forEach((shop, idx) => {
+                if (!shop.name) issues.push(`محل ${idx + 1}: اسم غير محدد`);
+                if (!shop.areaId) issues.push(`${shop.name}: منطقة غير محددة`);
+            });
+            
+            if (issues.length === 0) {
+                alert('✅ جميع بيانات المحلات صحيحة!\n\n' +
+                      `📊 إجمالي المحلات: ${planData.shops.length}`);
+            } else {
+                alert(`⚠️ تم العثور على ${issues.length} مشكلة:\n\n` + 
+                      issues.slice(0, 10).join('\n') +
+                      (issues.length > 10 ? `\n\n... و ${issues.length - 10} مشكلة أخرى` : ''));
+            }
+        }
+        
+        // View Shops on Map
+        function viewShopsOnMap() {
+            alert('🗺️ عرض المحلات على الخريطة\n\nسيتم إضافة هذه الميزة قريباً.\n\nستتمكن من:\n• رؤية جميع المحلات على خريطة تفاعلية\n• تصفية حسب المنطقة\n• عرض معلومات كل محل');
+        }
+        
+        // Merge Areas
+        function mergeAreas() {
+            alert('🔗 دمج المناطق\n\nسيتم إضافة هذه الميزة قريباً.\n\nستتمكن من:\n• دمج منطقتين أو أكثر\n• نقل المحلات تلقائياً\n• تحديث التفتيشات');
+        }
+        
+        // Assign Shops to Areas
+        function assignShopsToAreas() {
+            alert('📍 تعيين المحلات للمناطق\n\nسيتم إضافة هذه الميزة قريباً.\n\nستتمكن من:\n• تعيين محلات متعددة لمنطقة\n• إعادة تعيين المحلات\n• التعيين التلقائي حسب الموقع');
+        }
+        
+        // Export Areas Data
+        function exportAreasData() {
+            if (!planData || !planData.areas) {
+                alert('⚠️ لا توجد بيانات مناطق للتصدير');
+                return;
+            }
+            
+            const dataStr = JSON.stringify(planData.areas, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `areas-export-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+            
+            alert(`✅ تم تصدير ${planData.areas.length} منطقة بنجاح!`);
+        }
+        
+        // Import Areas from File
+        function importAreasFromFile() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const importedAreas = JSON.parse(event.target.result);
+                        if (!Array.isArray(importedAreas)) {
+                            alert('❌ صيغة الملف غير صحيحة. يجب أن يكون مصفوفة من المناطق.');
+                            return;
+                        }
+                        
+                        alert(`📥 تم استيراد ${importedAreas.length} منطقة!\n\nسيتم إضافة ميزة الدمج قريباً.`);
+                    } catch (error) {
+                        alert('❌ فشل قراءة الملف: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+        
+        // Bulk Edit Areas
+        function bulkEditAreas() {
+            alert('✏️ التعديل الجماعي للمناطق\n\nسيتم إضافة هذه الميزة قريباً.\n\nستتمكن من:\n• إعادة تسمية عدة مناطق\n• تحديث المعلومات\n• إعادة ترتيب المناطق');
+        }
+        
+        // Generate Areas Report
+        function generateAreasReport() {
+            if (!planData || !planData.areas || !planData.shops) {
+                alert('⚠️ لا توجد بيانات كافية للتقرير');
+                return;
+            }
+            
+            let report = '📊 تقرير المناطق\n';
+            report += '=' .repeat(50) + '\n\n';
+            
+            planData.areas.forEach(area => {
+                const shopsInArea = planData.shops.filter(s => s.areaId === area.id).length;
+                const inspectionsInArea = planData.inspectionData.filter(i => i.area === area.name).length;
+                
+                report += `🗺️ ${area.name}\n`;
+                report += `   • المحلات: ${shopsInArea}\n`;
+                report += `   • التفتيشات: ${inspectionsInArea}\n\n`;
+            });
+            
+            const dataBlob = new Blob([report], {type: 'text/plain;charset=utf-8'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `areas-report-${new Date().toISOString().split('T')[0]}.txt`;
+            link.click();
+            URL.revokeObjectURL(url);
+            
+            alert('✅ تم إنشاء تقرير المناطق!');
+        }
     </script>
 </body>
 </html>

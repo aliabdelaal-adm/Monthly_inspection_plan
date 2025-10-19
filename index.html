@@ -583,6 +583,121 @@
             color: #1565c0;
             text-align: center;
         }
+        
+        /* Smart Notification Bubble */
+        .notification-bubble {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 50px;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.5);
+            cursor: pointer;
+            z-index: 9999;
+            display: none;
+            animation: bubbleSlideIn 0.5s ease-out, bubblePulse 2s ease-in-out infinite 0.5s;
+            transition: all 0.3s ease;
+            font-weight: 700;
+            font-size: 1.1em;
+            user-select: none;
+        }
+        
+        .notification-bubble.show {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .notification-bubble:hover {
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 12px 30px rgba(255, 107, 107, 0.7);
+        }
+        
+        .notification-bubble:active {
+            transform: scale(0.98);
+        }
+        
+        .notification-bubble-icon {
+            font-size: 1.3em;
+            animation: bellShake 0.8s ease-in-out infinite;
+        }
+        
+        .notification-bubble-badge {
+            background: white;
+            color: #ff6b6b;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9em;
+            font-weight: 900;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        @keyframes bubbleSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes bubblePulse {
+            0%, 100% {
+                box-shadow: 0 8px 25px rgba(255, 107, 107, 0.5);
+            }
+            50% {
+                box-shadow: 0 8px 35px rgba(255, 107, 107, 0.8),
+                            0 0 20px rgba(255, 107, 107, 0.6);
+            }
+        }
+        
+        @keyframes bellShake {
+            0%, 100% { transform: rotate(0deg); }
+            10% { transform: rotate(-15deg); }
+            20% { transform: rotate(15deg); }
+            30% { transform: rotate(-10deg); }
+            40% { transform: rotate(10deg); }
+            50% { transform: rotate(-5deg); }
+            60% { transform: rotate(5deg); }
+            70% { transform: rotate(0deg); }
+        }
+        
+        /* Responsive design for notification bubble */
+        @media (max-width: 768px) {
+            .notification-bubble {
+                top: 60px;
+                right: 15px;
+                padding: 12px 20px;
+                font-size: 1em;
+            }
+            
+            .notification-bubble-badge {
+                width: 24px;
+                height: 24px;
+                font-size: 0.85em;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .notification-bubble {
+                top: 50px;
+                right: 10px;
+                padding: 10px 18px;
+                font-size: 0.95em;
+            }
+            
+            .notification-bubble-icon {
+                font-size: 1.1em;
+            }
+        }
         .horizontal-line {
             width: 100%;
             border: none;
@@ -3608,6 +3723,13 @@
     </div>
 </div>
 
+<!-- Smart Notification Bubble -->
+<div class="notification-bubble" id="notificationBubble">
+    <span class="notification-bubble-icon">🔔</span>
+    <span>إشعار هام</span>
+    <span class="notification-bubble-badge" id="notificationBubbleBadge">0</span>
+</div>
+
 <div class="main-container">
     <div class="header-top-bar">
         <div class="bell-container">
@@ -6212,6 +6334,89 @@ function updateNewsTicker() {
     // Duplicate content for seamless continuous scrolling
     newsTickerText.innerHTML = tickerContent + '<span class="news-ticker-separator">⦿</span>' + tickerContent;
     newsTickerContainer.classList.add('show');
+    
+    // Update notification bubble
+    updateNotificationBubble();
+}
+
+function restartTickerAnimation() {
+    const newsTickerText = document.getElementById('newsTickerText');
+    if (newsTickerText) {
+        // Reset animation by removing and re-adding the class
+        newsTickerText.style.animation = 'none';
+        newsTickerText.offsetHeight; // Trigger reflow
+        newsTickerText.style.animation = null;
+    }
+}
+
+// Smart Notification Bubble Functions
+function updateNotificationBubble() {
+    const bubble = document.getElementById('notificationBubble');
+    const badge = document.getElementById('notificationBubbleBadge');
+    
+    if (!bellNotesData.notifications || bellNotesData.notifications.length === 0) {
+        bubble.classList.remove('show');
+        return;
+    }
+    
+    // Update badge count
+    const notificationCount = bellNotesData.notifications.length;
+    badge.textContent = notificationCount;
+    
+    // Show bubble
+    bubble.classList.add('show');
+    
+    // Auto-hide after 10 seconds, then show again every 30 seconds
+    startNotificationBubbleCycle();
+}
+
+let bubbleCycleInterval = null;
+let bubbleHideTimeout = null;
+
+function startNotificationBubbleCycle() {
+    const bubble = document.getElementById('notificationBubble');
+    
+    // Clear existing intervals/timeouts
+    if (bubbleCycleInterval) clearInterval(bubbleCycleInterval);
+    if (bubbleHideTimeout) clearTimeout(bubbleHideTimeout);
+    
+    // Auto-hide after 10 seconds
+    bubbleHideTimeout = setTimeout(() => {
+        bubble.classList.remove('show');
+        
+        // Show again every 30 seconds
+        bubbleCycleInterval = setInterval(() => {
+            if (bellNotesData.notifications && bellNotesData.notifications.length > 0) {
+                bubble.classList.add('show');
+                
+                // Hide after 10 seconds
+                setTimeout(() => {
+                    bubble.classList.remove('show');
+                }, 10000);
+            }
+        }, 30000);
+    }, 10000);
+}
+
+function showNotificationBubbleOnClick() {
+    const bubble = document.getElementById('notificationBubble');
+    
+    // Clear auto-hide cycles
+    if (bubbleCycleInterval) clearInterval(bubbleCycleInterval);
+    if (bubbleHideTimeout) clearTimeout(bubbleHideTimeout);
+    
+    // Show the bell modal
+    playBellSound();
+    
+    // Hide the bubble
+    bubble.classList.remove('show');
+    
+    // Restart cycle after modal is closed
+    setTimeout(() => {
+        if (bellNotesData.notifications && bellNotesData.notifications.length > 0) {
+            startNotificationBubbleCycle();
+        }
+    }, 1000);
 }
 
 function restartTickerAnimation() {
@@ -11617,6 +11822,20 @@ document.addEventListener('DOMContentLoaded', function() {
             hideBellModal();
         }
     });
+    
+    // Notification bubble click event
+    const notificationBubble = document.getElementById('notificationBubble');
+    if (notificationBubble) {
+        notificationBubble.addEventListener('click', function(e) {
+            e.stopPropagation();
+            showNotificationBubbleOnClick();
+        });
+        
+        notificationBubble.addEventListener('touchstart', function(e) {
+            e.stopPropagation();
+            showNotificationBubbleOnClick();
+        });
+    }
 });
 
 // --- دوال التصدير والتقارير بالكامل ---

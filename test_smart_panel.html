@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Panel Tests</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-result {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .pass {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+        .fail {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 2px solid #bee5eb;
+        }
+        h1 {
+            color: #333;
+        }
+        button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Smart Panel Functionality Tests</h1>
+    <div id="results"></div>
+    
+    <button onclick="runTests()">Run All Tests</button>
+    <button onclick="testFileAccess()">Test File Access</button>
+    <button onclick="testDataStructure()">Test Data Structure</button>
+    
+    <script>
+        const resultsDiv = document.getElementById('results');
+        
+        function addResult(test, passed, message) {
+            const div = document.createElement('div');
+            div.className = `test-result ${passed ? 'pass' : 'fail'}`;
+            div.innerHTML = `${passed ? '✅' : '❌'} <strong>${test}:</strong> ${message}`;
+            resultsDiv.appendChild(div);
+        }
+        
+        function addInfo(message) {
+            const div = document.createElement('div');
+            div.className = 'test-result info';
+            div.innerHTML = `ℹ️ ${message}`;
+            resultsDiv.appendChild(div);
+        }
+        
+        async function testFileAccess() {
+            resultsDiv.innerHTML = '';
+            addInfo('Testing file access...');
+            
+            // Test smart-panel.html exists
+            try {
+                const response = await fetch('smart-panel.html');
+                addResult('Smart Panel File', response.ok, 
+                    response.ok ? 'smart-panel.html is accessible' : 'Failed to access smart-panel.html');
+            } catch (error) {
+                addResult('Smart Panel File', false, 'Error: ' + error.message);
+            }
+            
+            // Test shops_details.json exists
+            try {
+                const response = await fetch('shops_details.json');
+                addResult('Shops Data File', response.ok, 
+                    response.ok ? 'shops_details.json is accessible' : 'Failed to access shops_details.json');
+            } catch (error) {
+                addResult('Shops Data File', false, 'Error: ' + error.message);
+            }
+            
+            // Test plan-data.json exists
+            try {
+                const response = await fetch('plan-data.json');
+                addResult('Plan Data File', response.ok, 
+                    response.ok ? 'plan-data.json is accessible' : 'Failed to access plan-data.json');
+            } catch (error) {
+                addResult('Plan Data File', false, 'Error: ' + error.message);
+            }
+        }
+        
+        async function testDataStructure() {
+            resultsDiv.innerHTML = '';
+            addInfo('Testing data structure...');
+            
+            try {
+                // Test shops_details.json structure
+                const shopsResponse = await fetch('shops_details.json');
+                const shopsData = await shopsResponse.json();
+                
+                const hasShops = Object.keys(shopsData).length > 0;
+                addResult('Shops Data', hasShops, 
+                    `Found ${Object.keys(shopsData).length} shops`);
+                
+                // Test first shop structure
+                if (hasShops) {
+                    const firstShop = Object.values(shopsData)[0];
+                    const hasRequiredFields = firstShop.nameAr && firstShop.address;
+                    addResult('Shop Structure', hasRequiredFields, 
+                        hasRequiredFields ? 'Shop has required fields (nameAr, address)' : 'Missing required fields');
+                    
+                    // Test area extraction
+                    const areas = new Set();
+                    Object.values(shopsData).forEach(shop => {
+                        if (shop.address) areas.add(shop.address);
+                    });
+                    addResult('Areas Extraction', areas.size > 0, 
+                        `Extracted ${areas.size} unique areas from shops`);
+                }
+                
+                // Test plan-data.json structure
+                const planResponse = await fetch('plan-data.json');
+                const planData = await planResponse.json();
+                
+                const hasInspections = planData.inspectionData && planData.inspectionData.length > 0;
+                addResult('Plan Data', hasInspections, 
+                    `Found ${hasInspections ? planData.inspectionData.length : 0} inspections`);
+                
+                if (hasInspections) {
+                    const firstInspection = planData.inspectionData[0];
+                    const hasInspectionFields = firstInspection.inspector && 
+                                               firstInspection.area && 
+                                               firstInspection.shops;
+                    addResult('Inspection Structure', hasInspectionFields, 
+                        hasInspectionFields ? 'Inspection has required fields' : 'Missing required fields');
+                }
+                
+                // Test shop-area linking
+                if (hasShops && hasInspections) {
+                    const shopAreas = new Set();
+                    Object.values(shopsData).forEach(shop => {
+                        if (shop.address) shopAreas.add(shop.address);
+                    });
+                    
+                    const inspectionAreas = new Set();
+                    planData.inspectionData.forEach(inspection => {
+                        if (inspection.area) inspectionAreas.add(inspection.area);
+                    });
+                    
+                    const commonAreas = Array.from(shopAreas).filter(area => inspectionAreas.has(area));
+                    addResult('Shop-Area Linking', commonAreas.length > 0, 
+                        `Found ${commonAreas.length} areas linked between shops and inspections`);
+                }
+                
+            } catch (error) {
+                addResult('Data Structure', false, 'Error: ' + error.message);
+            }
+        }
+        
+        async function testSmartPanelFeatures() {
+            resultsDiv.innerHTML = '';
+            addInfo('Testing smart panel features...');
+            
+            // Test if page loads without errors
+            try {
+                const response = await fetch('smart-panel.html');
+                const html = await response.text();
+                
+                // Check for key elements
+                const hasOverviewTab = html.includes('id="overview"');
+                addResult('Overview Tab', hasOverviewTab, 
+                    hasOverviewTab ? 'Overview tab exists' : 'Overview tab missing');
+                
+                const hasShopsTab = html.includes('id="shops"');
+                addResult('Shops Tab', hasShopsTab, 
+                    hasShopsTab ? 'Shops management tab exists' : 'Shops tab missing');
+                
+                const hasAreasTab = html.includes('id="areas"');
+                addResult('Areas Tab', hasAreasTab, 
+                    hasAreasTab ? 'Areas management tab exists' : 'Areas tab missing');
+                
+                const hasMappingTab = html.includes('id="mapping"');
+                addResult('Mapping Tab', hasMappingTab, 
+                    hasMappingTab ? 'Shop-area mapping tab exists' : 'Mapping tab missing');
+                
+                // Check for key functions
+                const hasSaveFunction = html.includes('function saveShop()');
+                addResult('Save Shop Function', hasSaveFunction, 
+                    hasSaveFunction ? 'Save shop function exists' : 'Save function missing');
+                
+                const hasDeleteFunction = html.includes('function deleteShop(');
+                addResult('Delete Shop Function', hasDeleteFunction, 
+                    hasDeleteFunction ? 'Delete shop function exists' : 'Delete function missing');
+                
+                const hasFilterFunction = html.includes('function filterShopsTable()');
+                addResult('Filter Function', hasFilterFunction, 
+                    hasFilterFunction ? 'Filter function exists' : 'Filter function missing');
+                
+                const hasGitHubSave = html.includes('saveShopsData()');
+                addResult('GitHub Integration', hasGitHubSave, 
+                    hasGitHubSave ? 'GitHub save function exists' : 'GitHub integration missing');
+                
+            } catch (error) {
+                addResult('Smart Panel Features', false, 'Error: ' + error.message);
+            }
+        }
+        
+        async function runTests() {
+            resultsDiv.innerHTML = '';
+            addInfo('Running all tests...');
+            
+            await testFileAccess();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testDataStructure();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testSmartPanelFeatures();
+            
+            addInfo('✨ All tests completed!');
+        }
+        
+        // Run tests on page load
+        window.onload = () => {
+            addInfo('Smart Panel Test Suite Ready. Click "Run All Tests" to begin.');
+        };
+    </script>
+</body>
+</html>

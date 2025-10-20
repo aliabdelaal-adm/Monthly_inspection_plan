@@ -6310,14 +6310,14 @@ let bellNotesData = {
     notifications: [] // New array for individual notifications
 };
 
-// Helper function to check if notification is new (less than 3 days old)
+// Helper function to check if notification is new (less than 24 hours old)
 function isNotificationNew(timestamp) {
     if (!timestamp) return false;
     const notificationDate = new Date(timestamp);
     const now = new Date();
-    const threeDaysInMs = 3 * 24 * 60 * 60 * 1000; // 3 days in milliseconds
+    const oneDayInMs = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
     const diffInMs = now - notificationDate;
-    return diffInMs < threeDaysInMs;
+    return diffInMs < oneDayInMs;
 }
 
 // News Ticker Functions
@@ -6369,33 +6369,35 @@ function updateNotificationBubble() {
         return;
     }
     
-    // Update badge count
-    const notificationCount = bellNotesData.notifications.length;
-    badge.textContent = notificationCount;
+    // Count only new notifications (less than 24 hours old)
+    const newNotificationCount = bellNotesData.notifications.filter(notification => 
+        isNotificationNew(notification.timestamp)
+    ).length;
     
-    // Show bubble - ALWAYS VISIBLE when there are notifications (100% reliability)
-    bubble.classList.add('show');
+    // Update badge count with new notifications only
+    badge.textContent = newNotificationCount;
     
-    // Keep bubble visible continuously - no auto-hide for maximum visibility
-    // This ensures the bubble is always present to alert users about notifications
+    // Show bubble only if there are new notifications (less than 24 hours old)
+    if (newNotificationCount > 0) {
+        bubble.classList.add('show');
+    } else {
+        bubble.classList.remove('show');
+    }
 }
 
 let bubbleCycleInterval = null;
 let bubbleHideTimeout = null;
 
 function startNotificationBubbleCycle() {
-    // Function kept for compatibility but bubble now stays visible permanently
-    // when notifications exist to ensure 100% visibility and attention
+    // Update bubble visibility based on new notifications (less than 24 hours old)
     const bubble = document.getElementById('notificationBubble');
     
     // Clear any existing intervals/timeouts
     if (bubbleCycleInterval) clearInterval(bubbleCycleInterval);
     if (bubbleHideTimeout) clearTimeout(bubbleHideTimeout);
     
-    // Ensure bubble stays visible
-    if (bellNotesData.notifications && bellNotesData.notifications.length > 0) {
-        bubble.classList.add('show');
-    }
+    // Update bubble based on new notification count
+    updateNotificationBubble();
 }
 
 function showNotificationBubbleOnClick() {
@@ -6408,9 +6410,8 @@ function showNotificationBubbleOnClick() {
     // Show the bell modal
     playBellSound();
     
-    // Keep the bubble visible - do NOT hide it to ensure maximum visibility
-    // Bubble will remain visible as long as notifications exist
-    bubble.classList.add('show');
+    // Update bubble visibility based on new notifications
+    updateNotificationBubble();
 }
 
 function restartTickerAnimation() {
@@ -11380,7 +11381,7 @@ function displayNotificationsList() {
         const notificationDiv = document.createElement('div');
         notificationDiv.className = 'notification-item';
         
-        // Check if notification is new (less than 3 days old)
+        // Check if notification is new (less than 24 hours old)
         const isNew = isNotificationNew(notification.timestamp);
         const textColor = isNew ? 'red' : '#234085'; // Red for new, blue for old
         const borderColor = isNew ? 'red' : '#ddd';

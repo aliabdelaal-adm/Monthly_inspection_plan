@@ -23513,6 +23513,13 @@ async function viewLocationHistory() {
         return;
     }
     
+    // Helper function to escape HTML
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
     // Create modal to display history
     const modal = document.createElement('div');
     modal.style.cssText = `
@@ -23531,14 +23538,19 @@ async function viewLocationHistory() {
     
     const historyHTML = history.slice().reverse().slice(0, 50).map(loc => {
         const time = new Date(loc.timestamp).toLocaleString('ar-EG');
+        const escapedInspector = escapeHtml(loc.inspector);
+        const escapedDay = escapeHtml(loc.day);
+        const escapedShift = escapeHtml(loc.shift);
+        const escapedArea = escapeHtml(loc.area);
+        
         return `
             <div style="background:#f9f9f9;padding:12px;border-radius:8px;margin-bottom:10px;border-right:3px solid #667eea;">
-                <div style="color:#667eea;font-weight:bold;margin-bottom:5px;">⏰ ${time}</div>
+                <div style="color:#667eea;font-weight:bold;margin-bottom:5px;">⏰ ${escapeHtml(time)}</div>
                 <div style="color:#555;font-size:0.9em;font-family:monospace;">
                     📍 ${loc.latitude.toFixed(6)}, ${loc.longitude.toFixed(6)}
                 </div>
                 <div style="color:#666;font-size:0.85em;margin-top:5px;">
-                    👤 ${loc.inspector} | 📅 ${loc.day} | ⏱️ ${loc.shift} | 📍 ${loc.area} | 🎯 ${loc.accuracy.toFixed(2)}m
+                    👤 ${escapedInspector} | 📅 ${escapedDay} | ⏱️ ${escapedShift} | 📍 ${escapedArea} | 🎯 ${loc.accuracy.toFixed(2)}m
                 </div>
                 <a href="https://www.google.com/maps?q=${loc.latitude},${loc.longitude}" target="_blank" 
                    style="display:inline-block;margin-top:5px;color:#007bff;text-decoration:none;font-size:0.85em;">
@@ -23548,18 +23560,22 @@ async function viewLocationHistory() {
         `;
     }).join('');
     
+    const escapedInspectorName = selectedInspector ? escapeHtml(selectedInspector) : '';
+    const escapedInspectorForButton = selectedInspector ? 
+        selectedInspector.replace(/\\/g, '\\\\').replace(/'/g, "\\'") : 'all';
+    
     modal.innerHTML = `
         <div style="background:white;padding:30px;border-radius:15px;max-width:800px;max-height:80vh;overflow-y:auto;width:90%;">
             <h2 style="color:#2336a0;margin-bottom:20px;text-align:center;">📍 سجل المواقع الجغرافية</h2>
             <div style="margin-bottom:15px;padding:10px;background:#e7f3ff;border-radius:8px;">
                 <strong>عدد المواقع المسجلة:</strong> ${history.length}
-                ${selectedInspector ? `<br><strong>المفتش:</strong> ${selectedInspector}` : ''}
+                ${selectedInspector ? `<br><strong>المفتش:</strong> ${escapedInspectorName}` : ''}
             </div>
             <div style="max-height:500px;overflow-y:auto;">
                 ${historyHTML}
             </div>
             <div style="margin-top:20px;text-align:center;display:flex;gap:10px;justify-content:center;">
-                <button onclick="exportLocationHistory('${selectedInspector || 'all'}')" style="
+                <button onclick="exportLocationHistory('${escapedInspectorForButton}')" style="
                     background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                     color:white;
                     border:none;

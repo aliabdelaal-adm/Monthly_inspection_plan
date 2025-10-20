@@ -6558,7 +6558,7 @@ function showSecurityWarning(issues) {
     console.error('Issues detected:', issues);
 }
 
-// Auto-refresh functionality with automatic maintenance mode on data changes
+// Auto-refresh functionality - maintenance mode is ONLY controlled by developer via GitHub
 function startAutoRefresh() {
     setInterval(async () => {
         try {
@@ -6569,9 +6569,9 @@ function startAutoRefresh() {
                 // SECURITY CHECK: Validate data integrity on auto-refresh
                 const integrityCheck = validateDataIntegrity(data);
                 if (!integrityCheck.isValid) {
-                    // Automatically show maintenance mode with issues
-                    console.log('🔴 Data integrity issues detected - showing maintenance mode automatically');
-                    showMaintenanceModeWithNotification(integrityCheck.issues);
+                    // Log issues but DO NOT automatically show maintenance mode
+                    console.log('🔴 Data integrity issues detected - logged for developer review');
+                    console.log('Issues:', integrityCheck.issues);
                     showSecurityWarning(integrityCheck.issues);
                     return; // Don't proceed with invalid data
                 }
@@ -6582,31 +6582,20 @@ function startAutoRefresh() {
                 
                 // Check for data changes (new inspections, updates)
                 if (newVersion && newVersion !== lastUpdateTime && newVersion !== cachedVersion) {
-                    console.log('📊 Data change detected - showing maintenance mode for update');
+                    console.log('📊 Data change detected - updating silently');
                     console.log('   Previous version:', lastUpdateTime || cachedVersion);
                     console.log('   New version:', newVersion);
                     
                     // Detect what changed
                     const changeDetails = detectDataChanges(allPlanData, data);
                     
-                    // Show maintenance mode with change details
+                    // Update data silently without showing maintenance mode
                     if (changeDetails.length > 0) {
-                        showMaintenanceModeWithNotification([
-                            'تم اكتشاف تحديثات في البيانات',
-                            ...changeDetails,
-                            'جاري تحديث الصفحة...'
-                        ]);
+                        console.log('Changes detected:', changeDetails);
                         
-                        // Wait 2 seconds before loading new data (reduced from 3 for faster updates)
-                        setTimeout(async () => {
-                            await loadInspectionData();
-                            // Only hide maintenance mode if not in system maintenance
-                            const systemMaintenanceActive = localStorage.getItem('systemMaintenanceMode') === 'true';
-                            if (!systemMaintenanceActive) {
-                                hideMaintenanceMode();
-                            }
-                            showUpdateMessage('✅ تم تحديث البيانات تلقائياً - التغييرات ظاهرة الآن');
-                        }, 2000);
+                        // Load new data immediately without maintenance overlay
+                        await loadInspectionData();
+                        showUpdateMessage('✅ تم تحديث البيانات تلقائياً - التغييرات ظاهرة الآن');
                     } else {
                         // No specific changes detected, just update normally
                         await loadInspectionData();
@@ -6934,9 +6923,9 @@ let maintenanceMusicTimer = null;
 // Global variable to store maintenance configuration
 let maintenanceConfig = {
     checkInterval: 10000,
-    musicEnabled: true,
-    musicDuration: 0,
-    musicVolume: 0.25
+    musicEnabled: false,
+    musicDuration: 0, // 0 means continuous playback
+    musicVolume: 0.15 // Low volume (15%)
 };
 
 // Global variable to store the maintenance checker interval
@@ -8474,7 +8463,9 @@ function performDataValidation(data) {
     
     if (!validation.isValid) {
         console.error('❌ Data validation failed:', validation.issues);
-        showMaintenanceModeWithNotification(validation.issues);
+        // Log validation issues but do NOT automatically show maintenance mode
+        // Maintenance mode is ONLY controlled by developer via GitHub
+        console.warn('⚠️ Validation issues logged - maintenance mode controlled by developer only');
         return false;
     }
     
@@ -8497,7 +8488,9 @@ function firewallCheck() {
     const validation = validateDataIntegrity(currentData);
     if (!validation.isValid) {
         console.error('🛡️ Firewall: Suspicious data detected!', validation.issues);
-        showMaintenanceModeWithNotification(validation.issues);
+        // Log issues but do NOT automatically show maintenance mode
+        // Maintenance mode is ONLY controlled by developer via GitHub
+        console.warn('⚠️ Firewall issues logged - maintenance mode controlled by developer only');
         return false;
     }
     
@@ -8529,7 +8522,9 @@ async function loadInspectionData() {
             
             if (!validation.isValid) {
                 console.error('🛡️ Firewall: Data validation failed!', validation.issues);
-                showMaintenanceModeWithNotification(validation.issues);
+                // Log validation issues but do NOT automatically show maintenance mode
+                // Maintenance mode is ONLY controlled by developer via GitHub
+                console.warn('⚠️ Firewall issues logged - using cached data');
                 
                 // Use cached data from localStorage instead
                 const allLocalData = localStorage.getItem('allPlanData');
@@ -8618,22 +8613,12 @@ async function loadInspectionData() {
     } catch (error) {
         console.warn('Failed to load plan data, using fallback data:', error);
         
-        // Show maintenance mode message to inform users about the update
-        showMaintenanceModeWithNotification([
-            'تعذر تحميل البيانات من الخادم',
-            'جاري استخدام البيانات المحفوظة',
-            'سيتم تحديث البيانات تلقائياً'
-        ]);
+        // Log error but do NOT automatically show maintenance mode
+        // Maintenance mode is ONLY controlled by developer via GitHub
+        console.warn('⚠️ Data load error - using cached data if available');
         
-        // Auto-hide maintenance mode after 5 seconds (only if not in system maintenance)
-        setTimeout(() => {
-            const systemMaintenanceActive = localStorage.getItem('systemMaintenanceMode') === 'true';
-            if (!systemMaintenanceActive) {
-                hideMaintenanceMode();
-            } else {
-                console.log('ℹ️ System maintenance mode is active - keeping maintenance overlay visible');
-            }
-        }, 5000);
+        // Auto-refresh will attempt to reload data in 10 seconds
+        console.log('ℹ️ Auto-refresh will retry data loading automatically');
         
         // First try to load complete data from localStorage
         const allLocalData = localStorage.getItem('allPlanData');

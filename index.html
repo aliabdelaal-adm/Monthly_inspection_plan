@@ -2967,14 +2967,12 @@
 
         .news-ticker-text {
             white-space: nowrap;
-            color: #234085;
             font-size: 16px;
             font-weight: 600;
             line-height: 45px;
             padding-right: 50px;
             display: inline-block;
             animation: scroll-ticker 220s linear infinite;
-            text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
             transition: opacity 0.5s ease, transform 0.3s ease;
         }
 
@@ -6312,6 +6310,16 @@ let bellNotesData = {
     notifications: [] // New array for individual notifications
 };
 
+// Helper function to check if notification is new (less than 3 days old)
+function isNotificationNew(timestamp) {
+    if (!timestamp) return false;
+    const notificationDate = new Date(timestamp);
+    const now = new Date();
+    const threeDaysInMs = 3 * 24 * 60 * 60 * 1000; // 3 days in milliseconds
+    const diffInMs = now - notificationDate;
+    return diffInMs < threeDaysInMs;
+}
+
 // News Ticker Functions
 function updateNewsTicker() {
     const newsTickerContainer = document.getElementById('newsTicker');
@@ -6322,12 +6330,14 @@ function updateNewsTicker() {
         return;
     }
     
-    // Combine all notification texts with separators
+    // Combine all notification texts with separators, applying red color to new notifications
     const tickerContent = bellNotesData.notifications
         .map(notification => {
             const cleanText = notification.text.replace(/\n/g, ' ').trim();
             const author = notification.author || 'د. علي عبدالعال';
-            return `${cleanText} [${author}]`;
+            const isNew = isNotificationNew(notification.timestamp);
+            const color = isNew ? 'red' : '#234085'; // Red for new, blue for old
+            return `<span style="color: ${color};">${cleanText} [${author}]</span>`;
         })
         .join('<span class="news-ticker-separator">⦿</span>');
     
@@ -6363,39 +6373,29 @@ function updateNotificationBubble() {
     const notificationCount = bellNotesData.notifications.length;
     badge.textContent = notificationCount;
     
-    // Show bubble
+    // Show bubble - ALWAYS VISIBLE when there are notifications (100% reliability)
     bubble.classList.add('show');
     
-    // Auto-hide after 10 seconds, then show again every 30 seconds
-    startNotificationBubbleCycle();
+    // Keep bubble visible continuously - no auto-hide for maximum visibility
+    // This ensures the bubble is always present to alert users about notifications
 }
 
 let bubbleCycleInterval = null;
 let bubbleHideTimeout = null;
 
 function startNotificationBubbleCycle() {
+    // Function kept for compatibility but bubble now stays visible permanently
+    // when notifications exist to ensure 100% visibility and attention
     const bubble = document.getElementById('notificationBubble');
     
-    // Clear existing intervals/timeouts
+    // Clear any existing intervals/timeouts
     if (bubbleCycleInterval) clearInterval(bubbleCycleInterval);
     if (bubbleHideTimeout) clearTimeout(bubbleHideTimeout);
     
-    // Auto-hide after 10 seconds
-    bubbleHideTimeout = setTimeout(() => {
-        bubble.classList.remove('show');
-        
-        // Show again every 30 seconds
-        bubbleCycleInterval = setInterval(() => {
-            if (bellNotesData.notifications && bellNotesData.notifications.length > 0) {
-                bubble.classList.add('show');
-                
-                // Hide after 10 seconds
-                setTimeout(() => {
-                    bubble.classList.remove('show');
-                }, 10000);
-            }
-        }, 30000);
-    }, 10000);
+    // Ensure bubble stays visible
+    if (bellNotesData.notifications && bellNotesData.notifications.length > 0) {
+        bubble.classList.add('show');
+    }
 }
 
 function showNotificationBubbleOnClick() {
@@ -6408,15 +6408,9 @@ function showNotificationBubbleOnClick() {
     // Show the bell modal
     playBellSound();
     
-    // Hide the bubble
-    bubble.classList.remove('show');
-    
-    // Restart cycle after modal is closed
-    setTimeout(() => {
-        if (bellNotesData.notifications && bellNotesData.notifications.length > 0) {
-            startNotificationBubbleCycle();
-        }
-    }, 1000);
+    // Keep the bubble visible - do NOT hide it to ensure maximum visibility
+    // Bubble will remain visible as long as notifications exist
+    bubble.classList.add('show');
 }
 
 function restartTickerAnimation() {
@@ -11400,9 +11394,15 @@ function displayNotificationsList() {
     bellNotesData.notifications.forEach((notification, index) => {
         const notificationDiv = document.createElement('div');
         notificationDiv.className = 'notification-item';
+        
+        // Check if notification is new (less than 3 days old)
+        const isNew = isNotificationNew(notification.timestamp);
+        const textColor = isNew ? 'red' : '#234085'; // Red for new, blue for old
+        const borderColor = isNew ? 'red' : '#ddd';
+        
         notificationDiv.style.cssText = `
             background: white;
-            border: 1px solid #ddd;
+            border: 2px solid ${borderColor};
             border-radius: 8px;
             padding: 12px;
             margin-bottom: 10px;
@@ -11425,7 +11425,7 @@ function displayNotificationsList() {
         
         notificationDiv.innerHTML = `
             <div class="notification-content" style="margin-bottom: 10px;">
-                <div class="notification-text" id="notificationText_${index}" style="display: block; cursor: ${textCursor}; padding: 5px; border-radius: 4px;" ${textClickable}>${notification.text}</div>
+                <div class="notification-text" id="notificationText_${index}" style="display: block; cursor: ${textCursor}; padding: 5px; border-radius: 4px; color: ${textColor}; font-weight: ${isNew ? 'bold' : 'normal'};" ${textClickable}>${notification.text}</div>
                 <textarea class="notification-edit" id="notificationEdit_${index}" style="display: none; width: 100%; min-height: 60px; border: 1px solid #ccc; border-radius: 4px; padding: 5px; resize: vertical; margin-bottom: 8px;" dir="rtl">${notification.text}</textarea>
                 <div id="authorEditContainer_${index}" style="display: none; margin-top: 8px;">
                     <label style="display: block; margin-bottom: 4px; color: #495057; font-weight: 500; font-size: 0.9em;">👤 اسم المؤلف/المرسل:</label>
@@ -11441,6 +11441,7 @@ function displayNotificationsList() {
             <div class="notification-meta" style="font-size: 0.85em; color: #666; margin-bottom: 10px;">
                 <span>📅 ${formatDate(notification.timestamp)}</span>
                 ${notification.author ? `<span style="margin-right: 15px;">👤 ${notification.author}</span>` : ''}
+                ${isNew ? '<span style="margin-right: 15px; color: red; font-weight: bold;">🔴 جديد</span>' : '<span style="margin-right: 15px; color: #234085;">📌 قديم</span>'}
             </div>
             ${actionButtons}
         `;

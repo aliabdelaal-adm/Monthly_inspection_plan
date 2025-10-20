@@ -774,6 +774,12 @@
           <span>سجل النشاطات</span>
         </a>
       </li>
+      <li class="nav-item">
+        <a class="nav-link" onclick="showSection('location-tracking')">
+          <i class="fas fa-map-marked-alt"></i>
+          <span>🌍 تتبع المواقع</span>
+        </a>
+      </li>
       <li class="nav-item" style="margin-top: 20px; border-top: 2px solid rgba(255,255,255,0.1); padding-top: 20px;">
         <h4 style="color: rgba(255,255,255,0.7); font-size: 0.85em; padding: 0 18px; margin-bottom: 10px;">🚀 أدوات المطورين المتقدمة</h4>
       </li>
@@ -1424,6 +1430,77 @@
       </div>
     </section>
     
+    <!-- Location Tracking Section -->
+    <section id="location-tracking" class="section">
+      <div class="content-card">
+        <div class="content-card-header">
+          <h3 class="content-card-title">🌍 تتبع المواقع الجغرافية</h3>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn btn-primary" onclick="refreshLocationData()">
+              <i class="fas fa-sync-alt"></i>
+              تحديث
+            </button>
+            <button class="btn btn-success" onclick="exportAllLocationData()">
+              <i class="fas fa-download"></i>
+              تصدير الكل
+            </button>
+          </div>
+        </div>
+        
+        <!-- Filter Controls -->
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+          <h4 style="color: #2336a0; margin-bottom: 15px;">🔍 فلترة البيانات</h4>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <div>
+              <label style="display: block; margin-bottom: 5px; font-weight: bold;">المفتش:</label>
+              <select id="locationFilterInspector" class="form-control" onchange="filterLocationData()">
+                <option value="">-- جميع المفتشين --</option>
+              </select>
+            </div>
+            <div>
+              <label style="display: block; margin-bottom: 5px; font-weight: bold;">من تاريخ:</label>
+              <input type="date" id="locationFilterFromDate" class="form-control" onchange="filterLocationData()">
+            </div>
+            <div>
+              <label style="display: block; margin-bottom: 5px; font-weight: bold;">إلى تاريخ:</label>
+              <input type="date" id="locationFilterToDate" class="form-control" onchange="filterLocationData()">
+            </div>
+            <div>
+              <label style="display: block; margin-bottom: 5px; font-weight: bold;">المنطقة:</label>
+              <select id="locationFilterArea" class="form-control" onchange="filterLocationData()">
+                <option value="">-- جميع المناطق --</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Statistics Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(102,126,234,0.3);">
+            <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">إجمالي المواقع المسجلة</div>
+            <div id="totalLocationsCount" style="font-size: 2em; font-weight: bold;">0</div>
+          </div>
+          <div style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(67,233,123,0.3);">
+            <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">عدد المفتشين النشطين</div>
+            <div id="activeInspectorsCount" style="font-size: 2em; font-weight: bold;">0</div>
+          </div>
+          <div style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(250,112,154,0.3);">
+            <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">المناطق المغطاة</div>
+            <div id="coveredAreasCount" style="font-size: 2em; font-weight: bold;">0</div>
+          </div>
+          <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(79,172,254,0.3);">
+            <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">آخر تحديث</div>
+            <div id="lastLocationUpdate" style="font-size: 1.2em; font-weight: bold;">--</div>
+          </div>
+        </div>
+        
+        <!-- Location Data Table -->
+        <div id="locationDataContent">
+          <p style="text-align: center; color: #999; padding: 20px;">جاري تحميل بيانات المواقع...</p>
+        </div>
+      </div>
+    </section>
+    
   </main>
   
   <!-- Token Setup Modal -->
@@ -1594,6 +1671,9 @@
           break;
         case 'activity-log':
           refreshActivityLog();
+          break;
+        case 'location-tracking':
+          refreshLocationData();
           break;
       }
     }
@@ -3012,6 +3092,174 @@
       
       html += '</tbody></table>';
       container.innerHTML = html;
+    }
+    
+    // ========================
+    // Location Tracking Functions
+    // ========================
+    let allLocationData = [];
+    let filteredLocationData = [];
+    
+    async function refreshLocationData() {
+      try {
+        // Load location data from localStorage
+        const locationData = JSON.parse(localStorage.getItem('locationTrackingData') || '[]');
+        allLocationData = locationData;
+        
+        // Update filter dropdowns
+        updateLocationFilters();
+        
+        // Display data
+        filterLocationData();
+        
+        // Update statistics
+        updateLocationStatistics();
+        
+      } catch (error) {
+        console.error('Error loading location data:', error);
+        document.getElementById('locationDataContent').innerHTML = 
+          '<p style="text-align: center; color: #dc3545; padding: 20px;">❌ خطأ في تحميل البيانات</p>';
+      }
+    }
+    
+    function updateLocationFilters() {
+      // Get unique inspectors
+      const inspectors = [...new Set(allLocationData.map(loc => loc.inspector))].sort();
+      const inspectorSelect = document.getElementById('locationFilterInspector');
+      inspectorSelect.innerHTML = '<option value="">-- جميع المفتشين --</option>';
+      inspectors.forEach(inspector => {
+        inspectorSelect.innerHTML += `<option value="${inspector}">${inspector}</option>`;
+      });
+      
+      // Get unique areas
+      const areas = [...new Set(allLocationData.map(loc => loc.area))].sort();
+      const areaSelect = document.getElementById('locationFilterArea');
+      areaSelect.innerHTML = '<option value="">-- جميع المناطق --</option>';
+      areas.forEach(area => {
+        areaSelect.innerHTML += `<option value="${area}">${area}</option>`;
+      });
+    }
+    
+    function filterLocationData() {
+      const inspectorFilter = document.getElementById('locationFilterInspector')?.value || '';
+      const fromDate = document.getElementById('locationFilterFromDate')?.value || '';
+      const toDate = document.getElementById('locationFilterToDate')?.value || '';
+      const areaFilter = document.getElementById('locationFilterArea')?.value || '';
+      
+      filteredLocationData = allLocationData.filter(loc => {
+        const matchInspector = !inspectorFilter || loc.inspector === inspectorFilter;
+        const matchFromDate = !fromDate || loc.day >= fromDate;
+        const matchToDate = !toDate || loc.day <= toDate;
+        const matchArea = !areaFilter || loc.area === areaFilter;
+        
+        return matchInspector && matchFromDate && matchToDate && matchArea;
+      });
+      
+      displayLocationData();
+    }
+    
+    function displayLocationData() {
+      const container = document.getElementById('locationDataContent');
+      
+      if (filteredLocationData.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">لا توجد بيانات مطابقة للفلاتر المحددة</p>';
+        return;
+      }
+      
+      // Sort by timestamp (newest first)
+      const sortedData = [...filteredLocationData].sort((a, b) => 
+        new Date(b.timestamp) - new Date(a.timestamp)
+      );
+      
+      let html = `
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>الوقت</th>
+              <th>المفتش</th>
+              <th>التاريخ</th>
+              <th>المناوبة</th>
+              <th>المنطقة</th>
+              <th>الموقع</th>
+              <th>الدقة</th>
+              <th>الخريطة</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      
+      sortedData.forEach(loc => {
+        const time = new Date(loc.timestamp).toLocaleTimeString('ar-EG');
+        const coords = `${loc.latitude.toFixed(6)}, ${loc.longitude.toFixed(6)}`;
+        const mapsUrl = `https://www.google.com/maps?q=${loc.latitude},${loc.longitude}`;
+        
+        html += `
+          <tr>
+            <td>${time}</td>
+            <td><strong>${loc.inspector}</strong></td>
+            <td>${loc.day}</td>
+            <td>${loc.shift}</td>
+            <td>${loc.area}</td>
+            <td><code style="font-size: 0.85em;">${coords}</code></td>
+            <td>${loc.accuracy.toFixed(1)}m</td>
+            <td>
+              <a href="${mapsUrl}" target="_blank" style="color: #007bff; text-decoration: none;">
+                🗺️ عرض
+              </a>
+            </td>
+          </tr>
+        `;
+      });
+      
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+    
+    function updateLocationStatistics() {
+      // Total locations
+      document.getElementById('totalLocationsCount').textContent = allLocationData.length;
+      
+      // Active inspectors
+      const uniqueInspectors = new Set(allLocationData.map(loc => loc.inspector));
+      document.getElementById('activeInspectorsCount').textContent = uniqueInspectors.size;
+      
+      // Covered areas
+      const uniqueAreas = new Set(allLocationData.map(loc => loc.area));
+      document.getElementById('coveredAreasCount').textContent = uniqueAreas.size;
+      
+      // Last update
+      if (allLocationData.length > 0) {
+        const latestLocation = allLocationData.reduce((latest, loc) => 
+          new Date(loc.timestamp) > new Date(latest.timestamp) ? loc : latest
+        );
+        const lastUpdate = new Date(latestLocation.timestamp).toLocaleString('ar-EG', {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        document.getElementById('lastLocationUpdate').textContent = lastUpdate;
+      } else {
+        document.getElementById('lastLocationUpdate').textContent = '--';
+      }
+    }
+    
+    function exportAllLocationData() {
+      if (allLocationData.length === 0) {
+        alert('لا توجد بيانات للتصدير');
+        return;
+      }
+      
+      const dataToExport = filteredLocationData.length > 0 ? filteredLocationData : allLocationData;
+      const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `location-tracking-export-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      alert(`✅ تم تصدير ${dataToExport.length} موقع بنجاح`);
     }
     
     // ========================

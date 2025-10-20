@@ -1266,26 +1266,26 @@
           <div class="form-group">
             <label class="form-label"><i class="fas fa-hourglass-half"></i> مدة تشغيل الموسيقى</label>
             <select id="musicDurationSelect" class="form-control">
+              <option value="0" selected>تشغيل مستمر (بدون إيقاف)</option>
               <option value="30000">30 ثانية</option>
               <option value="60000">دقيقة واحدة</option>
               <option value="300000">5 دقائق</option>
-              <option value="600000" selected>10 دقائق (افتراضي)</option>
+              <option value="600000">10 دقائق</option>
               <option value="1800000">30 دقيقة</option>
-              <option value="0">تشغيل مستمر (بدون إيقاف)</option>
             </select>
             <small style="color: #666; display: block; margin-top: 5px;">
-              تحديد مدة تشغيل الموسيقى قبل إيقافها تلقائياً.
+              تحديد مدة تشغيل الموسيقى قبل إيقافها تلقائياً. "تشغيل مستمر" تعني الموسيقى ستستمر بدون توقف.
             </small>
           </div>
 
           <!-- Music Volume Control -->
           <div class="form-group">
-            <label class="form-label"><i class="fas fa-volume-up"></i> مستوى الصوت: <span id="volumeValue">40%</span></label>
-            <input type="range" id="musicVolumeSlider" class="form-control" min="0" max="100" value="40" step="5" 
+            <label class="form-label"><i class="fas fa-volume-up"></i> مستوى الصوت: <span id="volumeValue">15%</span></label>
+            <input type="range" id="musicVolumeSlider" class="form-control" min="0" max="100" value="15" step="1" 
                    style="height: 40px; cursor: pointer;"
                    oninput="document.getElementById('volumeValue').textContent = this.value + '%'">
             <small style="color: #666; display: block; margin-top: 5px;">
-              تحديد مستوى صوت الموسيقى (0% = كتم الصوت، 100% = أعلى صوت).
+              تحديد مستوى صوت الموسيقى (0% = كتم الصوت، 100% = أعلى صوت). القيمة الموصى بها: 10-20% للصوت الخافت.
             </small>
           </div>
 
@@ -4771,7 +4771,7 @@ ${Object.entries(stats.months).sort().map(([month, count]) =>
           
           document.getElementById('musicDurationSelect').value = config.musicDuration || 600000;
           
-          const volumePercent = Math.round((config.musicVolume || 0.40) * 100);
+          const volumePercent = Math.round((config.musicVolume || 0.15) * 100);
           document.getElementById('musicVolumeSlider').value = volumePercent;
           document.getElementById('volumeValue').textContent = volumePercent + '%';
           
@@ -4810,7 +4810,7 @@ ${Object.entries(stats.months).sort().map(([month, count]) =>
       document.getElementById('currentCheckInterval').textContent = intervalLabels[config.checkInterval] || config.checkIntervalLabel || "غير معروف";
       document.getElementById('currentMusicEnabled').textContent = config.musicEnabled ? "✅ مفعّل" : "❌ معطّل";
       document.getElementById('currentMusicDuration').textContent = durationLabels[config.musicDuration] || config.musicDurationLabel || "غير معروف";
-      document.getElementById('currentMusicVolume').textContent = Math.round((config.musicVolume || 0.40) * 100) + '%';
+      document.getElementById('currentMusicVolume').textContent = Math.round((config.musicVolume || 0.15) * 100) + '%';
     }
     
     // Save maintenance configuration

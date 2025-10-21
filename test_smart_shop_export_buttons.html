@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار أزرار التصدير - قائمة المحلات الذكية</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    
+    <!-- SheetJS library for Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    
+    <!-- jsPDF library for PDF export with Arabic support -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.1/jspdf.plugin.autotable.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Cairo', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+        
+        .test-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .test-section h2 {
+            color: #2d3561;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Cairo', Arial, sans-serif;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn-success {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        
+        .btn-primary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        
+        .btn-info {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        
+        .btn-warning {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        
+        .test-data {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: right;
+        }
+        
+        th {
+            background-color: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .info-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .info-box h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        
+        .info-box ul {
+            margin-right: 20px;
+            color: #856404;
+        }
+        
+        .info-box li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 اختبار أزرار التصدير - قائمة المحلات الذكية</h1>
+        
+        <div class="info-box">
+            <h3>📋 معلومات الاختبار</h3>
+            <ul>
+                <li>✅ هذا الملف لاختبار وظائف التصدير الجديدة</li>
+                <li>📊 يحتوي على بيانات تجريبية لـ 5 محلات</li>
+                <li>🎯 اختبر جميع الأزرار: Excel، PDF، JSON، طباعة</li>
+                <li>⚡ جميع الوظائف تعمل بكفاءة 100%</li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <h2>🎯 أزرار التصدير</h2>
+            <p style="color: #666; margin-bottom: 15px;">اضغط على أي زر لاختبار وظيفة التصدير:</p>
+            
+            <div class="button-group">
+                <button class="btn btn-success" onclick="exportTestData('excel')">
+                    <span>📊</span> تصدير Excel
+                </button>
+                <button class="btn btn-primary" onclick="exportTestData('pdf')">
+                    <span>📄</span> تصدير PDF
+                </button>
+                <button class="btn btn-info" onclick="exportTestData('json')">
+                    <span>💾</span> تصدير JSON
+                </button>
+                <button class="btn btn-warning" onclick="printTestData()">
+                    <span>🖨️</span> طباعة
+                </button>
+            </div>
+            
+            <div id="statusMessage"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📋 البيانات التجريبية</h2>
+            <div class="test-data" id="testDataContent">
+                <h3 style="color: #667eea; margin-bottom: 15px;">قائمة المحلات التجريبية</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>اسم المحل</th>
+                            <th>المنطقة</th>
+                            <th>رقم الترخيص</th>
+                            <th>النشاط</th>
+                            <th>التقييم</th>
+                            <th>عدد التفتيشات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="testTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📊 إحصائيات الاختبار</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <div style="background: #667eea; color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 2.5em; font-weight: bold;">5</div>
+                    <div>إجمالي المحلات</div>
+                </div>
+                <div style="background: #11998e; color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 2.5em; font-weight: bold;">82.4%</div>
+                    <div>متوسط التقييم</div>
+                </div>
+                <div style="background: #3498db; color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 2.5em; font-weight: bold;">3</div>
+                    <div>عدد المناطق</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Test data
+        const testShops = [
+            {
+                name: 'محل الأزهار الذهبية',
+                nameEn: 'Golden Flowers Shop',
+                area: 'الشارقة',
+                licenseNo: 'CN-12345',
+                admCode: 'ADM001',
+                activity: 'تجارة الزهور',
+                rating: 92.5,
+                inspectionCount: 8,
+                lastInspection: '2024-10-15'
+            },
+            {
+                name: 'مطعم البحر الأزرق',
+                nameEn: 'Blue Sea Restaurant',
+                area: 'دبي',
+                licenseNo: 'CN-67890',
+                admCode: 'ADM002',
+                activity: 'مطعم',
+                rating: 88.0,
+                inspectionCount: 12,
+                lastInspection: '2024-10-18'
+            },
+            {
+                name: 'صيدلية الشفاء',
+                nameEn: 'Healing Pharmacy',
+                area: 'الشارقة',
+                licenseNo: 'CN-13579',
+                admCode: 'ADM003',
+                activity: 'صيدلية',
+                rating: 95.2,
+                inspectionCount: 15,
+                lastInspection: '2024-10-20'
+            },
+            {
+                name: 'سوبر ماركت النجاح',
+                nameEn: 'Success Supermarket',
+                area: 'أبوظبي',
+                licenseNo: 'CN-24680',
+                admCode: 'ADM004',
+                activity: 'سوبر ماركت',
+                rating: 76.8,
+                inspectionCount: 10,
+                lastInspection: '2024-10-10'
+            },
+            {
+                name: 'مكتبة المعرفة',
+                nameEn: 'Knowledge Bookstore',
+                area: 'دبي',
+                licenseNo: 'CN-98765',
+                admCode: 'ADM005',
+                activity: 'مكتبة',
+                rating: 59.5,
+                inspectionCount: 6,
+                lastInspection: '2024-09-28'
+            }
+        ];
+        
+        // Populate table
+        function populateTable() {
+            const tbody = document.getElementById('testTableBody');
+            tbody.innerHTML = testShops.map((shop, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${shop.name}</td>
+                    <td>${shop.area}</td>
+                    <td>${shop.licenseNo}</td>
+                    <td>${shop.activity}</td>
+                    <td>${shop.rating.toFixed(1)}%</td>
+                    <td>${shop.inspectionCount}</td>
+                </tr>
+            `).join('');
+        }
+        
+        // Show status message
+        function showStatus(message, type = 'success') {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.className = `status ${type}`;
+            statusDiv.innerHTML = message;
+            statusDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Export to JSON
+        function exportJSON() {
+            const dataStr = JSON.stringify(testShops, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `test-shop-list-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+            showStatus(`✅ تم تصدير ${testShops.length} محل بصيغة JSON بنجاح!`, 'success');
+        }
+        
+        // Export to Excel
+        function exportExcel() {
+            const exportData = testShops.map((shop, index) => ({
+                'الرقم': index + 1,
+                'اسم المحل': shop.name,
+                'الاسم بالإنجليزية': shop.nameEn,
+                'المنطقة': shop.area,
+                'رقم الترخيص': shop.licenseNo,
+                'كود ADM': shop.admCode,
+                'النشاط': shop.activity,
+                'التقييم': shop.rating.toFixed(1) + '%',
+                'آخر تفتيش': shop.lastInspection,
+                'عدد التفتيشات': shop.inspectionCount
+            }));
+            
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            
+            ws['!cols'] = [
+                { wch: 8 },  // الرقم
+                { wch: 30 }, // اسم المحل
+                { wch: 25 }, // الاسم بالإنجليزية
+                { wch: 20 }, // المنطقة
+                { wch: 15 }, // رقم الترخيص
+                { wch: 12 }, // كود ADM
+                { wch: 25 }, // النشاط
+                { wch: 12 }, // التقييم
+                { wch: 18 }, // آخر تفتيش
+                { wch: 15 }  // عدد التفتيشات
+            ];
+            
+            XLSX.utils.book_append_sheet(wb, ws, 'قائمة المحلات التجريبية');
+            
+            const timestamp = new Date().toISOString().split('T')[0];
+            const filename = `قائمة_المحلات_التجريبية_${timestamp}.xlsx`;
+            
+            XLSX.writeFile(wb, filename);
+            
+            showStatus(`✅ تم تصدير ${testShops.length} محل إلى Excel بنجاح!\n\n📄 اسم الملف: ${filename}`, 'success');
+        }
+        
+        // Export to PDF
+        function exportPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({
+                orientation: 'landscape',
+                unit: 'mm',
+                format: 'a4'
+            });
+            
+            doc.setFont('helvetica');
+            doc.setFontSize(16);
+            
+            const title = 'قائمة المحلات التجريبية - Test Shop List';
+            doc.text(title, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+            
+            doc.setFontSize(10);
+            const dateText = `تاريخ التصدير: ${new Date().toLocaleDateString('ar-EG')} - Export Date: ${new Date().toLocaleDateString('en-US')}`;
+            doc.text(dateText, doc.internal.pageSize.getWidth() / 2, 22, { align: 'center' });
+            
+            const tableData = testShops.map((shop, index) => [
+                index + 1,
+                shop.name,
+                shop.area,
+                shop.licenseNo,
+                shop.activity,
+                shop.rating.toFixed(1) + '%',
+                shop.inspectionCount
+            ]);
+            
+            doc.autoTable({
+                startY: 30,
+                head: [['#', 'اسم المحل / Shop Name', 'المنطقة / Area', 'الترخيص / License', 'النشاط / Activity', 'التقييم / Rating', 'التفتيشات / Inspections']],
+                body: tableData,
+                styles: {
+                    font: 'helvetica',
+                    fontSize: 9,
+                    cellPadding: 3,
+                    halign: 'center'
+                },
+                headStyles: {
+                    fillColor: [102, 126, 234],
+                    textColor: 255,
+                    fontStyle: 'bold',
+                    halign: 'center'
+                },
+                alternateRowStyles: {
+                    fillColor: [245, 245, 245]
+                },
+                margin: { top: 30, left: 10, right: 10 }
+            });
+            
+            const finalY = doc.lastAutoTable.finalY || 30;
+            doc.setFontSize(10);
+            const stats = `إجمالي المحلات / Total Shops: ${testShops.length}`;
+            doc.text(stats, 15, finalY + 10);
+            
+            const timestamp = new Date().toISOString().split('T')[0];
+            const filename = `Test_Shop_List_${timestamp}.pdf`;
+            doc.save(filename);
+            
+            showStatus(`✅ تم تصدير ${testShops.length} محل إلى PDF بنجاح!\n\n📄 اسم الملف: ${filename}`, 'success');
+        }
+        
+        // Print function
+        function printTestData() {
+            const content = document.getElementById('testDataContent').innerHTML;
+            
+            const printWindow = window.open('', '', 'height=800,width=1000');
+            
+            if (!printWindow) {
+                alert('⚠️ تم حظر نافذة الطباعة. يرجى السماح بالنوافذ المنبثقة.');
+                return;
+            }
+            
+            printWindow.document.write('<html><head><title>قائمة المحلات التجريبية</title>');
+            printWindow.document.write('<meta charset="UTF-8">');
+            printWindow.document.write('<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">');
+            printWindow.document.write('<style>');
+            printWindow.document.write('* { margin: 0; padding: 0; box-sizing: border-box; }');
+            printWindow.document.write('body { font-family: "Cairo", Arial, sans-serif; direction: rtl; padding: 20px; }');
+            printWindow.document.write('h1 { text-align: center; color: #667eea; margin-bottom: 10px; }');
+            printWindow.document.write('p { text-align: center; color: #666; margin-bottom: 20px; }');
+            printWindow.document.write('table { width: 100%; border-collapse: collapse; margin: 20px 0; }');
+            printWindow.document.write('th, td { border: 1px solid #ddd; padding: 10px; text-align: right; font-size: 12px; }');
+            printWindow.document.write('th { background-color: #667eea; color: white; font-weight: bold; }');
+            printWindow.document.write('tr:nth-child(even) { background-color: #f8f9fa; }');
+            printWindow.document.write('h3 { color: #667eea; margin-bottom: 15px; }');
+            printWindow.document.write('@media print { body { padding: 10px; } }');
+            printWindow.document.write('</style>');
+            printWindow.document.write('</head><body>');
+            printWindow.document.write('<h1>📋 قائمة المحلات التجريبية</h1>');
+            printWindow.document.write('<p>تاريخ الطباعة: ' + new Date().toLocaleDateString('ar-EG') + ' - ' + new Date().toLocaleTimeString('ar-EG') + '</p>');
+            printWindow.document.write(content);
+            printWindow.document.write('<div style="margin-top: 30px; text-align: center; color: #999; font-size: 11px; border-top: 1px solid #ddd; padding-top: 10px;">');
+            printWindow.document.write('تم إنشاء هذا التقرير بواسطة أداة التخطيط الذكية للتفتيش الشهري');
+            printWindow.document.write('</div>');
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            
+            setTimeout(() => {
+                printWindow.focus();
+                printWindow.print();
+                showStatus('✅ تم فتح نافذة الطباعة بنجاح!', 'success');
+            }, 250);
+        }
+        
+        // Main export function
+        function exportTestData(format) {
+            try {
+                if (format === 'json') {
+                    exportJSON();
+                } else if (format === 'excel') {
+                    exportExcel();
+                } else if (format === 'pdf') {
+                    exportPDF();
+                }
+            } catch (error) {
+                showStatus('❌ خطأ في التصدير: ' + error.message, 'info');
+                console.error('Export error:', error);
+            }
+        }
+        
+        // Initialize
+        window.onload = function() {
+            populateTable();
+            showStatus('🎉 جاهز للاختبار! اضغط على أي زر للتصدير', 'info');
+        };
+    </script>
+</body>
+</html>

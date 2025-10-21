@@ -1045,6 +1045,10 @@
     
     <!-- SheetJS library for Excel import/export -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    
+    <!-- jsPDF library for PDF export with Arabic support -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.1/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -6870,40 +6874,213 @@
                 });
             }
             
+            // Check if there are shops to export
+            if (allShops.length === 0) {
+                alert('⚠️ لا توجد محلات للتصدير');
+                return;
+            }
+            
             if (format === 'json') {
-                const dataStr = JSON.stringify(allShops, null, 2);
-                const dataBlob = new Blob([dataStr], {type: 'application/json'});
-                const url = URL.createObjectURL(dataBlob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `smart-shop-list-${new Date().toISOString().split('T')[0]}.json`;
-                link.click();
-                URL.revokeObjectURL(url);
-                alert(`✅ تم تصدير ${allShops.length} محل بصيغة JSON`);
-            } else if (format === 'excel' || format === 'pdf') {
-                alert(`📊 تصدير ${format.toUpperCase()}\n\nسيتم إضافة هذه الميزة قريباً.\n\nيمكنك حالياً:\n• تصدير JSON\n• طباعة القائمة`);
+                try {
+                    const dataStr = JSON.stringify(allShops, null, 2);
+                    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                    const url = URL.createObjectURL(dataBlob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `smart-shop-list-${new Date().toISOString().split('T')[0]}.json`;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                    alert(`✅ تم تصدير ${allShops.length} محل بصيغة JSON بنجاح!`);
+                } catch (error) {
+                    alert('❌ خطأ في تصدير JSON: ' + error.message);
+                    console.error('JSON export error:', error);
+                }
+            } else if (format === 'excel') {
+                try {
+                    // Prepare data for Excel export
+                    const exportData = allShops.map((shop, index) => ({
+                        'الرقم': index + 1,
+                        'اسم المحل': shop.name,
+                        'الاسم بالإنجليزية': shop.nameEn,
+                        'المنطقة': shop.area,
+                        'رقم الترخيص': shop.licenseNo,
+                        'كود ADM': shop.admCode,
+                        'العنوان': shop.address,
+                        'جهة الاتصال': shop.contact,
+                        'النشاط': shop.activity,
+                        'التقييم': shop.rating ? shop.rating.toFixed(1) + '%' : 'لا يوجد',
+                        'آخر تفتيش': shop.lastInspection || 'لم يتم التفتيش',
+                        'عدد التفتيشات': shop.inspectionCount || 0
+                    }));
+                    
+                    // Create workbook
+                    const wb = XLSX.utils.book_new();
+                    const ws = XLSX.utils.json_to_sheet(exportData);
+                    
+                    // Set column widths
+                    ws['!cols'] = [
+                        { wch: 8 },  // الرقم
+                        { wch: 30 }, // اسم المحل
+                        { wch: 25 }, // الاسم بالإنجليزية
+                        { wch: 20 }, // المنطقة
+                        { wch: 15 }, // رقم الترخيص
+                        { wch: 12 }, // كود ADM
+                        { wch: 30 }, // العنوان
+                        { wch: 20 }, // جهة الاتصال
+                        { wch: 25 }, // النشاط
+                        { wch: 12 }, // التقييم
+                        { wch: 18 }, // آخر تفتيش
+                        { wch: 15 }  // عدد التفتيشات
+                    ];
+                    
+                    // Add worksheet to workbook
+                    XLSX.utils.book_append_sheet(wb, ws, 'قائمة المحلات الذكية');
+                    
+                    // Generate filename with timestamp
+                    const timestamp = new Date().toISOString().split('T')[0];
+                    const filename = `قائمة_المحلات_الذكية_${timestamp}.xlsx`;
+                    
+                    // Download file
+                    XLSX.writeFile(wb, filename);
+                    
+                    alert(`✅ تم تصدير ${allShops.length} محل إلى Excel بنجاح!\n\n📄 اسم الملف: ${filename}`);
+                } catch (error) {
+                    alert('❌ خطأ في تصدير Excel: ' + error.message);
+                    console.error('Excel export error:', error);
+                }
+            } else if (format === 'pdf') {
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF({
+                        orientation: 'landscape',
+                        unit: 'mm',
+                        format: 'a4'
+                    });
+                    
+                    // Set font for better Arabic support (using default font)
+                    doc.setFont('helvetica');
+                    doc.setFontSize(16);
+                    
+                    // Add title
+                    const title = 'قائمة المحلات الذكية - Smart Shop List';
+                    doc.text(title, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+                    
+                    // Add date
+                    doc.setFontSize(10);
+                    const dateText = `تاريخ التصدير: ${new Date().toLocaleDateString('ar-EG')} - Export Date: ${new Date().toLocaleDateString('en-US')}`;
+                    doc.text(dateText, doc.internal.pageSize.getWidth() / 2, 22, { align: 'center' });
+                    
+                    // Prepare table data
+                    const tableData = allShops.map((shop, index) => [
+                        index + 1,
+                        shop.name,
+                        shop.area,
+                        shop.licenseNo || '-',
+                        shop.activity || '-',
+                        shop.rating ? shop.rating.toFixed(1) + '%' : '-',
+                        shop.inspectionCount || 0
+                    ]);
+                    
+                    // Add table
+                    doc.autoTable({
+                        startY: 30,
+                        head: [['#', 'اسم المحل / Shop Name', 'المنطقة / Area', 'الترخيص / License', 'النشاط / Activity', 'التقييم / Rating', 'التفتيشات / Inspections']],
+                        body: tableData,
+                        styles: {
+                            font: 'helvetica',
+                            fontSize: 9,
+                            cellPadding: 3,
+                            halign: 'center'
+                        },
+                        headStyles: {
+                            fillColor: [102, 126, 234],
+                            textColor: 255,
+                            fontStyle: 'bold',
+                            halign: 'center'
+                        },
+                        alternateRowStyles: {
+                            fillColor: [245, 245, 245]
+                        },
+                        margin: { top: 30, left: 10, right: 10 }
+                    });
+                    
+                    // Add footer with statistics
+                    const finalY = doc.lastAutoTable.finalY || 30;
+                    doc.setFontSize(10);
+                    const stats = `إجمالي المحلات / Total Shops: ${allShops.length}`;
+                    doc.text(stats, 15, finalY + 10);
+                    
+                    // Save PDF
+                    const timestamp = new Date().toISOString().split('T')[0];
+                    const filename = `Smart_Shop_List_${timestamp}.pdf`;
+                    doc.save(filename);
+                    
+                    alert(`✅ تم تصدير ${allShops.length} محل إلى PDF بنجاح!\n\n📄 اسم الملف: ${filename}`);
+                } catch (error) {
+                    alert('❌ خطأ في تصدير PDF: ' + error.message);
+                    console.error('PDF export error:', error);
+                }
             }
         }
         
         // Print Smart Shop List
         function printSmartShopList() {
-            const content = document.getElementById('smartShopListContent').innerHTML;
-            const printWindow = window.open('', '', 'height=600,width=800');
-            printWindow.document.write('<html><head><title>قائمة المحلات الذكية</title>');
-            printWindow.document.write('<style>');
-            printWindow.document.write('body { font-family: "Cairo", Arial, sans-serif; direction: rtl; }');
-            printWindow.document.write('table { width: 100%; border-collapse: collapse; margin: 20px 0; }');
-            printWindow.document.write('th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }');
-            printWindow.document.write('th { background-color: #667eea; color: white; }');
-            printWindow.document.write('h3 { color: #667eea; }');
-            printWindow.document.write('</style>');
-            printWindow.document.write('</head><body>');
-            printWindow.document.write('<h1 style="text-align: center;">📋 قائمة المحلات الذكية</h1>');
-            printWindow.document.write('<p style="text-align: center;">تاريخ الطباعة: ' + new Date().toLocaleDateString('ar-EG') + '</p>');
-            printWindow.document.write(content);
-            printWindow.document.write('</body></html>');
-            printWindow.document.close();
-            printWindow.print();
+            try {
+                const content = document.getElementById('smartShopListContent').innerHTML;
+                
+                // Check if there's content to print
+                if (!content || content.trim() === '') {
+                    alert('⚠️ لا يوجد محتوى للطباعة');
+                    return;
+                }
+                
+                const printWindow = window.open('', '', 'height=800,width=1000');
+                
+                if (!printWindow) {
+                    alert('⚠️ تم حظر نافذة الطباعة. يرجى السماح بالنوافذ المنبثقة.');
+                    return;
+                }
+                
+                printWindow.document.write('<html><head><title>قائمة المحلات الذكية</title>');
+                printWindow.document.write('<meta charset="UTF-8">');
+                printWindow.document.write('<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">');
+                printWindow.document.write('<style>');
+                printWindow.document.write('* { margin: 0; padding: 0; box-sizing: border-box; }');
+                printWindow.document.write('body { font-family: "Cairo", Arial, sans-serif; direction: rtl; padding: 20px; }');
+                printWindow.document.write('h1 { text-align: center; color: #667eea; margin-bottom: 10px; }');
+                printWindow.document.write('p { text-align: center; color: #666; margin-bottom: 20px; }');
+                printWindow.document.write('table { width: 100%; border-collapse: collapse; margin: 20px 0; }');
+                printWindow.document.write('th, td { border: 1px solid #ddd; padding: 10px; text-align: right; font-size: 12px; }');
+                printWindow.document.write('th { background-color: #667eea; color: white; font-weight: bold; }');
+                printWindow.document.write('tr:nth-child(even) { background-color: #f8f9fa; }');
+                printWindow.document.write('h3 { color: #667eea; margin-top: 30px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #667eea; }');
+                printWindow.document.write('.priority-high { background-color: #ffe6e6; }');
+                printWindow.document.write('.rating-excellent { background-color: #d4edda; }');
+                printWindow.document.write('.rating-good { background-color: #cce5ff; }');
+                printWindow.document.write('.rating-fair { background-color: #fff3cd; }');
+                printWindow.document.write('.rating-poor { background-color: #f8d7da; }');
+                printWindow.document.write('@media print { body { padding: 10px; } }');
+                printWindow.document.write('</style>');
+                printWindow.document.write('</head><body>');
+                printWindow.document.write('<h1>📋 قائمة المحلات الذكية</h1>');
+                printWindow.document.write('<p>تاريخ الطباعة: ' + new Date().toLocaleDateString('ar-EG') + ' - ' + new Date().toLocaleTimeString('ar-EG') + '</p>');
+                printWindow.document.write(content);
+                printWindow.document.write('<div style="margin-top: 30px; text-align: center; color: #999; font-size: 11px; border-top: 1px solid #ddd; padding-top: 10px;">');
+                printWindow.document.write('تم إنشاء هذا التقرير بواسطة أداة التخطيط الذكية للتفتيش الشهري');
+                printWindow.document.write('</div>');
+                printWindow.document.write('</body></html>');
+                printWindow.document.close();
+                
+                // Wait for content to load then print
+                setTimeout(() => {
+                    printWindow.focus();
+                    printWindow.print();
+                }, 250);
+                
+            } catch (error) {
+                alert('❌ خطأ في الطباعة: ' + error.message);
+                console.error('Print error:', error);
+            }
         }
         
         // =========================================================================

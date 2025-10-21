@@ -1908,6 +1908,207 @@
             </div>
         </div>
         
+        <!-- Merge Areas Modal -->
+        <div id="mergeAreasModal" class="modal">
+            <div class="modal-content" style="max-width: 800px;">
+                <div class="modal-header">
+                    <h2>🔗 دمج المناطق</h2>
+                    <span class="modal-close" onclick="closeMergeAreasModal()">&times;</span>
+                </div>
+                
+                <p style="color: #666; margin-bottom: 20px;">
+                    اختر منطقتين أو أكثر لدمجها في منطقة واحدة. سيتم نقل جميع المحلات تلقائياً إلى المنطقة الرئيسية.
+                </p>
+                
+                <div class="form-group">
+                    <label class="form-label">المنطقة الرئيسية (سيتم الدمج فيها) <span style="color: red;">*</span></label>
+                    <select id="mergeTargetArea" class="form-control">
+                        <option value="">-- اختر المنطقة الرئيسية --</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">المناطق المراد دمجها (حدد واحدة أو أكثر) <span style="color: red;">*</span></label>
+                    <div id="mergeSourceAreasContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px;">
+                        <!-- Checkboxes will be added here dynamically -->
+                    </div>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                    <strong>⚠️ ملاحظة هامة:</strong>
+                    <ul style="margin: 10px 0; padding-right: 20px;">
+                        <li>سيتم نقل جميع المحلات من المناطق المحددة إلى المنطقة الرئيسية</li>
+                        <li>سيتم تحديث جميع التفتيشات للمحلات المنقولة</li>
+                        <li>سيتم حذف المناطق المدمجة بعد نقل المحلات</li>
+                        <li>لا يمكن التراجع عن هذه العملية</li>
+                    </ul>
+                </div>
+                
+                <div class="btn-group">
+                    <button class="btn btn-success" onclick="executeMergeAreas()">
+                        <span>🔗</span> تنفيذ الدمج
+                    </button>
+                    <button class="btn btn-warning" onclick="closeMergeAreasModal()">
+                        <span>✕</span> إلغاء
+                    </button>
+                </div>
+                
+                <div class="status-message" id="mergeAreasStatus"></div>
+            </div>
+        </div>
+        
+        <!-- Assign Shops to Areas Modal -->
+        <div id="assignShopsModal" class="modal">
+            <div class="modal-content" style="max-width: 900px;">
+                <div class="modal-header">
+                    <h2>📍 تعيين المحلات للمناطق</h2>
+                    <span class="modal-close" onclick="closeAssignShopsModal()">&times;</span>
+                </div>
+                
+                <p style="color: #666; margin-bottom: 20px;">
+                    حدد المحلات التي تريد نقلها إلى منطقة جديدة.
+                </p>
+                
+                <div class="form-group">
+                    <label class="form-label">المنطقة الحالية (للفلترة)</label>
+                    <select id="assignShopsCurrentArea" class="form-control" onchange="loadShopsForAssignment()">
+                        <option value="">-- جميع المناطق --</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">المنطقة الجديدة <span style="color: red;">*</span></label>
+                    <select id="assignShopsTargetArea" class="form-control">
+                        <option value="">-- اختر المنطقة الجديدة --</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">
+                        المحلات المراد نقلها (حدد واحد أو أكثر) <span style="color: red;">*</span>
+                    </label>
+                    <div style="margin-bottom: 10px;">
+                        <input type="text" id="searchShopsForAssignment" class="form-control" placeholder="ابحث عن محل..." oninput="filterShopsForAssignment()">
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <button class="btn btn-sm btn-info" onclick="selectAllShopsForAssignment()">
+                            ✓ تحديد الكل
+                        </button>
+                        <button class="btn btn-sm btn-warning" onclick="deselectAllShopsForAssignment()">
+                            ✕ إلغاء التحديد
+                        </button>
+                    </div>
+                    <div id="assignShopsContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px;">
+                        <!-- Checkboxes will be added here dynamically -->
+                    </div>
+                </div>
+                
+                <div style="background: #d1ecf1; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                    <strong>ℹ️ معلومات:</strong>
+                    <ul style="margin: 10px 0; padding-right: 20px;">
+                        <li>سيتم تحديث منطقة المحلات المحددة إلى المنطقة الجديدة</li>
+                        <li>سيتم تحديث جميع التفتيشات المرتبطة بالمحلات</li>
+                        <li>يمكن إعادة تعيين المحلات في أي وقت</li>
+                    </ul>
+                </div>
+                
+                <div class="btn-group">
+                    <button class="btn btn-success" onclick="executeAssignShops()">
+                        <span>📍</span> تعيين المحلات
+                    </button>
+                    <button class="btn btn-warning" onclick="closeAssignShopsModal()">
+                        <span>✕</span> إلغاء
+                    </button>
+                </div>
+                
+                <div class="status-message" id="assignShopsStatus"></div>
+            </div>
+        </div>
+        
+        <!-- Bulk Edit Areas Modal -->
+        <div id="bulkEditModal" class="modal">
+            <div class="modal-content" style="max-width: 900px;">
+                <div class="modal-header">
+                    <h2>✏️ التعديل الجماعي للمناطق</h2>
+                    <span class="modal-close" onclick="closeBulkEditModal()">&times;</span>
+                </div>
+                
+                <p style="color: #666; margin-bottom: 20px;">
+                    قم بتعديل عدة مناطق في نفس الوقت. يمكنك إضافة بادئة أو لاحقة لأسماء المناطق أو استبدال نص معين.
+                </p>
+                
+                <div class="form-group">
+                    <label class="form-label">المناطق المراد تعديلها (حدد واحدة أو أكثر) <span style="color: red;">*</span></label>
+                    <div style="margin-bottom: 10px;">
+                        <button class="btn btn-sm btn-info" onclick="selectAllAreasForBulkEdit()">
+                            ✓ تحديد الكل
+                        </button>
+                        <button class="btn btn-sm btn-warning" onclick="deselectAllAreasForBulkEdit()">
+                            ✕ إلغاء التحديد
+                        </button>
+                    </div>
+                    <div id="bulkEditAreasContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px;">
+                        <!-- Checkboxes will be added here dynamically -->
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">نوع التعديل</label>
+                    <select id="bulkEditType" class="form-control" onchange="toggleBulkEditOptions()">
+                        <option value="prefix">إضافة بادئة للأسماء</option>
+                        <option value="suffix">إضافة لاحقة للأسماء</option>
+                        <option value="replace">استبدال نص في الأسماء</option>
+                    </select>
+                </div>
+                
+                <div id="bulkEditPrefixSuffix" style="display: block;">
+                    <div class="form-group">
+                        <label class="form-label">النص المراد إضافته</label>
+                        <input type="text" id="bulkEditText" class="form-control" placeholder="مثال: منطقة">
+                    </div>
+                </div>
+                
+                <div id="bulkEditReplace" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">النص المراد استبداله</label>
+                        <input type="text" id="bulkEditFindText" class="form-control" placeholder="النص القديم">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">النص الجديد</label>
+                        <input type="text" id="bulkEditReplaceText" class="form-control" placeholder="النص الجديد">
+                    </div>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                    <strong>⚠️ ملاحظة:</strong>
+                    <ul style="margin: 10px 0; padding-right: 20px;">
+                        <li>سيتم تحديث أسماء المناطق المحددة فقط</li>
+                        <li>تأكد من المعاينة قبل التنفيذ</li>
+                        <li>سيتم حفظ التغييرات تلقائياً</li>
+                    </ul>
+                </div>
+                
+                <div class="btn-group">
+                    <button class="btn btn-info" onclick="previewBulkEdit()">
+                        <span>👁️</span> معاينة التغييرات
+                    </button>
+                    <button class="btn btn-success" onclick="executeBulkEdit()">
+                        <span>✏️</span> تنفيذ التعديل
+                    </button>
+                    <button class="btn btn-warning" onclick="closeBulkEditModal()">
+                        <span>✕</span> إلغاء
+                    </button>
+                </div>
+                
+                <div id="bulkEditPreview" style="display: none; margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <h3 style="color: #2d3561; margin-bottom: 10px;">👁️ معاينة التغييرات:</h3>
+                    <div id="bulkEditPreviewContent"></div>
+                </div>
+                
+                <div class="status-message" id="bulkEditStatus"></div>
+            </div>
+        </div>
+        
         <!-- Smart Shop List Modal -->
         <div id="smartShopListModal" class="modal">
             <div class="modal-content" style="max-width: 95%; max-height: 90vh; overflow-y: auto;">
@@ -6286,14 +6487,310 @@
         };
         
         
-        // Merge Areas
+        // ============================================
+        // MERGE AREAS FUNCTIONS
+        // ============================================
+        
+        // Open merge areas modal
         function mergeAreas() {
-            alert('🔗 دمج المناطق\n\nسيتم إضافة هذه الميزة قريباً.\n\nستتمكن من:\n• دمج منطقتين أو أكثر\n• نقل المحلات تلقائياً\n• تحديث التفتيشات');
+            if (!planData || !planData.areas || planData.areas.length < 2) {
+                alert('⚠️ يجب أن يكون لديك منطقتين على الأقل للدمج');
+                return;
+            }
+            
+            // Populate target area dropdown
+            const targetSelect = document.getElementById('mergeTargetArea');
+            targetSelect.innerHTML = '<option value="">-- اختر المنطقة الرئيسية --</option>';
+            planData.areas.forEach(area => {
+                const option = document.createElement('option');
+                option.value = area.id;
+                option.textContent = area.name;
+                targetSelect.appendChild(option);
+            });
+            
+            // Populate source areas checkboxes
+            const container = document.getElementById('mergeSourceAreasContainer');
+            container.innerHTML = '';
+            planData.areas.forEach(area => {
+                const shopsCount = planData.shops.filter(s => s.areaId === area.id).length;
+                const label = document.createElement('label');
+                label.style.display = 'block';
+                label.style.padding = '8px';
+                label.style.cursor = 'pointer';
+                label.innerHTML = `
+                    <input type="checkbox" value="${area.id}" class="merge-source-checkbox" style="margin-left: 10px;">
+                    ${area.name} (${shopsCount} محل)
+                `;
+                container.appendChild(label);
+            });
+            
+            document.getElementById('mergeAreasModal').style.display = 'block';
+            document.getElementById('mergeAreasStatus').innerHTML = '';
         }
         
-        // Assign Shops to Areas
+        // Close merge areas modal
+        function closeMergeAreasModal() {
+            document.getElementById('mergeAreasModal').style.display = 'none';
+        }
+        
+        // Execute merge areas
+        async function executeMergeAreas() {
+            const targetAreaId = document.getElementById('mergeTargetArea').value;
+            const checkboxes = document.querySelectorAll('.merge-source-checkbox:checked');
+            const sourceAreaIds = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (!targetAreaId) {
+                showMessage('mergeAreasStatus', 'error', '❌ يرجى اختيار المنطقة الرئيسية');
+                return;
+            }
+            
+            if (sourceAreaIds.length === 0) {
+                showMessage('mergeAreasStatus', 'error', '❌ يرجى اختيار منطقة واحدة على الأقل للدمج');
+                return;
+            }
+            
+            if (sourceAreaIds.includes(targetAreaId)) {
+                showMessage('mergeAreasStatus', 'error', '❌ لا يمكن دمج المنطقة في نفسها');
+                return;
+            }
+            
+            const targetArea = planData.areas.find(a => a.id === targetAreaId);
+            const sourceAreas = planData.areas.filter(a => sourceAreaIds.includes(a.id));
+            const sourceAreasNames = sourceAreas.map(a => a.name).join('، ');
+            
+            if (!confirm(`هل أنت متأكد من دمج المناطق:\n${sourceAreasNames}\n\nفي المنطقة: ${targetArea.name}؟\n\nسيتم نقل جميع المحلات وحذف المناطق المدمجة.`)) {
+                return;
+            }
+            
+            showMessage('mergeAreasStatus', 'info', '⏳ جاري دمج المناطق...');
+            
+            try {
+                // Move all shops from source areas to target area
+                let movedShopsCount = 0;
+                planData.shops.forEach(shop => {
+                    if (sourceAreaIds.includes(shop.areaId)) {
+                        shop.areaId = targetAreaId;
+                        movedShopsCount++;
+                    }
+                });
+                
+                // Update inspections data
+                let updatedInspections = 0;
+                if (planData.inspectionData) {
+                    planData.inspectionData.forEach(inspection => {
+                        const sourceArea = sourceAreas.find(a => a.name === inspection.area);
+                        if (sourceArea) {
+                            inspection.area = targetArea.name;
+                            updatedInspections++;
+                        }
+                    });
+                }
+                
+                // Remove source areas
+                planData.areas = planData.areas.filter(a => !sourceAreaIds.includes(a.id));
+                
+                // Save to GitHub
+                await savePlanDataToGitHub();
+                
+                showMessage('mergeAreasStatus', 'success', 
+                    `✅ تم دمج ${sourceAreas.length} منطقة بنجاح!\n` +
+                    `• تم نقل ${movedShopsCount} محل\n` +
+                    `• تم تحديث ${updatedInspections} تفتيش`);
+                
+                setTimeout(() => {
+                    closeMergeAreasModal();
+                    displayAreasList();
+                    populateAreas();
+                    populateShopAreaFilter();
+                }, 2000);
+                
+            } catch (error) {
+                showMessage('mergeAreasStatus', 'error', '❌ فشل دمج المناطق: ' + error.message);
+            }
+        }
+        
+        // ============================================
+        // ASSIGN SHOPS TO AREAS FUNCTIONS
+        // ============================================
+        
+        // Open assign shops modal
         function assignShopsToAreas() {
-            alert('📍 تعيين المحلات للمناطق\n\nسيتم إضافة هذه الميزة قريباً.\n\nستتمكن من:\n• تعيين محلات متعددة لمنطقة\n• إعادة تعيين المحلات\n• التعيين التلقائي حسب الموقع');
+            if (!planData || !planData.areas || planData.areas.length === 0) {
+                alert('⚠️ لا توجد مناطق متاحة');
+                return;
+            }
+            
+            if (!planData.shops || planData.shops.length === 0) {
+                alert('⚠️ لا توجد محلات متاحة');
+                return;
+            }
+            
+            // Populate current area filter
+            const currentAreaSelect = document.getElementById('assignShopsCurrentArea');
+            currentAreaSelect.innerHTML = '<option value="">-- جميع المناطق --</option>';
+            planData.areas.forEach(area => {
+                const option = document.createElement('option');
+                option.value = area.id;
+                option.textContent = area.name;
+                currentAreaSelect.appendChild(option);
+            });
+            
+            // Populate target area dropdown
+            const targetSelect = document.getElementById('assignShopsTargetArea');
+            targetSelect.innerHTML = '<option value="">-- اختر المنطقة الجديدة --</option>';
+            planData.areas.forEach(area => {
+                const option = document.createElement('option');
+                option.value = area.id;
+                option.textContent = area.name;
+                targetSelect.appendChild(option);
+            });
+            
+            // Load shops
+            loadShopsForAssignment();
+            
+            document.getElementById('assignShopsModal').style.display = 'block';
+            document.getElementById('assignShopsStatus').innerHTML = '';
+        }
+        
+        // Close assign shops modal
+        function closeAssignShopsModal() {
+            document.getElementById('assignShopsModal').style.display = 'none';
+        }
+        
+        // Load shops for assignment
+        function loadShopsForAssignment() {
+            const currentAreaId = document.getElementById('assignShopsCurrentArea').value;
+            const container = document.getElementById('assignShopsContainer');
+            
+            let shopsToShow = planData.shops;
+            if (currentAreaId) {
+                shopsToShow = planData.shops.filter(s => s.areaId === currentAreaId);
+            }
+            
+            container.innerHTML = '';
+            if (shopsToShow.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #999;">لا توجد محلات</p>';
+                return;
+            }
+            
+            shopsToShow.forEach(shop => {
+                const area = planData.areas.find(a => a.id === shop.areaId);
+                const areaName = area ? area.name : 'غير محدد';
+                const label = document.createElement('label');
+                label.style.display = 'block';
+                label.style.padding = '8px';
+                label.style.cursor = 'pointer';
+                label.className = 'shop-assignment-label';
+                label.innerHTML = `
+                    <input type="checkbox" value="${shop.id}" class="assign-shop-checkbox" style="margin-left: 10px;">
+                    ${shop.name} <span style="color: #999; font-size: 0.9em;">(${areaName})</span>
+                `;
+                container.appendChild(label);
+            });
+        }
+        
+        // Filter shops for assignment
+        function filterShopsForAssignment() {
+            const searchTerm = document.getElementById('searchShopsForAssignment').value.toLowerCase();
+            const labels = document.querySelectorAll('.shop-assignment-label');
+            
+            labels.forEach(label => {
+                const text = label.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    label.style.display = 'block';
+                } else {
+                    label.style.display = 'none';
+                }
+            });
+        }
+        
+        // Select all shops for assignment
+        function selectAllShopsForAssignment() {
+            const checkboxes = document.querySelectorAll('.assign-shop-checkbox');
+            checkboxes.forEach(cb => {
+                if (cb.parentElement.style.display !== 'none') {
+                    cb.checked = true;
+                }
+            });
+        }
+        
+        // Deselect all shops for assignment
+        function deselectAllShopsForAssignment() {
+            const checkboxes = document.querySelectorAll('.assign-shop-checkbox');
+            checkboxes.forEach(cb => cb.checked = false);
+        }
+        
+        // Execute assign shops
+        async function executeAssignShops() {
+            const targetAreaId = document.getElementById('assignShopsTargetArea').value;
+            const checkboxes = document.querySelectorAll('.assign-shop-checkbox:checked');
+            const shopIds = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (!targetAreaId) {
+                showMessage('assignShopsStatus', 'error', '❌ يرجى اختيار المنطقة الجديدة');
+                return;
+            }
+            
+            if (shopIds.length === 0) {
+                showMessage('assignShopsStatus', 'error', '❌ يرجى اختيار محل واحد على الأقل');
+                return;
+            }
+            
+            const targetArea = planData.areas.find(a => a.id === targetAreaId);
+            
+            if (!confirm(`هل أنت متأكد من نقل ${shopIds.length} محل إلى المنطقة: ${targetArea.name}؟`)) {
+                return;
+            }
+            
+            showMessage('assignShopsStatus', 'info', '⏳ جاري تعيين المحلات...');
+            
+            try {
+                // Update shops area
+                const updatedShops = [];
+                planData.shops.forEach(shop => {
+                    if (shopIds.includes(shop.id)) {
+                        const oldArea = planData.areas.find(a => a.id === shop.areaId);
+                        shop.areaId = targetAreaId;
+                        updatedShops.push({
+                            name: shop.name,
+                            oldArea: oldArea ? oldArea.name : 'غير محدد',
+                            newArea: targetArea.name
+                        });
+                    }
+                });
+                
+                // Update inspections
+                let updatedInspections = 0;
+                if (planData.inspectionData) {
+                    updatedShops.forEach(shopInfo => {
+                        planData.inspectionData.forEach(inspection => {
+                            if (inspection.shops && inspection.shops.includes(shopInfo.name)) {
+                                if (inspection.area === shopInfo.oldArea) {
+                                    inspection.area = shopInfo.newArea;
+                                    updatedInspections++;
+                                }
+                            }
+                        });
+                    });
+                }
+                
+                // Save to GitHub
+                await savePlanDataToGitHub();
+                
+                showMessage('assignShopsStatus', 'success', 
+                    `✅ تم تعيين ${shopIds.length} محل بنجاح!\n` +
+                    `• المنطقة الجديدة: ${targetArea.name}\n` +
+                    `• تم تحديث ${updatedInspections} تفتيش`);
+                
+                setTimeout(() => {
+                    closeAssignShopsModal();
+                    displayShopsList();
+                    displayAreasList();
+                }, 2000);
+                
+            } catch (error) {
+                showMessage('assignShopsStatus', 'error', '❌ فشل تعيين المحلات: ' + error.message);
+            }
         }
         
         // Export Areas Data
@@ -6343,9 +6840,263 @@
             input.click();
         }
         
-        // Bulk Edit Areas
+        // ============================================
+        // BULK EDIT AREAS FUNCTIONS
+        // ============================================
+        
+        // Open bulk edit modal
         function bulkEditAreas() {
-            alert('✏️ التعديل الجماعي للمناطق\n\nسيتم إضافة هذه الميزة قريباً.\n\nستتمكن من:\n• إعادة تسمية عدة مناطق\n• تحديث المعلومات\n• إعادة ترتيب المناطق');
+            if (!planData || !planData.areas || planData.areas.length === 0) {
+                alert('⚠️ لا توجد مناطق متاحة');
+                return;
+            }
+            
+            // Populate areas checkboxes
+            const container = document.getElementById('bulkEditAreasContainer');
+            container.innerHTML = '';
+            planData.areas.forEach(area => {
+                const shopsCount = planData.shops.filter(s => s.areaId === area.id).length;
+                const label = document.createElement('label');
+                label.style.display = 'block';
+                label.style.padding = '8px';
+                label.style.cursor = 'pointer';
+                label.innerHTML = `
+                    <input type="checkbox" value="${area.id}" class="bulk-edit-checkbox" style="margin-left: 10px;">
+                    ${area.name} (${shopsCount} محل)
+                `;
+                container.appendChild(label);
+            });
+            
+            document.getElementById('bulkEditModal').style.display = 'block';
+            document.getElementById('bulkEditStatus').innerHTML = '';
+            document.getElementById('bulkEditPreview').style.display = 'none';
+        }
+        
+        // Close bulk edit modal
+        function closeBulkEditModal() {
+            document.getElementById('bulkEditModal').style.display = 'none';
+        }
+        
+        // Toggle bulk edit options
+        function toggleBulkEditOptions() {
+            const editType = document.getElementById('bulkEditType').value;
+            const prefixSuffixDiv = document.getElementById('bulkEditPrefixSuffix');
+            const replaceDiv = document.getElementById('bulkEditReplace');
+            
+            if (editType === 'replace') {
+                prefixSuffixDiv.style.display = 'none';
+                replaceDiv.style.display = 'block';
+            } else {
+                prefixSuffixDiv.style.display = 'block';
+                replaceDiv.style.display = 'none';
+            }
+        }
+        
+        // Select all areas for bulk edit
+        function selectAllAreasForBulkEdit() {
+            const checkboxes = document.querySelectorAll('.bulk-edit-checkbox');
+            checkboxes.forEach(cb => cb.checked = true);
+        }
+        
+        // Deselect all areas for bulk edit
+        function deselectAllAreasForBulkEdit() {
+            const checkboxes = document.querySelectorAll('.bulk-edit-checkbox');
+            checkboxes.forEach(cb => cb.checked = false);
+        }
+        
+        // Preview bulk edit
+        function previewBulkEdit() {
+            const checkboxes = document.querySelectorAll('.bulk-edit-checkbox:checked');
+            const areaIds = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (areaIds.length === 0) {
+                showMessage('bulkEditStatus', 'error', '❌ يرجى اختيار منطقة واحدة على الأقل');
+                return;
+            }
+            
+            const editType = document.getElementById('bulkEditType').value;
+            const changes = [];
+            
+            if (editType === 'prefix') {
+                const prefix = document.getElementById('bulkEditText').value.trim();
+                if (!prefix) {
+                    showMessage('bulkEditStatus', 'error', '❌ يرجى إدخال البادئة');
+                    return;
+                }
+                
+                areaIds.forEach(areaId => {
+                    const area = planData.areas.find(a => a.id === areaId);
+                    if (area) {
+                        changes.push({
+                            old: area.name,
+                            new: prefix + ' ' + area.name
+                        });
+                    }
+                });
+            } else if (editType === 'suffix') {
+                const suffix = document.getElementById('bulkEditText').value.trim();
+                if (!suffix) {
+                    showMessage('bulkEditStatus', 'error', '❌ يرجى إدخال اللاحقة');
+                    return;
+                }
+                
+                areaIds.forEach(areaId => {
+                    const area = planData.areas.find(a => a.id === areaId);
+                    if (area) {
+                        changes.push({
+                            old: area.name,
+                            new: area.name + ' ' + suffix
+                        });
+                    }
+                });
+            } else if (editType === 'replace') {
+                const findText = document.getElementById('bulkEditFindText').value.trim();
+                const replaceText = document.getElementById('bulkEditReplaceText').value.trim();
+                
+                if (!findText) {
+                    showMessage('bulkEditStatus', 'error', '❌ يرجى إدخال النص المراد استبداله');
+                    return;
+                }
+                
+                areaIds.forEach(areaId => {
+                    const area = planData.areas.find(a => a.id === areaId);
+                    if (area && area.name.includes(findText)) {
+                        changes.push({
+                            old: area.name,
+                            new: area.name.replace(new RegExp(findText, 'g'), replaceText)
+                        });
+                    }
+                });
+            }
+            
+            if (changes.length === 0) {
+                showMessage('bulkEditStatus', 'warning', '⚠️ لا توجد تغييرات لتطبيقها');
+                return;
+            }
+            
+            // Display preview
+            const previewDiv = document.getElementById('bulkEditPreview');
+            const previewContent = document.getElementById('bulkEditPreviewContent');
+            previewContent.innerHTML = '';
+            
+            changes.forEach(change => {
+                const changeDiv = document.createElement('div');
+                changeDiv.style.padding = '10px';
+                changeDiv.style.borderBottom = '1px solid #e0e0e0';
+                changeDiv.innerHTML = `
+                    <div style="color: #dc3545;">القديم: ${change.old}</div>
+                    <div style="color: #28a745;">الجديد: ${change.new}</div>
+                `;
+                previewContent.appendChild(changeDiv);
+            });
+            
+            previewDiv.style.display = 'block';
+            showMessage('bulkEditStatus', 'success', `✅ معاينة ${changes.length} تغيير`);
+        }
+        
+        // Execute bulk edit
+        async function executeBulkEdit() {
+            const checkboxes = document.querySelectorAll('.bulk-edit-checkbox:checked');
+            const areaIds = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (areaIds.length === 0) {
+                showMessage('bulkEditStatus', 'error', '❌ يرجى اختيار منطقة واحدة على الأقل');
+                return;
+            }
+            
+            const editType = document.getElementById('bulkEditType').value;
+            
+            if (!confirm(`هل أنت متأكد من تطبيق التعديلات على ${areaIds.length} منطقة؟`)) {
+                return;
+            }
+            
+            showMessage('bulkEditStatus', 'info', '⏳ جاري تطبيق التعديلات...');
+            
+            try {
+                let changesCount = 0;
+                const updates = [];
+                
+                if (editType === 'prefix') {
+                    const prefix = document.getElementById('bulkEditText').value.trim();
+                    if (!prefix) {
+                        showMessage('bulkEditStatus', 'error', '❌ يرجى إدخال البادئة');
+                        return;
+                    }
+                    
+                    areaIds.forEach(areaId => {
+                        const area = planData.areas.find(a => a.id === areaId);
+                        if (area) {
+                            const oldName = area.name;
+                            area.name = prefix + ' ' + area.name;
+                            updates.push({ oldName, newName: area.name });
+                            changesCount++;
+                        }
+                    });
+                } else if (editType === 'suffix') {
+                    const suffix = document.getElementById('bulkEditText').value.trim();
+                    if (!suffix) {
+                        showMessage('bulkEditStatus', 'error', '❌ يرجى إدخال اللاحقة');
+                        return;
+                    }
+                    
+                    areaIds.forEach(areaId => {
+                        const area = planData.areas.find(a => a.id === areaId);
+                        if (area) {
+                            const oldName = area.name;
+                            area.name = area.name + ' ' + suffix;
+                            updates.push({ oldName, newName: area.name });
+                            changesCount++;
+                        }
+                    });
+                } else if (editType === 'replace') {
+                    const findText = document.getElementById('bulkEditFindText').value.trim();
+                    const replaceText = document.getElementById('bulkEditReplaceText').value.trim();
+                    
+                    if (!findText) {
+                        showMessage('bulkEditStatus', 'error', '❌ يرجى إدخال النص المراد استبداله');
+                        return;
+                    }
+                    
+                    areaIds.forEach(areaId => {
+                        const area = planData.areas.find(a => a.id === areaId);
+                        if (area && area.name.includes(findText)) {
+                            const oldName = area.name;
+                            area.name = area.name.replace(new RegExp(findText, 'g'), replaceText);
+                            updates.push({ oldName, newName: area.name });
+                            changesCount++;
+                        }
+                    });
+                }
+                
+                // Update inspections to match new area names
+                let updatedInspections = 0;
+                if (planData.inspectionData) {
+                    updates.forEach(update => {
+                        planData.inspectionData.forEach(inspection => {
+                            if (inspection.area === update.oldName) {
+                                inspection.area = update.newName;
+                                updatedInspections++;
+                            }
+                        });
+                    });
+                }
+                
+                // Save to GitHub
+                await savePlanDataToGitHub();
+                
+                showMessage('bulkEditStatus', 'success', 
+                    `✅ تم تطبيق ${changesCount} تعديل بنجاح!\n` +
+                    `• تم تحديث ${updatedInspections} تفتيش`);
+                
+                setTimeout(() => {
+                    closeBulkEditModal();
+                    displayAreasList();
+                    populateAreas();
+                }, 2000);
+                
+            } catch (error) {
+                showMessage('bulkEditStatus', 'error', '❌ فشل تطبيق التعديلات: ' + error.message);
+            }
         }
         
         // Generate Areas Report

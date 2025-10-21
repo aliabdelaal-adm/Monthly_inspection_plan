@@ -11585,8 +11585,25 @@ function showIndividualShopDetails(shopName) {
         return;
     }
     
-    // البحث عن تفاصيل المحل
-    const shopDetails = shopsDetailsData[shopName];
+    // البحث عن تفاصيل المحل - أولاً محاولة البحث المباشر
+    let shopDetails = shopsDetailsData[shopName];
+    
+    // إذا لم يتم العثور على المحل، حاول إزالة كلمة "محل" والبحث مرة أخرى
+    if (!shopDetails) {
+        const cleanedName = shopName.replace(/^محل\s+/, '');
+        shopDetails = shopsDetailsData[cleanedName];
+    }
+    
+    // إذا لم يتم العثور، حاول البحث بالتطابق الجزئي
+    if (!shopDetails) {
+        const cleanedName = shopName.replace(/^محل\s+/, '');
+        for (const [key, value] of Object.entries(shopsDetailsData)) {
+            if (key.includes(cleanedName) || cleanedName.includes(key)) {
+                shopDetails = value;
+                break;
+            }
+        }
+    }
     
     if (!shopDetails) {
         content.innerHTML = `

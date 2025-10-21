@@ -4713,8 +4713,13 @@
             alert('✨ اختصار: اختر المفتش والتاريخ والمنطقة بسرعة لإضافة تفتيش جديد');
         }
         
-        // Import from Excel
+        // Import from Excel - REAL IMPLEMENTATION
         function importFromExcel() {
+            if (!window.XLSX) {
+                alert('⚠️ مكتبة Excel غير محملة. يرجى إعادة تحميل الصفحة.');
+                return;
+            }
+            
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = '.xlsx,.xls';
@@ -4722,43 +4727,414 @@
                 const file = e.target.files[0];
                 if (!file) return;
                 
-                alert('📥 جاري استيراد البيانات من Excel...\n\nملاحظة: هذه الميزة تتطلب مكتبة معالجة Excel. سيتم إضافتها قريباً.');
-                // TODO: Implement Excel import functionality
+                try {
+                    const data = await file.arrayBuffer();
+                    const workbook = XLSX.read(data);
+                    
+                    // Create import preview modal
+                    const modal = document.createElement('div');
+                    modal.id = 'importExcelModal';
+                    modal.style.cssText = `
+                        display: block;
+                        position: fixed;
+                        z-index: 10000;
+                        left: 0;
+                        top: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0,0,0,0.8);
+                        overflow: auto;
+                    `;
+                    
+                    let sheetsHTML = '<div style="margin-bottom: 20px;">';
+                    sheetsHTML += '<h3 style="color: #2d3561; margin-bottom: 15px;">📋 أوراق العمل المتاحة:</h3>';
+                    sheetsHTML += '<div style="display: flex; flex-direction: column; gap: 10px;">';
+                    
+                    workbook.SheetNames.forEach((sheetName, idx) => {
+                        const sheet = workbook.Sheets[sheetName];
+                        const jsonData = XLSX.utils.sheet_to_json(sheet);
+                        
+                        sheetsHTML += `
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; border: 2px solid #e0e0e0;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <strong style="color: #667eea; font-size: 1.1em;">${sheetName}</strong>
+                                        <span style="color: #666; margin-right: 10px;">(${jsonData.length} صف)</span>
+                                    </div>
+                                    <div style="display: flex; gap: 10px;">
+                                        <button onclick="importExcelSheet('${sheetName}', 'inspections')" class="btn btn-primary btn-sm">
+                                            استيراد كتفتيشات
+                                        </button>
+                                        <button onclick="importExcelSheet('${sheetName}', 'shops')" class="btn btn-success btn-sm">
+                                            استيراد كمحلات
+                                        </button>
+                                    </div>
+                                </div>
+                                <div style="margin-top: 10px; font-size: 0.9em; color: #666;">
+                                    معاينة الأعمدة: ${Object.keys(jsonData[0] || {}).slice(0, 5).join(', ')}${Object.keys(jsonData[0] || {}).length > 5 ? '...' : ''}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    sheetsHTML += '</div></div>';
+                    
+                    modal.innerHTML = `
+                        <div style="background: white; margin: 3% auto; padding: 30px; border-radius: 20px; max-width: 900px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                <h2 style="color: #2d3561;">📥 استيراد من Excel</h2>
+                                <button onclick="document.getElementById('importExcelModal').remove()" style="font-size: 2em; border: none; background: none; cursor: pointer;">×</button>
+                            </div>
+                            ${sheetsHTML}
+                            <div style="background: #e3f2fd; padding: 15px; border-radius: 10px; margin-top: 20px; border: 2px solid #90caf9;">
+                                <strong style="color: #1976d2;">💡 نصائح:</strong>
+                                <ul style="margin: 10px 0 0 20px; color: #666;">
+                                    <li>تأكد من تطابق أسماء الأعمدة مع البيانات المطلوبة</li>
+                                    <li>استيراد كتفتيشات: يتطلب أعمدة (المفتش، التاريخ، المنطقة، المحلات)</li>
+                                    <li>استيراد كمحلات: يتطلب أعمدة (اسم المحل، المنطقة)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.body.appendChild(modal);
+                    
+                    // Store workbook for later use
+                    window.excelWorkbook = workbook;
+                    
+                } catch (error) {
+                    alert('❌ فشل قراءة ملف Excel: ' + error.message);
+                }
             };
             input.click();
         }
         
-        // Export All Data
+        // Import Excel Sheet
+        window.importExcelSheet = async function(sheetName, type) {
+            if (!window.excelWorkbook) {
+                alert('⚠️ لم يتم تحميل ملف Excel');
+                return;
+            }
+            
+            const sheet = window.excelWorkbook.Sheets[sheetName];
+            const jsonData = XLSX.utils.sheet_to_json(sheet);
+            
+            if (type === 'inspections') {
+                let importedCount = 0;
+                let errors = [];
+                
+                jsonData.forEach((row, idx) => {
+                    try {
+                        // Try to extract inspection data with flexible column names
+                        const inspector = row['المفتش'] || row['Inspector'] || row['inspector'] || '';
+                        const day = row['التاريخ'] || row['Date'] || row['date'] || row['day'] || '';
+                        const area = row['المنطقة'] || row['Area'] || row['area'] || '';
+                        const shopsStr = row['المحلات'] || row['Shops'] || row['shops'] || '';
+                        
+                        if (!inspector || !day || !area) {
+                            errors.push(`الصف ${idx + 1}: بيانات ناقصة`);
+                            return;
+                        }
+                        
+                        const shops = shopsStr.split(',').map(s => s.trim()).filter(s => s);
+                        
+                        const newInspection = {
+                            id: 'insp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                            inspector: inspector,
+                            day: day,
+                            area: area,
+                            shops: shops,
+                            shift: row['المناوبة'] || row['Shift'] || 'صباحية'
+                        };
+                        
+                        planData.inspectionData.push(newInspection);
+                        importedCount++;
+                    } catch (error) {
+                        errors.push(`الصف ${idx + 1}: ${error.message}`);
+                    }
+                });
+                
+                if (errors.length > 0 && errors.length < 10) {
+                    alert(`⚠️ تحذيرات:\n\n` + errors.join('\n'));
+                }
+                
+                alert(`✅ تم استيراد ${importedCount} تفتيش من ${jsonData.length} صف!\n\n⚠️ لا تنسَ حفظ التغييرات`);
+                
+            } else if (type === 'shops') {
+                let importedCount = 0;
+                let errors = [];
+                
+                jsonData.forEach((row, idx) => {
+                    try {
+                        const shopName = row['اسم المحل'] || row['Shop Name'] || row['name'] || row['Name'] || '';
+                        const areaName = row['المنطقة'] || row['Area'] || row['area'] || '';
+                        
+                        if (!shopName) {
+                            errors.push(`الصف ${idx + 1}: اسم المحل مفقود`);
+                            return;
+                        }
+                        
+                        // Find or create area
+                        let areaId = '';
+                        if (areaName && planData.areas) {
+                            const area = planData.areas.find(a => a.name === areaName);
+                            if (area) {
+                                areaId = area.id;
+                            } else {
+                                // Create new area
+                                areaId = 'area_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                                planData.areas.push({
+                                    id: areaId,
+                                    name: areaName
+                                });
+                            }
+                        }
+                        
+                        // Check if shop already exists
+                        const exists = planData.shops.some(s => s.name.toLowerCase().trim() === shopName.toLowerCase().trim());
+                        if (exists) {
+                            return;
+                        }
+                        
+                        const newShop = {
+                            id: 'shop_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                            name: shopName,
+                            areaId: areaId
+                        };
+                        
+                        planData.shops.push(newShop);
+                        importedCount++;
+                    } catch (error) {
+                        errors.push(`الصف ${idx + 1}: ${error.message}`);
+                    }
+                });
+                
+                if (errors.length > 0 && errors.length < 10) {
+                    alert(`⚠️ تحذيرات:\n\n` + errors.join('\n'));
+                }
+                
+                alert(`✅ تم استيراد ${importedCount} محل من ${jsonData.length} صف!\n\n⚠️ لا تنسَ حفظ التغييرات`);
+            }
+            
+            document.getElementById('importExcelModal').remove();
+        };
+        
+        // Export All Data - ENHANCED WITH MULTIPLE FORMATS
         function exportAllData() {
             if (!planData) {
                 alert('⚠️ لا توجد بيانات للتصدير');
                 return;
             }
             
+            // Create export format selection modal
+            const modal = document.createElement('div');
+            modal.id = 'exportModal';
+            modal.style.cssText = `
+                display: block;
+                position: fixed;
+                z-index: 10000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                overflow: auto;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; margin: 5% auto; padding: 30px; border-radius: 20px; max-width: 700px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2 style="color: #2d3561;">📤 تصدير جميع البيانات</h2>
+                        <button onclick="document.getElementById('exportModal').remove()" style="font-size: 2em; border: none; background: none; cursor: pointer;">×</button>
+                    </div>
+                    
+                    <!-- Data Summary -->
+                    <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 20px; border-radius: 15px; margin-bottom: 20px;">
+                        <h3 style="color: #2d3561; margin-bottom: 15px;">📊 ملخص البيانات</h3>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                            <div>
+                                <div style="font-size: 2em; font-weight: 700; color: #667eea;">${planData.inspectionData?.length || 0}</div>
+                                <div style="color: #666;">التفتيشات</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 2em; font-weight: 700; color: #11998e;">${planData.inspectors?.length || 0}</div>
+                                <div style="color: #666;">المفتشون</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 2em; font-weight: 700; color: #fa709a;">${planData.areas?.length || 0}</div>
+                                <div style="color: #666;">المناطق</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 2em; font-weight: 700; color: #ffc107;">${planData.shops?.length || 0}</div>
+                                <div style="color: #666;">المحلات</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Export Format Selection -->
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="color: #2d3561; margin-bottom: 15px;">📋 اختر صيغة التصدير:</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                            <button onclick="exportDataFormat('json')" class="btn btn-primary" style="padding: 20px; flex-direction: column; gap: 10px;">
+                                <span style="font-size: 2em;">📄</span>
+                                <span>JSON</span>
+                                <small style="font-size: 0.85em; opacity: 0.8;">للمطورين والتطبيقات</small>
+                            </button>
+                            <button onclick="exportDataFormat('excel')" class="btn btn-success" style="padding: 20px; flex-direction: column; gap: 10px;">
+                                <span style="font-size: 2em;">📊</span>
+                                <span>Excel</span>
+                                <small style="font-size: 0.85em; opacity: 0.8;">للتحليل والمشاركة</small>
+                            </button>
+                            <button onclick="exportDataFormat('csv')" class="btn btn-info" style="padding: 20px; flex-direction: column; gap: 10px;">
+                                <span style="font-size: 2em;">📋</span>
+                                <span>CSV</span>
+                                <small style="font-size: 0.85em; opacity: 0.8;">للقواعد والأنظمة</small>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Export Options -->
+                    <div style="background: #fff3cd; padding: 15px; border-radius: 10px; border: 2px solid #ffc107;">
+                        <strong style="color: #856404;">⚙️ خيارات التصدير:</strong>
+                        <div style="margin-top: 10px;">
+                            <label style="display: block; margin-bottom: 10px;">
+                                <input type="checkbox" id="exportInspections" checked>
+                                <span style="margin-right: 5px;">تضمين التفتيشات</span>
+                            </label>
+                            <label style="display: block; margin-bottom: 10px;">
+                                <input type="checkbox" id="exportInspectors" checked>
+                                <span style="margin-right: 5px;">تضمين المفتشين</span>
+                            </label>
+                            <label style="display: block; margin-bottom: 10px;">
+                                <input type="checkbox" id="exportAreas" checked>
+                                <span style="margin-right: 5px;">تضمين المناطق</span>
+                            </label>
+                            <label style="display: block;">
+                                <input type="checkbox" id="exportShops" checked>
+                                <span style="margin-right: 5px;">تضمين المحلات</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+        
+        // Export Data in Selected Format
+        window.exportDataFormat = function(format) {
+            const includeInspections = document.getElementById('exportInspections').checked;
+            const includeInspectors = document.getElementById('exportInspectors').checked;
+            const includeAreas = document.getElementById('exportAreas').checked;
+            const includeShops = document.getElementById('exportShops').checked;
+            
             const exportData = {
-                inspections: planData.inspectionData,
-                inspectors: planData.inspectors,
-                areas: planData.areas,
-                shops: planData.shops,
                 exportDate: new Date().toISOString(),
-                exportedBy: 'Smart Planner'
+                exportedBy: 'Smart Planner - أداة التخطيط الذكية',
+                format: format
             };
             
-            const dataStr = JSON.stringify(exportData, null, 2);
-            const dataBlob = new Blob([dataStr], {type: 'application/json'});
-            const url = URL.createObjectURL(dataBlob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `smart-planner-full-export-${new Date().toISOString().split('T')[0]}.json`;
-            link.click();
-            URL.revokeObjectURL(url);
+            if (includeInspections) exportData.inspections = planData.inspectionData || [];
+            if (includeInspectors) exportData.inspectors = planData.inspectors || [];
+            if (includeAreas) exportData.areas = planData.areas || [];
+            if (includeShops) exportData.shops = planData.shops || [];
             
-            alert('✅ تم تصدير جميع البيانات بنجاح!\n\n' +
-                  `📊 التفتيشات: ${planData.inspectionData.length}\n` +
-                  `👥 المفتشون: ${planData.inspectors.length}\n` +
-                  `🗺️ المناطق: ${planData.areas.length}\n` +
-                  `🏪 المحلات: ${planData.shops.length}`);
-        }
+            if (format === 'json') {
+                const dataStr = JSON.stringify(exportData, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `smart-planner-export-${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                URL.revokeObjectURL(url);
+                
+                alert('✅ تم تصدير البيانات بصيغة JSON بنجاح!');
+                
+            } else if (format === 'excel') {
+                if (!window.XLSX) {
+                    alert('⚠️ مكتبة Excel غير محملة. جاري التصدير بصيغة JSON بديلة...');
+                    exportDataFormat('json');
+                    return;
+                }
+                
+                const wb = XLSX.utils.book_new();
+                
+                // Add inspections sheet
+                if (includeInspections && exportData.inspections) {
+                    const inspectionsSheet = exportData.inspections.map(i => ({
+                        'المفتش': i.inspector,
+                        'التاريخ': i.day,
+                        'المنطقة': i.area,
+                        'المناوبة': i.shift || '',
+                        'عدد المحلات': i.shops ? i.shops.length : 0,
+                        'المحلات': i.shops ? i.shops.join(', ') : ''
+                    }));
+                    const ws = XLSX.utils.json_to_sheet(inspectionsSheet);
+                    XLSX.utils.book_append_sheet(wb, ws, 'التفتيشات');
+                }
+                
+                // Add inspectors sheet
+                if (includeInspectors && exportData.inspectors) {
+                    const inspectorsSheet = exportData.inspectors.map(i => ({
+                        'الاسم': i.name,
+                        'الأيام': i.days ? i.days.join(', ') : ''
+                    }));
+                    const ws = XLSX.utils.json_to_sheet(inspectorsSheet);
+                    XLSX.utils.book_append_sheet(wb, ws, 'المفتشون');
+                }
+                
+                // Add areas sheet
+                if (includeAreas && exportData.areas) {
+                    const areasSheet = exportData.areas.map(a => ({
+                        'المعرف': a.id,
+                        'الاسم': a.name
+                    }));
+                    const ws = XLSX.utils.json_to_sheet(areasSheet);
+                    XLSX.utils.book_append_sheet(wb, ws, 'المناطق');
+                }
+                
+                // Add shops sheet
+                if (includeShops && exportData.shops) {
+                    const shopsSheet = exportData.shops.map(s => {
+                        const area = planData.areas?.find(a => a.id === s.areaId);
+                        return {
+                            'المعرف': s.id,
+                            'الاسم': s.name,
+                            'المنطقة': area ? area.name : ''
+                        };
+                    });
+                    const ws = XLSX.utils.json_to_sheet(shopsSheet);
+                    XLSX.utils.book_append_sheet(wb, ws, 'المحلات');
+                }
+                
+                XLSX.writeFile(wb, `smart-planner-export-${new Date().toISOString().split('T')[0]}.xlsx`);
+                alert('✅ تم تصدير البيانات بصيغة Excel بنجاح!');
+                
+            } else if (format === 'csv') {
+                // Export inspections as CSV
+                if (includeInspections && exportData.inspections) {
+                    let csv = 'المفتش,التاريخ,المنطقة,المناوبة,عدد المحلات,المحلات\n';
+                    exportData.inspections.forEach(i => {
+                        csv += `"${i.inspector}","${i.day}","${i.area}","${i.shift || ''}","${i.shops ? i.shops.length : 0}","${i.shops ? i.shops.join('; ') : ''}"\n`;
+                    });
+                    
+                    const dataBlob = new Blob(['\uFEFF' + csv], {type: 'text/csv;charset=utf-8;'});
+                    const url = URL.createObjectURL(dataBlob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `smart-planner-inspections-${new Date().toISOString().split('T')[0]}.csv`;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                    
+                    alert('✅ تم تصدير البيانات بصيغة CSV بنجاح!');
+                } else {
+                    alert('⚠️ لم يتم تحديد بيانات للتصدير');
+                }
+            }
+            
+            document.getElementById('exportModal').remove();
+        };
         
         // Sync with GitHub
         async function syncWithGitHub() {
@@ -4810,7 +5186,7 @@
             alert('✅ تم إنشاء النسخة الاحتياطية بنجاح!\n\n💾 احتفظ بهذا الملف في مكان آمن.');
         }
         
-        // Generate Full Report
+        // Generate Full Report - ENHANCED WITH VISUAL REPORT
         function generateFullReport() {
             if (!planData || !planData.inspectionData) {
                 alert('⚠️ لا توجد بيانات لإنشاء التقرير');
@@ -4821,106 +5197,1122 @@
             const totalShops = planData.inspectionData.reduce((sum, i) => sum + (i.shops ? i.shops.length : 0), 0);
             const inspectorCounts = {};
             const areaCounts = {};
+            const monthCounts = {};
+            const shiftCounts = { 'صباحية': 0, 'مسائية': 0 };
             
             planData.inspectionData.forEach(insp => {
                 inspectorCounts[insp.inspector] = (inspectorCounts[insp.inspector] || 0) + 1;
                 areaCounts[insp.area] = (areaCounts[insp.area] || 0) + 1;
+                
+                const month = insp.day ? insp.day.substring(0, 7) : 'غير محدد';
+                monthCounts[month] = (monthCounts[month] || 0) + 1;
+                
+                if (insp.shift) {
+                    shiftCounts[insp.shift] = (shiftCounts[insp.shift] || 0) + 1;
+                }
             });
             
-            let report = '📊 التقرير الشامل لنظام التفتيش\n';
-            report += '=' .repeat(50) + '\n\n';
-            report += `📅 تاريخ التقرير: ${new Date().toLocaleString('ar-EG')}\n\n`;
-            report += `📈 الإحصائيات العامة:\n`;
-            report += `   • إجمالي التفتيشات: ${totalInspections}\n`;
-            report += `   • إجمالي المحلات المفتشة: ${totalShops}\n`;
-            report += `   • عدد المفتشين: ${Object.keys(inspectorCounts).length}\n`;
-            report += `   • عدد المناطق: ${Object.keys(areaCounts).length}\n\n`;
+            // Create visual report modal
+            const modal = document.createElement('div');
+            modal.id = 'reportModal';
+            modal.style.cssText = `
+                display: block;
+                position: fixed;
+                z-index: 10000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                overflow: auto;
+            `;
             
-            report += `👥 تفتيشات المفتشين:\n`;
-            Object.entries(inspectorCounts).sort((a, b) => b[1] - a[1]).forEach(([inspector, count]) => {
-                report += `   • ${inspector}: ${count} تفتيش\n`;
+            // Calculate top performers
+            const topInspectors = Object.entries(inspectorCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            const topAreas = Object.entries(areaCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            
+            modal.innerHTML = `
+                <div style="background: white; margin: 2% auto; padding: 30px; border-radius: 20px; max-width: 1200px; max-height: 90vh; overflow: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 3px solid #667eea;">
+                        <h2 style="color: #2d3561; margin: 0;">📊 التقرير الشامل والتفصيلي</h2>
+                        <button onclick="document.getElementById('reportModal').remove()" style="font-size: 2em; border: none; background: none; cursor: pointer;">×</button>
+                    </div>
+                    
+                    <!-- Summary Cards -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
+                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 15px; color: white; text-align: center;">
+                            <div style="font-size: 3em; font-weight: 700; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">${totalInspections}</div>
+                            <div style="font-size: 1.1em; margin-top: 5px;">إجمالي التفتيشات</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); padding: 20px; border-radius: 15px; color: white; text-align: center;">
+                            <div style="font-size: 3em; font-weight: 700; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">${totalShops}</div>
+                            <div style="font-size: 1.1em; margin-top: 5px;">المحلات المفتشة</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); padding: 20px; border-radius: 15px; color: white; text-align: center;">
+                            <div style="font-size: 3em; font-weight: 700; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">${Object.keys(inspectorCounts).length}</div>
+                            <div style="font-size: 1.1em; margin-top: 5px;">المفتشون النشطون</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); padding: 20px; border-radius: 15px; color: white; text-align: center;">
+                            <div style="font-size: 3em; font-weight: 700; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">${Object.keys(areaCounts).length}</div>
+                            <div style="font-size: 1.1em; margin-top: 5px;">المناطق المغطاة</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Top Performers -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 15px;">
+                            <h3 style="color: #2d3561; margin-bottom: 15px;">🏆 أفضل 5 مفتشين</h3>
+                            ${topInspectors.map(([ inspector, count], idx) => {
+                                const percentage = ((count / totalInspections) * 100).toFixed(1);
+                                return `
+                                    <div style="margin-bottom: 15px;">
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                            <span style="font-weight: 600;">${idx + 1}. ${inspector}</span>
+                                            <span style="color: #667eea; font-weight: 600;">${count} (${percentage}%)</span>
+                                        </div>
+                                        <div style="background: #e0e0e0; border-radius: 10px; height: 10px; overflow: hidden;">
+                                            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); height: 100%; width: ${percentage}%; transition: width 1s ease;"></div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                        
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 15px;">
+                            <h3 style="color: #2d3561; margin-bottom: 15px;">📍 أكثر 5 مناطق تفتيشاً</h3>
+                            ${topAreas.map(([area, count], idx) => {
+                                const percentage = ((count / totalInspections) * 100).toFixed(1);
+                                return `
+                                    <div style="margin-bottom: 15px;">
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                            <span style="font-weight: 600;">${idx + 1}. ${area}</span>
+                                            <span style="color: #11998e; font-weight: 600;">${count} (${percentage}%)</span>
+                                        </div>
+                                        <div style="background: #e0e0e0; border-radius: 10px; height: 10px; overflow: hidden;">
+                                            <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); height: 100%; width: ${percentage}%; transition: width 1s ease;"></div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                    
+                    <!-- Shift Distribution -->
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 15px; margin-bottom: 30px;">
+                        <h3 style="color: #2d3561; margin-bottom: 15px;">🕐 توزيع المناوبات</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                            <div style="background: white; padding: 15px; border-radius: 10px; text-align: center; border: 2px solid #ffc107;">
+                                <div style="font-size: 2.5em; font-weight: 700; color: #ffc107;">${shiftCounts['صباحية'] || 0}</div>
+                                <div style="color: #666;">المناوبات الصباحية</div>
+                            </div>
+                            <div style="background: white; padding: 15px; border-radius: 10px; text-align: center; border: 2px solid #3498db;">
+                                <div style="font-size: 2.5em; font-weight: 700; color: #3498db;">${shiftCounts['مسائية'] || 0}</div>
+                                <div style="color: #666;">المناوبات المسائية</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Monthly Distribution -->
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 15px; margin-bottom: 30px;">
+                        <h3 style="color: #2d3561; margin-bottom: 15px;">📅 التوزيع الشهري للتفتيشات</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                            ${Object.entries(monthCounts).sort((a, b) => a[0].localeCompare(b[0])).map(([month, count]) => `
+                                <div style="background: white; padding: 12px; border-radius: 8px; text-align: center; border: 2px solid #667eea;">
+                                    <div style="font-weight: 600; color: #667eea; margin-bottom: 5px;">${month}</div>
+                                    <div style="font-size: 1.8em; font-weight: 700; color: #2d3561;">${count}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
+                        <button onclick="downloadTextReport()" class="btn btn-primary">
+                            <span>📄</span>
+                            <span>تحميل التقرير النصي</span>
+                        </button>
+                        <button onclick="printReport()" class="btn btn-success">
+                            <span>🖨️</span>
+                            <span>طباعة التقرير</span>
+                        </button>
+                        <button onclick="shareReport()" class="btn btn-info">
+                            <span>📤</span>
+                            <span>مشاركة التقرير</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Store report data globally for download functions
+            window.currentReportData = {
+                totalInspections,
+                totalShops,
+                inspectorCounts,
+                areaCounts,
+                monthCounts,
+                shiftCounts
+            };
+        }
+        
+        // Download Text Report
+        window.downloadTextReport = function() {
+            const data = window.currentReportData;
+            
+            let report = '📊 التقرير الشامل لنظام التفتيش الذكي\n';
+            report += '═'.repeat(60) + '\n\n';
+            report += `📅 تاريخ التقرير: ${new Date().toLocaleString('ar-EG')}\n`;
+            report += `🔗 النظام: Smart Planner - أداة التخطيط الذكية\n\n`;
+            
+            report += '📈 الإحصائيات العامة:\n';
+            report += '─'.repeat(60) + '\n';
+            report += `   • إجمالي التفتيشات: ${data.totalInspections}\n`;
+            report += `   • إجمالي المحلات المفتشة: ${data.totalShops}\n`;
+            report += `   • عدد المفتشين النشطين: ${Object.keys(data.inspectorCounts).length}\n`;
+            report += `   • عدد المناطق المغطاة: ${Object.keys(data.areaCounts).length}\n`;
+            report += `   • متوسط المحلات لكل تفتيش: ${(data.totalShops / data.totalInspections).toFixed(2)}\n\n`;
+            
+            report += '👥 تفتيشات المفتشين (مرتبة تنازلياً):\n';
+            report += '─'.repeat(60) + '\n';
+            Object.entries(data.inspectorCounts).sort((a, b) => b[1] - a[1]).forEach(([inspector, count], idx) => {
+                const percentage = ((count / data.totalInspections) * 100).toFixed(1);
+                report += `   ${idx + 1}. ${inspector}: ${count} تفتيش (${percentage}%)\n`;
             });
             
-            report += `\n🗺️ تفتيشات المناطق:\n`;
-            Object.entries(areaCounts).sort((a, b) => b[1] - a[1]).forEach(([area, count]) => {
-                report += `   • ${area}: ${count} تفتيش\n`;
+            report += '\n🗺️ تفتيشات المناطق (مرتبة تنازلياً):\n';
+            report += '─'.repeat(60) + '\n';
+            Object.entries(data.areaCounts).sort((a, b) => b[1] - a[1]).forEach(([area, count], idx) => {
+                const percentage = ((count / data.totalInspections) * 100).toFixed(1);
+                report += `   ${idx + 1}. ${area}: ${count} تفتيش (${percentage}%)\n`;
             });
             
-            // Create downloadable report
-            const dataBlob = new Blob([report], {type: 'text/plain;charset=utf-8'});
+            report += '\n🕐 توزيع المناوبات:\n';
+            report += '─'.repeat(60) + '\n';
+            report += `   • المناوبات الصباحية: ${data.shiftCounts['صباحية'] || 0}\n`;
+            report += `   • المناوبات المسائية: ${data.shiftCounts['مسائية'] || 0}\n`;
+            
+            report += '\n📅 التوزيع الشهري:\n';
+            report += '─'.repeat(60) + '\n';
+            Object.entries(data.monthCounts).sort((a, b) => a[0].localeCompare(b[0])).forEach(([month, count]) => {
+                report += `   • ${month}: ${count} تفتيش\n`;
+            });
+            
+            report += '\n' + '═'.repeat(60) + '\n';
+            report += 'تم إنشاء هذا التقرير بواسطة Smart Planner\n';
+            report += '© 2025 جميع الحقوق محفوظة\n';
+            
+            const dataBlob = new Blob(['\uFEFF' + report], {type: 'text/plain;charset=utf-8'});
             const url = URL.createObjectURL(dataBlob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `report-${new Date().toISOString().split('T')[0]}.txt`;
+            link.download = `تقرير-شامل-${new Date().toISOString().split('T')[0]}.txt`;
             link.click();
             URL.revokeObjectURL(url);
             
-            alert('✅ تم إنشاء التقرير الشامل!\n\n' + report);
-        }
+            alert('✅ تم تحميل التقرير النصي بنجاح!');
+        };
         
-        // Check Data Quality
+        // Print Report
+        window.printReport = function() {
+            window.print();
+        };
+        
+        // Share Report
+        window.shareReport = function() {
+            const data = window.currentReportData;
+            const summary = `📊 تقرير نظام التفتيش\n\n` +
+                          `✅ التفتيشات: ${data.totalInspections}\n` +
+                          `🏪 المحلات: ${data.totalShops}\n` +
+                          `👥 المفتشون: ${Object.keys(data.inspectorCounts).length}\n` +
+                          `🗺️ المناطق: ${Object.keys(data.areaCounts).length}`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'تقرير نظام التفتيش الذكي',
+                    text: summary
+                }).catch(err => console.log('Error sharing:', err));
+            } else {
+                // Fallback: copy to clipboard
+                navigator.clipboard.writeText(summary).then(() => {
+                    alert('✅ تم نسخ ملخص التقرير إلى الحافظة!');
+                }).catch(() => {
+                    alert('📋 ملخص التقرير:\n\n' + summary);
+                });
+            }
+        };
+        
+        // Check Data Quality - ENHANCED WITH AUTO-FIX
         function checkDataQuality() {
             if (!planData) {
                 alert('⚠️ لا توجد بيانات للفحص');
                 return;
             }
             
-            const issues = [];
+            const issues = {
+                critical: [],
+                warnings: [],
+                suggestions: []
+            };
             
             // Check inspections
             if (planData.inspectionData) {
                 planData.inspectionData.forEach((insp, idx) => {
-                    if (!insp.inspector) issues.push(`تفتيش ${idx + 1}: مفتش غير محدد`);
-                    if (!insp.day) issues.push(`تفتيش ${idx + 1}: تاريخ غير محدد`);
-                    if (!insp.area) issues.push(`تفتيش ${idx + 1}: منطقة غير محددة`);
-                    if (!insp.shops || insp.shops.length === 0) issues.push(`تفتيش ${idx + 1}: لا توجد محلات`);
+                    if (!insp.inspector) issues.critical.push({ type: 'missing_inspector', index: idx, message: `تفتيش ${idx + 1}: مفتش غير محدد` });
+                    if (!insp.day) issues.critical.push({ type: 'missing_date', index: idx, message: `تفتيش ${idx + 1}: تاريخ غير محدد` });
+                    if (!insp.area) issues.warnings.push({ type: 'missing_area', index: idx, message: `تفتيش ${idx + 1}: منطقة غير محددة` });
+                    if (!insp.shops || insp.shops.length === 0) issues.warnings.push({ type: 'no_shops', index: idx, message: `تفتيش ${idx + 1}: لا توجد محلات` });
+                    if (!insp.id) issues.suggestions.push({ type: 'missing_id', index: idx, message: `تفتيش ${idx + 1}: معرف غير موجود` });
+                    if (!insp.shift) issues.suggestions.push({ type: 'missing_shift', index: idx, message: `تفتيش ${idx + 1}: مناوبة غير محددة` });
+                    
+                    // Check date format
+                    if (insp.day && !/^\d{4}-\d{2}-\d{2}$/.test(insp.day)) {
+                        issues.warnings.push({ type: 'invalid_date_format', index: idx, message: `تفتيش ${idx + 1}: صيغة تاريخ غير صحيحة (${insp.day})` });
+                    }
                 });
             }
             
             // Check duplicates
-            const inspectionKeys = new Set();
-            planData.inspectionData.forEach(insp => {
+            const inspectionKeys = new Map();
+            planData.inspectionData.forEach((insp, idx) => {
                 const key = `${insp.inspector}-${insp.day}`;
                 if (inspectionKeys.has(key)) {
-                    issues.push(`تفتيش مكرر: ${insp.inspector} في ${insp.day}`);
+                    issues.warnings.push({
+                        type: 'duplicate',
+                        index: idx,
+                        originalIndex: inspectionKeys.get(key),
+                        message: `تفتيش مكرر: ${insp.inspector} في ${insp.day}`,
+                        fixable: true
+                    });
+                } else {
+                    inspectionKeys.set(key, idx);
                 }
-                inspectionKeys.add(key);
             });
             
-            if (issues.length === 0) {
-                alert('✅ جودة البيانات ممتازة!\n\nلا توجد مشاكل في البيانات.');
-            } else {
-                alert(`⚠️ تم العثور على ${issues.length} مشكلة:\n\n` + issues.slice(0, 10).join('\n') + 
-                      (issues.length > 10 ? `\n\n... و ${issues.length - 10} مشكلة أخرى` : ''));
+            // Check shops
+            if (planData.shops) {
+                planData.shops.forEach((shop, idx) => {
+                    if (!shop.name) issues.critical.push({ type: 'missing_shop_name', index: idx, message: `محل ${idx + 1}: اسم غير محدد` });
+                    if (!shop.id) issues.suggestions.push({ type: 'missing_shop_id', index: idx, message: `محل ${idx + 1}: معرف غير موجود`, fixable: true });
+                    if (!shop.areaId) issues.warnings.push({ type: 'missing_shop_area', index: idx, message: `${shop.name || 'محل ' + (idx + 1)}: منطقة غير محددة` });
+                });
+                
+                // Check for duplicate shop names
+                const shopNames = new Map();
+                planData.shops.forEach((shop, idx) => {
+                    const name = shop.name?.toLowerCase().trim();
+                    if (name) {
+                        if (shopNames.has(name)) {
+                            issues.warnings.push({
+                                type: 'duplicate_shop',
+                                index: idx,
+                                originalIndex: shopNames.get(name),
+                                message: `محل مكرر: ${shop.name}`,
+                                fixable: true
+                            });
+                        } else {
+                            shopNames.set(name, idx);
+                        }
+                    }
+                });
             }
+            
+            // Check areas
+            if (planData.areas) {
+                planData.areas.forEach((area, idx) => {
+                    if (!area.name) issues.critical.push({ type: 'missing_area_name', index: idx, message: `منطقة ${idx + 1}: اسم غير محدد` });
+                    if (!area.id) issues.suggestions.push({ type: 'missing_area_id', index: idx, message: `منطقة ${idx + 1}: معرف غير موجود`, fixable: true });
+                });
+            }
+            
+            // Check inspectors
+            if (planData.inspectors) {
+                planData.inspectors.forEach((inspector, idx) => {
+                    if (!inspector.name) issues.critical.push({ type: 'missing_inspector_name', index: idx, message: `مفتش ${idx + 1}: اسم غير محدد` });
+                });
+            }
+            
+            // Create quality report modal
+            const totalIssues = issues.critical.length + issues.warnings.length + issues.suggestions.length;
+            
+            if (totalIssues === 0) {
+                alert('✅ ممتاز! جودة البيانات عالية جداً!\n\nلا توجد مشاكل في البيانات.');
+                return;
+            }
+            
+            const modal = document.createElement('div');
+            modal.id = 'qualityModal';
+            modal.style.cssText = `
+                display: block;
+                position: fixed;
+                z-index: 10000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                overflow: auto;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; margin: 3% auto; padding: 30px; border-radius: 20px; max-width: 900px; max-height: 90vh; overflow: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 3px solid #667eea;">
+                        <h2 style="color: #2d3561; margin: 0;">🔍 تقرير جودة البيانات</h2>
+                        <button onclick="document.getElementById('qualityModal').remove()" style="font-size: 2em; border: none; background: none; cursor: pointer;">×</button>
+                    </div>
+                    
+                    <!-- Summary -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                        <div style="background: ${issues.critical.length > 0 ? 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)' : 'linear-gradient(135deg, #27ae60 0%, #229954 100%)'}; padding: 20px; border-radius: 15px; color: white; text-align: center;">
+                            <div style="font-size: 2.5em; font-weight: 700;">${issues.critical.length}</div>
+                            <div>مشاكل حرجة</div>
+                        </div>
+                        <div style="background: ${issues.warnings.length > 0 ? 'linear-gradient(135deg, #f39c12 0%, #e67e22 100%)' : 'linear-gradient(135deg, #27ae60 0%, #229954 100%)'}; padding: 20px; border-radius: 15px; color: white; text-align: center;">
+                            <div style="font-size: 2.5em; font-weight: 700;">${issues.warnings.length}</div>
+                            <div>تحذيرات</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); padding: 20px; border-radius: 15px; color: white; text-align: center;">
+                            <div style="font-size: 2.5em; font-weight: 700;">${issues.suggestions.length}</div>
+                            <div>اقتراحات</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Critical Issues -->
+                    ${issues.critical.length > 0 ? `
+                        <div style="background: #ffebee; padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 2px solid #e74c3c;">
+                            <h3 style="color: #c0392b; margin-bottom: 15px;">🚨 مشاكل حرجة (يجب إصلاحها)</h3>
+                            <div style="max-height: 200px; overflow-y: auto;">
+                                ${issues.critical.slice(0, 20).map(issue => `
+                                    <div style="padding: 10px; background: white; border-radius: 8px; margin-bottom: 10px; border-right: 4px solid #e74c3c;">
+                                        ${issue.message}
+                                    </div>
+                                `).join('')}
+                                ${issues.critical.length > 20 ? `<div style="text-align: center; color: #666; padding: 10px;">... و ${issues.critical.length - 20} مشكلة أخرى</div>` : ''}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Warnings -->
+                    ${issues.warnings.length > 0 ? `
+                        <div style="background: #fff3cd; padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 2px solid #ffc107;">
+                            <h3 style="color: #856404; margin-bottom: 15px;">⚠️ تحذيرات (يُنصح بإصلاحها)</h3>
+                            <div style="max-height: 200px; overflow-y: auto;">
+                                ${issues.warnings.slice(0, 20).map(issue => `
+                                    <div style="padding: 10px; background: white; border-radius: 8px; margin-bottom: 10px; border-right: 4px solid #ffc107;">
+                                        ${issue.message}
+                                        ${issue.fixable ? '<span style="background: #28a745; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8em; margin-right: 10px;">قابل للإصلاح</span>' : ''}
+                                    </div>
+                                `).join('')}
+                                ${issues.warnings.length > 20 ? `<div style="text-align: center; color: #666; padding: 10px;">... و ${issues.warnings.length - 20} تحذير آخر</div>` : ''}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Suggestions -->
+                    ${issues.suggestions.length > 0 ? `
+                        <div style="background: #d1ecf1; padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 2px solid #17a2b8;">
+                            <h3 style="color: #0c5460; margin-bottom: 15px;">💡 اقتراحات تحسين</h3>
+                            <div style="max-height: 200px; overflow-y: auto;">
+                                ${issues.suggestions.slice(0, 20).map(issue => `
+                                    <div style="padding: 10px; background: white; border-radius: 8px; margin-bottom: 10px; border-right: 4px solid #17a2b8;">
+                                        ${issue.message}
+                                        ${issue.fixable ? '<span style="background: #28a745; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8em; margin-right: 10px;">قابل للإصلاح</span>' : ''}
+                                    </div>
+                                `).join('')}
+                                ${issues.suggestions.length > 20 ? `<div style="text-align: center; color: #666; padding: 10px;">... و ${issues.suggestions.length - 20} اقتراح آخر</div>` : ''}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Auto-fix Options -->
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 15px; color: white; margin-bottom: 20px;">
+                        <h3 style="margin: 0 0 15px 0;">🔧 الإصلاح التلقائي</h3>
+                        <p style="margin-bottom: 15px; font-size: 0.95em;">يمكن للنظام إصلاح بعض المشاكل تلقائياً:</p>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <button onclick="autoFixMissingIds()" class="btn btn-success" style="background: white; color: #667eea;">
+                                إصلاح المعرفات المفقودة
+                            </button>
+                            <button onclick="autoFixDuplicates()" class="btn btn-warning" style="background: white; color: #667eea;">
+                                دمج التفتيشات المكررة
+                            </button>
+                            <button onclick="autoFixMissingShifts()" class="btn btn-info" style="background: white; color: #667eea;">
+                                إضافة المناوبات الافتراضية
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Export Report -->
+                    <div style="text-align: center;">
+                        <button onclick="exportQualityReport()" class="btn btn-primary">
+                            <span>📄</span>
+                            <span>تصدير تقرير الجودة</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Store issues for auto-fix functions
+            window.currentQualityIssues = issues;
         }
         
-        // View System Logs
+        // Auto-fix Missing IDs
+        window.autoFixMissingIds = function() {
+            let fixed = 0;
+            
+            // Fix inspection IDs
+            planData.inspectionData?.forEach(insp => {
+                if (!insp.id) {
+                    insp.id = 'insp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    fixed++;
+                }
+            });
+            
+            // Fix shop IDs
+            planData.shops?.forEach(shop => {
+                if (!shop.id) {
+                    shop.id = 'shop_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    fixed++;
+                }
+            });
+            
+            // Fix area IDs
+            planData.areas?.forEach(area => {
+                if (!area.id) {
+                    area.id = 'area_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    fixed++;
+                }
+            });
+            
+            alert(`✅ تم إصلاح ${fixed} معرف مفقود!\n\n⚠️ لا تنسَ حفظ التغييرات`);
+            document.getElementById('qualityModal').remove();
+            checkDataQuality(); // Re-check
+        };
+        
+        // Auto-fix Duplicates
+        window.autoFixDuplicates = async function() {
+            const duplicates = window.currentQualityIssues.warnings.filter(i => i.type === 'duplicate');
+            
+            if (duplicates.length === 0) {
+                alert('✅ لا توجد تفتيشات مكررة!');
+                return;
+            }
+            
+            if (!confirm(`⚠️ سيتم دمج ${duplicates.length} تفتيش مكرر\n\nهل تريد المتابعة؟`)) {
+                return;
+            }
+            
+            // Call bulk merge function
+            await bulkMergeDuplicates();
+        };
+        
+        // Auto-fix Missing Shifts
+        window.autoFixMissingShifts = function() {
+            let fixed = 0;
+            
+            planData.inspectionData?.forEach(insp => {
+                if (!insp.shift) {
+                    insp.shift = 'صباحية'; // Default to morning shift
+                    fixed++;
+                }
+            });
+            
+            alert(`✅ تم إضافة ${fixed} مناوبة افتراضية (صباحية)!\n\n⚠️ لا تنسَ حفظ التغييرات`);
+            document.getElementById('qualityModal').remove();
+            checkDataQuality(); // Re-check
+        };
+        
+        // Export Quality Report
+        window.exportQualityReport = function() {
+            const issues = window.currentQualityIssues;
+            
+            let report = '🔍 تقرير جودة البيانات - Smart Planner\n';
+            report += '═'.repeat(60) + '\n\n';
+            report += `📅 تاريخ الفحص: ${new Date().toLocaleString('ar-EG')}\n\n`;
+            
+            report += '📊 ملخص المشاكل:\n';
+            report += '─'.repeat(60) + '\n';
+            report += `   🚨 مشاكل حرجة: ${issues.critical.length}\n`;
+            report += `   ⚠️ تحذيرات: ${issues.warnings.length}\n`;
+            report += `   💡 اقتراحات: ${issues.suggestions.length}\n\n`;
+            
+            if (issues.critical.length > 0) {
+                report += '🚨 المشاكل الحرجة:\n';
+                report += '─'.repeat(60) + '\n';
+                issues.critical.forEach((issue, idx) => {
+                    report += `   ${idx + 1}. ${issue.message}\n`;
+                });
+                report += '\n';
+            }
+            
+            if (issues.warnings.length > 0) {
+                report += '⚠️ التحذيرات:\n';
+                report += '─'.repeat(60) + '\n';
+                issues.warnings.forEach((issue, idx) => {
+                    report += `   ${idx + 1}. ${issue.message}${issue.fixable ? ' [قابل للإصلاح]' : ''}\n`;
+                });
+                report += '\n';
+            }
+            
+            if (issues.suggestions.length > 0) {
+                report += '💡 الاقتراحات:\n';
+                report += '─'.repeat(60) + '\n';
+                issues.suggestions.forEach((issue, idx) => {
+                    report += `   ${idx + 1}. ${issue.message}${issue.fixable ? ' [قابل للإصلاح]' : ''}\n`;
+                });
+            }
+            
+            const dataBlob = new Blob(['\uFEFF' + report], {type: 'text/plain;charset=utf-8'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `تقرير-جودة-${new Date().toISOString().split('T')[0]}.txt`;
+            link.click();
+            URL.revokeObjectURL(url);
+            
+            alert('✅ تم تصدير تقرير الجودة بنجاح!');
+        };
+        
+        // View System Logs - ENHANCED WITH DETAILED LOGS
         function viewSystemLogs() {
-            const logs = [
-                `[${new Date().toLocaleString('ar-EG')}] النظام يعمل بشكل طبيعي`,
-                `[${new Date().toLocaleString('ar-EG')}] آخر تحديث: ${planData?.lastUpdate || 'غير محدد'}`,
-                `[${new Date().toLocaleString('ar-EG')}] إجمالي التفتيشات: ${planData?.inspectionData?.length || 0}`,
-                `[${new Date().toLocaleString('ar-EG')}] إجمالي المحلات: ${planData?.shops?.length || 0}`,
-            ];
+            // Initialize logs in sessionStorage if not exists
+            if (!sessionStorage.getItem('smartPlannerLogs')) {
+                sessionStorage.setItem('smartPlannerLogs', JSON.stringify([]));
+            }
             
-            alert('📋 سجل النظام:\n\n' + logs.join('\n'));
+            const logs = JSON.parse(sessionStorage.getItem('smartPlannerLogs') || '[]');
+            
+            // Add current system status
+            const currentStatus = {
+                timestamp: new Date().toISOString(),
+                type: 'info',
+                message: 'عرض سجل النظام',
+                details: {
+                    inspections: planData?.inspectionData?.length || 0,
+                    shops: planData?.shops?.length || 0,
+                    areas: planData?.areas?.length || 0,
+                    inspectors: planData?.inspectors?.length || 0
+                }
+            };
+            
+            // Create system logs modal
+            const modal = document.createElement('div');
+            modal.id = 'logsModal';
+            modal.style.cssText = `
+                display: block;
+                position: fixed;
+                z-index: 10000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                overflow: auto;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; margin: 3% auto; padding: 30px; border-radius: 20px; max-width: 1000px; max-height: 90vh; overflow: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 3px solid #667eea;">
+                        <h2 style="color: #2d3561; margin: 0;">📋 سجل النظام المفصل</h2>
+                        <button onclick="document.getElementById('logsModal').remove()" style="font-size: 2em; border: none; background: none; cursor: pointer;">×</button>
+                    </div>
+                    
+                    <!-- System Status -->
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 15px; color: white; margin-bottom: 20px;">
+                        <h3 style="margin: 0 0 15px 0;">⚡ حالة النظام الحالية</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 2em; font-weight: 700;">${planData?.inspectionData?.length || 0}</div>
+                                <div style="font-size: 0.9em; opacity: 0.9;">التفتيشات</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 2em; font-weight: 700;">${planData?.shops?.length || 0}</div>
+                                <div style="font-size: 0.9em; opacity: 0.9;">المحلات</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 2em; font-weight: 700;">${planData?.areas?.length || 0}</div>
+                                <div style="font-size: 0.9em; opacity: 0.9;">المناطق</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 2em; font-weight: 700;">${planData?.inspectors?.length || 0}</div>
+                                <div style="font-size: 0.9em; opacity: 0.9;">المفتشون</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.3);">
+                            <div style="font-size: 0.9em;">
+                                📅 آخر تحديث: ${planData?.lastUpdate ? new Date(planData.lastUpdate).toLocaleString('ar-EG') : 'غير محدد'}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Log Controls -->
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                        <button onclick="filterLogs('all')" class="btn btn-primary btn-sm">
+                            جميع السجلات (${logs.length})
+                        </button>
+                        <button onclick="filterLogs('info')" class="btn btn-info btn-sm">
+                            معلومات (${logs.filter(l => l.type === 'info').length})
+                        </button>
+                        <button onclick="filterLogs('success')" class="btn btn-success btn-sm">
+                            نجاح (${logs.filter(l => l.type === 'success').length})
+                        </button>
+                        <button onclick="filterLogs('warning')" class="btn btn-warning btn-sm">
+                            تحذيرات (${logs.filter(l => l.type === 'warning').length})
+                        </button>
+                        <button onclick="filterLogs('error')" class="btn btn-danger btn-sm">
+                            أخطاء (${logs.filter(l => l.type === 'error').length})
+                        </button>
+                        <button onclick="clearSystemLogs()" class="btn btn-danger btn-sm">
+                            مسح السجلات
+                        </button>
+                        <button onclick="exportSystemLogs()" class="btn btn-success btn-sm">
+                            تصدير السجلات
+                        </button>
+                    </div>
+                    
+                    <!-- Logs Display -->
+                    <div id="logsDisplay" style="background: #f8f9fa; padding: 20px; border-radius: 15px; max-height: 500px; overflow-y: auto;">
+                        ${logs.length === 0 ? `
+                            <div style="text-align: center; padding: 40px; color: #999;">
+                                <div style="font-size: 3em; margin-bottom: 10px;">📋</div>
+                                <p>لا توجد سجلات حتى الآن</p>
+                                <p style="font-size: 0.9em;">سيتم تسجيل الأحداث هنا تلقائياً</p>
+                            </div>
+                        ` : logs.slice().reverse().map(log => {
+                            const typeColors = {
+                                info: { bg: '#d1ecf1', border: '#17a2b8', icon: 'ℹ️' },
+                                success: { bg: '#d4edda', border: '#28a745', icon: '✅' },
+                                warning: { bg: '#fff3cd', border: '#ffc107', icon: '⚠️' },
+                                error: { bg: '#f8d7da', border: '#dc3545', icon: '❌' }
+                            };
+                            const style = typeColors[log.type] || typeColors.info;
+                            
+                            return `
+                                <div class="log-entry" data-type="${log.type}" style="background: ${style.bg}; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-right: 4px solid ${style.border};">
+                                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <span style="font-size: 1.2em;">${style.icon}</span>
+                                            <strong>${log.message}</strong>
+                                        </div>
+                                        <small style="color: #666;">${new Date(log.timestamp).toLocaleString('ar-EG')}</small>
+                                    </div>
+                                    ${log.details ? `
+                                        <div style="font-size: 0.9em; color: #666; margin-top: 5px; padding-top: 5px; border-top: 1px solid rgba(0,0,0,0.1);">
+                                            ${typeof log.details === 'object' ? 
+                                                Object.entries(log.details).map(([k, v]) => `${k}: ${v}`).join(' • ') : 
+                                                log.details
+                                            }
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
         }
         
-        // Bulk Operations
-        function bulkOperations() {
-            const operations = [
-                '1. تعديل جماعي للتفتيشات',
-                '2. حذف جماعي للتفتيشات',
-                '3. نسخ جماعي للتفتيشات',
-                '4. إعادة تعيين المفتشين',
-                '5. إعادة تعيين المناطق',
-                '6. دمج التفتيشات المكررة'
-            ];
+        // Filter Logs
+        window.filterLogs = function(type) {
+            const entries = document.querySelectorAll('.log-entry');
+            entries.forEach(entry => {
+                if (type === 'all' || entry.dataset.type === type) {
+                    entry.style.display = 'block';
+                } else {
+                    entry.style.display = 'none';
+                }
+            });
+        };
+        
+        // Clear System Logs
+        window.clearSystemLogs = function() {
+            if (!confirm('⚠️ هل أنت متأكد من حذف جميع السجلات؟\n\nلن يمكن استرجاعها!')) {
+                return;
+            }
             
-            alert('⚙️ العمليات الجماعية المتاحة:\n\n' + operations.join('\n') + 
-                  '\n\nاختر العملية من القائمة أعلاه (قريباً)');
+            sessionStorage.setItem('smartPlannerLogs', JSON.stringify([]));
+            document.getElementById('logsModal').remove();
+            alert('✅ تم مسح جميع السجلات');
+        };
+        
+        // Export System Logs
+        window.exportSystemLogs = function() {
+            const logs = JSON.parse(sessionStorage.getItem('smartPlannerLogs') || '[]');
+            
+            if (logs.length === 0) {
+                alert('⚠️ لا توجد سجلات لتصديرها');
+                return;
+            }
+            
+            let report = '📋 سجل النظام - Smart Planner\n';
+            report += '═'.repeat(60) + '\n\n';
+            report += `📅 تاريخ التصدير: ${new Date().toLocaleString('ar-EG')}\n`;
+            report += `📊 عدد السجلات: ${logs.length}\n\n`;
+            
+            logs.slice().reverse().forEach((log, idx) => {
+                report += `[${idx + 1}] ${new Date(log.timestamp).toLocaleString('ar-EG')}\n`;
+                report += `النوع: ${log.type.toUpperCase()}\n`;
+                report += `الرسالة: ${log.message}\n`;
+                if (log.details) {
+                    report += `التفاصيل: ${typeof log.details === 'object' ? JSON.stringify(log.details, null, 2) : log.details}\n`;
+                }
+                report += '─'.repeat(60) + '\n\n';
+            });
+            
+            const dataBlob = new Blob(['\uFEFF' + report], {type: 'text/plain;charset=utf-8'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `system-logs-${new Date().toISOString().split('T')[0]}.txt`;
+            link.click();
+            URL.revokeObjectURL(url);
+            
+            alert('✅ تم تصدير السجلات بنجاح!');
+        };
+        
+        // Add System Log (utility function)
+        window.addSystemLog = function(type, message, details = null) {
+            const logs = JSON.parse(sessionStorage.getItem('smartPlannerLogs') || '[]');
+            logs.push({
+                timestamp: new Date().toISOString(),
+                type: type,
+                message: message,
+                details: details
+            });
+            
+            // Keep only last 100 logs
+            if (logs.length > 100) {
+                logs.splice(0, logs.length - 100);
+            }
+            
+            sessionStorage.setItem('smartPlannerLogs', JSON.stringify(logs));
+        };
+        
+        // Bulk Operations - REAL IMPLEMENTATION
+        function bulkOperations() {
+            if (!planData || !planData.inspectionData) {
+                alert('⚠️ لا توجد بيانات للعمليات الجماعية');
+                return;
+            }
+            
+            // Create bulk operations modal
+            const modal = document.createElement('div');
+            modal.id = 'bulkOpsModal';
+            modal.style.cssText = `
+                display: block;
+                position: fixed;
+                z-index: 10000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                overflow: auto;
+                animation: fadeIn 0.3s ease;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; margin: 3% auto; padding: 30px; border-radius: 20px; max-width: 900px; box-shadow: 0 20px 60px rgba(0,0,0,0.4);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 3px solid #667eea;">
+                        <h2 style="color: #2d3561; margin: 0;">⚙️ العمليات الجماعية الذكية</h2>
+                        <button onclick="document.getElementById('bulkOpsModal').remove()" style="font-size: 2em; border: none; background: none; cursor: pointer; color: #999;">×</button>
+                    </div>
+                    
+                    <!-- Operation Selection -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                        <button onclick="bulkEditInspections()" class="btn btn-primary" style="padding: 20px; flex-direction: column; align-items: center; gap: 10px;">
+                            <span style="font-size: 2em;">✏️</span>
+                            <span>تعديل جماعي للتفتيشات</span>
+                        </button>
+                        <button onclick="bulkDeleteInspections()" class="btn btn-danger" style="padding: 20px; flex-direction: column; align-items: center; gap: 10px;">
+                            <span style="font-size: 2em;">🗑️</span>
+                            <span>حذف جماعي للتفتيشات</span>
+                        </button>
+                        <button onclick="bulkCopyInspections()" class="btn btn-info" style="padding: 20px; flex-direction: column; align-items: center; gap: 10px;">
+                            <span style="font-size: 2em;">📋</span>
+                            <span>نسخ جماعي للتفتيشات</span>
+                        </button>
+                        <button onclick="bulkReassignInspectors()" class="btn btn-warning" style="padding: 20px; flex-direction: column; align-items: center; gap: 10px;">
+                            <span style="font-size: 2em;">👥</span>
+                            <span>إعادة تعيين المفتشين</span>
+                        </button>
+                        <button onclick="bulkReassignAreas()" class="btn btn-success" style="padding: 20px; flex-direction: column; align-items: center; gap: 10px;">
+                            <span style="font-size: 2em;">🗺️</span>
+                            <span>إعادة تعيين المناطق</span>
+                        </button>
+                        <button onclick="bulkMergeDuplicates()" class="btn btn-primary" style="padding: 20px; flex-direction: column; align-items: center; gap: 10px;">
+                            <span style="font-size: 2em;">🔗</span>
+                            <span>دمج التفتيشات المكررة</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Statistics -->
+                    <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 20px; border-radius: 15px; margin-top: 20px;">
+                        <h3 style="color: #2d3561; margin-bottom: 15px;">📊 إحصائيات البيانات</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 2.5em; font-weight: 700; color: #667eea;">${planData.inspectionData.length}</div>
+                                <div style="color: #666; font-size: 0.9em;">إجمالي التفتيشات</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 2.5em; font-weight: 700; color: #11998e;">${new Set(planData.inspectionData.map(i => i.inspector)).size}</div>
+                                <div style="color: #666; font-size: 0.9em;">عدد المفتشين</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 2.5em; font-weight: 700; color: #fa709a;">${new Set(planData.inspectionData.map(i => i.area)).size}</div>
+                                <div style="color: #666; font-size: 0.9em;">عدد المناطق</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 2.5em; font-weight: 700; color: #ffc107;">${planData.inspectionData.reduce((sum, i) => sum + (i.shops ? i.shops.length : 0), 0)}</div>
+                                <div style="color: #666; font-size: 0.9em;">إجمالي المحلات</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
         }
+        
+        // Bulk Edit Inspections
+        window.bulkEditInspections = function() {
+            const selectedRange = prompt('📅 أدخل نطاق التواريخ للتفتيشات المراد تعديلها:\n\nمثال: 2025-01-01 إلى 2025-01-31\n\nالصيغة: من-تاريخ إلى إلى-تاريخ', '2025-01-01 إلى 2025-01-31');
+            if (!selectedRange) return;
+            
+            const parts = selectedRange.split(' إلى ');
+            if (parts.length !== 2) {
+                alert('⚠️ صيغة غير صحيحة. استخدم: من-تاريخ إلى إلى-تاريخ');
+                return;
+            }
+            
+            const fromDate = new Date(parts[0].trim());
+            const toDate = new Date(parts[1].trim());
+            
+            const matchingInspections = planData.inspectionData.filter(insp => {
+                const inspDate = new Date(insp.day);
+                return inspDate >= fromDate && inspDate <= toDate;
+            });
+            
+            if (matchingInspections.length === 0) {
+                alert('⚠️ لا توجد تفتيشات في النطاق المحدد');
+                return;
+            }
+            
+            const action = confirm(`✏️ تم العثور على ${matchingInspections.length} تفتيش في النطاق المحدد.\n\nهل تريد:\nOK = تعديل المفتش\nCancel = تعديل المنطقة`);
+            
+            if (action) {
+                // Edit inspector
+                const newInspector = prompt('👤 أدخل اسم المفتش الجديد:', matchingInspections[0].inspector);
+                if (!newInspector) return;
+                
+                matchingInspections.forEach(insp => {
+                    insp.inspector = newInspector;
+                });
+                
+                alert(`✅ تم تحديث ${matchingInspections.length} تفتيش!\n\nالمفتش الجديد: ${newInspector}\n\n⚠️ لا تنسَ حفظ التغييرات`);
+            } else {
+                // Edit area
+                const newArea = prompt('🗺️ أدخل اسم المنطقة الجديدة:', matchingInspections[0].area);
+                if (!newArea) return;
+                
+                matchingInspections.forEach(insp => {
+                    insp.area = newArea;
+                });
+                
+                alert(`✅ تم تحديث ${matchingInspections.length} تفتيش!\n\nالمنطقة الجديدة: ${newArea}\n\n⚠️ لا تنسَ حفظ التغييرات`);
+            }
+        };
+        
+        // Bulk Delete Inspections
+        window.bulkDeleteInspections = async function() {
+            const selectedRange = prompt('🗑️ أدخل نطاق التواريخ للتفتيشات المراد حذفها:\n\nمثال: 2025-01-01 إلى 2025-01-31\n\nالصيغة: من-تاريخ إلى إلى-تاريخ', '2025-01-01 إلى 2025-01-31');
+            if (!selectedRange) return;
+            
+            const parts = selectedRange.split(' إلى ');
+            if (parts.length !== 2) {
+                alert('⚠️ صيغة غير صحيحة. استخدم: من-تاريخ إلى إلى-تاريخ');
+                return;
+            }
+            
+            const fromDate = new Date(parts[0].trim());
+            const toDate = new Date(parts[1].trim());
+            
+            const beforeCount = planData.inspectionData.length;
+            planData.inspectionData = planData.inspectionData.filter(insp => {
+                const inspDate = new Date(insp.day);
+                return !(inspDate >= fromDate && inspDate <= toDate);
+            });
+            
+            const deletedCount = beforeCount - planData.inspectionData.length;
+            
+            if (deletedCount === 0) {
+                alert('⚠️ لا توجد تفتيشات في النطاق المحدد');
+                return;
+            }
+            
+            if (!confirm(`⚠️ هل أنت متأكد من حذف ${deletedCount} تفتيش؟\n\nهذه العملية لا يمكن التراجع عنها!`)) {
+                // Reload data to undo
+                await loadPlanData();
+                return;
+            }
+            
+            try {
+                await savePlanDataToGitHub();
+                alert(`✅ تم حذف ${deletedCount} تفتيش بنجاح!`);
+                document.getElementById('bulkOpsModal').remove();
+            } catch (error) {
+                alert('❌ فشل الحفظ: ' + error.message);
+            }
+        };
+        
+        // Bulk Copy Inspections
+        window.bulkCopyInspections = function() {
+            const sourceDate = prompt('📅 أدخل التاريخ المصدر (التفتيشات التي تريد نسخها):', '2025-01-01');
+            if (!sourceDate) return;
+            
+            const targetDate = prompt('📅 أدخل التاريخ الهدف (حيث تريد نسخ التفتيشات):', '2025-02-01');
+            if (!targetDate) return;
+            
+            const sourceInspections = planData.inspectionData.filter(i => i.day === sourceDate);
+            
+            if (sourceInspections.length === 0) {
+                alert('⚠️ لا توجد تفتيشات في التاريخ المصدر');
+                return;
+            }
+            
+            // Check if target date already has inspections
+            const targetInspections = planData.inspectionData.filter(i => i.day === targetDate);
+            if (targetInspections.length > 0) {
+                if (!confirm(`⚠️ التاريخ الهدف يحتوي على ${targetInspections.length} تفتيش.\n\nهل تريد الإضافة؟`)) {
+                    return;
+                }
+            }
+            
+            // Copy inspections
+            sourceInspections.forEach(insp => {
+                const copiedInsp = {
+                    ...insp,
+                    day: targetDate,
+                    id: 'insp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+                };
+                planData.inspectionData.push(copiedInsp);
+            });
+            
+            alert(`✅ تم نسخ ${sourceInspections.length} تفتيش من ${sourceDate} إلى ${targetDate}!\n\n⚠️ لا تنسَ حفظ التغييرات`);
+        };
+        
+        // Bulk Reassign Inspectors
+        window.bulkReassignInspectors = function() {
+            const oldInspector = prompt('👤 أدخل اسم المفتش القديم:', planData.inspectors[0]?.name || '');
+            if (!oldInspector) return;
+            
+            const newInspector = prompt('👤 أدخل اسم المفتش الجديد:');
+            if (!newInspector) return;
+            
+            const matchingInspections = planData.inspectionData.filter(i => i.inspector === oldInspector);
+            
+            if (matchingInspections.length === 0) {
+                alert('⚠️ لا توجد تفتيشات للمفتش المحدد');
+                return;
+            }
+            
+            if (!confirm(`🔄 سيتم تحديث ${matchingInspections.length} تفتيش\n\nمن: ${oldInspector}\nإلى: ${newInspector}\n\nهل تريد المتابعة؟`)) {
+                return;
+            }
+            
+            matchingInspections.forEach(insp => {
+                insp.inspector = newInspector;
+            });
+            
+            alert(`✅ تم تحديث ${matchingInspections.length} تفتيش!\n\n⚠️ لا تنسَ حفظ التغييرات`);
+        };
+        
+        // Bulk Reassign Areas
+        window.bulkReassignAreas = function() {
+            const oldArea = prompt('🗺️ أدخل اسم المنطقة القديمة:', planData.areas[0]?.name || '');
+            if (!oldArea) return;
+            
+            const newArea = prompt('🗺️ أدخل اسم المنطقة الجديدة:');
+            if (!newArea) return;
+            
+            const matchingInspections = planData.inspectionData.filter(i => i.area === oldArea);
+            
+            if (matchingInspections.length === 0) {
+                alert('⚠️ لا توجد تفتيشات للمنطقة المحددة');
+                return;
+            }
+            
+            if (!confirm(`🔄 سيتم تحديث ${matchingInspections.length} تفتيش\n\nمن: ${oldArea}\nإلى: ${newArea}\n\nهل تريد المتابعة؟`)) {
+                return;
+            }
+            
+            matchingInspections.forEach(insp => {
+                insp.area = newArea;
+            });
+            
+            alert(`✅ تم تحديث ${matchingInspections.length} تفتيش!\n\n⚠️ لا تنسَ حفظ التغييرات`);
+        };
+        
+        // Bulk Merge Duplicates
+        window.bulkMergeDuplicates = async function() {
+            const duplicates = [];
+            const seen = new Map();
+            
+            planData.inspectionData.forEach((insp, idx) => {
+                const key = `${insp.inspector}-${insp.day}-${insp.area}`;
+                if (seen.has(key)) {
+                    duplicates.push({
+                        original: seen.get(key),
+                        duplicate: idx,
+                        inspector: insp.inspector,
+                        day: insp.day,
+                        area: insp.area
+                    });
+                } else {
+                    seen.set(key, idx);
+                }
+            });
+            
+            if (duplicates.length === 0) {
+                alert('✅ رائع! لا توجد تفتيشات مكررة في البيانات');
+                return;
+            }
+            
+            if (!confirm(`⚠️ تم العثور على ${duplicates.length} تفتيش مكرر\n\nهل تريد دمجها ومحلاتها وحذف التكرارات؟`)) {
+                return;
+            }
+            
+            // Merge duplicates
+            duplicates.forEach(dup => {
+                const original = planData.inspectionData[dup.original];
+                const duplicate = planData.inspectionData[dup.duplicate];
+                
+                // Merge shops
+                if (duplicate.shops) {
+                    if (!original.shops) original.shops = [];
+                    duplicate.shops.forEach(shop => {
+                        if (!original.shops.includes(shop)) {
+                            original.shops.push(shop);
+                        }
+                    });
+                }
+            });
+            
+            // Remove duplicates
+            const toRemove = new Set(duplicates.map(d => d.duplicate));
+            planData.inspectionData = planData.inspectionData.filter((_, idx) => !toRemove.has(idx));
+            
+            try {
+                await savePlanDataToGitHub();
+                alert(`✅ تم دمج وحذف ${duplicates.length} تفتيش مكرر بنجاح!`);
+                document.getElementById('bulkOpsModal').remove();
+            } catch (error) {
+                alert('❌ فشل الحفظ: ' + error.message);
+            }
+        };
         
         // Reload Shops from Excel - REAL IMPLEMENTATION
         async function reloadShopsFromExcel() {

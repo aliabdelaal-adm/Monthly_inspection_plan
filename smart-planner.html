@@ -990,6 +990,139 @@
             transform: translateY(-2px);
         }
         
+        .notification-move-btn {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .notification-move-btn:hover {
+            background: #138496;
+            transform: translateY(-2px);
+        }
+        
+        .notification-priority-btn {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .notification-priority-btn:hover {
+            background: #e0a800;
+            transform: translateY(-2px);
+        }
+        
+        .notification-item.priority-high {
+            border-left: 5px solid #dc3545;
+            background: linear-gradient(to right, #fff5f5 0%, white 10%);
+        }
+        
+        .notification-item.priority-medium {
+            border-left: 5px solid #ffc107;
+            background: linear-gradient(to right, #fffbf0 0%, white 10%);
+        }
+        
+        .notification-item.priority-low {
+            border-left: 5px solid #28a745;
+            background: linear-gradient(to right, #f0fff4 0%, white 10%);
+        }
+        
+        .notification-settings {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .notification-settings label {
+            display: block;
+            margin-bottom: 8px;
+            color: #495057;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+        
+        .notification-settings input,
+        .notification-settings select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid #ced4da;
+            border-radius: 8px;
+            font-family: 'Cairo', sans-serif;
+            margin-bottom: 10px;
+        }
+        
+        .notification-settings input:focus,
+        .notification-settings select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .bell-control-panel {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            border: 2px solid #dee2e6;
+        }
+        
+        .bell-control-panel h3 {
+            color: #2d3561;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+        
+        .bell-control-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        
+        .bell-control-item {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .bell-control-item label {
+            display: block;
+            margin-bottom: 8px;
+            color: #495057;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+        
+        .bell-control-item input,
+        .bell-control-item select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #ced4da;
+            border-radius: 8px;
+            font-family: 'Cairo', sans-serif;
+        }
+        
+        .bell-bulk-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .bell-bulk-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95em;
+        }
+        
+        .bell-bulk-btn:hover {
+            transform: translateY(-2px);
+        }
+        
         .bell-save-all-btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -2223,6 +2356,39 @@
                 <div class="bell-status-message" id="bellStatusMessage"></div>
                 
                 <!-- Add New Notification Section -->
+                <!-- Global Bell Settings Control Panel -->
+                <div class="bell-control-panel">
+                    <h3>⚙️ الإعدادات العامة للإشعارات</h3>
+                    <div class="bell-control-row">
+                        <div class="bell-control-item">
+                            <label>⏱️ مدة ظهور فقاعة الإشعار (بالثواني):</label>
+                            <input type="number" id="bellBubbleDuration" value="24" min="5" max="120" 
+                                   onchange="updateBellBubbleDuration()" 
+                                   style="width: 100%; padding: 10px; border: 2px solid #ced4da; border-radius: 8px;">
+                            <small style="color: #6c757d; display: block; margin-top: 5px;">
+                                💡 القيمة الافتراضية: 24 ثانية (يمكن التعديل من 5 إلى 120 ثانية)
+                            </small>
+                        </div>
+                        <div class="bell-control-item">
+                            <label>🔔 تفعيل صوت الإشعارات:</label>
+                            <select id="bellSoundEnabled" onchange="updateBellSoundSetting()" 
+                                    style="width: 100%; padding: 10px; border: 2px solid #ced4da; border-radius: 8px;">
+                                <option value="true">مفعّل ✅</option>
+                                <option value="false">معطّل ❌</option>
+                            </select>
+                        </div>
+                        <div class="bell-control-item">
+                            <label>🎨 نمط العرض:</label>
+                            <select id="bellDisplayStyle" onchange="updateBellDisplayStyle()" 
+                                    style="width: 100%; padding: 10px; border: 2px solid #ced4da; border-radius: 8px;">
+                                <option value="modern">عصري ✨</option>
+                                <option value="classic">كلاسيكي 📜</option>
+                                <option value="minimal">بسيط 🎯</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="notification-add-section">
                     <h3>➕ إضافة إشعار جديد</h3>
                     <p style="color: #6c757d; margin-bottom: 15px; font-size: 0.95em;">
@@ -2242,6 +2408,24 @@
                         value="د. علي عبدالعال"
                         dir="rtl"
                     />
+                    
+                    <!-- Enhanced notification settings -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; color: #495057; font-weight: 600;">📌 أولوية الإشعار:</label>
+                            <select id="newBellNotificationPriority" style="width: 100%; padding: 8px; border: 2px solid #ced4da; border-radius: 8px;">
+                                <option value="high">عالية 🔴</option>
+                                <option value="medium" selected>متوسطة 🟡</option>
+                                <option value="low">منخفضة 🟢</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; color: #495057; font-weight: 600;">⏱️ مدة العرض (بالأيام):</label>
+                            <input type="number" id="newBellNotificationDuration" value="7" min="1" max="365" 
+                                   style="width: 100%; padding: 8px; border: 2px solid #ced4da; border-radius: 8px;">
+                        </div>
+                    </div>
+                    
                     <button class="notification-add-btn" onclick="addBellNotification()">
                         ➕ إضافة إشعار
                     </button>
@@ -2249,7 +2433,23 @@
                 
                 <!-- Existing Notifications List -->
                 <div class="notifications-list">
-                    <h3 style="color: #2d3561; margin-bottom: 15px; font-size: 1.4em;">📋 الإشعارات الحالية</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="color: #2d3561; font-size: 1.4em; margin: 0;">📋 الإشعارات الحالية</h3>
+                        <div class="bell-bulk-actions">
+                            <button class="bell-bulk-btn" onclick="sortBellNotificationsByPriority()" 
+                                    style="background: #17a2b8; color: white;">
+                                🔽 ترتيب حسب الأولوية
+                            </button>
+                            <button class="bell-bulk-btn" onclick="sortBellNotificationsByDate()" 
+                                    style="background: #6c757d; color: white;">
+                                📅 ترتيب حسب التاريخ
+                            </button>
+                            <button class="bell-bulk-btn" onclick="deleteExpiredNotifications()" 
+                                    style="background: #dc3545; color: white;">
+                                🗑️ حذف المنتهية
+                            </button>
+                        </div>
+                    </div>
                     <div id="bellNotificationsList">
                         <p style="text-align: center; padding: 40px; color: #999;">
                             جاري تحميل الإشعارات...
@@ -9254,6 +9454,17 @@
             try {
                 showBellStatusMessage('جاري تحميل الإشعارات...', 'info');
                 
+                // If planData is already loaded, use it
+                if (planData && planData.bellNotes) {
+                    console.log('Using already loaded planData');
+                    displayBellNotifications();
+                    loadBellSettings();
+                    showBellStatusMessage('تم تحميل الإشعارات بنجاح ✅', 'success');
+                    setTimeout(() => hideBellStatusMessage(), 2000);
+                    return;
+                }
+                
+                // Otherwise, fetch from server
                 const response = await fetch('plan-data.json?' + new Date().getTime());
                 if (!response.ok) {
                     throw new Error('فشل في تحميل البيانات');
@@ -9264,12 +9475,22 @@
                 
                 // Display notifications
                 displayBellNotifications();
+                loadBellSettings();
                 
                 showBellStatusMessage('تم تحميل الإشعارات بنجاح ✅', 'success');
                 setTimeout(() => hideBellStatusMessage(), 2000);
             } catch (error) {
                 console.error('Error loading bell notifications:', error);
-                showBellStatusMessage('خطأ في تحميل الإشعارات: ' + error.message, 'error');
+                showBellStatusMessage('خطأ في تحميل الإشعارات: ' + error.message + '\n\nسيتم المحاولة مرة أخرى...', 'error');
+                
+                // Retry with current planData if available
+                if (planData) {
+                    setTimeout(() => {
+                        displayBellNotifications();
+                        loadBellSettings();
+                        showBellStatusMessage('تم استخدام البيانات المحملة مسبقاً ✅', 'success');
+                    }, 1000);
+                }
             }
         }
         
@@ -9310,17 +9531,40 @@
                 }) : 'غير محدد';
                 
                 const author = notification.author || 'د. علي عبدالعال';
+                const priority = notification.priority || 'medium';
+                const displayDuration = notification.displayDuration || 7;
+                const expiryDate = notification.expiryDate || null;
+                
+                // Calculate if notification is expired
+                const isExpired = expiryDate && new Date(expiryDate) < new Date();
+                const expiredClass = isExpired ? 'opacity: 0.5; text-decoration: line-through;' : '';
+                
+                // Priority icons
+                const priorityIcons = {
+                    high: '🔴',
+                    medium: '🟡',
+                    low: '🟢'
+                };
                 
                 html += `
-                    <div class="notification-item">
-                        <div class="notification-text" id="bellNotifText_${index}" onclick="editBellNotification(${index})">
-                            ${notification.text}
+                    <div class="notification-item priority-${priority}" style="${expiredClass}">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                            <div style="flex: 1;">
+                                <div class="notification-text" id="bellNotifText_${index}" onclick="editBellNotification(${index})">
+                                    ${notification.text}
+                                </div>
+                                <textarea 
+                                    class="notification-edit-textarea" 
+                                    id="bellNotifEdit_${index}"
+                                    dir="rtl"
+                                >${notification.text}</textarea>
+                            </div>
+                            <div style="display: flex; gap: 5px; margin-right: 10px;">
+                                ${index > 0 ? `<button class="notification-action-btn notification-move-btn" onclick="moveBellNotificationUp(${index})" title="نقل لأعلى">⬆️</button>` : ''}
+                                ${index < planData.bellNotes.notifications.length - 1 ? `<button class="notification-action-btn notification-move-btn" onclick="moveBellNotificationDown(${index})" title="نقل لأسفل">⬇️</button>` : ''}
+                            </div>
                         </div>
-                        <textarea 
-                            class="notification-edit-textarea" 
-                            id="bellNotifEdit_${index}"
-                            dir="rtl"
-                        >${notification.text}</textarea>
+                        
                         <div id="bellAuthorEditContainer_${index}" style="display: none; margin-top: 10px;">
                             <label style="display: block; margin-bottom: 5px; color: #495057; font-weight: 500; font-size: 0.9em;">👤 اسم المؤلف/المرسل:</label>
                             <input 
@@ -9331,16 +9575,41 @@
                                 dir="rtl"
                             />
                         </div>
+                        
+                        <div id="bellSettingsContainer_${index}" style="display: none;" class="notification-settings">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div>
+                                    <label>📌 الأولوية:</label>
+                                    <select id="bellPriorityEdit_${index}" style="width: 100%; padding: 8px; border: 2px solid #ced4da; border-radius: 8px;">
+                                        <option value="high" ${priority === 'high' ? 'selected' : ''}>عالية 🔴</option>
+                                        <option value="medium" ${priority === 'medium' ? 'selected' : ''}>متوسطة 🟡</option>
+                                        <option value="low" ${priority === 'low' ? 'selected' : ''}>منخفضة 🟢</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label>⏱️ مدة العرض (بالأيام):</label>
+                                    <input type="number" id="bellDurationEdit_${index}" value="${displayDuration}" min="1" max="365" 
+                                           style="width: 100%; padding: 8px; border: 2px solid #ced4da; border-radius: 8px;">
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="notification-meta">
                             <span>📅 ${timestamp}</span>
                             <span>👤 ${author}</span>
+                            <span>${priorityIcons[priority]} ${priority === 'high' ? 'أولوية عالية' : priority === 'medium' ? 'أولوية متوسطة' : 'أولوية منخفضة'}</span>
+                            ${isExpired ? '<span style="color: #dc3545;">⏰ منتهي</span>' : `<span>⏱️ ${displayDuration} أيام</span>`}
                         </div>
+                        
                         <div class="notification-actions">
                             <button class="notification-action-btn notification-save-btn" id="bellSaveBtn_${index}" onclick="saveBellNotificationEdit(${index})">
                                 ✅ حفظ
                             </button>
                             <button class="notification-action-btn notification-cancel-btn" id="bellCancelBtn_${index}" onclick="cancelBellNotificationEdit(${index})">
                                 ❌ إلغاء
+                            </button>
+                            <button class="notification-action-btn notification-priority-btn" onclick="toggleBellSettings(${index})">
+                                ⚙️ إعدادات
                             </button>
                             <button class="notification-action-btn notification-delete-btn" onclick="deleteBellNotification(${index})">
                                 🗑️ حذف
@@ -9357,9 +9626,13 @@
         function addBellNotification() {
             const textInput = document.getElementById('newBellNotificationText');
             const authorInput = document.getElementById('newBellNotificationAuthor');
+            const priorityInput = document.getElementById('newBellNotificationPriority');
+            const durationInput = document.getElementById('newBellNotificationDuration');
             
             const text = textInput.value.trim();
             const author = authorInput.value.trim();
+            const priority = priorityInput.value;
+            const displayDuration = parseInt(durationInput.value);
             
             if (!text) {
                 alert('⚠️ يرجى كتابة نص الإشعار');
@@ -9373,19 +9646,26 @@
             
             // Initialize bellNotes if needed
             if (!planData.bellNotes) {
-                planData.bellNotes = { notifications: [] };
+                planData.bellNotes = { notifications: [], settings: {} };
             }
             
             if (!planData.bellNotes.notifications) {
                 planData.bellNotes.notifications = [];
             }
             
+            // Calculate expiry date
+            const expiryDate = new Date();
+            expiryDate.setDate(expiryDate.getDate() + displayDuration);
+            
             // Create new notification
             const newNotification = {
                 id: Date.now().toString(),
                 text: text,
                 timestamp: new Date().toISOString(),
-                author: author
+                author: author,
+                priority: priority,
+                displayDuration: displayDuration,
+                expiryDate: expiryDate.toISOString()
             };
             
             // Add to beginning of array (most recent first)
@@ -9394,6 +9674,8 @@
             // Clear inputs
             textInput.value = '';
             // Keep author for convenience
+            priorityInput.value = 'medium';
+            durationInput.value = '7';
             
             // Refresh display
             displayBellNotifications();
@@ -9424,11 +9706,16 @@
             const editTextarea = document.getElementById(`bellNotifEdit_${index}`);
             const authorEditContainer = document.getElementById(`bellAuthorEditContainer_${index}`);
             const authorEdit = document.getElementById(`bellAuthorEdit_${index}`);
+            const settingsContainer = document.getElementById(`bellSettingsContainer_${index}`);
+            const priorityEdit = document.getElementById(`bellPriorityEdit_${index}`);
+            const durationEdit = document.getElementById(`bellDurationEdit_${index}`);
             const saveBtn = document.getElementById(`bellSaveBtn_${index}`);
             const cancelBtn = document.getElementById(`bellCancelBtn_${index}`);
             
             const newText = editTextarea.value.trim();
             const newAuthor = authorEdit.value.trim();
+            const newPriority = priorityEdit ? priorityEdit.value : (planData.bellNotes.notifications[index].priority || 'medium');
+            const newDuration = durationEdit ? parseInt(durationEdit.value) : (planData.bellNotes.notifications[index].displayDuration || 7);
             
             if (!newText) {
                 alert('⚠️ لا يمكن أن يكون الإشعار فارغاً');
@@ -9440,9 +9727,16 @@
                 return;
             }
             
+            // Calculate new expiry date
+            const expiryDate = new Date();
+            expiryDate.setDate(expiryDate.getDate() + newDuration);
+            
             // Update notification
             planData.bellNotes.notifications[index].text = newText;
             planData.bellNotes.notifications[index].author = newAuthor;
+            planData.bellNotes.notifications[index].priority = newPriority;
+            planData.bellNotes.notifications[index].displayDuration = newDuration;
+            planData.bellNotes.notifications[index].expiryDate = expiryDate.toISOString();
             planData.bellNotes.notifications[index].lastModified = new Date().toISOString();
             
             // Refresh display
@@ -9567,6 +9861,175 @@
         function hideBellStatusMessage() {
             const messageDiv = document.getElementById('bellStatusMessage');
             messageDiv.classList.remove('show');
+        }
+        
+        // =========================================================================
+        // Enhanced Bell Notification Functions
+        // =========================================================================
+        
+        // Toggle Bell Settings
+        function toggleBellSettings(index) {
+            const settingsContainer = document.getElementById(`bellSettingsContainer_${index}`);
+            if (settingsContainer.style.display === 'none') {
+                settingsContainer.style.display = 'block';
+            } else {
+                settingsContainer.style.display = 'none';
+            }
+        }
+        
+        // Move Bell Notification Up
+        function moveBellNotificationUp(index) {
+            if (index === 0) return;
+            
+            // Swap with previous
+            const temp = planData.bellNotes.notifications[index];
+            planData.bellNotes.notifications[index] = planData.bellNotes.notifications[index - 1];
+            planData.bellNotes.notifications[index - 1] = temp;
+            
+            // Refresh display
+            displayBellNotifications();
+            
+            showBellStatusMessage('تم نقل الإشعار لأعلى ⬆️ لا تنسَ حفظ التغييرات', 'success');
+        }
+        
+        // Move Bell Notification Down
+        function moveBellNotificationDown(index) {
+            if (index >= planData.bellNotes.notifications.length - 1) return;
+            
+            // Swap with next
+            const temp = planData.bellNotes.notifications[index];
+            planData.bellNotes.notifications[index] = planData.bellNotes.notifications[index + 1];
+            planData.bellNotes.notifications[index + 1] = temp;
+            
+            // Refresh display
+            displayBellNotifications();
+            
+            showBellStatusMessage('تم نقل الإشعار لأسفل ⬇️ لا تنسَ حفظ التغييرات', 'success');
+        }
+        
+        // Sort Bell Notifications by Priority
+        function sortBellNotificationsByPriority() {
+            const priorityOrder = { high: 0, medium: 1, low: 2 };
+            
+            planData.bellNotes.notifications.sort((a, b) => {
+                const priorityA = priorityOrder[a.priority || 'medium'];
+                const priorityB = priorityOrder[b.priority || 'medium'];
+                return priorityA - priorityB;
+            });
+            
+            // Refresh display
+            displayBellNotifications();
+            
+            showBellStatusMessage('تم ترتيب الإشعارات حسب الأولوية 🔽 لا تنسَ حفظ التغييرات', 'success');
+        }
+        
+        // Sort Bell Notifications by Date
+        function sortBellNotificationsByDate() {
+            planData.bellNotes.notifications.sort((a, b) => {
+                const dateA = new Date(a.timestamp || 0);
+                const dateB = new Date(b.timestamp || 0);
+                return dateB - dateA; // Most recent first
+            });
+            
+            // Refresh display
+            displayBellNotifications();
+            
+            showBellStatusMessage('تم ترتيب الإشعارات حسب التاريخ 📅 لا تنسَ حفظ التغييرات', 'success');
+        }
+        
+        // Delete Expired Notifications
+        function deleteExpiredNotifications() {
+            const now = new Date();
+            const before = planData.bellNotes.notifications.length;
+            
+            planData.bellNotes.notifications = planData.bellNotes.notifications.filter(notification => {
+                if (!notification.expiryDate) return true;
+                return new Date(notification.expiryDate) >= now;
+            });
+            
+            const after = planData.bellNotes.notifications.length;
+            const deleted = before - after;
+            
+            if (deleted === 0) {
+                showBellStatusMessage('لا توجد إشعارات منتهية للحذف ✅', 'success');
+            } else {
+                displayBellNotifications();
+                showBellStatusMessage(`تم حذف ${deleted} إشعار منتهي 🗑️ لا تنسَ حفظ التغييرات`, 'success');
+            }
+        }
+        
+        // Load Bell Settings
+        function loadBellSettings() {
+            // Initialize settings if they don't exist
+            if (!planData.bellNotes.settings) {
+                planData.bellNotes.settings = {
+                    bubbleDuration: 24,
+                    soundEnabled: true,
+                    displayStyle: 'modern'
+                };
+            }
+            
+            // Load settings into UI
+            const bubbleDurationInput = document.getElementById('bellBubbleDuration');
+            const soundEnabledSelect = document.getElementById('bellSoundEnabled');
+            const displayStyleSelect = document.getElementById('bellDisplayStyle');
+            
+            if (bubbleDurationInput) {
+                bubbleDurationInput.value = planData.bellNotes.settings.bubbleDuration || 24;
+            }
+            
+            if (soundEnabledSelect) {
+                soundEnabledSelect.value = planData.bellNotes.settings.soundEnabled !== false ? 'true' : 'false';
+            }
+            
+            if (displayStyleSelect) {
+                displayStyleSelect.value = planData.bellNotes.settings.displayStyle || 'modern';
+            }
+        }
+        
+        // Update Bell Bubble Duration
+        function updateBellBubbleDuration() {
+            const bubbleDurationInput = document.getElementById('bellBubbleDuration');
+            const duration = parseInt(bubbleDurationInput.value);
+            
+            if (duration < 5 || duration > 120) {
+                alert('⚠️ مدة الظهور يجب أن تكون بين 5 و 120 ثانية');
+                bubbleDurationInput.value = planData.bellNotes.settings.bubbleDuration || 24;
+                return;
+            }
+            
+            if (!planData.bellNotes.settings) {
+                planData.bellNotes.settings = {};
+            }
+            
+            planData.bellNotes.settings.bubbleDuration = duration;
+            showBellStatusMessage(`تم تحديث مدة ظهور الفقاعة إلى ${duration} ثانية ⏱️ لا تنسَ حفظ التغييرات`, 'success');
+        }
+        
+        // Update Bell Sound Setting
+        function updateBellSoundSetting() {
+            const soundEnabledSelect = document.getElementById('bellSoundEnabled');
+            const soundEnabled = soundEnabledSelect.value === 'true';
+            
+            if (!planData.bellNotes.settings) {
+                planData.bellNotes.settings = {};
+            }
+            
+            planData.bellNotes.settings.soundEnabled = soundEnabled;
+            showBellStatusMessage(`تم ${soundEnabled ? 'تفعيل' : 'تعطيل'} صوت الإشعارات 🔔 لا تنسَ حفظ التغييرات`, 'success');
+        }
+        
+        // Update Bell Display Style
+        function updateBellDisplayStyle() {
+            const displayStyleSelect = document.getElementById('bellDisplayStyle');
+            const displayStyle = displayStyleSelect.value;
+            
+            if (!planData.bellNotes.settings) {
+                planData.bellNotes.settings = {};
+            }
+            
+            planData.bellNotes.settings.displayStyle = displayStyle;
+            showBellStatusMessage(`تم تغيير نمط العرض إلى ${displayStyle === 'modern' ? 'عصري' : displayStyle === 'classic' ? 'كلاسيكي' : 'بسيط'} 🎨 لا تنسَ حفظ التغييرات`, 'success');
         }
     </script>
 </body>

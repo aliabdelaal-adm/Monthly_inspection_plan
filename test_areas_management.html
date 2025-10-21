@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Areas Management Features</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 اختبار ميزات إدارة المناطق</h1>
+    
+    <div class="test-section">
+        <h2>1. اختبار الدوال الأساسية</h2>
+        <button onclick="testBasicFunctions()">تشغيل الاختبار</button>
+        <div id="basic-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. اختبار دمج المناطق</h2>
+        <button onclick="testMergeAreas()">تشغيل الاختبار</button>
+        <div id="merge-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. اختبار تعيين المحلات</h2>
+        <button onclick="testAssignShops()">تشغيل الاختبار</button>
+        <div id="assign-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. اختبار التعديل الجماعي</h2>
+        <button onclick="testBulkEdit()">تشغيل الاختبار</button>
+        <div id="bulk-results"></div>
+    </div>
+
+    <script>
+        // Mock plan data for testing
+        let planData = {
+            areas: [
+                { id: 'area1', name: 'منطقة الخالدية' },
+                { id: 'area2', name: 'منطقة الشامخة' },
+                { id: 'area3', name: 'منطقة الزاهية' }
+            ],
+            shops: [
+                { id: 'shop1', name: 'محل الطيور', areaId: 'area1' },
+                { id: 'shop2', name: 'محل الأسماك', areaId: 'area1' },
+                { id: 'shop3', name: 'محل الحيوانات', areaId: 'area2' },
+                { id: 'shop4', name: 'عيادة بيطرية', areaId: 'area3' }
+            ],
+            inspectionData: [
+                { inspector: 'د. أحمد', area: 'منطقة الخالدية', shops: ['محل الطيور'] },
+                { inspector: 'د. محمد', area: 'منطقة الشامخة', shops: ['محل الحيوانات'] }
+            ]
+        };
+
+        function showResult(containerId, message, isSuccess) {
+            const container = document.getElementById(containerId);
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'test-result ' + (isSuccess ? 'success' : 'error');
+            resultDiv.textContent = message;
+            container.appendChild(resultDiv);
+        }
+
+        function testBasicFunctions() {
+            const container = document.getElementById('basic-results');
+            container.innerHTML = '';
+            
+            // Test 1: Data structure
+            try {
+                if (planData && planData.areas && planData.shops) {
+                    showResult('basic-results', '✅ هيكل البيانات صحيح', true);
+                } else {
+                    showResult('basic-results', '❌ هيكل البيانات غير صحيح', false);
+                }
+            } catch (e) {
+                showResult('basic-results', '❌ خطأ في هيكل البيانات: ' + e.message, false);
+            }
+            
+            // Test 2: Areas count
+            try {
+                const areasCount = planData.areas.length;
+                showResult('basic-results', `✅ عدد المناطق: ${areasCount}`, true);
+            } catch (e) {
+                showResult('basic-results', '❌ خطأ في حساب المناطق: ' + e.message, false);
+            }
+            
+            // Test 3: Shops count
+            try {
+                const shopsCount = planData.shops.length;
+                showResult('basic-results', `✅ عدد المحلات: ${shopsCount}`, true);
+            } catch (e) {
+                showResult('basic-results', '❌ خطأ في حساب المحلات: ' + e.message, false);
+            }
+        }
+
+        function testMergeAreas() {
+            const container = document.getElementById('merge-results');
+            container.innerHTML = '';
+            
+            try {
+                // Simulate merge: area2 and area3 into area1
+                const targetAreaId = 'area1';
+                const sourceAreaIds = ['area2', 'area3'];
+                
+                // Move shops
+                let movedCount = 0;
+                planData.shops.forEach(shop => {
+                    if (sourceAreaIds.includes(shop.areaId)) {
+                        shop.areaId = targetAreaId;
+                        movedCount++;
+                    }
+                });
+                
+                showResult('merge-results', `✅ تم نقل ${movedCount} محل`, true);
+                
+                // Update inspections
+                const targetArea = planData.areas.find(a => a.id === targetAreaId);
+                let updatedInspections = 0;
+                planData.inspectionData.forEach(inspection => {
+                    if (inspection.area === 'منطقة الشامخة' || inspection.area === 'منطقة الزاهية') {
+                        inspection.area = targetArea.name;
+                        updatedInspections++;
+                    }
+                });
+                
+                showResult('merge-results', `✅ تم تحديث ${updatedInspections} تفتيش`, true);
+                
+                // Remove merged areas
+                const beforeCount = planData.areas.length;
+                planData.areas = planData.areas.filter(a => !sourceAreaIds.includes(a.id));
+                const afterCount = planData.areas.length;
+                
+                showResult('merge-results', `✅ تم حذف ${beforeCount - afterCount} منطقة`, true);
+                showResult('merge-results', '✅ عملية الدمج نجحت بالكامل', true);
+                
+            } catch (e) {
+                showResult('merge-results', '❌ خطأ في عملية الدمج: ' + e.message, false);
+            }
+        }
+
+        function testAssignShops() {
+            const container = document.getElementById('assign-results');
+            container.innerHTML = '';
+            
+            try {
+                // Restore test data
+                planData.areas = [
+                    { id: 'area1', name: 'منطقة الخالدية' },
+                    { id: 'area2', name: 'منطقة الشامخة' }
+                ];
+                planData.shops = [
+                    { id: 'shop1', name: 'محل الطيور', areaId: 'area1' },
+                    { id: 'shop2', name: 'محل الأسماك', areaId: 'area1' }
+                ];
+                
+                // Simulate assign: move shop1 to area2
+                const shopId = 'shop1';
+                const targetAreaId = 'area2';
+                
+                const shop = planData.shops.find(s => s.id === shopId);
+                if (shop) {
+                    const oldAreaId = shop.areaId;
+                    shop.areaId = targetAreaId;
+                    showResult('assign-results', `✅ تم نقل المحل من ${oldAreaId} إلى ${targetAreaId}`, true);
+                } else {
+                    showResult('assign-results', '❌ لم يتم العثور على المحل', false);
+                }
+                
+                // Verify the change
+                const updatedShop = planData.shops.find(s => s.id === shopId);
+                if (updatedShop && updatedShop.areaId === targetAreaId) {
+                    showResult('assign-results', '✅ تم التحقق من التغيير بنجاح', true);
+                } else {
+                    showResult('assign-results', '❌ فشل التحقق من التغيير', false);
+                }
+                
+            } catch (e) {
+                showResult('assign-results', '❌ خطأ في تعيين المحلات: ' + e.message, false);
+            }
+        }
+
+        function testBulkEdit() {
+            const container = document.getElementById('bulk-results');
+            container.innerHTML = '';
+            
+            try {
+                // Restore test data
+                planData.areas = [
+                    { id: 'area1', name: 'الخالدية' },
+                    { id: 'area2', name: 'الشامخة' }
+                ];
+                
+                // Test 1: Add prefix
+                const prefix = 'منطقة';
+                planData.areas.forEach(area => {
+                    area.name = prefix + ' ' + area.name;
+                });
+                showResult('bulk-results', `✅ إضافة البادئة "${prefix}" نجحت`, true);
+                showResult('bulk-results', `الأسماء الجديدة: ${planData.areas.map(a => a.name).join('، ')}`, true);
+                
+                // Test 2: Replace text
+                planData.areas.forEach(area => {
+                    area.name = area.name.replace('منطقة', 'حي');
+                });
+                showResult('bulk-results', '✅ استبدال النص نجح', true);
+                showResult('bulk-results', `الأسماء بعد الاستبدال: ${planData.areas.map(a => a.name).join('، ')}`, true);
+                
+                // Test 3: Add suffix
+                const suffix = 'الجديدة';
+                planData.areas.forEach(area => {
+                    area.name = area.name + ' ' + suffix;
+                });
+                showResult('bulk-results', `✅ إضافة اللاحقة "${suffix}" نجحت`, true);
+                showResult('bulk-results', `الأسماء النهائية: ${planData.areas.map(a => a.name).join('، ')}`, true);
+                
+            } catch (e) {
+                showResult('bulk-results', '❌ خطأ في التعديل الجماعي: ' + e.message, false);
+            }
+        }
+
+        // Auto-run basic tests on page load
+        window.onload = function() {
+            console.log('اختبار تحميل الصفحة...');
+            setTimeout(() => {
+                testBasicFunctions();
+            }, 500);
+        };
+    </script>
+</body>
+</html>

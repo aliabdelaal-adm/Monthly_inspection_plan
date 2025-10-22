@@ -2539,20 +2539,81 @@
                         </div>
                     </div>
                     
-                    <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
-                        <button class="btn btn-success" onclick="exportSmartShopList('excel')" style="background: white; color: #667eea;">
-                            <span>📊</span> تصدير Excel
-                        </button>
-                        <button class="btn btn-primary" onclick="exportSmartShopList('pdf')" style="background: white; color: #667eea;">
-                            <span>📄</span> تصدير PDF
-                        </button>
-                        <button class="btn btn-info" onclick="exportSmartShopList('json')" style="background: white; color: #667eea;">
-                            <span>💾</span> تصدير JSON
-                        </button>
-                        <button class="btn btn-warning" onclick="printSmartShopList()" style="background: white; color: #667eea;">
-                            <span>🖨️</span> طباعة
-                        </button>
+                    <!-- Smart Management Buttons Section -->
+                    <div style="margin-top: 20px; padding: 20px; background: rgba(255,255,255,0.15); border-radius: 10px;">
+                        <h4 style="color: white; margin-bottom: 15px; font-size: 1.2em;">🎯 إدارة المحلات الذكية</h4>
+                        
+                        <!-- Row 1: Core Management Actions -->
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+                            <button class="btn btn-success" onclick="openAddShopFromSmartList()" style="background: white; color: #28a745; font-weight: bold;">
+                                <span>➕</span> إضافة محل جديد
+                            </button>
+                            <button class="btn btn-primary" onclick="openBulkEditShops()" style="background: white; color: #007bff;">
+                                <span>✏️</span> تعديل محلات متعددة
+                            </button>
+                            <button class="btn btn-danger" onclick="openBulkDeleteShops()" style="background: white; color: #dc3545;">
+                                <span>🗑️</span> حذف محلات متعددة
+                            </button>
+                            <button class="btn btn-warning" onclick="openImportShopsFromExcel()" style="background: white; color: #ffc107;">
+                                <span>📥</span> استيراد من Excel
+                            </button>
+                        </div>
+                        
+                        <!-- Row 2: Advanced Management Actions -->
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+                            <button class="btn btn-info" onclick="mergeDuplicateShops()" style="background: white; color: #17a2b8;">
+                                <span>🔄</span> دمج المحلات المكررة
+                            </button>
+                            <button class="btn btn-success" onclick="syncShopsWithGitHub()" style="background: white; color: #11998e;">
+                                <span>☁️</span> مزامنة مع GitHub
+                            </button>
+                            <button class="btn btn-primary" onclick="refreshSmartShopData()" style="background: white; color: #3498db;">
+                                <span>🔄</span> تحديث البيانات
+                            </button>
+                            <button class="btn btn-warning" onclick="openAdvancedShopSearch()" style="background: white; color: #f39c12;">
+                                <span>🔍</span> بحث متقدم
+                            </button>
+                        </div>
+                        
+                        <!-- Row 3: Backup and Export Actions -->
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+                            <button class="btn btn-info" onclick="createShopsBackup()" style="background: white; color: #6c757d;">
+                                <span>💾</span> نسخة احتياطية
+                            </button>
+                            <button class="btn btn-success" onclick="exportSmartShopList('excel')" style="background: white; color: #667eea;">
+                                <span>📊</span> تصدير Excel
+                            </button>
+                            <button class="btn btn-primary" onclick="exportSmartShopList('pdf')" style="background: white; color: #667eea;">
+                                <span>📄</span> تصدير PDF
+                            </button>
+                            <button class="btn btn-info" onclick="exportSmartShopList('json')" style="background: white; color: #667eea;">
+                                <span>💾</span> تصدير JSON
+                            </button>
+                            <button class="btn btn-warning" onclick="printSmartShopList()" style="background: white; color: #667eea;">
+                                <span>🖨️</span> طباعة
+                            </button>
+                        </div>
+                        
+                        <!-- Row 4: Batch Selection Actions -->
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="btn btn-sm" onclick="selectAllShopsInList()" style="background: white; color: #28a745; padding: 8px 16px;">
+                                <span>☑️</span> تحديد الكل
+                            </button>
+                            <button class="btn btn-sm" onclick="deselectAllShopsInList()" style="background: white; color: #dc3545; padding: 8px 16px;">
+                                <span>⬜</span> إلغاء التحديد
+                            </button>
+                            <button class="btn btn-sm" onclick="selectHighPriorityShopsInList()" style="background: white; color: #ffc107; padding: 8px 16px;">
+                                <span>⭐</span> تحديد الأولوية العالية
+                            </button>
+                            <button class="btn btn-sm" onclick="exportSelectedShops()" style="background: white; color: #17a2b8; padding: 8px 16px;">
+                                <span>📤</span> تصدير المحدد
+                            </button>
+                            <button class="btn btn-sm" onclick="applyBatchOperation()" style="background: white; color: #6f42c1; padding: 8px 16px;">
+                                <span>⚙️</span> عملية جماعية
+                            </button>
+                        </div>
                     </div>
+                </div>
                 </div>
                 
                 <!-- Statistics Summary -->
@@ -2572,6 +2633,10 @@
                     <div style="background: #e74c3c; color: white; padding: 15px; border-radius: 10px; text-align: center;">
                         <div style="font-size: 2em; font-weight: bold;" id="smartListHighPriority">0</div>
                         <div>أولوية عالية</div>
+                    </div>
+                    <div id="selectedShopsCounter" style="background: #28a745; color: white; padding: 15px; border-radius: 10px; text-align: center; display: none;">
+                        <div style="font-size: 2em; font-weight: bold;" id="smartListSelectedCount">0</div>
+                        <div>محلات محددة</div>
                     </div>
                 </div>
                 
@@ -9376,6 +9441,16 @@
             document.getElementById('smartListAreas').textContent = uniqueAreas;
             document.getElementById('smartListHighPriority').textContent = highPriority;
             
+            // Update selected shops counter
+            const selectedCounter = document.getElementById('selectedShopsCounter');
+            const selectedCount = document.getElementById('smartListSelectedCount');
+            if (selectedShopsForBatch.size > 0) {
+                selectedCounter.style.display = 'block';
+                selectedCount.textContent = selectedShopsForBatch.size;
+            } else {
+                selectedCounter.style.display = 'none';
+            }
+            
             // Generate tables based on view mode
             const content = document.getElementById('smartShopListContent');
             
@@ -9397,6 +9472,7 @@
             let html = '<div style="overflow-x: auto;">';
             html += '<table class="inspections-table" style="width: 100%;">';
             html += '<thead><tr>';
+            html += '<th style="width: 50px;">☑️</th>';
             html += '<th>#</th>';
             html += '<th>اسم المحل</th>';
             html += '<th>المنطقة</th>';
@@ -9404,7 +9480,7 @@
             html += '<th>التقييم</th>';
             html += '<th>آخر تفتيش</th>';
             html += '<th>عدد التفتيشات</th>';
-            html += '<th>التفاصيل</th>';
+            html += '<th>الإجراءات</th>';
             html += '</tr></thead><tbody>';
             
             shops.forEach((shop, idx) => {
@@ -9422,7 +9498,16 @@
                     (shop.activity.length > 50 ? shop.activity.substring(0, 50) + '...' : shop.activity) : 
                     'غير محدد';
                 
-                html += '<tr>';
+                const isSelected = selectedShopsForBatch.has(shop.name);
+                const checkboxStyle = isSelected ? 'background: #28a745; color: white;' : 'background: white; color: #666;';
+                
+                html += `<tr style="${isSelected ? 'background: #e8f5e9;' : ''}">`;
+                html += `<td style="text-align: center;">
+                    <input type="checkbox" 
+                           ${isSelected ? 'checked' : ''} 
+                           onchange="toggleShopSelection('${escapeHtml(shop.name)}')"
+                           style="width: 20px; height: 20px; cursor: pointer;">
+                </td>`;
                 html += `<td>${idx + 1}</td>`;
                 html += `<td><strong>${escapeHtml(shop.name)}</strong><br><small style="color: #999;">${escapeHtml(shop.nameEn || '')}</small></td>`;
                 html += `<td>${escapeHtml(shop.area)}</td>`;
@@ -9430,7 +9515,11 @@
                 html += `<td><div style="background: ${ratingColor}; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; text-align: center;">${shop.rating.toFixed(0)}</div></td>`;
                 html += `<td>${lastInspectionText}</td>`;
                 html += `<td style="text-align: center;">${shop.inspectionCount}</td>`;
-                html += `<td><button onclick="showShopRatingDetails('${escapeHtml(shop.name)}')" class="btn btn-sm btn-info" style="padding: 5px 10px;">عرض</button></td>`;
+                html += `<td>
+                    <button onclick="showShopRatingDetails('${escapeHtml(shop.name)}')" class="btn btn-sm btn-info" style="padding: 5px 10px; margin: 2px;" title="عرض التفاصيل">👁️</button>
+                    <button onclick="editShopFromSmartList('${escapeHtml(shop.name)}')" class="btn btn-sm btn-warning" style="padding: 5px 10px; margin: 2px;" title="تعديل">✏️</button>
+                    <button onclick="deleteShopFromSmartList('${escapeHtml(shop.name)}')" class="btn btn-sm btn-danger" style="padding: 5px 10px; margin: 2px;" title="حذف">🗑️</button>
+                </td>`;
                 html += '</tr>';
             });
             
@@ -9801,6 +9890,908 @@
             } catch (error) {
                 alert('❌ خطأ في الطباعة: ' + error.message);
                 console.error('Print error:', error);
+            }
+        }
+        
+        // =========================================================================
+        // Smart Shop Management Functions
+        // =========================================================================
+        
+        // Track selected shops for batch operations
+        let selectedShopsForBatch = new Set();
+        
+        // Open Add Shop modal from Smart List
+        function openAddShopFromSmartList() {
+            // Close smart list modal first
+            closeSmartShopListModal();
+            // Switch to shops tab
+            switchTab('shops');
+            // Open add shop modal
+            setTimeout(() => {
+                openAddShopModal();
+            }, 300);
+        }
+        
+        // Open Bulk Edit Shops
+        function openBulkEditShops() {
+            if (selectedShopsForBatch.size === 0) {
+                alert('⚠️ يرجى تحديد محل واحد على الأقل للتعديل\n\nاستخدم أزرار "تحديد الكل" أو حدد المحلات يدوياً');
+                return;
+            }
+            
+            const shopNames = Array.from(selectedShopsForBatch).join('\n• ');
+            const confirm = window.confirm(`📝 تعديل جماعي لـ ${selectedShopsForBatch.size} محل\n\nالمحلات المحددة:\n• ${shopNames}\n\nهل تريد المتابعة؟`);
+            
+            if (confirm) {
+                // Open bulk edit interface
+                showBulkEditInterface();
+            }
+        }
+        
+        // Show Bulk Edit Interface
+        function showBulkEditInterface() {
+            const operations = [
+                '1. تحديث المنطقة لجميع المحلات',
+                '2. تحديث النشاط لجميع المحلات',
+                '3. إضافة نفس العنوان لجميع المحلات',
+                '4. تحديث رقم الترخيص بشكل جماعي',
+                '5. إضافة موقع خرائط جوجل لجميع المحلات'
+            ].join('\n');
+            
+            const choice = prompt(`⚙️ عمليات التعديل الجماعي المتاحة:\n\n${operations}\n\nاختر رقم العملية (1-5):`);
+            
+            if (!choice) return;
+            
+            switch(choice) {
+                case '1':
+                    bulkUpdateArea();
+                    break;
+                case '2':
+                    bulkUpdateActivity();
+                    break;
+                case '3':
+                    bulkUpdateAddress();
+                    break;
+                case '4':
+                    bulkUpdateLicense();
+                    break;
+                case '5':
+                    bulkUpdateMapsLocation();
+                    break;
+                default:
+                    alert('❌ اختيار غير صحيح');
+            }
+        }
+        
+        // Bulk update area
+        function bulkUpdateArea() {
+            if (!planData || !planData.areas) {
+                alert('❌ لا توجد مناطق محددة');
+                return;
+            }
+            
+            const areasList = planData.areas.map((a, i) => `${i + 1}. ${a.name}`).join('\n');
+            const areaChoice = prompt(`📍 اختر المنطقة الجديدة:\n\n${areasList}\n\nأدخل رقم المنطقة:`);
+            
+            if (!areaChoice) return;
+            
+            const areaIndex = parseInt(areaChoice) - 1;
+            if (areaIndex >= 0 && areaIndex < planData.areas.length) {
+                const newArea = planData.areas[areaIndex];
+                
+                if (confirm(`✅ تحديث ${selectedShopsForBatch.size} محل إلى المنطقة: ${newArea.name}\n\nهل أنت متأكد؟`)) {
+                    // Update shops
+                    selectedShopsForBatch.forEach(shopName => {
+                        // Update in shops_details.json
+                        if (shopsDetails[shopName]) {
+                            shopsDetails[shopName].area = newArea.name;
+                            shopsDetails[shopName].areaId = newArea.id;
+                        }
+                    });
+                    
+                    alert(`✅ تم تحديث ${selectedShopsForBatch.size} محل بنجاح!\n\n💾 لا تنسَ حفظ التغييرات والمزامنة مع GitHub`);
+                    updateSmartShopList();
+                }
+            } else {
+                alert('❌ اختيار غير صحيح');
+            }
+        }
+        
+        // Bulk update activity
+        function bulkUpdateActivity() {
+            const newActivity = prompt('💼 أدخل النشاط الجديد لجميع المحلات المحددة:\n\nمثال: بيع الحيوانات الأليفة وأسماك الزينة');
+            
+            if (!newActivity) return;
+            
+            if (confirm(`✅ تحديث نشاط ${selectedShopsForBatch.size} محل إلى:\n"${newActivity}"\n\nهل أنت متأكد؟`)) {
+                selectedShopsForBatch.forEach(shopName => {
+                    if (shopsDetails[shopName]) {
+                        shopsDetails[shopName].activity = newActivity;
+                    }
+                });
+                
+                alert(`✅ تم تحديث ${selectedShopsForBatch.size} محل بنجاح!\n\n💾 لا تنسَ حفظ التغييرات والمزامنة مع GitHub`);
+                updateSmartShopList();
+            }
+        }
+        
+        // Bulk update address
+        function bulkUpdateAddress() {
+            const newAddress = prompt('📍 أدخل العنوان الجديد لجميع المحلات المحددة:\n\nمثال: حي الورود، شارع الأمير محمد');
+            
+            if (!newAddress) return;
+            
+            if (confirm(`✅ تحديث عنوان ${selectedShopsForBatch.size} محل إلى:\n"${newAddress}"\n\nهل أنت متأكد؟`)) {
+                selectedShopsForBatch.forEach(shopName => {
+                    if (shopsDetails[shopName]) {
+                        shopsDetails[shopName].address = newAddress;
+                    }
+                });
+                
+                alert(`✅ تم تحديث ${selectedShopsForBatch.size} محل بنجاح!\n\n💾 لا تنسَ حفظ التغييرات والمزامنة مع GitHub`);
+                updateSmartShopList();
+            }
+        }
+        
+        // Bulk update license
+        function bulkUpdateLicense() {
+            alert('🔖 تحديث الترخيص الجماعي\n\nسيتم إضافة بادئة ورقم تسلسلي لكل محل');
+            
+            const prefix = prompt('أدخل بادئة الترخيص (مثال: CN):', 'CN');
+            if (!prefix) return;
+            
+            const startNumber = prompt('أدخل رقم البداية (مثال: 1000):', '1000');
+            if (!startNumber) return;
+            
+            if (confirm(`✅ سيتم ترقيم ${selectedShopsForBatch.size} محل بدءاً من ${prefix}-${startNumber}\n\nهل أنت متأكد؟`)) {
+                let counter = parseInt(startNumber);
+                selectedShopsForBatch.forEach(shopName => {
+                    if (shopsDetails[shopName]) {
+                        shopsDetails[shopName].licenseNo = `${prefix}-${counter}`;
+                        counter++;
+                    }
+                });
+                
+                alert(`✅ تم تحديث ${selectedShopsForBatch.size} محل بنجاح!\n\n💾 لا تنسَ حفظ التغييرات والمزامنة مع GitHub`);
+                updateSmartShopList();
+            }
+        }
+        
+        // Bulk update maps location
+        function bulkUpdateMapsLocation() {
+            const baseUrl = prompt('🗺️ أدخل رابط خرائط جوجل الأساسي:\n\nمثال: https://maps.google.com/...');
+            
+            if (!baseUrl) return;
+            
+            if (confirm(`✅ تحديث موقع ${selectedShopsForBatch.size} محل\n\nهل أنت متأكد؟`)) {
+                selectedShopsForBatch.forEach(shopName => {
+                    if (shopsDetails[shopName]) {
+                        shopsDetails[shopName].locationMap = baseUrl;
+                    }
+                });
+                
+                alert(`✅ تم تحديث ${selectedShopsForBatch.size} محل بنجاح!\n\n💾 لا تنسَ حفظ التغييرات والمزامنة مع GitHub`);
+                updateSmartShopList();
+            }
+        }
+        
+        // Open Bulk Delete Shops
+        function openBulkDeleteShops() {
+            if (selectedShopsForBatch.size === 0) {
+                alert('⚠️ يرجى تحديد محل واحد على الأقل للحذف');
+                return;
+            }
+            
+            const shopNames = Array.from(selectedShopsForBatch).join('\n• ');
+            const confirm = window.confirm(`⚠️ تحذير: حذف جماعي\n\nسيتم حذف ${selectedShopsForBatch.size} محل نهائياً:\n• ${shopNames}\n\nهذا الإجراء لا يمكن التراجع عنه!\n\nهل أنت متأكد تماماً؟`);
+            
+            if (confirm) {
+                const doubleConfirm = window.confirm(`⚠️ تأكيد نهائي\n\nهل أنت متأكد 100% من حذف ${selectedShopsForBatch.size} محل؟\n\nسيتم الحذف فوراً!`);
+                
+                if (doubleConfirm) {
+                    deleteBulkShops();
+                }
+            }
+        }
+        
+        // Delete Bulk Shops
+        async function deleteBulkShops() {
+            try {
+                let deletedCount = 0;
+                
+                selectedShopsForBatch.forEach(shopName => {
+                    if (shopsDetails[shopName]) {
+                        delete shopsDetails[shopName];
+                        deletedCount++;
+                    }
+                });
+                
+                // Clear selection
+                selectedShopsForBatch.clear();
+                
+                alert(`✅ تم حذف ${deletedCount} محل بنجاح!\n\n💾 لا تنسَ حفظ التغييرات والمزامنة مع GitHub`);
+                updateSmartShopList();
+                
+            } catch (error) {
+                console.error('Error deleting shops:', error);
+                alert('❌ خطأ في حذف المحلات: ' + error.message);
+            }
+        }
+        
+        // Open Import Shops from Excel
+        function openImportShopsFromExcel() {
+            const instructions = `📥 استيراد محلات من Excel\n\n`;
+            const details = `الخطوات:\n1. قم بتحضير ملف Excel يحتوي على أعمدة:\n   - اسم المحل (nameAr)\n   - الاسم بالإنجليزية (nameEn)\n   - المنطقة (area)\n   - رقم الترخيص (licenseNo)\n   - العنوان (address)\n   - الهاتف (contact)\n   - النشاط (activity)\n   - كود ADM (admCode)\n\n2. احفظ الملف بصيغة .xlsx\n\n3. اختر الملف للاستيراد\n\nهل تريد المتابعة؟`;
+            
+            if (confirm(instructions + details)) {
+                // Create file input
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.xlsx,.xls';
+                input.onchange = handleImportExcelFile;
+                input.click();
+            }
+        }
+        
+        // Handle Import Excel File
+        async function handleImportExcelFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            try {
+                const data = await file.arrayBuffer();
+                const workbook = XLSX.read(data);
+                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                
+                if (jsonData.length === 0) {
+                    alert('❌ الملف فارغ أو لا يحتوي على بيانات صحيحة');
+                    return;
+                }
+                
+                let importedCount = 0;
+                let skippedCount = 0;
+                
+                jsonData.forEach(row => {
+                    const shopName = row.nameAr || row['اسم المحل'] || row.name;
+                    
+                    if (!shopName) {
+                        skippedCount++;
+                        return;
+                    }
+                    
+                    // Check if shop already exists
+                    if (shopsDetails[shopName]) {
+                        const overwrite = confirm(`⚠️ المحل "${shopName}" موجود بالفعل\n\nهل تريد استبدال البيانات؟`);
+                        if (!overwrite) {
+                            skippedCount++;
+                            return;
+                        }
+                    }
+                    
+                    // Import shop
+                    shopsDetails[shopName] = {
+                        nameAr: shopName,
+                        nameEn: row.nameEn || row['الاسم بالإنجليزية'] || '',
+                        area: row.area || row['المنطقة'] || '',
+                        licenseNo: row.licenseNo || row['رقم الترخيص'] || '',
+                        address: row.address || row['العنوان'] || '',
+                        contact: row.contact || row['الهاتف'] || '',
+                        activity: row.activity || row['النشاط'] || '',
+                        admCode: row.admCode || row['كود ADM'] || '',
+                        locationMap: row.locationMap || row['موقع الخريطة'] || ''
+                    };
+                    
+                    importedCount++;
+                });
+                
+                alert(`✅ تم الاستيراد بنجاح!\n\n📊 الإحصائيات:\n• تم استيراد: ${importedCount} محل\n• تم تجاهل: ${skippedCount} محل\n\n💾 لا تنسَ حفظ التغييرات والمزامنة مع GitHub`);
+                updateSmartShopList();
+                
+            } catch (error) {
+                console.error('Error importing Excel:', error);
+                alert('❌ خطأ في استيراد الملف: ' + error.message);
+            }
+        }
+        
+        // Merge Duplicate Shops
+        async function mergeDuplicateShops() {
+            if (!confirm('🔄 دمج المحلات المكررة\n\nسيتم البحث عن المحلات المكررة ودمجها\n\nهل تريد المتابعة؟')) {
+                return;
+            }
+            
+            try {
+                const shopNames = Object.keys(shopsDetails);
+                const duplicates = [];
+                const seen = new Map();
+                
+                // Find duplicates
+                shopNames.forEach(shopName => {
+                    const normalized = shopName.trim().toLowerCase();
+                    
+                    if (seen.has(normalized)) {
+                        duplicates.push({
+                            original: seen.get(normalized),
+                            duplicate: shopName
+                        });
+                    } else {
+                        seen.set(normalized, shopName);
+                    }
+                });
+                
+                if (duplicates.length === 0) {
+                    alert('✅ لا توجد محلات مكررة!\n\nجميع المحلات فريدة.');
+                    return;
+                }
+                
+                // Show duplicates and merge
+                const duplicatesList = duplicates.map(d => `• ${d.duplicate} → ${d.original}`).join('\n');
+                
+                if (confirm(`🔍 تم العثور على ${duplicates.length} محل مكرر:\n\n${duplicatesList}\n\nهل تريد دمجها؟`)) {
+                    duplicates.forEach(d => {
+                        // Merge data from duplicate to original
+                        const original = shopsDetails[d.original];
+                        const duplicate = shopsDetails[d.duplicate];
+                        
+                        // Keep non-empty fields from duplicate
+                        Object.keys(duplicate).forEach(key => {
+                            if (duplicate[key] && !original[key]) {
+                                original[key] = duplicate[key];
+                            }
+                        });
+                        
+                        // Delete duplicate
+                        delete shopsDetails[d.duplicate];
+                    });
+                    
+                    alert(`✅ تم دمج ${duplicates.length} محل مكرر بنجاح!\n\n💾 لا تنسَ حفظ التغييرات والمزامنة مع GitHub`);
+                    updateSmartShopList();
+                }
+                
+            } catch (error) {
+                console.error('Error merging duplicates:', error);
+                alert('❌ خطأ في دمج المحلات المكررة: ' + error.message);
+            }
+        }
+        
+        // Sync Shops with GitHub
+        async function syncShopsWithGitHub() {
+            if (!githubToken) {
+                alert('⚠️ يجب تسجيل الدخول أولاً للمزامنة مع GitHub');
+                return;
+            }
+            
+            if (!confirm('☁️ مزامنة جميع المحلات مع GitHub\n\nسيتم حفظ جميع التغييرات في shops_details.json\n\nهل تريد المتابعة؟')) {
+                return;
+            }
+            
+            try {
+                // Save shops_details.json
+                const jsonContent = JSON.stringify(shopsDetails, null, 2);
+                const encodedContent = btoa(unescape(encodeURIComponent(jsonContent)));
+                
+                // Get current file SHA
+                const getResponse = await fetch(`https://api.github.com/repos/${repo}/contents/shops_details.json`, {
+                    headers: {
+                        'Authorization': `token ${githubToken}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                let sha = null;
+                if (getResponse.ok) {
+                    const fileData = await getResponse.json();
+                    sha = fileData.sha;
+                }
+                
+                // Commit to GitHub
+                const updateResponse = await fetch(`https://api.github.com/repos/${repo}/contents/shops_details.json`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${githubToken}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: `تحديث قائمة المحلات - ${new Date().toLocaleString('ar-EG')}`,
+                        content: encodedContent,
+                        sha: sha,
+                        branch: 'main'
+                    })
+                });
+                
+                if (!updateResponse.ok) {
+                    throw new Error('فشل في حفظ التغييرات');
+                }
+                
+                alert('✅ تمت المزامنة مع GitHub بنجاح!\n\n☁️ جميع التغييرات محفوظة');
+                
+            } catch (error) {
+                console.error('Error syncing with GitHub:', error);
+                alert('❌ خطأ في المزامنة: ' + error.message);
+            }
+        }
+        
+        // Refresh Smart Shop Data
+        async function refreshSmartShopData() {
+            if (confirm('🔄 تحديث البيانات من الخادم\n\nسيتم تحميل آخر نسخة من البيانات\n\nهل تريد المتابعة؟')) {
+                try {
+                    // Reload shops_details.json
+                    const response = await fetch('shops_details.json?' + new Date().getTime());
+                    if (response.ok) {
+                        shopsDetails = await response.json();
+                    }
+                    
+                    // Reload plan-data.json
+                    const planResponse = await fetch('plan-data.json?' + new Date().getTime());
+                    if (planResponse.ok) {
+                        planData = await planResponse.json();
+                    }
+                    
+                    alert('✅ تم تحديث البيانات بنجاح!');
+                    updateSmartShopList();
+                    
+                } catch (error) {
+                    console.error('Error refreshing data:', error);
+                    alert('❌ خطأ في تحديث البيانات: ' + error.message);
+                }
+            }
+        }
+        
+        // Open Advanced Shop Search
+        function openAdvancedShopSearch() {
+            const searchOptions = [
+                '🔍 بحث متقدم في المحلات',
+                '',
+                '1. البحث بالاسم (عربي/إنجليزي)',
+                '2. البحث برقم الترخيص',
+                '3. البحث بكود ADM',
+                '4. البحث بالنشاط',
+                '5. البحث بالعنوان',
+                '6. البحث برقم الهاتف',
+                '',
+                'اختر نوع البحث (1-6):'
+            ].join('\n');
+            
+            const choice = prompt(searchOptions);
+            if (!choice) return;
+            
+            const searchTerm = prompt('🔍 أدخل كلمة البحث:');
+            if (!searchTerm) return;
+            
+            performAdvancedSearch(parseInt(choice), searchTerm);
+        }
+        
+        // Perform Advanced Search
+        function performAdvancedSearch(searchType, searchTerm) {
+            const results = [];
+            const term = searchTerm.toLowerCase();
+            
+            Object.entries(shopsDetails).forEach(([shopName, shop]) => {
+                let match = false;
+                
+                switch(searchType) {
+                    case 1: // Name
+                        match = shopName.toLowerCase().includes(term) || 
+                               (shop.nameEn && shop.nameEn.toLowerCase().includes(term));
+                        break;
+                    case 2: // License
+                        match = shop.licenseNo && shop.licenseNo.toLowerCase().includes(term);
+                        break;
+                    case 3: // ADM Code
+                        match = shop.admCode && shop.admCode.toLowerCase().includes(term);
+                        break;
+                    case 4: // Activity
+                        match = shop.activity && shop.activity.toLowerCase().includes(term);
+                        break;
+                    case 5: // Address
+                        match = shop.address && shop.address.toLowerCase().includes(term);
+                        break;
+                    case 6: // Phone
+                        match = shop.contact && shop.contact.includes(term);
+                        break;
+                }
+                
+                if (match) {
+                    results.push(shopName);
+                }
+            });
+            
+            if (results.length === 0) {
+                alert('🔍 لم يتم العثور على نتائج مطابقة');
+            } else {
+                const resultsList = results.slice(0, 20).join('\n• ');
+                const more = results.length > 20 ? `\n\n... و ${results.length - 20} نتيجة أخرى` : '';
+                alert(`✅ تم العثور على ${results.length} نتيجة:\n\n• ${resultsList}${more}`);
+            }
+        }
+        
+        // Create Shops Backup
+        function createShopsBackup() {
+            try {
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                const filename = `shops_backup_${timestamp}.json`;
+                
+                const dataStr = JSON.stringify(shopsDetails, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                link.click();
+                URL.revokeObjectURL(url);
+                
+                alert(`✅ تم إنشاء نسخة احتياطية بنجاح!\n\n📄 اسم الملف:\n${filename}\n\n💾 تم حفظ ${Object.keys(shopsDetails).length} محل`);
+                
+            } catch (error) {
+                console.error('Error creating backup:', error);
+                alert('❌ خطأ في إنشاء النسخة الاحتياطية: ' + error.message);
+            }
+        }
+        
+        // Select All Shops in List
+        function selectAllShopsInList() {
+            Object.keys(shopsDetails).forEach(shopName => {
+                selectedShopsForBatch.add(shopName);
+            });
+            
+            alert(`✅ تم تحديد ${selectedShopsForBatch.size} محل\n\nيمكنك الآن استخدام أزرار العمليات الجماعية`);
+            updateSmartShopList();
+        }
+        
+        // Deselect All Shops in List
+        function deselectAllShopsInList() {
+            const count = selectedShopsForBatch.size;
+            selectedShopsForBatch.clear();
+            
+            alert(`✅ تم إلغاء تحديد ${count} محل`);
+            updateSmartShopList();
+        }
+        
+        // Select High Priority Shops in List
+        function selectHighPriorityShopsInList() {
+            selectedShopsForBatch.clear();
+            
+            Object.keys(shopsDetails).forEach(shopName => {
+                const ratingData = calculateShopRating(shopName);
+                if (ratingData.rating < 70) { // High priority = low rating
+                    selectedShopsForBatch.add(shopName);
+                }
+            });
+            
+            alert(`✅ تم تحديد ${selectedShopsForBatch.size} محل ذو أولوية عالية\n\n⚠️ المحلات ذات التقييم المنخفض (أقل من 70)`);
+            updateSmartShopList();
+        }
+        
+        // Export Selected Shops
+        function exportSelectedShops() {
+            if (selectedShopsForBatch.size === 0) {
+                alert('⚠️ لم يتم تحديد أي محلات للتصدير');
+                return;
+            }
+            
+            try {
+                const selectedData = {};
+                selectedShopsForBatch.forEach(shopName => {
+                    if (shopsDetails[shopName]) {
+                        selectedData[shopName] = shopsDetails[shopName];
+                    }
+                });
+                
+                const timestamp = new Date().toISOString().split('T')[0];
+                const filename = `selected_shops_${timestamp}.json`;
+                
+                const dataStr = JSON.stringify(selectedData, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                link.click();
+                URL.revokeObjectURL(url);
+                
+                alert(`✅ تم تصدير ${selectedShopsForBatch.size} محل محدد بنجاح!\n\n📄 اسم الملف:\n${filename}`);
+                
+            } catch (error) {
+                console.error('Error exporting selected shops:', error);
+                alert('❌ خطأ في التصدير: ' + error.message);
+            }
+        }
+        
+        // Apply Batch Operation
+        function applyBatchOperation() {
+            if (selectedShopsForBatch.size === 0) {
+                alert('⚠️ يرجى تحديد محلات أولاً');
+                return;
+            }
+            
+            const operations = [
+                '⚙️ العمليات الجماعية المتاحة:',
+                '',
+                '1. تصدير المحدد إلى Excel',
+                '2. طباعة قائمة المحدد',
+                '3. نسخ أسماء المحدد',
+                '4. حساب إحصائيات المحدد',
+                '5. تطبيق تعديل جماعي',
+                '',
+                'اختر رقم العملية (1-5):'
+            ].join('\n');
+            
+            const choice = prompt(operations);
+            if (!choice) return;
+            
+            switch(choice) {
+                case '1':
+                    exportSelectedToExcel();
+                    break;
+                case '2':
+                    printSelectedShops();
+                    break;
+                case '3':
+                    copySelectedShopNames();
+                    break;
+                case '4':
+                    calculateSelectedStats();
+                    break;
+                case '5':
+                    showBulkEditInterface();
+                    break;
+                default:
+                    alert('❌ اختيار غير صحيح');
+            }
+        }
+        
+        // Export Selected to Excel
+        function exportSelectedToExcel() {
+            try {
+                const exportData = [];
+                
+                selectedShopsForBatch.forEach(shopName => {
+                    const shop = shopsDetails[shopName];
+                    if (shop) {
+                        exportData.push({
+                            'اسم المحل': shopName,
+                            'الاسم بالإنجليزية': shop.nameEn || '',
+                            'المنطقة': shop.area || '',
+                            'رقم الترخيص': shop.licenseNo || '',
+                            'كود ADM': shop.admCode || '',
+                            'العنوان': shop.address || '',
+                            'الهاتف': shop.contact || '',
+                            'النشاط': shop.activity || ''
+                        });
+                    }
+                });
+                
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.json_to_sheet(exportData);
+                XLSX.utils.book_append_sheet(wb, ws, 'المحلات المحددة');
+                
+                const timestamp = new Date().toISOString().split('T')[0];
+                const filename = `selected_shops_${timestamp}.xlsx`;
+                XLSX.writeFile(wb, filename);
+                
+                alert(`✅ تم تصدير ${selectedShopsForBatch.size} محل إلى Excel بنجاح!\n\n📄 ${filename}`);
+                
+            } catch (error) {
+                console.error('Error exporting to Excel:', error);
+                alert('❌ خطأ في التصدير: ' + error.message);
+            }
+        }
+        
+        // Print Selected Shops
+        function printSelectedShops() {
+            const shopsList = Array.from(selectedShopsForBatch).map((name, i) => {
+                const shop = shopsDetails[name];
+                return `${i + 1}. ${name}\n   المنطقة: ${shop.area || 'غير محدد'}\n   الترخيص: ${shop.licenseNo || 'غير محدد'}`;
+            }).join('\n\n');
+            
+            const printWindow = window.open('', '', 'height=600,width=800');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>قائمة المحلات المحددة</title>
+                    <meta charset="UTF-8">
+                    <style>
+                        body { font-family: Arial, sans-serif; direction: rtl; padding: 20px; }
+                        h1 { color: #667eea; text-align: center; }
+                        pre { white-space: pre-wrap; line-height: 1.6; }
+                    </style>
+                </head>
+                <body>
+                    <h1>قائمة المحلات المحددة (${selectedShopsForBatch.size} محل)</h1>
+                    <p>تاريخ الطباعة: ${new Date().toLocaleString('ar-EG')}</p>
+                    <hr>
+                    <pre>${shopsList}</pre>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+        
+        // Copy Selected Shop Names
+        function copySelectedShopNames() {
+            const names = Array.from(selectedShopsForBatch).join('\n');
+            
+            navigator.clipboard.writeText(names).then(() => {
+                alert(`✅ تم نسخ ${selectedShopsForBatch.size} اسم محل إلى الحافظة!\n\nيمكنك الآن لصقها في أي مكان`);
+            }).catch(err => {
+                alert('❌ فشل النسخ: ' + err.message);
+            });
+        }
+        
+        // Calculate Selected Stats
+        function calculateSelectedStats() {
+            const stats = {
+                total: selectedShopsForBatch.size,
+                withLicense: 0,
+                withAdmCode: 0,
+                withPhone: 0,
+                withActivity: 0,
+                withLocation: 0,
+                avgRating: 0
+            };
+            
+            let totalRating = 0;
+            
+            selectedShopsForBatch.forEach(shopName => {
+                const shop = shopsDetails[shopName];
+                if (!shop) return;
+                
+                if (shop.licenseNo) stats.withLicense++;
+                if (shop.admCode) stats.withAdmCode++;
+                if (shop.contact) stats.withPhone++;
+                if (shop.activity) stats.withActivity++;
+                if (shop.locationMap) stats.withLocation++;
+                
+                const ratingData = calculateShopRating(shopName);
+                totalRating += ratingData.rating;
+            });
+            
+            stats.avgRating = (totalRating / stats.total).toFixed(1);
+            
+            const report = `📊 إحصائيات المحلات المحددة\n\n` +
+                          `📈 إجمالي المحلات: ${stats.total}\n` +
+                          `🔖 لديها ترخيص: ${stats.withLicense}\n` +
+                          `🔢 لديها كود ADM: ${stats.withAdmCode}\n` +
+                          `📞 لديها هاتف: ${stats.withPhone}\n` +
+                          `💼 لديها نشاط محدد: ${stats.withActivity}\n` +
+                          `🗺️ لديها موقع خرائط: ${stats.withLocation}\n` +
+                          `⭐ متوسط التقييم: ${stats.avgRating}%\n\n` +
+                          `📝 نسبة الاكتمال:\n` +
+                          `• الترخيص: ${((stats.withLicense / stats.total) * 100).toFixed(1)}%\n` +
+                          `• كود ADM: ${((stats.withAdmCode / stats.total) * 100).toFixed(1)}%\n` +
+                          `• الهاتف: ${((stats.withPhone / stats.total) * 100).toFixed(1)}%\n` +
+                          `• النشاط: ${((stats.withActivity / stats.total) * 100).toFixed(1)}%\n` +
+                          `• الموقع: ${((stats.withLocation / stats.total) * 100).toFixed(1)}%`;
+            
+            alert(report);
+        }
+        
+        // Toggle Shop Selection for batch operations
+        function toggleShopSelection(shopName) {
+            if (selectedShopsForBatch.has(shopName)) {
+                selectedShopsForBatch.delete(shopName);
+            } else {
+                selectedShopsForBatch.add(shopName);
+            }
+            updateSmartShopList();
+        }
+        
+        // Edit Shop from Smart List
+        function editShopFromSmartList(shopName) {
+            const shop = shopsDetails[shopName];
+            if (!shop) {
+                alert('❌ لم يتم العثور على بيانات المحل');
+                return;
+            }
+            
+            const fields = [
+                `📝 تعديل محل: ${shopName}`,
+                '',
+                `1. الاسم بالعربية: ${shopName}`,
+                `2. الاسم بالإنجليزية: ${shop.nameEn || 'غير محدد'}`,
+                `3. المنطقة: ${shop.area || 'غير محدد'}`,
+                `4. رقم الترخيص: ${shop.licenseNo || 'غير محدد'}`,
+                `5. كود ADM: ${shop.admCode || 'غير محدد'}`,
+                `6. العنوان: ${shop.address || 'غير محدد'}`,
+                `7. الهاتف: ${shop.contact || 'غير محدد'}`,
+                `8. النشاط: ${shop.activity || 'غير محدد'}`,
+                `9. موقع الخرائط: ${shop.locationMap ? 'موجود' : 'غير محدد'}`,
+                '',
+                'أدخل رقم الحقل للتعديل (1-9) أو 0 للحفظ:'
+            ].join('\n');
+            
+            const choice = prompt(fields);
+            if (!choice || choice === '0') {
+                if (confirm('💾 حفظ التعديلات؟')) {
+                    alert('✅ تم الحفظ!\n\n💡 لا تنسَ المزامنة مع GitHub');
+                    updateSmartShopList();
+                }
+                return;
+            }
+            
+            const fieldChoice = parseInt(choice);
+            let newValue;
+            
+            switch(fieldChoice) {
+                case 1:
+                    alert('⚠️ لا يمكن تعديل الاسم الأساسي مباشرة\n\nاستخدم وظيفة إضافة محل جديد ثم حذف القديم');
+                    break;
+                case 2:
+                    newValue = prompt('الاسم بالإنجليزية:', shop.nameEn || '');
+                    if (newValue !== null) shop.nameEn = newValue;
+                    break;
+                case 3:
+                    const areasList = planData.areas.map((a, i) => `${i + 1}. ${a.name}`).join('\n');
+                    const areaChoice = prompt(`اختر المنطقة:\n\n${areasList}\n\nرقم المنطقة:`);
+                    if (areaChoice) {
+                        const areaIndex = parseInt(areaChoice) - 1;
+                        if (areaIndex >= 0 && areaIndex < planData.areas.length) {
+                            shop.area = planData.areas[areaIndex].name;
+                            shop.areaId = planData.areas[areaIndex].id;
+                        }
+                    }
+                    break;
+                case 4:
+                    newValue = prompt('رقم الترخيص:', shop.licenseNo || '');
+                    if (newValue !== null) shop.licenseNo = newValue;
+                    break;
+                case 5:
+                    newValue = prompt('كود ADM:', shop.admCode || '');
+                    if (newValue !== null) shop.admCode = newValue;
+                    break;
+                case 6:
+                    newValue = prompt('العنوان:', shop.address || '');
+                    if (newValue !== null) shop.address = newValue;
+                    break;
+                case 7:
+                    newValue = prompt('رقم الهاتف:', shop.contact || '');
+                    if (newValue !== null) shop.contact = newValue;
+                    break;
+                case 8:
+                    newValue = prompt('النشاط:', shop.activity || '');
+                    if (newValue !== null) shop.activity = newValue;
+                    break;
+                case 9:
+                    newValue = prompt('رابط خرائط جوجل:', shop.locationMap || '');
+                    if (newValue !== null) shop.locationMap = newValue;
+                    break;
+                default:
+                    alert('❌ اختيار غير صحيح');
+                    return;
+            }
+            
+            // Continue editing
+            editShopFromSmartList(shopName);
+        }
+        
+        // Delete Shop from Smart List
+        function deleteShopFromSmartList(shopName) {
+            const shop = shopsDetails[shopName];
+            if (!shop) {
+                alert('❌ لم يتم العثور على بيانات المحل');
+                return;
+            }
+            
+            const details = [
+                `⚠️ تأكيد حذف المحل`,
+                '',
+                `اسم المحل: ${shopName}`,
+                `المنطقة: ${shop.area || 'غير محدد'}`,
+                `الترخيص: ${shop.licenseNo || 'غير محدد'}`,
+                '',
+                `هذا الإجراء لا يمكن التراجع عنه!`,
+                '',
+                `هل أنت متأكد من الحذف؟`
+            ].join('\n');
+            
+            if (confirm(details)) {
+                delete shopsDetails[shopName];
+                selectedShopsForBatch.delete(shopName);
+                
+                alert('✅ تم حذف المحل بنجاح!\n\n💾 لا تنسَ المزامنة مع GitHub');
+                updateSmartShopList();
             }
         }
         

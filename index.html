@@ -17456,12 +17456,67 @@ function displayShopsList() {
     shopsData.forEach((shop, index) => {
         const area = areasData.find(a => a.id === shop.areaId);
         const areaName = area ? area.name : 'غير محدد';
+        
+        // Get shop details from shops_details.json
+        let shopDetails = null;
+        const shopName = shop.name;
+        
+        // Try exact match first
+        if (shopsDetailsData && shopsDetailsData[shopName]) {
+            shopDetails = shopsDetailsData[shopName];
+        } else {
+            // Try without "محل" prefix
+            const cleanedName = shopName.replace(/^محل\s+/, '');
+            if (shopsDetailsData[cleanedName]) {
+                shopDetails = shopsDetailsData[cleanedName];
+            } else {
+                // Try partial match
+                for (const [key, value] of Object.entries(shopsDetailsData || {})) {
+                    if (key.includes(cleanedName) || cleanedName.includes(key)) {
+                        shopDetails = value;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Build the display with Arabic name prominent and English + details as supplementary
+        const nameAr = shopDetails ? shopDetails.nameAr : shopName;
+        const nameEn = shopDetails ? shopDetails.nameEn : '';
+        const licenseNo = shopDetails ? shopDetails.licenseNo : '';
+        const contact = shopDetails ? shopDetails.contact : '';
+        const address = shopDetails ? shopDetails.address : areaName;
+        
         html += `
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;border-bottom:1px solid #eee;">
-                <span>${shop.name} - ${areaName}</span>
-                <div style="display:flex;gap:4px;">
-                    <button onclick="checkDeveloperAccess('shop-management', () => editShopSimple(${index}))" style="background:#6c757d;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">تعديل</button>
-                    <button onclick="checkDeveloperAccess('shop-management', () => deleteShopSimple(${index}))" style="background:#dc3545;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">حذف</button>
+            <div style="padding:12px;border-bottom:1px solid #e0e6f0;background:#fff;transition:background 0.2s;" 
+                 onmouseover="this.style.background='#f8f9fa'" 
+                 onmouseout="this.style.background='#fff'">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+                    <div style="flex:1;">
+                        <!-- Arabic name (prominent) -->
+                        <div style="font-size:1.1em;font-weight:700;color:#234085;margin-bottom:6px;direction:rtl;">
+                            🏪 ${nameAr}
+                        </div>
+                        
+                        <!-- Supplementary information -->
+                        <div style="font-size:0.9em;color:#666;line-height:1.6;direction:rtl;">
+                            ${nameEn ? `<div style="margin-bottom:3px;"><span style="color:#888;">الاسم الإنجليزي:</span> <span style="color:#555;font-weight:500;">${nameEn}</span></div>` : ''}
+                            <div style="margin-bottom:3px;"><span style="color:#888;">المنطقة:</span> <span style="color:#555;font-weight:500;">${address}</span></div>
+                            ${licenseNo ? `<div style="margin-bottom:3px;"><span style="color:#888;">رقم الترخيص:</span> <span style="color:#555;font-weight:500;direction:ltr;display:inline-block;">${licenseNo}</span></div>` : ''}
+                            ${contact ? `<div style="margin-bottom:3px;"><span style="color:#888;">التواصل:</span> <span style="color:#555;font-weight:500;direction:ltr;display:inline-block;">${contact}</span></div>` : ''}
+                        </div>
+                    </div>
+                    
+                    <div style="display:flex;gap:4px;flex-shrink:0;">
+                        <button onclick="checkDeveloperAccess('shop-management', () => editShopSimple(${index}))" 
+                                style="background:#6c757d;color:#fff;border:none;padding:6px 10px;border-radius:4px;cursor:pointer;font-size:0.85em;white-space:nowrap;">
+                            ✏️ تعديل
+                        </button>
+                        <button onclick="checkDeveloperAccess('shop-management', () => deleteShopSimple(${index}))" 
+                                style="background:#dc3545;color:#fff;border:none;padding:6px 10px;border-radius:4px;cursor:pointer;font-size:0.85em;white-space:nowrap;">
+                            🗑️ حذف
+                        </button>
+                    </div>
                 </div>
             </div>
         `;

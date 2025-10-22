@@ -4801,6 +4801,11 @@
                             <span class="icon">📊</span>
                             <span class="label">أولوية المحلات</span>
                         </button>
+                        
+                        <button class="icon-btn location-tracking-btn tooltip" onclick="showLocationTrackingModal()" data-tooltip="تتبع موقع المفتشين عند زيارة المحلات">
+                            <span class="icon">📍</span>
+                            <span class="label">تتبع الزيارات</span>
+                        </button>
                     </div>
                 </div>
 
@@ -23824,6 +23829,1016 @@ if (typeof originalSaveDirectToGitHub === 'function') {
             throw error;
         }
     };
+}
+
+// ===== 📍 نظام تتبع موقع المفتشين وزيارة المحلات =====
+// Inspector Location Tracking and Shop Visit System
+
+/**
+ * بيانات تتبع الزيارات - يتم حفظها في localStorage
+ * Visit tracking data - stored in localStorage
+ */
+let inspectorVisitLogs = [];
+let inspectorCurrentLocation = null;
+let locationWatchId = null;
+let locationTrackingEnabled = false;
+
+/**
+ * تحميل بيانات الزيارات من localStorage
+ * Load visit logs from localStorage
+ */
+function loadVisitLogs() {
+    try {
+        const stored = localStorage.getItem('inspectorVisitLogs');
+        if (stored) {
+            inspectorVisitLogs = JSON.parse(stored);
+        }
+    } catch (error) {
+        console.error('Error loading visit logs:', error);
+        inspectorVisitLogs = [];
+    }
+}
+
+/**
+ * حفظ بيانات الزيارات في localStorage
+ * Save visit logs to localStorage
+ */
+function saveVisitLogs() {
+    try {
+        localStorage.setItem('inspectorVisitLogs', JSON.stringify(inspectorVisitLogs));
+        // إرسال إشعار للمطور إذا كان متصلاً
+        broadcastVisitUpdate();
+    } catch (error) {
+        console.error('Error saving visit logs:', error);
+    }
+}
+
+/**
+ * بث تحديث الزيارة لجميع النوافذ المفتوحة
+ * Broadcast visit update to all open windows
+ */
+function broadcastVisitUpdate() {
+    try {
+        const event = new CustomEvent('inspectorVisitUpdate', {
+            detail: {
+                timestamp: Date.now(),
+                logCount: inspectorVisitLogs.length
+            }
+        });
+        window.dispatchEvent(event);
+        
+        // أيضاً حفظ في localStorage للمزامنة بين التابات
+        localStorage.setItem('lastVisitUpdate', Date.now().toString());
+    } catch (error) {
+        console.error('Error broadcasting visit update:', error);
+    }
+}
+
+/**
+ * طلب صلاحيات الموقع من المستخدم
+ * Request location permissions from user
+ */
+async function requestLocationPermission() {
+    if (!navigator.geolocation) {
+        alert('❌ عذراً، متصفحك لا يدعم خدمات الموقع الجغرافي');
+        return false;
+    }
+    
+    return new Promise((resolve) => {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                inspectorCurrentLocation = {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    accuracy: position.coords.accuracy,
+                    timestamp: Date.now()
+                };
+                resolve(true);
+            },
+            (error) => {
+                console.error('Geolocation error:', error);
+                let errorMsg = '❌ فشل الحصول على الموقع';
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMsg = '❌ تم رفض الوصول للموقع. يرجى السماح بالوصول للموقع في إعدادات المتصفح';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMsg = '❌ معلومات الموقع غير متاحة';
+                        break;
+                    case error.TIMEOUT:
+                        errorMsg = '❌ انتهت مهلة طلب الموقع';
+                        break;
+                }
+                alert(errorMsg);
+                resolve(false);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+    });
+}
+
+/**
+ * بدء تتبع الموقع المستمر
+ * Start continuous location tracking
+ */
+function startLocationTracking() {
+    if (!navigator.geolocation) {
+        return;
+    }
+    
+    locationWatchId = navigator.geolocation.watchPosition(
+        (position) => {
+            inspectorCurrentLocation = {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                accuracy: position.coords.accuracy,
+                timestamp: Date.now()
+            };
+            
+            // فحص إذا كان المفتش قريباً من أي محل
+            checkProximityToShops();
+        },
+        (error) => {
+            console.error('Location tracking error:', error);
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0
+        }
+    );
+    
+    locationTrackingEnabled = true;
+}
+
+/**
+ * إيقاف تتبع الموقع
+ * Stop location tracking
+ */
+function stopLocationTracking() {
+    if (locationWatchId !== null) {
+        navigator.geolocation.clearWatch(locationWatchId);
+        locationWatchId = null;
+    }
+    locationTrackingEnabled = false;
+}
+
+/**
+ * حساب المسافة بين نقطتين جغرافيتين (بالأمتار)
+ * Calculate distance between two geographic points (in meters)
+ * Using Haversine formula
+ */
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371e3; // radius of Earth in meters
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lon2 - lon1) * Math.PI / 180;
+    
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    
+    return R * c; // distance in meters
+}
+
+/**
+ * استخراج الإحداثيات من رابط خرائط جوجل
+ * Extract coordinates from Google Maps URL
+ */
+function extractCoordinatesFromMapUrl(url) {
+    if (!url) return null;
+    
+    // نمط 1: /@latitude,longitude
+    let match = url.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+    if (match) {
+        return {
+            latitude: parseFloat(match[1]),
+            longitude: parseFloat(match[2])
+        };
+    }
+    
+    // نمط 2: ?q=latitude,longitude
+    match = url.match(/\?q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+    if (match) {
+        return {
+            latitude: parseFloat(match[1]),
+            longitude: parseFloat(match[2])
+        };
+    }
+    
+    return null;
+}
+
+/**
+ * فحص القرب من المحلات
+ * Check proximity to shops
+ */
+function checkProximityToShops() {
+    if (!inspectorCurrentLocation) return;
+    
+    const PROXIMITY_THRESHOLD = 100; // 100 متر
+    const currentTime = Date.now();
+    
+    // الحصول على المستخدم الحالي
+    const currentUser = getCurrentUser();
+    if (!currentUser) return;
+    
+    // فحص جميع المحلات
+    Object.entries(smartPlannerShopsData || {}).forEach(([shopName, shopDetails]) => {
+        if (!shopDetails.locationMap) return;
+        
+        const shopCoords = extractCoordinatesFromMapUrl(shopDetails.locationMap);
+        if (!shopCoords) return;
+        
+        const distance = calculateDistance(
+            inspectorCurrentLocation.latitude,
+            inspectorCurrentLocation.longitude,
+            shopCoords.latitude,
+            shopCoords.longitude
+        );
+        
+        // إذا كان المفتش قريباً من المحل (أقل من 100 متر)
+        if (distance <= PROXIMITY_THRESHOLD) {
+            // فحص إذا لم يتم تسجيل هذه الزيارة مؤخراً (خلال آخر 30 دقيقة)
+            const recentVisit = inspectorVisitLogs.find(log => 
+                log.inspector === currentUser &&
+                log.shopName === shopName &&
+                (currentTime - log.timestamp) < 30 * 60 * 1000 // 30 دقيقة
+            );
+            
+            if (!recentVisit) {
+                // تسجيل الزيارة
+                recordShopVisit(shopName, shopDetails, distance, 'proximity');
+            }
+        }
+    });
+}
+
+/**
+ * تسجيل زيارة محل
+ * Record shop visit
+ */
+function recordShopVisit(shopName, shopDetails, distance, visitType) {
+    const currentUser = getCurrentUser();
+    if (!currentUser) return;
+    
+    const visitLog = {
+        id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+        inspector: currentUser,
+        shopName: shopName,
+        shopAddress: shopDetails.address || 'غير محدد',
+        shopArea: shopDetails.areaName || 'غير محددة',
+        visitType: visitType, // 'proximity' أو 'map_click'
+        distance: distance ? Math.round(distance) : null,
+        timestamp: Date.now(),
+        location: inspectorCurrentLocation ? {
+            latitude: inspectorCurrentLocation.latitude,
+            longitude: inspectorCurrentLocation.longitude,
+            accuracy: inspectorCurrentLocation.accuracy
+        } : null,
+        date: new Date().toISOString().split('T')[0],
+        time: new Date().toLocaleTimeString('ar-EG', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: true 
+        })
+    };
+    
+    inspectorVisitLogs.push(visitLog);
+    saveVisitLogs();
+    
+    // إظهار إشعار للمفتش
+    showVisitConfirmation(visitLog);
+    
+    // إرسال إشعار للمطور
+    notifyDeveloperOfVisit(visitLog);
+}
+
+/**
+ * إظهار تأكيد الزيارة للمفتش
+ * Show visit confirmation to inspector
+ */
+function showVisitConfirmation(visitLog) {
+    // إنشاء إشعار منبثق
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        background: linear-gradient(135deg, #43cea2 0%, #185a9d 100%);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        z-index: 10001;
+        max-width: 350px;
+        animation: slideInRight 0.5s ease-out;
+    `;
+    
+    notification.innerHTML = `
+        <div style="display: flex; align-items: start; gap: 12px;">
+            <span style="font-size: 2em;">✅</span>
+            <div style="flex: 1;">
+                <div style="font-weight: bold; margin-bottom: 5px; font-size: 1.1em;">
+                    تم تسجيل الزيارة!
+                </div>
+                <div style="font-size: 0.9em; opacity: 0.95;">
+                    المحل: ${visitLog.shopName}<br>
+                    ${visitLog.distance ? `المسافة: ${visitLog.distance} متر<br>` : ''}
+                    الوقت: ${visitLog.time}
+                </div>
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()" 
+                    style="background: rgba(255,255,255,0.2); border: none; color: white; 
+                           width: 30px; height: 30px; border-radius: 50%; cursor: pointer; 
+                           font-size: 1.2em; display: flex; align-items: center; 
+                           justify-content: center;">×</button>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // إزالة تلقائية بعد 5 ثوان
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.style.animation = 'slideOutRight 0.5s ease-out';
+            setTimeout(() => notification.remove(), 500);
+        }
+    }, 5000);
+}
+
+/**
+ * إرسال إشعار للمطور عن الزيارة
+ * Notify developer of visit
+ */
+function notifyDeveloperOfVisit(visitLog) {
+    // التحقق إذا كان المستخدم الحالي هو المطور
+    if (isDev || window.isDev) {
+        showDeveloperNotification(visitLog);
+    }
+    
+    // بث الإشعار لجميع النوافذ المفتوحة
+    broadcastVisitUpdate();
+}
+
+/**
+ * إظهار إشعار للمطور
+ * Show notification to developer
+ */
+function showDeveloperNotification(visitLog) {
+    // إنشاء إشعار منبثق مميز للمطور
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 80px;
+        left: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+        z-index: 10002;
+        max-width: 400px;
+        animation: slideInLeft 0.5s ease-out;
+    `;
+    
+    const visitTypeText = visitLog.visitType === 'proximity' ? 
+        '🎯 زيارة ميدانية (GPS)' : 
+        '🗺️ فتح خرائط جوجل';
+    
+    notification.innerHTML = `
+        <div style="display: flex; align-items: start; gap: 12px;">
+            <span style="font-size: 2.5em;">🔔</span>
+            <div style="flex: 1;">
+                <div style="font-weight: bold; margin-bottom: 8px; font-size: 1.2em;">
+                    إشعار زيارة جديدة
+                </div>
+                <div style="font-size: 0.95em; line-height: 1.6;">
+                    <strong>المفتش:</strong> ${visitLog.inspector}<br>
+                    <strong>المحل:</strong> ${visitLog.shopName}<br>
+                    <strong>المنطقة:</strong> ${visitLog.shopArea}<br>
+                    <strong>النوع:</strong> ${visitTypeText}<br>
+                    ${visitLog.distance ? `<strong>المسافة:</strong> ${visitLog.distance} متر<br>` : ''}
+                    <strong>الوقت:</strong> ${visitLog.time}
+                </div>
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()" 
+                    style="background: rgba(255,255,255,0.2); border: none; color: white; 
+                           width: 35px; height: 35px; border-radius: 50%; cursor: pointer; 
+                           font-size: 1.3em; display: flex; align-items: center; 
+                           justify-content: center;">×</button>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // تشغيل صوت إشعار (إذا كان متاحاً)
+    try {
+        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBR9+zfLTgjYHHWa46+CZSgwOUqfj8LljHQU2jdXxy3QlBSl+zPDblzsKGGS36+OcSgwOUqfj8LljHQU2jdXxy3QlBSl+zPDblzsKGGS36+OcSgwOUqfj8LljHQU2jdXxy3QlBSl+zPDblzsKGGS36+OcSgwOUqfj8LljHQU2jdXxy3QlBSl+zPDblzsK');
+        audio.volume = 0.3;
+        audio.play().catch(e => console.log('Audio play failed:', e));
+    } catch (e) {
+        console.log('Audio notification failed:', e);
+    }
+    
+    // إزالة تلقائية بعد 8 ثوان
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.style.animation = 'slideOutLeft 0.5s ease-out';
+            setTimeout(() => notification.remove(), 500);
+        }
+    }, 8000);
+}
+
+/**
+ * الحصول على المستخدم الحالي
+ * Get current user
+ */
+function getCurrentUser() {
+    // محاولة الحصول على المستخدم من المفتش المحدد
+    const inspectorSelect = document.getElementById('inspectorSelect');
+    if (inspectorSelect && inspectorSelect.value) {
+        const inspector = inspectorsData?.find(i => i.id === inspectorSelect.value);
+        return inspector ? inspector.name : null;
+    }
+    
+    // أو من المستخدم المسجل دخوله
+    if (currentInspector) {
+        return currentInspector;
+    }
+    
+    // أو طلب من المستخدم إدخال الاسم
+    return null;
+}
+
+/**
+ * تتبع نقرات روابط خرائط جوجل
+ * Track Google Maps link clicks
+ */
+function initializeMapLinkTracking() {
+    // إضافة مستمع للنقرات على جميع روابط خرائط جوجل
+    document.addEventListener('click', function(event) {
+        const target = event.target;
+        
+        // فحص إذا كان الرابط هو رابط خرائط جوجل
+        if (target.tagName === 'A' && target.href && 
+            (target.href.includes('maps.google.com') || target.href.includes('google.com/maps'))) {
+            
+            // استخراج اسم المحل من السياق
+            const shopNameElement = target.closest('[data-shop-name]') || 
+                                   target.parentElement?.querySelector('.shop-name') ||
+                                   target.previousElementSibling;
+            
+            let shopName = null;
+            
+            // محاولة استخراج اسم المحل من السياق
+            if (target.hasAttribute('data-shop-name')) {
+                shopName = target.getAttribute('data-shop-name');
+            } else if (shopNameElement) {
+                shopName = shopNameElement.textContent?.trim();
+            } else {
+                // البحث في النص المحيط
+                const parentText = target.parentElement?.textContent;
+                if (parentText) {
+                    // محاولة مطابقة اسم المحل من القائمة
+                    const shops = Object.keys(smartPlannerShopsData || {});
+                    shopName = shops.find(s => parentText.includes(s));
+                }
+            }
+            
+            if (shopName && smartPlannerShopsData && smartPlannerShopsData[shopName]) {
+                const shopDetails = smartPlannerShopsData[shopName];
+                const coords = extractCoordinatesFromMapUrl(target.href);
+                
+                // تسجيل الزيارة
+                setTimeout(() => {
+                    recordShopVisit(shopName, shopDetails, null, 'map_click');
+                }, 500);
+            }
+        }
+    }, true);
+}
+
+/**
+ * عرض نافذة تتبع الزيارات
+ * Show location tracking modal
+ */
+function showLocationTrackingModal() {
+    // تحميل بيانات الزيارات
+    loadVisitLogs();
+    
+    // إنشاء أو الحصول على المودال
+    let modal = document.getElementById('locationTrackingModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'locationTrackingModal';
+        modal.style.cssText = `
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6);
+            padding: 20px;
+        `;
+        document.body.appendChild(modal);
+    }
+    
+    // بناء محتوى المودال
+    const isDeveloper = isDev || window.isDev;
+    const currentUser = getCurrentUser();
+    
+    // فلترة السجلات حسب المستخدم (إذا لم يكن مطوراً)
+    let filteredLogs = inspectorVisitLogs;
+    if (!isDeveloper && currentUser) {
+        filteredLogs = inspectorVisitLogs.filter(log => log.inspector === currentUser);
+    }
+    
+    // ترتيب السجلات (الأحدث أولاً)
+    filteredLogs.sort((a, b) => b.timestamp - a.timestamp);
+    
+    // حساب إحصائيات
+    const stats = calculateVisitStats(filteredLogs);
+    
+    const modalContent = `
+        <div style="background: white; margin: auto; max-width: 1400px; border-radius: 12px; 
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.3); position: relative; 
+                    max-height: 90vh; overflow-y: auto;">
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                        color: white; padding: 25px 30px; border-radius: 12px 12px 0 0; 
+                        position: sticky; top: 0; z-index: 100;">
+                <h2 style="margin: 0; font-size: 1.8em; display: flex; align-items: center; gap: 12px;">
+                    <span>📍</span>
+                    <span>نظام تتبع زيارات المفتشين للمحلات</span>
+                </h2>
+                <p style="margin: 10px 0 0 0; font-size: 0.95em; opacity: 0.95;">
+                    ${isDeveloper ? 'عرض جميع زيارات المفتشين' : 'سجل زياراتي للمحلات'}
+                </p>
+                <button onclick="closeLocationTrackingModal()" 
+                        style="position: absolute; top: 15px; left: 15px; background: rgba(255,255,255,0.2); 
+                               border: none; color: white; font-size: 1.8em; width: 45px; height: 45px; 
+                               border-radius: 50%; cursor: pointer; display: flex; align-items: center; 
+                               justify-content: center;">×</button>
+            </div>
+            
+            <!-- Content -->
+            <div style="padding: 30px;">
+                
+                ${!isDeveloper && !currentUser ? `
+                <!-- تنبيه: يرجى تسجيل الدخول -->
+                <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 12px; 
+                            padding: 20px; margin-bottom: 25px; text-align: center;">
+                    <div style="font-size: 3em; margin-bottom: 10px;">⚠️</div>
+                    <h3 style="margin: 0 0 10px 0; color: #856404;">يرجى تحديد المفتش</h3>
+                    <p style="margin: 0; color: #856404; line-height: 1.6;">
+                        لاستخدام نظام تتبع الزيارات، يرجى اختيار اسمك من قائمة المفتشين في الصفحة الرئيسية
+                    </p>
+                </div>
+                ` : ''}
+                
+                <!-- Controls Section -->
+                <div style="background: #f8f9fa; border-radius: 12px; padding: 20px; margin-bottom: 25px;">
+                    <h3 style="margin: 0 0 15px 0; color: #667eea; display: flex; align-items: center; gap: 10px;">
+                        <span>⚙️</span>
+                        <span>الإعدادات والتحكم</span>
+                    </h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                        ${currentUser || isDeveloper ? `
+                        <button onclick="enableLocationTracking()" 
+                                style="background: linear-gradient(135deg, #43cea2 0%, #185a9d 100%); 
+                                       color: white; border: none; padding: 15px; border-radius: 8px; 
+                                       cursor: pointer; font-size: 1em; font-weight: bold; 
+                                       box-shadow: 0 4px 8px rgba(0,0,0,0.2); display: flex; 
+                                       align-items: center; justify-content: center; gap: 8px;">
+                            <span>📍</span>
+                            <span>تفعيل تتبع الموقع</span>
+                        </button>
+                        
+                        <button onclick="testLocationAccuracy()" 
+                                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                                       color: white; border: none; padding: 15px; border-radius: 8px; 
+                                       cursor: pointer; font-size: 1em; font-weight: bold; 
+                                       box-shadow: 0 4px 8px rgba(0,0,0,0.2); display: flex; 
+                                       align-items: center; justify-content: center; gap: 8px;">
+                            <span>🎯</span>
+                            <span>اختبار دقة الموقع</span>
+                        </button>
+                        ` : ''}
+                        
+                        ${isDeveloper ? `
+                        <button onclick="exportVisitLogs()" 
+                                style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); 
+                                       color: white; border: none; padding: 15px; border-radius: 8px; 
+                                       cursor: pointer; font-size: 1em; font-weight: bold; 
+                                       box-shadow: 0 4px 8px rgba(0,0,0,0.2); display: flex; 
+                                       align-items: center; justify-content: center; gap: 8px;">
+                            <span>📥</span>
+                            <span>تصدير السجلات</span>
+                        </button>
+                        
+                        <button onclick="clearOldVisitLogs()" 
+                                style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); 
+                                       color: white; border: none; padding: 15px; border-radius: 8px; 
+                                       cursor: pointer; font-size: 1em; font-weight: bold; 
+                                       box-shadow: 0 4px 8px rgba(0,0,0,0.2); display: flex; 
+                                       align-items: center; justify-content: center; gap: 8px;">
+                            <span>🗑️</span>
+                            <span>مسح السجلات القديمة</span>
+                        </button>
+                        ` : ''}
+                    </div>
+                </div>
+                
+                <!-- Statistics Section -->
+                <div style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); 
+                            border-radius: 12px; padding: 20px; margin-bottom: 25px;">
+                    <h3 style="margin: 0 0 15px 0; color: #234085; display: flex; align-items: center; gap: 10px;">
+                        <span>📊</span>
+                        <span>إحصائيات الزيارات</span>
+                    </h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div style="background: white; padding: 20px; border-radius: 8px; text-align: center; 
+                                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <div style="font-size: 2.5em; color: #667eea; font-weight: bold; margin-bottom: 8px;">
+                                ${stats.totalVisits}
+                            </div>
+                            <div style="color: #666; font-size: 0.95em;">إجمالي الزيارات</div>
+                        </div>
+                        
+                        <div style="background: white; padding: 20px; border-radius: 8px; text-align: center; 
+                                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <div style="font-size: 2.5em; color: #43cea2; font-weight: bold; margin-bottom: 8px;">
+                                ${stats.proximityVisits}
+                            </div>
+                            <div style="color: #666; font-size: 0.95em;">زيارات GPS</div>
+                        </div>
+                        
+                        <div style="background: white; padding: 20px; border-radius: 8px; text-align: center; 
+                                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <div style="font-size: 2.5em; color: #ffc107; font-weight: bold; margin-bottom: 8px;">
+                                ${stats.mapClickVisits}
+                            </div>
+                            <div style="color: #666; font-size: 0.95em;">فتح الخرائط</div>
+                        </div>
+                        
+                        <div style="background: white; padding: 20px; border-radius: 8px; text-align: center; 
+                                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <div style="font-size: 2.5em; color: #764ba2; font-weight: bold; margin-bottom: 8px;">
+                                ${stats.uniqueShops}
+                            </div>
+                            <div style="color: #666; font-size: 0.95em;">محلات مختلفة</div>
+                        </div>
+                        
+                        ${isDeveloper ? `
+                        <div style="background: white; padding: 20px; border-radius: 8px; text-align: center; 
+                                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <div style="font-size: 2.5em; color: #17a2b8; font-weight: bold; margin-bottom: 8px;">
+                                ${stats.uniqueInspectors}
+                            </div>
+                            <div style="color: #666; font-size: 0.95em;">مفتشين نشطين</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+                
+                <!-- Visit Logs Table -->
+                <div style="background: white; border-radius: 12px; overflow: hidden; 
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                                color: white; padding: 15px 20px;">
+                        <h3 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                            <span>📋</span>
+                            <span>سجل الزيارات</span>
+                            <span style="font-size: 0.8em; opacity: 0.9;">(${filteredLogs.length} سجل)</span>
+                        </h3>
+                    </div>
+                    
+                    ${filteredLogs.length === 0 ? `
+                    <div style="padding: 60px 20px; text-align: center; color: #999;">
+                        <div style="font-size: 4em; margin-bottom: 15px;">📭</div>
+                        <p style="font-size: 1.2em; margin: 0;">لا توجد زيارات مسجلة بعد</p>
+                        <p style="font-size: 0.9em; margin: 10px 0 0 0; opacity: 0.8;">
+                            قم بتفعيل تتبع الموقع وزيارة المحلات لبدء التسجيل
+                        </p>
+                    </div>
+                    ` : `
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                                    <th style="padding: 15px; text-align: center; font-weight: bold; color: #234085;">#</th>
+                                    ${isDeveloper ? '<th style="padding: 15px; text-align: right; font-weight: bold; color: #234085;">المفتش</th>' : ''}
+                                    <th style="padding: 15px; text-align: right; font-weight: bold; color: #234085;">المحل</th>
+                                    <th style="padding: 15px; text-align: center; font-weight: bold; color: #234085;">المنطقة</th>
+                                    <th style="padding: 15px; text-align: center; font-weight: bold; color: #234085;">نوع الزيارة</th>
+                                    <th style="padding: 15px; text-align: center; font-weight: bold; color: #234085;">المسافة</th>
+                                    <th style="padding: 15px; text-align: center; font-weight: bold; color: #234085;">التاريخ</th>
+                                    <th style="padding: 15px; text-align: center; font-weight: bold; color: #234085;">الوقت</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${generateVisitLogsTableRows(filteredLogs, isDeveloper)}
+                            </tbody>
+                        </table>
+                    </div>
+                    `}
+                </div>
+                
+                <!-- Instructions -->
+                <div style="background: #e7f3ff; border-left: 4px solid #667eea; padding: 20px; 
+                            border-radius: 8px; margin-top: 25px;">
+                    <h4 style="margin: 0 0 10px 0; color: #667eea; font-size: 1.1em;">💡 كيفية الاستخدام:</h4>
+                    <ul style="margin: 0; padding-right: 20px; line-height: 2;">
+                        <li>انقر على "تفعيل تتبع الموقع" للسماح بتتبع موقعك الجغرافي</li>
+                        <li>عند الاقتراب من أي محل (ضمن 100 متر)، سيتم تسجيل الزيارة تلقائياً</li>
+                        <li>يمكنك أيضاً النقر على رابط خرائط جوجل لأي محل لتسجيل الزيارة</li>
+                        ${isDeveloper ? '<li>كمطور، ستتلقى إشعارات فورية عند زيارة أي مفتش لمحل</li>' : ''}
+                        <li>جميع الزيارات محفوظة بشكل آمن ويمكن مراجعتها في أي وقت</li>
+                        <li>النظام يحترم الخصوصية ويستخدم الموقع فقط لأغراض التفتيش</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    modal.innerHTML = modalContent;
+    modal.style.display = 'block';
+}
+
+/**
+ * حساب إحصائيات الزيارات
+ * Calculate visit statistics
+ */
+function calculateVisitStats(logs) {
+    const stats = {
+        totalVisits: logs.length,
+        proximityVisits: logs.filter(l => l.visitType === 'proximity').length,
+        mapClickVisits: logs.filter(l => l.visitType === 'map_click').length,
+        uniqueShops: [...new Set(logs.map(l => l.shopName))].length,
+        uniqueInspectors: [...new Set(logs.map(l => l.inspector))].length
+    };
+    
+    return stats;
+}
+
+/**
+ * توليد صفوف جدول سجلات الزيارات
+ * Generate visit logs table rows
+ */
+function generateVisitLogsTableRows(logs, showInspector) {
+    return logs.slice(0, 100).map((log, index) => {
+        const visitTypeIcon = log.visitType === 'proximity' ? '🎯' : '🗺️';
+        const visitTypeText = log.visitType === 'proximity' ? 'زيارة GPS' : 'فتح الخرائط';
+        const distanceText = log.distance ? `${log.distance} م` : '-';
+        
+        const bgColor = index % 2 === 0 ? '#ffffff' : '#f8f9fa';
+        
+        return `
+            <tr style="background: ${bgColor}; border-bottom: 1px solid #dee2e6;">
+                <td style="padding: 12px; text-align: center; color: #666;">${index + 1}</td>
+                ${showInspector ? `<td style="padding: 12px; text-align: right; font-weight: 600; color: #234085;">${log.inspector}</td>` : ''}
+                <td style="padding: 12px; text-align: right; font-weight: 600; color: #333;">${log.shopName}</td>
+                <td style="padding: 12px; text-align: center; color: #666;">${log.shopArea}</td>
+                <td style="padding: 12px; text-align: center;">
+                    <span style="background: ${log.visitType === 'proximity' ? '#43cea2' : '#ffc107'}; 
+                                 color: white; padding: 4px 12px; border-radius: 12px; 
+                                 font-size: 0.85em; font-weight: bold; white-space: nowrap;">
+                        ${visitTypeIcon} ${visitTypeText}
+                    </span>
+                </td>
+                <td style="padding: 12px; text-align: center; color: #666; font-weight: 500;">${distanceText}</td>
+                <td style="padding: 12px; text-align: center; color: #666;">${log.date}</td>
+                <td style="padding: 12px; text-align: center; color: #666;">${log.time}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+/**
+ * إغلاق نافذة تتبع الزيارات
+ * Close location tracking modal
+ */
+function closeLocationTrackingModal() {
+    const modal = document.getElementById('locationTrackingModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+/**
+ * تفعيل تتبع الموقع
+ * Enable location tracking
+ */
+async function enableLocationTracking() {
+    const currentUser = getCurrentUser();
+    if (!currentUser && !isDev && !window.isDev) {
+        alert('⚠️ يرجى تحديد اسمك من قائمة المفتشين أولاً');
+        return;
+    }
+    
+    const hasPermission = await requestLocationPermission();
+    if (hasPermission) {
+        startLocationTracking();
+        alert('✅ تم تفعيل تتبع الموقع بنجاح!\n\nسيتم تسجيل زياراتك للمحلات تلقائياً عند الاقتراب منها.');
+        
+        // تحديث عرض المودال
+        closeLocationTrackingModal();
+        setTimeout(() => showLocationTrackingModal(), 300);
+    }
+}
+
+/**
+ * اختبار دقة الموقع
+ * Test location accuracy
+ */
+async function testLocationAccuracy() {
+    const hasPermission = await requestLocationPermission();
+    if (!hasPermission) return;
+    
+    if (!inspectorCurrentLocation) {
+        alert('❌ لم يتم الحصول على الموقع');
+        return;
+    }
+    
+    const accuracy = Math.round(inspectorCurrentLocation.accuracy);
+    const lat = inspectorCurrentLocation.latitude.toFixed(6);
+    const lon = inspectorCurrentLocation.longitude.toFixed(6);
+    
+    let accuracyLevel = '';
+    let accuracyColor = '';
+    
+    if (accuracy <= 10) {
+        accuracyLevel = 'ممتازة 🌟';
+        accuracyColor = '#28a745';
+    } else if (accuracy <= 30) {
+        accuracyLevel = 'جيدة جداً ✅';
+        accuracyColor = '#43cea2';
+    } else if (accuracy <= 50) {
+        accuracyLevel = 'جيدة ✔️';
+        accuracyColor = '#ffc107';
+    } else {
+        accuracyLevel = 'متوسطة ⚠️';
+        accuracyColor = '#dc3545';
+    }
+    
+    alert(`📍 معلومات الموقع الحالي:\n\n` +
+          `📊 الدقة: ${accuracy} متر - ${accuracyLevel}\n` +
+          `🌍 الإحداثيات:\n` +
+          `   خط العرض: ${lat}\n` +
+          `   خط الطول: ${lon}\n\n` +
+          `💡 ملاحظة: الدقة المثالية أقل من 30 متر`);
+}
+
+/**
+ * تصدير سجلات الزيارات
+ * Export visit logs
+ */
+function exportVisitLogs() {
+    if (inspectorVisitLogs.length === 0) {
+        alert('⚠️ لا توجد سجلات لتصديرها');
+        return;
+    }
+    
+    // بناء محتوى CSV
+    let csvContent = '\uFEFF'; // UTF-8 BOM
+    csvContent += 'تقرير سجلات زيارات المفتشين للمحلات\n';
+    csvContent += `تاريخ التصدير: ${new Date().toLocaleString('ar-EG')}\n`;
+    csvContent += `عدد السجلات: ${inspectorVisitLogs.length}\n\n`;
+    
+    csvContent += '#,المفتش,المحل,المنطقة,العنوان,نوع الزيارة,المسافة (متر),التاريخ,الوقت\n';
+    
+    inspectorVisitLogs.forEach((log, index) => {
+        const visitType = log.visitType === 'proximity' ? 'زيارة GPS' : 'فتح الخرائط';
+        const distance = log.distance || '-';
+        
+        csvContent += `${index + 1},"${log.inspector}","${log.shopName}","${log.shopArea}",` +
+                     `"${log.shopAddress}","${visitType}","${distance}","${log.date}","${log.time}"\n`;
+    });
+    
+    // تنزيل الملف
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    const timestamp = new Date().toISOString().split('T')[0];
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `سجل_زيارات_المفتشين_${timestamp}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    alert('✅ تم تصدير السجلات بنجاح!');
+}
+
+/**
+ * مسح السجلات القديمة (أكثر من 30 يوم)
+ * Clear old visit logs (older than 30 days)
+ */
+function clearOldVisitLogs() {
+    if (!confirm('هل تريد حذف السجلات الأقدم من 30 يوم؟')) return;
+    
+    const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+    const originalCount = inspectorVisitLogs.length;
+    
+    inspectorVisitLogs = inspectorVisitLogs.filter(log => log.timestamp >= thirtyDaysAgo);
+    
+    saveVisitLogs();
+    
+    const deletedCount = originalCount - inspectorVisitLogs.length;
+    alert(`✅ تم حذف ${deletedCount} سجل قديم\n\nالسجلات المتبقية: ${inspectorVisitLogs.length}`);
+    
+    // تحديث العرض
+    closeLocationTrackingModal();
+    setTimeout(() => showLocationTrackingModal(), 300);
+}
+
+// تهيئة النظام عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+    // تحميل سجلات الزيارات
+    loadVisitLogs();
+    
+    // تهيئة تتبع روابط الخرائط
+    initializeMapLinkTracking();
+    
+    // الاستماع لتحديثات الزيارات من نوافذ أخرى
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'lastVisitUpdate') {
+            loadVisitLogs();
+            
+            // إظهار إشعار للمطور إذا كان متصلاً
+            if (isDev || window.isDev) {
+                const latestLog = inspectorVisitLogs[inspectorVisitLogs.length - 1];
+                if (latestLog && Date.now() - latestLog.timestamp < 5000) {
+                    showDeveloperNotification(latestLog);
+                }
+            }
+        }
+    });
+    
+    console.log('📍 نظام تتبع الزيارات جاهز');
+});
+
+// إضافة أنيميشن CSS للإشعارات
+if (!document.getElementById('visitTrackingAnimations')) {
+    const style = document.createElement('style');
+    style.id = 'visitTrackingAnimations';
+    style.textContent = `
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes slideInLeft {
+            from {
+                transform: translateX(-400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOutLeft {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(-400px);
+                opacity: 0;
+            }
+        }
+    `;
+    document.head.appendChild(style);
 }
 
 </script>

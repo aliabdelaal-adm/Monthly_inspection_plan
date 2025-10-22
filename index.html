@@ -9730,6 +9730,30 @@ function calculateDistance(coord1, coord2) {
     return distance;
 }
 
+// التحقق من ما إذا كان المحل يجب أن يظهر باللون الأحمر
+// المحلات التي تظهر باللون الأحمر:
+// 1. الصالونات المتنقلة (تحتوي على "صالون متنقل")
+// 2. محلات حديقة الحيوانات (المحلات في منطقة "حديقة حيوانات")
+// 3. محلات المولات (المحلات في منطقة "محلات المولات")
+function shouldShopBeRed(shopName, areaName) {
+    // التحقق من الصالون المتنقل
+    if (shopName.includes('صالون متنقل')) {
+        return true;
+    }
+    
+    // التحقق من منطقة حديقة الحيوانات
+    if (areaName === 'حديقة حيوانات' || areaName.includes('حديقة حيوان')) {
+        return true;
+    }
+    
+    // التحقق من منطقة محلات المولات
+    if (areaName === 'محلات المولات' || areaName.includes('محلات المولات')) {
+        return true;
+    }
+    
+    return false;
+}
+
 // ترتيب المحلات حسب القرب من بعضها البعض
 function sortShopsByProximity(shopNames) {
     if (!shopNames || shopNames.length <= 1) return shopNames;
@@ -11570,12 +11594,14 @@ function renderPlanTable() {
                         قائمة المحلات المطلوب تفتيشها
                     </div>
                     <ul>
-                        ${sortShopsByProximity(row.shops).map((shop, index) => 
-                            `<li class="shop-item-clickable" 
+                        ${sortShopsByProximity(row.shops).map((shop, index) => {
+                            const isRed = shouldShopBeRed(shop, row.area);
+                            const shopStyle = isRed ? 'cursor:pointer;color:#ff0000;font-weight:600;' : 'cursor:pointer;';
+                            return `<li class="shop-item-clickable" 
                                 onclick="showIndividualShopDetails('${shop.replace(/'/g, "\\'")}')" 
-                                style="cursor:pointer;" 
-                                title="انقر لعرض تفاصيل ${shop}">${shop}</li>`
-                        ).join('')}
+                                style="${shopStyle}" 
+                                title="انقر لعرض تفاصيل ${shop}">${shop}</li>`;
+                        }).join('')}
                     </ul>
                 </div>
             </div>` : 

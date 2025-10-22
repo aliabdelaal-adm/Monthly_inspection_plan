@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Merge New Shops from Excel into shops_details.json
-This script integrates new shop data from new-shop-list-updated.xlsx that are not yet in the system.
+Merge New HIGHLIGHTED Shops from Excel into shops_details.json
+This script integrates ONLY highlighted (yellow background) shop data from new-shop-list-updated.xlsx
+that are not yet in the system. This ensures only the shops marked by the user are added.
 """
 
 import json
@@ -64,11 +65,23 @@ def main():
     ws = wb.active
     print(f"   ✓ Loaded Excel file with {ws.max_row} rows")
     
-    # Find new shops
-    print("\n[4/6] Identifying new shops...")
+    # Find new HIGHLIGHTED shops
+    print("\n[4/6] Identifying new HIGHLIGHTED shops (yellow background)...")
     new_shops = []
     
     for row_idx in range(2, ws.max_row + 1):
+        # Check if row is highlighted (yellow background)
+        cell = ws.cell(row_idx, 1)
+        is_highlighted = False
+        if cell.fill and cell.fill.patternType and cell.fill.patternType != 'none':
+            fill_color = cell.fill.fgColor
+            if fill_color and hasattr(fill_color, 'rgb') and fill_color.rgb == 'FFFFFF00':
+                is_highlighted = True
+        
+        # Only process highlighted rows
+        if not is_highlighted:
+            continue
+        
         license_no = safe_str(ws.cell(row_idx, 1).value)
         name_ar = safe_str(ws.cell(row_idx, 2).value)
         name_en = safe_str(ws.cell(row_idx, 3).value)
@@ -134,9 +147,10 @@ def main():
     print("=" * 80)
     print(f"\nStatistics:")
     print(f"  - Original shop count: {len(shops_details) - len(new_shops)}")
-    print(f"  - New shops added: {len(new_shops)}")
+    print(f"  - New HIGHLIGHTED shops added: {len(new_shops)}")
     print(f"  - Total shop count: {len(shops_details)}")
     print(f"\nBackup saved as: {backup_filename}")
+    print(f"\nNote: Only shops with YELLOW highlighting in Excel were processed.")
     
     return True
 

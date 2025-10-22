@@ -2180,25 +2180,79 @@
         
         <!-- Add/Edit Shop Modal -->
         <div id="shopModal" class="modal">
-            <div class="modal-content">
+            <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
                 <div class="modal-header">
                     <h2 id="shopModalTitle">➕ إضافة محل جديد</h2>
                     <span class="modal-close" onclick="closeShopModal()">&times;</span>
                 </div>
                 <input type="hidden" id="shopModalId">
-                <div class="form-group">
-                    <label class="form-label">اسم المحل <span style="color: red;">*</span></label>
-                    <input type="text" id="shopModalName" class="form-control" placeholder="أدخل اسم المحل">
+                
+                <!-- Required Fields Section -->
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h3 style="color: #2d3561; font-size: 1.1em; margin-bottom: 15px;">📋 المعلومات الأساسية (إجبارية)</h3>
+                    <div class="form-group">
+                        <label class="form-label">اسم المحل <span style="color: red;">*</span></label>
+                        <input type="text" id="shopModalName" class="form-control" placeholder="أدخل اسم المحل">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">المنطقة <span style="color: red;">*</span></label>
+                        <select id="shopModalArea" class="form-control">
+                            <option value="">اختر المنطقة...</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">المنطقة <span style="color: red;">*</span></label>
-                    <select id="shopModalArea" class="form-control">
-                        <option value="">اختر المنطقة...</option>
-                    </select>
+                
+                <!-- Optional Details Section -->
+                <div style="background: #e8f4f8; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h3 style="color: #2d3561; font-size: 1.1em; margin-bottom: 15px;">📝 التفاصيل الإضافية (اختيارية)</h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label">اسم المحل بالإنجليزية</label>
+                        <input type="text" id="shopModalNameEn" class="form-control" placeholder="Shop Name in English">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">رقم الترخيص</label>
+                        <input type="text" id="shopModalLicense" class="form-control" placeholder="مثال: CN-1234567">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">العنوان</label>
+                        <input type="text" id="shopModalAddress" class="form-control" placeholder="العنوان الكامل للمحل">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">رقم الهاتف</label>
+                        <input type="tel" id="shopModalPhone" class="form-control" placeholder="مثال: 0501234567">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">البريد الإلكتروني</label>
+                        <input type="email" id="shopModalEmail" class="form-control" placeholder="example@email.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">🗺️ موقع المحل على خرائط جوجل</label>
+                        <input type="url" id="shopModalGoogleMaps" class="form-control" placeholder="https://maps.google.com/...">
+                        <small style="color: #666; display: block; margin-top: 5px;">
+                            💡 نسخ رابط الموقع من خرائط جوجل لتسهيل الوصول إلى المحل
+                        </small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">طبيعة نشاط المحل</label>
+                        <textarea id="shopModalActivity" class="form-control" rows="3" placeholder="مثال: بيع الحيوانات الأليفة، بيع أسماك الزينة، بيع الطيور..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">رمز ADM</label>
+                        <input type="text" id="shopModalAdmCode" class="form-control" placeholder="مثال: ADM0001">
+                    </div>
                 </div>
+                
                 <div class="btn-group">
                     <button class="btn btn-success" onclick="saveShop()">
-                        <span>💾</span> حفظ
+                        <span>💾</span> حفظ فوراً
                     </button>
                     <button class="btn btn-warning" onclick="closeShopModal()">
                         <span>✕</span> إلغاء
@@ -4136,6 +4190,16 @@
             document.getElementById('shopModalName').value = '';
             document.getElementById('shopModalArea').value = '';
             
+            // Clear optional fields
+            document.getElementById('shopModalNameEn').value = '';
+            document.getElementById('shopModalLicense').value = '';
+            document.getElementById('shopModalAddress').value = '';
+            document.getElementById('shopModalPhone').value = '';
+            document.getElementById('shopModalEmail').value = '';
+            document.getElementById('shopModalGoogleMaps').value = '';
+            document.getElementById('shopModalActivity').value = '';
+            document.getElementById('shopModalAdmCode').value = '';
+            
             // Populate areas dropdown
             const select = document.getElementById('shopModalArea');
             select.innerHTML = '<option value="">اختر المنطقة...</option>';
@@ -4173,6 +4237,45 @@
             }
             select.value = shop.areaId;
             
+            // Load additional details from shops_details.json
+            fetch('shops_details.json?' + new Date().getTime())
+                .then(response => response.json())
+                .then(shopsDetails => {
+                    const details = shopsDetails[shop.name];
+                    if (details) {
+                        document.getElementById('shopModalNameEn').value = details.nameEn || '';
+                        document.getElementById('shopModalLicense').value = details.licenseNo || '';
+                        document.getElementById('shopModalAddress').value = details.address || '';
+                        document.getElementById('shopModalPhone').value = details.contact || '';
+                        document.getElementById('shopModalEmail').value = details.email || '';
+                        document.getElementById('shopModalGoogleMaps').value = details.locationMap || '';
+                        document.getElementById('shopModalActivity').value = details.activity || '';
+                        document.getElementById('shopModalAdmCode').value = details.admCode || '';
+                    } else {
+                        // Clear optional fields if no details found
+                        document.getElementById('shopModalNameEn').value = '';
+                        document.getElementById('shopModalLicense').value = '';
+                        document.getElementById('shopModalAddress').value = '';
+                        document.getElementById('shopModalPhone').value = '';
+                        document.getElementById('shopModalEmail').value = '';
+                        document.getElementById('shopModalGoogleMaps').value = '';
+                        document.getElementById('shopModalActivity').value = '';
+                        document.getElementById('shopModalAdmCode').value = '';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading shop details:', error);
+                    // Clear optional fields on error
+                    document.getElementById('shopModalNameEn').value = '';
+                    document.getElementById('shopModalLicense').value = '';
+                    document.getElementById('shopModalAddress').value = '';
+                    document.getElementById('shopModalPhone').value = '';
+                    document.getElementById('shopModalEmail').value = '';
+                    document.getElementById('shopModalGoogleMaps').value = '';
+                    document.getElementById('shopModalActivity').value = '';
+                    document.getElementById('shopModalAdmCode').value = '';
+                });
+            
             document.getElementById('shopModal').style.display = 'block';
         }
         
@@ -4187,6 +4290,16 @@
             const shopName = document.getElementById('shopModalName').value.trim();
             const areaId = document.getElementById('shopModalArea').value;
             
+            // Get optional fields
+            const shopNameEn = document.getElementById('shopModalNameEn').value.trim();
+            const licenseNo = document.getElementById('shopModalLicense').value.trim();
+            const address = document.getElementById('shopModalAddress').value.trim();
+            const contact = document.getElementById('shopModalPhone').value.trim();
+            const email = document.getElementById('shopModalEmail').value.trim();
+            const locationMap = document.getElementById('shopModalGoogleMaps').value.trim();
+            const activity = document.getElementById('shopModalActivity').value.trim();
+            const admCode = document.getElementById('shopModalAdmCode').value.trim();
+            
             if (!shopName) {
                 showMessage('shopModalStatus', 'error', '❌ يرجى إدخال اسم المحل');
                 return;
@@ -4200,6 +4313,7 @@
             showMessage('shopModalStatus', 'info', '⏳ جاري الحفظ...');
             
             try {
+                // Update or add shop in plan-data.json
                 if (shopId) {
                     // Edit existing shop
                     const shopIndex = planData.shops.findIndex(s => s.id === shopId);
@@ -4217,18 +4331,95 @@
                     planData.shops.push(newShop);
                 }
                 
-                // Save to GitHub
-                await savePlanDataToGitHub();
+                // Save to plan-data.json on GitHub
+                await savePlanDataToGitHub(`تحديث محل: ${shopName}`);
                 
-                showMessage('shopModalStatus', 'success', '✅ تم الحفظ بنجاح');
+                // Save additional details to shops_details.json if any optional field is filled
+                if (shopNameEn || licenseNo || address || contact || email || locationMap || activity || admCode) {
+                    await saveShopDetailsToGitHub(shopName, {
+                        nameAr: shopName,
+                        nameEn: shopNameEn,
+                        licenseNo: licenseNo,
+                        address: address,
+                        contact: contact,
+                        email: email,
+                        locationMap: locationMap,
+                        activity: activity,
+                        admCode: admCode
+                    });
+                }
+                
+                showMessage('shopModalStatus', 'success', '✅ تم الحفظ بنجاح - المحل ظاهر الآن في القائمة');
                 setTimeout(() => {
                     closeShopModal();
                     displayShopsList();
                     populateAreas(); // Refresh main form areas
-                }, 1000);
+                }, 1500);
                 
             } catch (error) {
                 showMessage('shopModalStatus', 'error', '❌ فشل الحفظ: ' + error.message);
+            }
+        }
+        
+        // Save shop details to shops_details.json on GitHub
+        async function saveShopDetailsToGitHub(shopName, details) {
+            try {
+                // Get current shops_details.json file
+                const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/shops_details.json`, {
+                    headers: {
+                        'Authorization': `Bearer ${githubToken}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (!getRes.ok) {
+                    throw new Error('فشل الحصول على ملف shops_details.json');
+                }
+                
+                const file = await getRes.json();
+                const sha = file.sha;
+                
+                // Decode and parse current content
+                const currentContent = JSON.parse(decodeURIComponent(escape(atob(file.content))));
+                
+                // Update or add shop details - remove empty fields
+                const cleanDetails = {};
+                if (details.nameAr) cleanDetails.nameAr = details.nameAr;
+                if (details.nameEn) cleanDetails.nameEn = details.nameEn;
+                if (details.licenseNo) cleanDetails.licenseNo = details.licenseNo;
+                if (details.address) cleanDetails.address = details.address;
+                if (details.contact) cleanDetails.contact = details.contact;
+                if (details.email) cleanDetails.email = details.email;
+                if (details.locationMap) cleanDetails.locationMap = details.locationMap;
+                if (details.activity) cleanDetails.activity = details.activity;
+                if (details.admCode) cleanDetails.admCode = details.admCode;
+                
+                currentContent[shopName] = cleanDetails;
+                
+                // Prepare content
+                const content = btoa(unescape(encodeURIComponent(JSON.stringify(currentContent, null, 2))));
+                
+                // Update file
+                const updateRes = await fetch(`https://api.github.com/repos/${repo}/contents/shops_details.json`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${githubToken}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: `تحديث تفاصيل المحل: ${shopName}`,
+                        content: content,
+                        sha: sha
+                    })
+                });
+                
+                if (!updateRes.ok) {
+                    throw new Error('فشل تحديث ملف shops_details.json');
+                }
+            } catch (error) {
+                console.error('Error saving shop details:', error);
+                // Don't throw - optional details save failure shouldn't block main save
             }
         }
         

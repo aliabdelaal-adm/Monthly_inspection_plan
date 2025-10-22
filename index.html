@@ -4100,23 +4100,7 @@
             }
         }
 
-        @keyframes musicNote {
-            0%, 100% {
-                transform: translateY(0) scale(1);
-            }
-            50% {
-                transform: translateY(-10px) scale(1.1);
-            }
-        }
 
-        #devSplashScreen.show {
-            display: flex !important;
-            opacity: 1 !important;
-        }
-
-        #devSplashScreen.hide {
-            opacity: 0 !important;
-        }
     </style>
 </head>
 <body>
@@ -4163,19 +4147,8 @@
 </div>
 
 <!-- Developer Splash Screen Overlay -->
-<div id="devSplashScreen" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); z-index:999999; opacity:0; transition:opacity 0.5s ease;">
-    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:white; font-family:'Cairo', Arial, sans-serif; text-align:center; padding:20px;">
-        <div style="font-size:100px; margin-bottom:25px; animation:pulse 1.5s ease-in-out infinite, rotate360 3s linear infinite;">💫</div>
-        <div style="display:flex; align-items:center; gap:15px; margin-top:10px;">
-            <div style="font-size:2.5em; animation:musicNote 1s ease-in-out infinite;">🎵</div>
-            <p style="font-size:1.3em; opacity:0.9; margin:0; font-weight:500;">استمتع بالموسيقى أثناء الانتظار</p>
-            <div style="font-size:2.5em; animation:musicNote 1s ease-in-out infinite 0.5s;">🎶</div>
-        </div>
-    </div>
-</div>
-
-<!-- Hidden Audio Element for Developer Splash Screen -->
-<audio id="splashAudio" preload="metadata" playsinline webkit-playsinline style="display:none;" loop crossorigin="anonymous">
+<!-- Background music for main screen - plays on click -->
+<audio id="backgroundMusicAudio" preload="metadata" playsinline webkit-playsinline style="display:none;" crossorigin="anonymous">
     <source src="Classical-Music-for-Relaxation-Mozart-Bach-Tchaikovsky...-128Kbps-44KHz(mp3)1الجزء(4).mp3" type="audio/mpeg">
     <source src="Classical-Music-for-Relaxation-Mozart-Bach-Tchaikovsky...-128Kbps-44KHz(mp3)1الجزء(4).mp3" type="audio/mp3">
     متصفحك لا يدعم تشغيل الملفات الصوتية.
@@ -6737,7 +6710,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeAudioElements() {
     const audioElements = [
         document.getElementById('maintenanceAudio'),
-        document.getElementById('splashAudio'),
+        document.getElementById('backgroundMusicAudio'),
         document.getElementById('sheikhZayedAudio')
     ];
     
@@ -6811,7 +6784,7 @@ function initializeAudioElements() {
         
         // Safari-specific: Handle ended event for loop (backup for loop attribute)
         audio.addEventListener('ended', function() {
-            if (audio.id === 'splashAudio' || (audio.id === 'maintenanceAudio' && maintenanceConfig.musicDuration === 0)) {
+            if (audio.id === 'maintenanceAudio' && maintenanceConfig.musicDuration === 0) {
                 // Should loop, restart it
                 console.log('🎵 Audio ended - restarting for loop:', audio.id);
                 audio.currentTime = 0;
@@ -8913,7 +8886,7 @@ async function emergencyDisableMaintenance() {
         }
         
         // CRITICAL: Stop all audio playback
-        const audioElements = ['maintenanceAudio', 'splashAudio', 'sheikhZayedAudio'];
+        const audioElements = ['maintenanceAudio', 'backgroundMusicAudio', 'sheikhZayedAudio'];
         audioElements.forEach(id => {
             const audio = document.getElementById(id);
             if (audio) {
@@ -8969,15 +8942,8 @@ function emergencyHideMessage() {
         // Hide progress message
         hideMaintenanceProgress();
         
-        // Hide splash screen if visible
-        const splashScreen = document.getElementById('devSplashScreen');
-        if (splashScreen) {
-            splashScreen.style.display = 'none';
-            splashScreen.style.opacity = '0';
-        }
-        
         // Stop all audio
-        const audioElements = ['maintenanceAudio', 'splashAudio', 'sheikhZayedAudio'];
+        const audioElements = ['maintenanceAudio', 'backgroundMusicAudio', 'sheikhZayedAudio'];
         audioElements.forEach(id => {
             const audio = document.getElementById(id);
             if (audio && !audio.paused) {
@@ -9135,7 +9101,7 @@ function emergencyKillSwitch() {
         }
         
         // 3. STOP AND RESET ALL AUDIO ELEMENTS
-        const audioElements = ['maintenanceAudio', 'splashAudio', 'sheikhZayedAudio'];
+        const audioElements = ['maintenanceAudio', 'backgroundMusicAudio', 'sheikhZayedAudio'];
         audioElements.forEach(id => {
             const audio = document.getElementById(id);
             if (audio) {
@@ -9157,13 +9123,6 @@ function emergencyKillSwitch() {
         if (overlay) {
             overlay.style.display = 'none';
             console.log('✅ Maintenance overlay HIDDEN');
-        }
-        
-        const splashScreen = document.getElementById('devSplashScreen');
-        if (splashScreen) {
-            splashScreen.style.display = 'none';
-            splashScreen.style.opacity = '0';
-            console.log('✅ Splash screen HIDDEN');
         }
         
         // 5. HIDE PROGRESS MESSAGES
@@ -23705,7 +23664,13 @@ window.addEventListener('DOMContentLoaded', () => {
 // ===== Developer Splash Screen System =====
 // This system monitors for file changes and shows a splash screen with music
 
-let splashScreenTimer = null;
+// ===== 🎵 نظام الموسيقى الخلفية للشاشة الرئيسية =====
+// Background Music System for Main Screen
+// يعمل بصوت هادئ جداً (5%) ويتوقف تلقائياً بعد دقيقة واحدة
+// Plays at very low volume (5%) and stops automatically after 1 minute
+
+let backgroundMusicTimer = null;
+let backgroundMusicPlaying = false;
 let lastKnownDataHash = null;
 let isMonitoringActive = false;
 
@@ -23717,67 +23682,61 @@ function calculateDataHash(data) {
     }, 0);
 }
 
-// Show developer splash screen with music
-function showDevSplashScreen() {
-    const splash = document.getElementById('devSplashScreen');
-    const audio = document.getElementById('splashAudio');
+// Toggle background music on main screen click
+function toggleBackgroundMusic() {
+    const audio = document.getElementById('backgroundMusicAudio');
     
-    if (!splash) return;
+    if (!audio) {
+        console.log('⚠️ Background music audio element not found');
+        return;
+    }
     
-    // Show splash screen
-    splash.style.display = 'flex';
-    setTimeout(() => {
-        splash.classList.add('show');
-    }, 10);
-    
-    // Play music with autoplay handling
-    if (audio) {
-        audio.currentTime = 0;
-        audio.volume = 0.25; // 25% volume
-        audio.play().catch(error => {
-            console.log('Audio autoplay prevented:', error);
-            // Try to play on first user interaction
-            const playOnInteraction = () => {
-                audio.volume = 0.25; // 25% volume
-                audio.play().catch(e => console.log('Still cannot play:', e));
-                document.removeEventListener('click', playOnInteraction);
-                document.removeEventListener('touchstart', playOnInteraction);
-            };
-            document.addEventListener('click', playOnInteraction);
-            document.addEventListener('touchstart', playOnInteraction);
+    if (audio.paused) {
+        // Play from current position (resume)
+        audio.volume = 0.05; // Very low volume (5%)
+        audio.play().then(() => {
+            backgroundMusicPlaying = true;
+            console.log('🎵 Background music started/resumed at position:', audio.currentTime.toFixed(2), 'seconds');
+            
+            // Auto-stop after 1 minute (60 seconds)
+            clearTimeout(backgroundMusicTimer);
+            backgroundMusicTimer = setTimeout(() => {
+                audio.pause();
+                backgroundMusicPlaying = false;
+                console.log('⏸️ Background music paused automatically after 1 minute at position:', audio.currentTime.toFixed(2), 'seconds');
+            }, 60000); // 60 seconds = 1 minute
+        }).catch(error => {
+            console.log('⚠️ Could not play background music:', error);
+            backgroundMusicPlaying = false;
         });
-    }
-    
-    console.log('🎬 Developer splash screen shown with music');
-}
-
-// Hide developer splash screen
-function hideDevSplashScreen() {
-    const splash = document.getElementById('devSplashScreen');
-    const audio = document.getElementById('splashAudio');
-    
-    if (!splash) return;
-    
-    // Fade out
-    splash.classList.remove('show');
-    splash.classList.add('hide');
-    
-    // Stop music
-    if (audio) {
+    } else {
+        // Already playing, pause it
         audio.pause();
-        audio.currentTime = 0;
+        clearTimeout(backgroundMusicTimer);
+        backgroundMusicPlaying = false;
+        console.log('⏸️ Background music paused at position:', audio.currentTime.toFixed(2), 'seconds');
     }
-    
-    // Remove from DOM after animation
-    setTimeout(() => {
-        splash.style.display = 'none';
-        splash.classList.remove('hide');
-    }, 500);
-    
-    console.log('🎬 Developer splash screen hidden');
 }
 
-// Monitor for data changes
+// Setup click handler for main screen
+function setupBackgroundMusicClickHandler() {
+    document.addEventListener('click', function(event) {
+        // Only trigger on body clicks or main container, not on buttons/inputs
+        const targetElement = event.target;
+        const isButton = targetElement.tagName === 'BUTTON' || targetElement.closest('button');
+        const isInput = targetElement.tagName === 'INPUT' || targetElement.tagName === 'SELECT' || targetElement.tagName === 'TEXTAREA';
+        const isLink = targetElement.tagName === 'A' || targetElement.closest('a');
+        
+        // Only toggle music if not clicking on interactive elements
+        if (!isButton && !isInput && !isLink) {
+            toggleBackgroundMusic();
+        }
+    }, { passive: true, capture: false });
+    
+    console.log('🎵 Background music click handler initialized');
+}
+
+// Monitor for data changes (keep monitoring functionality)
 async function monitorForChanges() {
     if (!isMonitoringActive) return;
     
@@ -23788,16 +23747,9 @@ async function monitorForChanges() {
             const data = await response.json();
             const currentHash = calculateDataHash(data);
             
-            // If hash changed, show splash screen
+            // If hash changed, log it (no splash screen anymore)
             if (lastKnownDataHash !== null && currentHash !== lastKnownDataHash) {
                 console.log('📦 Data change detected!');
-                showDevSplashScreen();
-                
-                // Auto-hide after 3 seconds
-                clearTimeout(splashScreenTimer);
-                splashScreenTimer = setTimeout(() => {
-                    hideDevSplashScreen();
-                }, 3000);
             }
             
             lastKnownDataHash = currentHash;
@@ -23810,8 +23762,11 @@ async function monitorForChanges() {
     setTimeout(monitorForChanges, 3000);
 }
 
-// Start monitoring when page loads
+// Initialize on page load
 window.addEventListener('load', function() {
+    // Setup background music click handler
+    setupBackgroundMusicClickHandler();
+    
     // Calculate initial hash
     if (typeof inspectionData !== 'undefined') {
         lastKnownDataHash = calculateDataHash({
@@ -23829,55 +23784,18 @@ window.addEventListener('load', function() {
     }, 5000);
 });
 
-// Manual trigger for developers (can be called from console)
-window.showSplash = showDevSplashScreen;
-window.hideSplash = hideDevSplashScreen;
+// Manual controls for developers (can be called from console)
+window.toggleBackgroundMusic = toggleBackgroundMusic;
+window.stopBackgroundMusic = function() {
+    const audio = document.getElementById('backgroundMusicAudio');
+    if (audio) {
+        audio.pause();
+        clearTimeout(backgroundMusicTimer);
+        backgroundMusicPlaying = false;
+        console.log('⏹️ Background music stopped at position:', audio.currentTime.toFixed(2), 'seconds');
+    }
+};
 
-// Detect when saveInspectionData is called (when developer makes edits)
-const originalSaveInspectionData = window.saveInspectionData;
-if (typeof originalSaveInspectionData === 'function') {
-    window.saveInspectionData = function() {
-        // Show splash screen when saving
-        showDevSplashScreen();
-        
-        // Call original function
-        const result = originalSaveInspectionData.apply(this, arguments);
-        
-        // Auto-hide after 5 seconds
-        clearTimeout(splashScreenTimer);
-        splashScreenTimer = setTimeout(() => {
-            hideDevSplashScreen();
-        }, 5000);
-        
-        return result;
-    };
-}
-
-// Detect GitHub save operations
-const originalSaveDirectToGitHub = window.saveDirectToGitHub;
-if (typeof originalSaveDirectToGitHub === 'function') {
-    window.saveDirectToGitHub = async function() {
-        // Show splash screen
-        showDevSplashScreen();
-        
-        try {
-            // Call original function
-            const result = await originalSaveDirectToGitHub.apply(this, arguments);
-            
-            // Auto-hide after 5 seconds
-            clearTimeout(splashScreenTimer);
-            splashScreenTimer = setTimeout(() => {
-                hideDevSplashScreen();
-            }, 5000);
-            
-            return result;
-        } catch (error) {
-            // Hide on error too
-            setTimeout(hideDevSplashScreen, 1000);
-            throw error;
-        }
-    };
-}
 
 // ===== 📍 نظام تتبع موقع المفتشين وزيارة المحلات =====
 // Inspector Location Tracking and Shop Visit System

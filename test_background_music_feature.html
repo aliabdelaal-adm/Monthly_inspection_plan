@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار الموسيقى الخلفية - Background Music Test</title>
+    <style>
+        body {
+            font-family: 'Cairo', Arial, sans-serif;
+            padding: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .info-box {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+        }
+        .test-area {
+            width: 80%;
+            max-width: 600px;
+            background: rgba(255,255,255,0.2);
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .test-area:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.02);
+        }
+        button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 10px;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #218838;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            font-size: 1.1em;
+        }
+        #log {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.9em;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎵 اختبار الموسيقى الخلفية</h1>
+    <h2>Background Music Test</h2>
+    
+    <div class="info-box">
+        <h3>كيفية الاختبار - How to Test:</h3>
+        <ol style="text-align: right;">
+            <li>انقر في أي مكان على الصفحة لبدء الموسيقى</li>
+            <li>الموسيقى تعمل بصوت هادئ جداً (5%)</li>
+            <li>سوف تتوقف تلقائياً بعد دقيقة واحدة</li>
+            <li>انقر مرة أخرى لاستكمال الموسيقى من نفس النقطة</li>
+        </ol>
+        <ol style="text-align: left;">
+            <li>Click anywhere on the page to start music</li>
+            <li>Music plays at very low volume (5%)</li>
+            <li>It will auto-stop after 1 minute</li>
+            <li>Click again to resume from where it stopped</li>
+        </ol>
+    </div>
+
+    <div class="test-area" id="clickArea">
+        <h2>👆 انقر هنا لتشغيل/إيقاف الموسيقى</h2>
+        <h3>Click here to play/pause music</h3>
+        <div class="status" id="status">⏹️ الموسيقى متوقفة - Music stopped</div>
+    </div>
+
+    <div>
+        <button onclick="window.stopBackgroundMusic()">⏹️ إيقاف الموسيقى - Stop Music</button>
+        <button onclick="window.toggleBackgroundMusic()">🎵 تبديل الموسيقى - Toggle Music</button>
+    </div>
+
+    <div id="log"></div>
+
+    <!-- Background music audio element -->
+    <audio id="backgroundMusicAudio" preload="metadata" playsinline webkit-playsinline style="display:none;">
+        <source src="Classical-Music-for-Relaxation-Mozart-Bach-Tchaikovsky...-128Kbps-44KHz(mp3)1الجزء(4).mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // Background Music System
+        let backgroundMusicTimer = null;
+        let backgroundMusicPlaying = false;
+        
+        function addLog(message) {
+            const log = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString('ar-EG');
+            log.innerHTML = `[${timestamp}] ${message}<br>` + log.innerHTML;
+        }
+        
+        function updateStatus(message) {
+            document.getElementById('status').textContent = message;
+        }
+
+        function toggleBackgroundMusic() {
+            const audio = document.getElementById('backgroundMusicAudio');
+            
+            if (!audio) {
+                addLog('⚠️ Background music audio element not found');
+                return;
+            }
+            
+            if (audio.paused) {
+                audio.volume = 0.05; // Very low volume (5%)
+                audio.play().then(() => {
+                    backgroundMusicPlaying = true;
+                    const position = audio.currentTime.toFixed(2);
+                    addLog(`🎵 Background music started/resumed at position: ${position} seconds`);
+                    updateStatus(`🎵 الموسيقى تعمل - Music playing (${position}s)`);
+                    
+                    clearTimeout(backgroundMusicTimer);
+                    backgroundMusicTimer = setTimeout(() => {
+                        audio.pause();
+                        backgroundMusicPlaying = false;
+                        const finalPosition = audio.currentTime.toFixed(2);
+                        addLog(`⏸️ Background music paused automatically after 1 minute at position: ${finalPosition} seconds`);
+                        updateStatus(`⏸️ الموسيقى متوقفة تلقائياً - Auto-paused (${finalPosition}s)`);
+                    }, 60000); // 60 seconds = 1 minute
+                }).catch(error => {
+                    addLog('⚠️ Could not play background music: ' + error);
+                    backgroundMusicPlaying = false;
+                    updateStatus('⚠️ خطأ - Error playing music');
+                });
+            } else {
+                audio.pause();
+                clearTimeout(backgroundMusicTimer);
+                backgroundMusicPlaying = false;
+                const position = audio.currentTime.toFixed(2);
+                addLog(`⏸️ Background music paused at position: ${position} seconds`);
+                updateStatus(`⏸️ الموسيقى متوقفة - Music paused (${position}s)`);
+            }
+        }
+
+        function setupBackgroundMusicClickHandler() {
+            document.addEventListener('click', function(event) {
+                const targetElement = event.target;
+                const isButton = targetElement.tagName === 'BUTTON' || targetElement.closest('button');
+                const isInput = targetElement.tagName === 'INPUT' || targetElement.tagName === 'SELECT' || targetElement.tagName === 'TEXTAREA';
+                const isLink = targetElement.tagName === 'A' || targetElement.closest('a');
+                
+                if (!isButton && !isInput && !isLink) {
+                    toggleBackgroundMusic();
+                }
+            }, { passive: true });
+            
+            addLog('🎵 Background music click handler initialized');
+        }
+
+        window.toggleBackgroundMusic = toggleBackgroundMusic;
+        window.stopBackgroundMusic = function() {
+            const audio = document.getElementById('backgroundMusicAudio');
+            if (audio) {
+                audio.pause();
+                clearTimeout(backgroundMusicTimer);
+                backgroundMusicPlaying = false;
+                const position = audio.currentTime.toFixed(2);
+                addLog(`⏹️ Background music stopped at position: ${position} seconds`);
+                updateStatus(`⏹️ الموسيقى متوقفة - Music stopped (${position}s)`);
+            }
+        };
+
+        window.addEventListener('load', function() {
+            setupBackgroundMusicClickHandler();
+            addLog('✅ Test page loaded - Click anywhere to start music');
+        });
+    </script>
+</body>
+</html>

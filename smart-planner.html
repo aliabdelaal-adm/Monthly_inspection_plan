@@ -1601,6 +1601,15 @@
                         <span id="highPriorityBtnText">عرض المحلات ذات الأولوية العالية</span>
                     </button>
                 </div>
+                
+                <!-- Search box for shops in new inspection -->
+                <div class="search-box" id="inspectionShopSearchBox" style="display: none; margin-bottom: 15px;">
+                    <input type="text" id="inspectionShopSearch" class="form-control" 
+                           placeholder="🔍 ابحث عن محل معين (بالاسم، رقم الترخيص، كود ADM...)" 
+                           oninput="filterInspectionShops()">
+                    <span class="search-icon">🔍</span>
+                </div>
+                
                 <div id="shopsListContainer">
                     <p style="text-align: center; color: #999; padding: 20px;">
                         اختر المفتش والتاريخ والمنطقة لعرض المحلات المتاحة
@@ -2924,11 +2933,21 @@
             const inspector = document.getElementById('inspectorSelect').value;
             const date = document.getElementById('inspectionDate').value;
             const area = document.getElementById('areaSelect').value;
+            const searchBox = document.getElementById('inspectionShopSearchBox');
+            const searchInput = document.getElementById('inspectionShopSearch');
+            
+            // Clear search when filters change
+            if (searchInput) {
+                searchInput.value = '';
+            }
             
             if (!inspector || !date || !area) {
                 document.getElementById('shopsListContainer').innerHTML = 
                     '<p style="text-align: center; color: #999; padding: 20px;">اختر المفتش والتاريخ والمنطقة لعرض المحلات المتاحة</p>';
                 document.getElementById('showHighPriorityBtn').style.display = 'none';
+                if (searchBox) {
+                    searchBox.style.display = 'none';
+                }
                 return;
             }
             
@@ -3167,6 +3186,14 @@
         // Display shops
         function displayShops(shops, showingHighPriority = false) {
             const container = document.getElementById('shopsListContainer');
+            const searchBox = document.getElementById('inspectionShopSearchBox');
+            
+            // Show search box when there are shops to display
+            if (shops.length > 0) {
+                searchBox.style.display = 'block';
+            } else {
+                searchBox.style.display = 'none';
+            }
             
             if (shops.length === 0) {
                 container.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">لا توجد محلات متاحة حسب المعايير المحددة</p>';
@@ -3279,6 +3306,47 @@
             updateSelectedShopsDisplay();
             updateAvailableShops();
             updatePreview();
+        }
+        
+        // Filter shops in new inspection based on search term
+        function filterInspectionShops() {
+            const searchTerm = document.getElementById('inspectionShopSearch').value.toLowerCase().trim();
+            const shopCards = document.querySelectorAll('#shopsListContainer .shop-card');
+            
+            if (!searchTerm) {
+                // Show all shops if search is empty
+                shopCards.forEach(card => {
+                    card.style.display = '';
+                });
+                return;
+            }
+            
+            // Filter shop cards based on search term
+            shopCards.forEach(card => {
+                const shopName = card.querySelector('.shop-name').textContent.toLowerCase();
+                
+                // Try to get additional details from shopsDetails if available
+                let shopDetails = '';
+                const originalShopName = card.querySelector('.shop-name').textContent;
+                if (shopsDetails && shopsDetails[originalShopName]) {
+                    const shop = shopsDetails[originalShopName];
+                    shopDetails = [
+                        shop.nameEn || '',
+                        shop.licenseNo || '',
+                        shop.admCode || '',
+                        shop.activity || '',
+                        shop.address || ''
+                    ].join(' ').toLowerCase();
+                }
+                
+                // Check if search term matches shop name or details
+                const searchableText = shopName + ' ' + shopDetails;
+                if (searchableText.includes(searchTerm)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
         }
         
         // Update selected shops display
@@ -4001,6 +4069,16 @@
             document.getElementById('shiftSelect').value = 'صباحية';
             document.getElementById('areaSelect').value = '';
             selectedShops = [];
+            
+            // Clear search input and hide search box
+            const searchInput = document.getElementById('inspectionShopSearch');
+            const searchBox = document.getElementById('inspectionShopSearchBox');
+            if (searchInput) {
+                searchInput.value = '';
+            }
+            if (searchBox) {
+                searchBox.style.display = 'none';
+            }
             
             document.getElementById('shopsListContainer').innerHTML = 
                 '<p style="text-align: center; color: #999; padding: 20px;">اختر المفتش والتاريخ والمنطقة لعرض المحلات المتاحة</p>';

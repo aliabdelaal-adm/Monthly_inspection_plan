@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Search Feature</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+        }
+        
+        .section-title {
+            font-size: 1.8em;
+            color: #2d3561;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #2d3561;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            margin-bottom: 15px;
+        }
+        
+        .search-box {
+            position: relative;
+            margin-bottom: 15px;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 12px 40px 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+        }
+        
+        .search-box .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+        
+        .shops-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .shop-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            cursor: pointer;
+        }
+        
+        .shop-card.high-priority {
+            border-left: 5px solid #dc3545;
+        }
+        
+        .shop-name {
+            font-weight: 600;
+            color: #2d3561;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+        
+        .shop-info {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            background: #667eea;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="section-title">📝 إضافة تفتيش جديد</h2>
+        
+        <div style="margin-bottom: 20px;">
+            <label class="form-label">المفتش</label>
+            <select class="form-control">
+                <option value="">اختر المفتش...</option>
+                <option value="محمد">محمد أحمد</option>
+            </select>
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+            <label class="form-label">التاريخ</label>
+            <input type="date" class="form-control" value="2025-10-22">
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+            <label class="form-label">المنطقة</label>
+            <select class="form-control">
+                <option value="">اختر المنطقة...</option>
+                <option value="منطقة 1" selected>منطقة 1</option>
+            </select>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <label class="form-label" style="margin-bottom: 0;">المحلات المتاحة (مرتبة حسب الأولوية)</label>
+            <button class="btn">
+                👁️ عرض المحلات ذات الأولوية العالية
+            </button>
+        </div>
+        
+        <!-- Search box - NEW FEATURE -->
+        <div class="search-box">
+            <input type="text" placeholder="🔍 ابحث عن محل معين (بالاسم، رقم الترخيص، كود ADM...)" oninput="filterShops()">
+            <span class="search-icon">🔍</span>
+        </div>
+        
+        <div class="shops-list" id="shopsList">
+            <div class="shop-card high-priority">
+                <div class="shop-name">محل الرحمة للحيوانات الأليفة</div>
+                <div class="shop-info">📊 النقاط: 95</div>
+                <div class="shop-info">📝 لم يتم تفتيشه من قبل</div>
+                <div class="shop-info">🔖 رقم الترخيص: 12345</div>
+            </div>
+            
+            <div class="shop-card">
+                <div class="shop-name">محل السعادة للحيوانات</div>
+                <div class="shop-info">📊 النقاط: 80</div>
+                <div class="shop-info">📝 آخر تفتيش قبل 35 يوم</div>
+                <div class="shop-info">🔖 رقم الترخيص: 54321</div>
+            </div>
+            
+            <div class="shop-card">
+                <div class="shop-name">محل الأمل لمستلزمات الحيوانات</div>
+                <div class="shop-info">📊 النقاط: 60</div>
+                <div class="shop-info">📝 آخر تفتيش قبل 25 يوم</div>
+                <div class="shop-info">🔖 كود ADM: ADM-001</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function filterShops() {
+            const searchTerm = event.target.value.toLowerCase();
+            const cards = document.querySelectorAll('.shop-card');
+            
+            cards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                card.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        }
+    </script>
+</body>
+</html>

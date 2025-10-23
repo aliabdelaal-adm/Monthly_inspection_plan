@@ -24228,14 +24228,17 @@ function showDeveloperNotification(visitLog) {
 function getCurrentUser() {
     // محاولة الحصول على المستخدم من المفتش المحدد
     const inspectorSelect = document.getElementById('inspectorSelect');
-    if (inspectorSelect && inspectorSelect.value) {
-        const inspector = inspectorsData?.find(i => i.id === inspectorSelect.value);
-        return inspector ? inspector.name : null;
+    if (inspectorSelect && inspectorSelect.value && inspectorSelect.value !== '') {
+        // Get the selected option text
+        const selectedOption = inspectorSelect.options[inspectorSelect.selectedIndex];
+        if (selectedOption && selectedOption.value && selectedOption.value !== '') {
+            return selectedOption.textContent.trim();
+        }
     }
     
-    // أو من المستخدم المسجل دخوله
-    if (currentInspector) {
-        return currentInspector;
+    // أو من المتغير المخزن للمفتش المحدد
+    if (typeof selectedInspector !== 'undefined' && selectedInspector) {
+        return selectedInspector;
     }
     
     // أو طلب من المستخدم إدخال الاسم

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار منع تكرار المحلات</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #2d3748;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        .test-case {
+            background: #f7fafc;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 10px;
+            border-left: 5px solid #4299e1;
+        }
+        .test-case.pass {
+            border-left-color: #48bb78;
+            background: #f0fff4;
+        }
+        .test-case.fail {
+            border-left-color: #f56565;
+            background: #fff5f5;
+        }
+        .test-title {
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            color: #2d3748;
+        }
+        .test-result {
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .pass .test-result {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        .fail .test-result {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+        .test-details {
+            margin-top: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            font-size: 0.9em;
+            color: #4a5568;
+        }
+        .summary {
+            background: #edf2f7;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+            text-align: center;
+            font-size: 1.2em;
+        }
+        .summary.all-pass {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        .code {
+            background: #2d3748;
+            color: #68d391;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            direction: ltr;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 اختبار منع تكرار المحلات</h1>
+        <p style="text-align: center; font-size: 1.1em; color: #4a5568; margin-bottom: 30px;">
+            اختبار شامل للتحقق من عمل آلية منع تخصيص نفس المحل لأكثر من مفتش في نفس اليوم
+        </p>
+        
+        <div id="test-results"></div>
+        <div id="summary"></div>
+    </div>
+
+    <script>
+        // Simulate the planData structure
+        const planData = {
+            inspectionData: [
+                {
+                    inspector: "د. آمنه بن صرم",
+                    day: "2025-10-24",
+                    shift: "صباحية",
+                    area: "محلات المولات",
+                    shops: ["فيذيرز ان فينس للحيوانات الأليفة", "بيت كير للحيوانات الأليفة"]
+                },
+                {
+                    inspector: "د. هاجر الغافري",
+                    day: "2025-10-24",
+                    shift: "مسائية",
+                    area: "محلات المولات",
+                    shops: ["محل الحيوانات الأليفة الذهبي", "محل بيتس بارادايس"]
+                },
+                {
+                    inspector: "د. آمنه بن صرم",
+                    day: "2025-10-25",
+                    shift: "صباحية",
+                    area: "سوق الميناء",
+                    shops: ["محل الميناء للطيور", "محل السحر للطيور"]
+                }
+            ]
+        };
+
+        // The validation function from smart-planner.html
+        function checkForDuplicateShops(inspector, date, selectedShops, currentIndex = -1) {
+            const duplicateShops = [];
+            
+            for (let i = 0; i < planData.inspectionData.length; i++) {
+                const inspection = planData.inspectionData[i];
+                
+                // Skip the current inspection being edited
+                if (i === currentIndex) {
+                    continue;
+                }
+                
+                // Skip if it's the same inspector on same day (will be handled separately)
+                if (inspection.inspector === inspector && inspection.day === date) {
+                    continue;
+                }
+                
+                // Check if it's the same day but different inspector
+                if (inspection.day === date) {
+                    const inspectionShops = inspection.shops || [];
+                    for (const shop of selectedShops) {
+                        if (inspectionShops.includes(shop)) {
+                            duplicateShops.push({
+                                shop: shop,
+                                inspector: inspection.inspector
+                            });
+                        }
+                    }
+                }
+            }
+            
+            return duplicateShops;
+        }
+
+        // Test cases
+        const testCases = [
+            {
+                name: "اختبار 1: محلات جديدة تماماً - يجب أن ينجح",
+                inspector: "د. فايز المسالمة",
+                date: "2025-10-24",
+                shops: ["محل جديد 1", "محل جديد 2"],
+                expectedDuplicates: 0,
+                shouldPass: true
+            },
+            {
+                name: "اختبار 2: محل مكرر مع مفتش آخر في نفس اليوم - يجب أن يفشل",
+                inspector: "د. فايز المسالمة",
+                date: "2025-10-24",
+                shops: ["فيذيرز ان فينس للحيوانات الأليفة", "محل جديد"],
+                expectedDuplicates: 1,
+                shouldPass: false
+            },
+            {
+                name: "اختبار 3: نفس المحل لكن في يوم مختلف - يجب أن ينجح",
+                inspector: "د. فايز المسالمة",
+                date: "2025-10-26",
+                shops: ["فيذيرز ان فينس للحيوانات الأليفة"],
+                expectedDuplicates: 0,
+                shouldPass: true
+            },
+            {
+                name: "اختبار 4: عدة محلات مكررة - يجب أن يفشل",
+                inspector: "د. محمد سعيد",
+                date: "2025-10-24",
+                shops: ["فيذيرز ان فينس للحيوانات الأليفة", "بيت كير للحيوانات الأليفة", "محل بيتس بارادايس"],
+                expectedDuplicates: 3,
+                shouldPass: false
+            },
+            {
+                name: "اختبار 5: نفس المفتش ونفس اليوم - يجب أن ينجح (يُعالج بطريقة أخرى)",
+                inspector: "د. آمنه بن صرم",
+                date: "2025-10-24",
+                shops: ["فيذيرز ان فينس للحيوانات الأليفة", "بيت كير للحيوانات الأليفة"],
+                expectedDuplicates: 0,
+                shouldPass: true
+            },
+            {
+                name: "اختبار 6: تعديل تفتيش موجود بإضافة محل مكرر - يجب أن يفشل",
+                inspector: "د. هاجر الغافري",
+                date: "2025-10-24",
+                shops: ["محل الحيوانات الأليفة الذهبي", "فيذيرز ان فينس للحيوانات الأليفة"],
+                expectedDuplicates: 1,
+                shouldPass: false,
+                editingIndex: 1
+            }
+        ];
+
+        // Run tests
+        const results = [];
+        const resultsContainer = document.getElementById('test-results');
+        
+        testCases.forEach((test, index) => {
+            const duplicates = checkForDuplicateShops(
+                test.inspector, 
+                test.date, 
+                test.shops,
+                test.editingIndex
+            );
+            
+            const passed = (duplicates.length === test.expectedDuplicates) && 
+                          ((duplicates.length === 0) === test.shouldPass);
+            
+            results.push(passed);
+            
+            const testDiv = document.createElement('div');
+            testDiv.className = `test-case ${passed ? 'pass' : 'fail'}`;
+            
+            let detailsHTML = `
+                <div class="test-details">
+                    <strong>المفتش:</strong> ${test.inspector}<br>
+                    <strong>التاريخ:</strong> ${test.date}<br>
+                    <strong>المحلات:</strong> ${test.shops.join(', ')}<br>
+                    <strong>التكرارات المتوقعة:</strong> ${test.expectedDuplicates}<br>
+                    <strong>التكرارات الفعلية:</strong> ${duplicates.length}<br>
+            `;
+            
+            if (duplicates.length > 0) {
+                detailsHTML += '<strong>المحلات المكررة:</strong><br>';
+                duplicates.forEach(dup => {
+                    detailsHTML += `• ${dup.shop} (مخصص لـ: ${dup.inspector})<br>`;
+                });
+            }
+            
+            detailsHTML += '</div>';
+            
+            testDiv.innerHTML = `
+                <div class="test-title">${test.name}</div>
+                ${detailsHTML}
+                <div class="test-result">
+                    ${passed ? '✅ نجح الاختبار' : '❌ فشل الاختبار'}
+                </div>
+            `;
+            
+            resultsContainer.appendChild(testDiv);
+        });
+
+        // Display summary
+        const passedCount = results.filter(r => r).length;
+        const totalCount = results.length;
+        const allPassed = passedCount === totalCount;
+        
+        const summaryDiv = document.getElementById('summary');
+        summaryDiv.className = `summary ${allPassed ? 'all-pass' : ''}`;
+        summaryDiv.innerHTML = `
+            <h2>${allPassed ? '🎉 جميع الاختبارات نجحت!' : '⚠️ بعض الاختبارات فشلت'}</h2>
+            <p><strong>النتيجة:</strong> ${passedCount} من ${totalCount} اختبارات نجحت</p>
+            ${allPassed ? 
+                '<p>✅ آلية منع التكرار تعمل بشكل صحيح!</p>' : 
+                '<p>❌ يوجد مشاكل في آلية منع التكرار</p>'}
+        `;
+        
+        // Log results to console
+        console.log('='.repeat(80));
+        console.log('نتائج اختبار منع تكرار المحلات');
+        console.log('='.repeat(80));
+        console.log(`النتيجة النهائية: ${passedCount}/${totalCount} اختبارات نجحت`);
+        console.log(`الحالة: ${allPassed ? 'نجح ✅' : 'فشل ❌'}`);
+        console.log('='.repeat(80));
+    </script>
+</body>
+</html>

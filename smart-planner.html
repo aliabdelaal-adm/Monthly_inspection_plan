@@ -3638,6 +3638,63 @@
                 return;
             }
             
+            // Check for duplicate shops assigned to other inspectors on the same day
+            // التحقق من وجود محلات مكررة مخصصة لمفتشين آخرين في نفس اليوم
+            const duplicateShops = [];
+            for (let i = 0; i < planData.inspectionData.length; i++) {
+                const inspection = planData.inspectionData[i];
+                
+                // Skip the current inspection being edited
+                if (i === index) {
+                    continue;
+                }
+                
+                // Skip if it's the same inspector (will be handled separately)
+                if (inspection.inspector === inspector && inspection.day === date) {
+                    continue;
+                }
+                
+                // Check if it's the same day but different inspector
+                if (inspection.day === date) {
+                    const inspectionShops = inspection.shops || [];
+                    for (const shop of shops) {
+                        if (inspectionShops.includes(shop)) {
+                            duplicateShops.push({
+                                shop: shop,
+                                inspector: inspection.inspector
+                            });
+                        }
+                    }
+                }
+            }
+            
+            // If duplicate shops found with other inspectors, prevent saving
+            if (duplicateShops.length > 0) {
+                let errorMessage = '❌ خطأ: لا يمكن حفظ التعديلات!\n\n';
+                errorMessage += 'المحلات التالية مخصصة بالفعل لمفتشين آخرين في نفس اليوم:\n\n';
+                
+                const shopsByInspector = {};
+                duplicateShops.forEach(dup => {
+                    if (!shopsByInspector[dup.inspector]) {
+                        shopsByInspector[dup.inspector] = [];
+                    }
+                    shopsByInspector[dup.inspector].push(dup.shop);
+                });
+                
+                for (const [otherInspector, shopsList] of Object.entries(shopsByInspector)) {
+                    errorMessage += `\n🔸 ${otherInspector}:\n`;
+                    shopsList.forEach(shop => {
+                        errorMessage += `   • ${shop}\n`;
+                    });
+                }
+                
+                errorMessage += '\n⚠️ يرجى إزالة هذه المحلات من القائمة أو اختيار يوم آخر.';
+                errorMessage += '\n\n💡 ملاحظة: يمكن تخصيص نفس المحل لمفتشين مختلفين في أيام مختلفة.';
+                
+                showMessage('editStatus', 'error', errorMessage);
+                return;
+            }
+            
             showMessage('editStatus', 'info', '⏳ جاري حفظ التعديلات...');
             
             try {
@@ -3948,6 +4005,57 @@
             
             if (!inspector || !date || !area || selectedShops.length === 0) {
                 showMessage('planningStatus', 'error', '❌ يرجى ملء جميع الحقول واختيار المحلات');
+                return;
+            }
+            
+            // Check for duplicate shops assigned to other inspectors on the same day
+            // التحقق من وجود محلات مكررة مخصصة لمفتشين آخرين في نفس اليوم
+            const duplicateShops = [];
+            for (const inspection of planData.inspectionData) {
+                // Skip if it's the same inspector (will be handled separately)
+                if (inspection.inspector === inspector && inspection.day === date) {
+                    continue;
+                }
+                
+                // Check if it's the same day but different inspector
+                if (inspection.day === date) {
+                    const inspectionShops = inspection.shops || [];
+                    for (const shop of selectedShops) {
+                        if (inspectionShops.includes(shop)) {
+                            duplicateShops.push({
+                                shop: shop,
+                                inspector: inspection.inspector
+                            });
+                        }
+                    }
+                }
+            }
+            
+            // If duplicate shops found with other inspectors, prevent saving
+            if (duplicateShops.length > 0) {
+                let errorMessage = '❌ خطأ: لا يمكن حفظ التفتيش!\n\n';
+                errorMessage += 'المحلات التالية مخصصة بالفعل لمفتشين آخرين في نفس اليوم:\n\n';
+                
+                const shopsByInspector = {};
+                duplicateShops.forEach(dup => {
+                    if (!shopsByInspector[dup.inspector]) {
+                        shopsByInspector[dup.inspector] = [];
+                    }
+                    shopsByInspector[dup.inspector].push(dup.shop);
+                });
+                
+                for (const [otherInspector, shops] of Object.entries(shopsByInspector)) {
+                    errorMessage += `\n🔸 ${otherInspector}:\n`;
+                    shops.forEach(shop => {
+                        errorMessage += `   • ${shop}\n`;
+                    });
+                }
+                
+                errorMessage += '\n⚠️ يرجى إزالة هذه المحلات من القائمة أو اختيار يوم آخر.';
+                errorMessage += '\n\n💡 ملاحظة: يمكن تخصيص نفس المحل لمفتشين مختلفين في أيام مختلفة.';
+                
+                showMessage('planningStatus', 'error', errorMessage);
+                document.getElementById('saveBtn').disabled = false;
                 return;
             }
             

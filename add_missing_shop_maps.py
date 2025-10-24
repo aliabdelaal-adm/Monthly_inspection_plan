@@ -53,16 +53,18 @@ def main():
     updated_count = 0
     
     for shop_name, area in shop_areas.items():
-        # Check if shop exists
+        # Check if shop exists with exact name
         if shop_name not in shops_details:
             # Try with cleaned name
             cleaned_name = shop_name.replace('محل ', '')
             
-            # Try fuzzy match
-            found = False
+            # Try fuzzy match to find similar shop
+            found_similar = False
+            similar_shop_key = None
             for key in shops_details.keys():
                 if cleaned_name in key or key in cleaned_name:
-                    found = True
+                    found_similar = True
+                    similar_shop_key = key
                     # Update the original entry if it doesn't have a locationMap
                     if not shops_details[key].get('locationMap'):
                         shops_details[key]['locationMap'] = generate_google_maps_link(shop_name, area)
@@ -70,24 +72,27 @@ def main():
                         print(f"✅ Updated locationMap for existing shop: {key}")
                     break
             
-            if not found:
-                # Add new shop entry
-                shops_details[shop_name] = {
-                    "nameAr": shop_name,
-                    "nameEn": "",
-                    "licenseNo": "",
-                    "locationMap": generate_google_maps_link(shop_name, area),
-                    "admCode": "",
-                    "address": area if area else "",
-                    "contact": "",
-                    "activity": "بيع الحيوانات والمنتجات البيطرية"
-                }
-                added_count += 1
+            # Always add shop with exact name from plan-data.json for perfect matching
+            # Even if a similar shop exists, we add it with the exact name
+            shops_details[shop_name] = {
+                "nameAr": shop_name,
+                "nameEn": "",
+                "licenseNo": "",
+                "locationMap": generate_google_maps_link(shop_name, area),
+                "admCode": "",
+                "address": area if area else "",
+                "contact": "",
+                "activity": "بيع الحيوانات والمنتجات البيطرية"
+            }
+            added_count += 1
+            if found_similar:
+                print(f"➕ Added shop with exact name (similar exists as '{similar_shop_key}'): {shop_name}")
+            else:
                 print(f"➕ Added new shop: {shop_name}")
-                print(f"   Area: {area}")
-                print(f"   Map Link: {shops_details[shop_name]['locationMap']}")
+            print(f"   Area: {area}")
+            print(f"   Map Link: {shops_details[shop_name]['locationMap']}")
         else:
-            # Shop exists, check if it has a locationMap
+            # Shop exists with exact name, check if it has a locationMap
             if not shops_details[shop_name].get('locationMap'):
                 shops_details[shop_name]['locationMap'] = generate_google_maps_link(shop_name, area)
                 updated_count += 1

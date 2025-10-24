@@ -11433,6 +11433,10 @@ document.getElementById('inspectorSelect').addEventListener('change', function()
     const detailsBtn = document.getElementById('viewInspectorDetailsBtn');
     if (selectedInspector && selectedInspector !== '') {
         detailsBtn.style.display = 'inline-block';
+        
+        // 📍 تفعيل تتبع الموقع التلقائي للمفتش
+        // Auto-enable location tracking for inspector
+        initializeAutoLocationTracking();
     } else {
         detailsBtn.style.display = 'none';
     }
@@ -24080,12 +24084,14 @@ function broadcastVisitUpdate() {
 }
 
 /**
- * طلب صلاحيات الموقع من المستخدم
- * Request location permissions from user
+ * طلب صلاحيات الموقع من المستخدم - تلقائي وصامت للمفتشين
+ * Request location permissions from user - automatic and silent for inspectors
  */
-async function requestLocationPermission() {
+async function requestLocationPermission(silent = false) {
     if (!navigator.geolocation) {
-        alert('❌ عذراً، متصفحك لا يدعم خدمات الموقع الجغرافي');
+        if (!silent) {
+            console.warn('المتصفح لا يدعم خدمات الموقع الجغرافي');
+        }
         return false;
     }
     
@@ -24098,23 +24104,27 @@ async function requestLocationPermission() {
                     accuracy: position.coords.accuracy,
                     timestamp: Date.now()
                 };
+                console.log('✅ تم الحصول على الموقع بنجاح');
                 resolve(true);
             },
             (error) => {
                 console.error('Geolocation error:', error);
-                let errorMsg = '❌ فشل الحصول على الموقع';
-                switch(error.code) {
-                    case error.PERMISSION_DENIED:
-                        errorMsg = '❌ تم رفض الوصول للموقع. يرجى السماح بالوصول للموقع في إعدادات المتصفح';
-                        break;
-                    case error.POSITION_UNAVAILABLE:
-                        errorMsg = '❌ معلومات الموقع غير متاحة';
-                        break;
-                    case error.TIMEOUT:
-                        errorMsg = '❌ انتهت مهلة طلب الموقع';
-                        break;
+                // للمفتشين: لا نعرض رسائل خطأ مزعجة، فقط نسجل في console
+                if (!silent && (isDev || window.isDev)) {
+                    let errorMsg = '❌ فشل الحصول على الموقع';
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMsg = '❌ تم رفض الوصول للموقع. يرجى السماح بالوصول للموقع في إعدادات المتصفح';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMsg = '❌ معلومات الموقع غير متاحة';
+                            break;
+                        case error.TIMEOUT:
+                            errorMsg = '❌ انتهت مهلة طلب الموقع';
+                            break;
+                    }
+                    alert(errorMsg);
                 }
-                alert(errorMsg);
                 resolve(false);
             },
             {
@@ -24173,14 +24183,43 @@ function stopLocationTracking() {
 }
 
 /**
+ * تهيئة تتبع الموقع التلقائي للمفتشين
+ * Initialize automatic location tracking for inspectors
+ * يتم تفعيله تلقائياً عند تسجيل دخول المفتش
+ */
+async function initializeAutoLocationTracking() {
+    // تحميل حالة التتبع السابقة
+    const trackingEnabled = localStorage.getItem('autoLocationTrackingEnabled');
+    
+    // إذا لم يكن التتبع مفعلاً من قبل، نحاول تفعيله تلقائياً
+    if (!locationTrackingEnabled) {
+        console.log('📍 محاولة تفعيل تتبع الموقع التلقائي...');
+        
+        // طلب الصلاحيات بشكل صامت (بدون رسائل مزعجة)
+        const hasPermission = await requestLocationPermission(true);
+        
+        if (hasPermission) {
+            // بدء التتبع المستمر
+            startLocationTracking();
+            localStorage.setItem('autoLocationTrackingEnabled', 'true');
+            console.log('✅ تم تفعيل تتبع الموقع التلقائي بنجاح');
+        } else {
+            console.log('⚠️ لم يتم منح صلاحية الموقع - سيتم المحاولة لاحقاً');
+        }
+    } else if (trackingEnabled === 'true' && !locationTrackingEnabled) {
+        // إعادة تفعيل التتبع إذا كان مفعلاً سابقاً
+        const hasPermission = await requestLocationPermission(true);
+        if (hasPermission) {
+            startLocationTracking();
+            console.log('✅ تم إعادة تفعيل تتبع الموقع التلقائي');
+        }
+    }
+}
+
+/**
  * حساب المسافة بين نقطتين جغرافيتين (بالأمتار)
  * Calculate distance between two geographic points (in meters)
  * Using Haversine formula
- */
-function calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371e3; // radius of Earth in meters
-    const φ1 = lat1 * Math.PI / 180;
-    const φ2 = lat2 * Math.PI / 180;
     const Δφ = (lat2 - lat1) * Math.PI / 180;
     const Δλ = (lon2 - lon1) * Math.PI / 180;
     
@@ -24834,9 +24873,10 @@ async function enableLocationTracking() {
         return;
     }
     
-    const hasPermission = await requestLocationPermission();
+    const hasPermission = await requestLocationPermission(false); // للمطور: نعرض الرسائل
     if (hasPermission) {
         startLocationTracking();
+        localStorage.setItem('autoLocationTrackingEnabled', 'true');
         alert('✅ تم تفعيل تتبع الموقع بنجاح!\n\nسيتم تسجيل زياراتك للمحلات تلقائياً عند الاقتراب منها.');
         
         // تحديث عرض المودال
@@ -24850,7 +24890,7 @@ async function enableLocationTracking() {
  * Test location accuracy
  */
 async function testLocationAccuracy() {
-    const hasPermission = await requestLocationPermission();
+    const hasPermission = await requestLocationPermission(false); // للمطور: نعرض الرسائل
     if (!hasPermission) return;
     
     if (!inspectorCurrentLocation) {
@@ -24958,6 +24998,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // تهيئة تتبع روابط الخرائط
     initializeMapLinkTracking();
+    
+    // تفعيل التتبع التلقائي إذا كان مفعلاً سابقاً
+    setTimeout(() => {
+        const currentInspector = getCurrentUser();
+        if (currentInspector || selectedInspector) {
+            initializeAutoLocationTracking();
+        }
+    }, 2000); // تأخير 2 ثانية للسماح بتحميل البيانات
     
     // الاستماع لتحديثات الزيارات من نوافذ أخرى
     window.addEventListener('storage', function(e) {

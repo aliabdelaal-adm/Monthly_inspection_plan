@@ -11578,14 +11578,16 @@ function renderPlanTable() {
                             const hasLocation = shopDetails && shopDetails.locationMap && shopDetails.locationMap !== '';
                             const mapsIcon = hasLocation ? 
                                 `<a href="${shopDetails.locationMap}" target="_blank" onclick="event.stopPropagation();" 
-                                    style="margin-right:8px;text-decoration:none;font-size:1.2em;" 
-                                    title="فتح الموقع على خرائط جوجل">📍</a>` : '';
+                                    style="display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#28a745,#20c997);color:white;padding:4px 10px;border-radius:6px;text-decoration:none;font-size:0.85em;font-weight:600;box-shadow:0 2px 6px rgba(40,167,69,0.3);transition:all 0.2s ease;margin-right:8px;" 
+                                    onmouseover="this.style.transform='scale(1.05)';this.style.boxShadow='0 4px 10px rgba(40,167,69,0.5)';" 
+                                    onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 2px 6px rgba(40,167,69,0.3)';"
+                                    title="فتح الموقع على خرائط جوجل">📍 خريطة</a>` : '';
                             
                             return `<li class="shop-item-clickable" 
                                 onclick="showIndividualShopDetails('${shop.replace(/'/g, "\\'")}')" 
-                                style="${shopStyle}display:flex;align-items:center;justify-content:space-between;" 
+                                style="${shopStyle}display:flex;align-items:center;justify-content:space-between;padding:10px 12px;" 
                                 title="انقر لعرض تفاصيل ${shop}">
-                                <span>${shop}</span>
+                                <span style="flex:1;">${shop}</span>
                                 ${mapsIcon}
                             </li>`;
                         }).join('')}
@@ -11881,12 +11883,32 @@ function showIndividualShopDetails(shopName) {
         const coords = extractCoordinatesFromMapUrl(shopDetails.locationMap);
         const coordsText = coords ? `(${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)})` : '';
         
+        // Create embedded map URL from coordinates or search query
+        let embedMapUrl = '';
+        if (coords) {
+            embedMapUrl = `https://www.google.com/maps/embed/v1/place?key=AIzaSyDummy&q=${coords.lat},${coords.lng}&zoom=15`;
+        }
+        
         html += `
             <div style="margin-top: 25px; padding: 20px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border-radius: 10px; text-align: center;">
                 <div style="color: white; font-size: 1.2em; margin-bottom: 12px; font-weight: 600;">
                     📍 الموقع على خرائط جوجل
                 </div>
                 ${coordsText ? `<div style="color: rgba(255,255,255,0.9); font-size: 0.85em; margin-bottom: 12px; font-family: monospace;">${coordsText}</div>` : ''}
+                
+                ${coords ? `
+                <div style="margin: 15px 0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                    <iframe
+                        width="100%"
+                        height="250"
+                        style="border:0;display:block;"
+                        loading="lazy"
+                        referrerpolicy="no-referrer-when-downgrade"
+                        src="https://www.google.com/maps?q=${coords.lat},${coords.lng}&output=embed&z=15">
+                    </iframe>
+                </div>
+                ` : ''}
+                
                 <a href="${shopDetails.locationMap}" 
                    target="_blank"
                    data-shop-name="${escapeHtml(shopName)}"

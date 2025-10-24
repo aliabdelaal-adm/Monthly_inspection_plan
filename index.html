@@ -11558,10 +11558,36 @@ function renderPlanTable() {
                         ${sortShopsByProximity(row.shops).map((shop, index) => {
                             const isRed = shouldShopBeRed(shop, row.area);
                             const shopStyle = isRed ? 'cursor:pointer;color:#ff0000;font-weight:600;' : 'cursor:pointer;';
+                            
+                            // Get shop details for Google Maps link
+                            let shopDetails = shopsDetailsData[shop];
+                            if (!shopDetails) {
+                                const cleanedName = shop.replace(/^محل\\s+/, '');
+                                shopDetails = shopsDetailsData[cleanedName];
+                            }
+                            if (!shopDetails) {
+                                const cleanedName = shop.replace(/^محل\\s+/, '');
+                                for (const [key, value] of Object.entries(shopsDetailsData || {})) {
+                                    if (key.includes(cleanedName) || cleanedName.includes(key)) {
+                                        shopDetails = value;
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            const hasLocation = shopDetails && shopDetails.locationMap && shopDetails.locationMap !== '';
+                            const mapsIcon = hasLocation ? 
+                                `<a href="${shopDetails.locationMap}" target="_blank" onclick="event.stopPropagation();" 
+                                    style="margin-right:8px;text-decoration:none;font-size:1.2em;" 
+                                    title="فتح الموقع على خرائط جوجل">📍</a>` : '';
+                            
                             return `<li class="shop-item-clickable" 
                                 onclick="showIndividualShopDetails('${shop.replace(/'/g, "\\'")}')" 
-                                style="${shopStyle}" 
-                                title="انقر لعرض تفاصيل ${shop}">${shop}</li>`;
+                                style="${shopStyle}display:flex;align-items:center;justify-content:space-between;" 
+                                title="انقر لعرض تفاصيل ${shop}">
+                                <span>${shop}</span>
+                                ${mapsIcon}
+                            </li>`;
                         }).join('')}
                     </ul>
                 </div>

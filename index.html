@@ -4105,45 +4105,441 @@
 </head>
 <body>
 <!-- ============================================ -->
-<!-- 🚨 EMERGENCY DEVELOPER CONTROL PANEL 🚨 -->
-<!-- INSTANT 100% CONTROL - ALWAYS VISIBLE FOR DEVELOPER -->
+<!-- 🚨 ENHANCED EMERGENCY DEVELOPER CONTROL PANEL 🚨 -->
+<!-- SMART, COLLAPSIBLE, FULLY FEATURED DASHBOARD -->
 <!-- ============================================ -->
-<div id="emergencyDevPanel" style="display:none; position:fixed; top:0; left:0; right:0; z-index:99999999; background:linear-gradient(135deg, #dc3545 0%, #c82333 100%); color:white; padding:15px; box-shadow:0 4px 12px rgba(0,0,0,0.3); border-bottom:3px solid #b21f2d; font-family:'Cairo',Arial,sans-serif;">
-    <div style="max-width:1400px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:15px; flex-wrap:wrap;">
-        <div style="display:flex; align-items:center; gap:15px;">
-            <div style="font-size:2em; animation:pulse 1.5s infinite;">🚨</div>
+<style>
+.emergency-dev-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 99999999;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    font-family: 'Cairo', Arial, sans-serif;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.emergency-dev-panel.collapsed {
+    transform: translateY(-100%);
+}
+
+.emergency-dev-panel.collapsed .emergency-toggle-btn {
+    transform: translateY(100%) translateX(-50%);
+    bottom: auto;
+    top: 100%;
+}
+
+.emergency-toggle-btn {
+    position: absolute;
+    bottom: -45px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 10px 30px;
+    border-radius: 0 0 15px 15px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.95em;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+    z-index: 99999998;
+}
+
+.emergency-toggle-btn:hover {
+    transform: translateX(-50%) scale(1.05);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+}
+
+.emergency-header {
+    background: rgba(255,255,255,0.1);
+    padding: 12px 20px;
+    border-bottom: 2px solid rgba(255,255,255,0.2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background 0.2s;
+}
+
+.emergency-header:hover {
+    background: rgba(255,255,255,0.15);
+}
+
+.emergency-header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.emergency-pulse {
+    font-size: 1.8em;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+.emergency-title {
+    font-weight: bold;
+    font-size: 1.1em;
+    margin-bottom: 3px;
+}
+
+.emergency-subtitle {
+    font-size: 0.85em;
+    opacity: 0.9;
+}
+
+.emergency-status {
+    padding: 6px 12px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.emergency-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.emergency-content.expanded {
+    max-height: 2000px;
+}
+
+.emergency-body {
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.emergency-section {
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.emergency-section-title {
+    font-size: 1em;
+    font-weight: bold;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.emergency-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+}
+
+.emergency-btn {
+    background: rgba(255,255,255,0.9);
+    color: #333;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.9em;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-align: center;
+}
+
+.emergency-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.emergency-btn:active {
+    transform: translateY(0);
+}
+
+.emergency-btn.danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+}
+
+.emergency-btn.success {
+    background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+    color: white;
+}
+
+.emergency-btn.warning {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+    color: #000;
+}
+
+.emergency-btn.info {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    color: white;
+}
+
+.emergency-btn.primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+}
+
+.emergency-search-box {
+    width: 100%;
+    padding: 10px 15px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.9);
+    font-family: 'Cairo', Arial, sans-serif;
+    font-size: 1em;
+    margin-bottom: 10px;
+    transition: all 0.2s;
+}
+
+.emergency-search-box:focus {
+    outline: none;
+    border-color: #fff;
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.3);
+}
+
+.emergency-shops-list {
+    max-height: 300px;
+    overflow-y: auto;
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.emergency-shop-item {
+    background: rgba(255,255,255,0.9);
+    color: #333;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9em;
+}
+
+.emergency-shop-item:hover {
+    background: rgba(255,255,255,1);
+    transform: translateX(-5px);
+}
+
+.emergency-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.emergency-stat {
+    background: rgba(255,255,255,0.15);
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.emergency-stat-value {
+    font-size: 1.8em;
+    font-weight: bold;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.emergency-stat-label {
+    font-size: 0.85em;
+    opacity: 0.9;
+}
+
+.emergency-links {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.emergency-link {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9em;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.emergency-link:hover {
+    background: rgba(255,255,255,0.3);
+    transform: translateY(-2px);
+}
+</style>
+
+<div id="emergencyDevPanel" class="emergency-dev-panel" style="display:none;">
+    <div class="emergency-header" onclick="toggleEmergencyPanel()">
+        <div class="emergency-header-left">
+            <div class="emergency-pulse">🚨</div>
             <div>
-                <div style="font-weight:bold; font-size:1.2em; margin-bottom:3px;">⚡ لوحة التحكم الطارئة للمطور</div>
-                <div style="font-size:0.85em; opacity:0.9;">التحكم الفوري 100% في وضع الصيانة والتحديثات</div>
+                <div class="emergency-title">⚡ لوحة التحكم الطارئة للمطور المحسّنة</div>
+                <div class="emergency-subtitle">التحكم الكامل والدقيق - انقر للتوسيع/الطي</div>
             </div>
         </div>
-        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-            <div style="padding:8px 15px; background:rgba(255,255,255,0.2); border-radius:6px; font-size:0.9em; font-weight:600;">
-                الحالة: <span id="emergencyStatusIndicator" style="color:#ffd700;">⚠️ غير معروف</span>
+        <div style="display:flex; align-items:center; gap:15px;">
+            <div class="emergency-status">
+                الحالة: <span id="emergencyStatusIndicator">⚠️ غير معروف</span>
             </div>
-            <button onclick="emergencyEnableMaintenance()" style="background:#ffc107; color:#000; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:1em; box-shadow:0 2px 8px rgba(0,0,0,0.3); transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                🔒 تفعيل فوري
-            </button>
-            <button onclick="emergencyDisableMaintenance()" style="background:#28a745; color:#fff; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:1em; box-shadow:0 2px 8px rgba(0,0,0,0.3); transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                ✅ إلغاء فوري
-            </button>
-            <button onclick="emergencyHideMessage()" style="background:#007bff; color:#fff; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:1em; box-shadow:0 2px 8px rgba(0,0,0,0.3); transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                ❌ إخفاء الرسالة
-            </button>
-            <button onclick="emergencyClearCache()" style="background:#6c757d; color:#fff; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:1em; box-shadow:0 2px 8px rgba(0,0,0,0.3); transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                🧹 مسح الكاش
-            </button>
-            <button onclick="emergencyForceRefresh()" style="background:#fd7e14; color:#fff; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:1em; box-shadow:0 2px 8px rgba(0,0,0,0.3); transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                🔄 تحديث فوري
-            </button>
-            <button onclick="emergencySaveShopsToGitHub()" style="background:#20c997; color:#fff; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:1em; box-shadow:0 2px 8px rgba(0,0,0,0.3); transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                💾 حفظ المحلات
-            </button>
-            <button onclick="emergencyKillSwitch()" style="background:#8b0000; color:#fff; border:none; padding:12px 24px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:1.1em; box-shadow:0 3px 10px rgba(0,0,0,0.4); transition:all 0.2s; border:2px solid #ff0000;" onmouseover="this.style.transform='scale(1.08)'; this.style.background='#a00000'" onmouseout="this.style.transform='scale(1)'; this.style.background='#8b0000'" title="إيقاف فوري لجميع الأنشطة: المدقق، الموسيقى، الرسائل">
-                🛑 إيقاف كامل 100%
-            </button>
+            <div style="font-size:1.5em; transition:transform 0.3s;" id="emergencyArrow">▼</div>
         </div>
     </div>
+    
+    <div class="emergency-content" id="emergencyContent">
+        <div class="emergency-body">
+            <!-- Quick Actions Section -->
+            <div class="emergency-section">
+                <div class="emergency-section-title">⚡ إجراءات سريعة</div>
+                <div class="emergency-buttons">
+                    <button class="emergency-btn warning" onclick="emergencyEnableMaintenance()">
+                        <span>🔒</span><span>تفعيل الصيانة</span>
+                    </button>
+                    <button class="emergency-btn success" onclick="emergencyDisableMaintenance()">
+                        <span>✅</span><span>إلغاء الصيانة</span>
+                    </button>
+                    <button class="emergency-btn info" onclick="emergencyHideMessage()">
+                        <span>❌</span><span>إخفاء الرسالة</span>
+                    </button>
+                    <button class="emergency-btn" onclick="emergencyClearCache()">
+                        <span>🧹</span><span>مسح الكاش</span>
+                    </button>
+                    <button class="emergency-btn primary" onclick="emergencyForceRefresh()">
+                        <span>🔄</span><span>تحديث فوري</span>
+                    </button>
+                    <button class="emergency-btn success" onclick="emergencySaveShopsToGitHub()">
+                        <span>💾</span><span>حفظ المحلات</span>
+                    </button>
+                    <button class="emergency-btn danger" onclick="emergencyKillSwitch()" title="إيقاف فوري لجميع الأنشطة">
+                        <span>🛑</span><span>إيقاف كامل</span>
+                    </button>
+                    <button class="emergency-btn success" onclick="emergencySyncWithGitHub()">
+                        <span>🔄</span><span>مزامنة GitHub</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Shop Search Section -->
+            <div class="emergency-section">
+                <div class="emergency-section-title">🔍 البحث الذكي عن المحلات</div>
+                <input type="text" class="emergency-search-box" id="emergencyShopSearch" 
+                       placeholder="ابحث عن محل بالاسم، المنطقة، النشاط، أو رقم الترخيص..." 
+                       oninput="emergencySearchShops(this.value)">
+                <div class="emergency-shops-list" id="emergencyShopsList">
+                    <div style="text-align:center; padding:20px; color:rgba(255,255,255,0.7);">
+                        أدخل كلمة بحث لعرض المحلات...
+                    </div>
+                </div>
+                <div class="emergency-stats" id="emergencySearchStats" style="display:none;">
+                    <div class="emergency-stat">
+                        <span class="emergency-stat-value" id="emergencyTotalShops">0</span>
+                        <span class="emergency-stat-label">إجمالي المحلات</span>
+                    </div>
+                    <div class="emergency-stat">
+                        <span class="emergency-stat-value" id="emergencyFoundShops">0</span>
+                        <span class="emergency-stat-label">نتائج البحث</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Management Section -->
+            <div class="emergency-section">
+                <div class="emergency-section-title">💾 إدارة البيانات</div>
+                <div class="emergency-buttons">
+                    <button class="emergency-btn primary" onclick="emergencyBackupData()">
+                        <span>📦</span><span>نسخ احتياطي</span>
+                    </button>
+                    <button class="emergency-btn success" onclick="emergencyExportShops()">
+                        <span>📤</span><span>تصدير المحلات</span>
+                    </button>
+                    <button class="emergency-btn warning" onclick="emergencyImportShops()">
+                        <span>📥</span><span>استيراد المحلات</span>
+                    </button>
+                    <button class="emergency-btn info" onclick="emergencyValidateData()">
+                        <span>✔️</span><span>التحقق من البيانات</span>
+                    </button>
+                    <button class="emergency-btn" onclick="emergencyCleanDuplicates()">
+                        <span>🧹</span><span>حذف المكررات</span>
+                    </button>
+                    <button class="emergency-btn primary" onclick="emergencyGenerateReport()">
+                        <span>📊</span><span>تقرير شامل</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Navigation & Integration Section -->
+            <div class="emergency-section">
+                <div class="emergency-section-title">🔗 الروابط السريعة والتكامل</div>
+                <div class="emergency-links">
+                    <a href="smart-planner.html" class="emergency-link" target="_blank">
+                        <span>🎯</span><span>Smart Planner</span>
+                    </a>
+                    <a href="admin-dashboard.html" class="emergency-link" target="_blank">
+                        <span>📊</span><span>لوحة الإدارة</span>
+                    </a>
+                    <a href="https://github.com/aliabdelaal-adm/Monthly_inspection_plan" class="emergency-link" target="_blank">
+                        <span>🔗</span><span>مستودع GitHub</span>
+                    </a>
+                    <button class="emergency-btn success" onclick="openSmartPlannerIntegration()">
+                        <span>🔄</span><span>مزامنة مع Smart Planner</span>
+                    </button>
+                    <button class="emergency-btn info" onclick="openBellNotificationsControl()">
+                        <span>🔔</span><span>إدارة الإشعارات</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Statistics Section -->
+            <div class="emergency-section">
+                <div class="emergency-section-title">📊 إحصائيات فورية</div>
+                <div class="emergency-stats">
+                    <div class="emergency-stat">
+                        <span class="emergency-stat-value" id="emergencyStatShops">-</span>
+                        <span class="emergency-stat-label">المحلات</span>
+                    </div>
+                    <div class="emergency-stat">
+                        <span class="emergency-stat-value" id="emergencyStatInspectors">-</span>
+                        <span class="emergency-stat-label">المفتشون</span>
+                    </div>
+                    <div class="emergency-stat">
+                        <span class="emergency-stat-value" id="emergencyStatAreas">-</span>
+                        <span class="emergency-stat-label">المناطق</span>
+                    </div>
+                    <div class="emergency-stat">
+                        <span class="emergency-stat-value" id="emergencyStatInspections">-</span>
+                        <span class="emergency-stat-label">التفتيشات</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <button class="emergency-toggle-btn" onclick="toggleEmergencyPanel()">
+        <span id="emergencyToggleText">▲ طي اللوحة</span>
+    </button>
 </div>
 
 <!-- Background music for main screen - plays on click -->
@@ -9447,12 +9843,35 @@ function showEmergencyPanel() {
     const panel = document.getElementById('emergencyDevPanel');
     if (panel && isDev) {
         panel.style.display = 'block';
+        
+        // Expand the panel by default
+        const content = document.getElementById('emergencyContent');
+        if (content) {
+            content.classList.add('expanded');
+        }
+        
+        // Update arrow and toggle text
+        const arrow = document.getElementById('emergencyArrow');
+        const toggleText = document.getElementById('emergencyToggleText');
+        if (arrow) arrow.textContent = '▲';
+        if (toggleText) toggleText.textContent = '▲ طي اللوحة';
+        
+        // Update status and stats
         updateEmergencyStatusIndicator();
+        updateEmergencyStats();
         
-        // Update status every 2 seconds
-        setInterval(updateEmergencyStatusIndicator, 2000);
+        // Update status every 5 seconds
+        setInterval(() => {
+            updateEmergencyStatusIndicator();
+            updateEmergencyStats();
+        }, 5000);
         
-        console.log('✅ Emergency developer panel shown');
+        // Show welcome toast
+        setTimeout(() => {
+            showDevToast('👋 مرحباً بك! لوحة التحكم المحسّنة جاهزة', 'success', 6000, '👋');
+        }, 500);
+        
+        console.log('✅ Enhanced emergency developer panel shown');
     }
 }
 
@@ -9461,6 +9880,341 @@ function hideEmergencyPanel() {
     const panel = document.getElementById('emergencyDevPanel');
     if (panel) {
         panel.style.display = 'none';
+    }
+}
+
+// ============================================================================
+// 🚨 ENHANCED EMERGENCY PANEL FUNCTIONS
+// New functions for the improved developer dashboard
+// ============================================================================
+
+// Toggle emergency panel collapse/expand
+function toggleEmergencyPanel() {
+    const content = document.getElementById('emergencyContent');
+    const arrow = document.getElementById('emergencyArrow');
+    const toggleText = document.getElementById('emergencyToggleText');
+    const panel = document.getElementById('emergencyDevPanel');
+    
+    if (content.classList.contains('expanded')) {
+        // Collapse
+        content.classList.remove('expanded');
+        arrow.textContent = '▼';
+        toggleText.textContent = '▼ توسيع اللوحة';
+        panel.classList.add('collapsed');
+    } else {
+        // Expand
+        content.classList.add('expanded');
+        arrow.textContent = '▲';
+        toggleText.textContent = '▲ طي اللوحة';
+        panel.classList.remove('collapsed');
+        
+        // Load stats when expanding
+        updateEmergencyStats();
+    }
+}
+
+// Search shops in emergency panel
+function emergencySearchShops(query) {
+    const listContainer = document.getElementById('emergencyShopsList');
+    const statsContainer = document.getElementById('emergencySearchStats');
+    const totalShopsEl = document.getElementById('emergencyTotalShops');
+    const foundShopsEl = document.getElementById('emergencyFoundShops');
+    
+    if (!query || query.trim().length < 2) {
+        listContainer.innerHTML = '<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.7);">أدخل كلمة بحث لعرض المحلات...</div>';
+        statsContainer.style.display = 'none';
+        return;
+    }
+    
+    query = query.trim().toLowerCase();
+    const results = [];
+    
+    // Search in shops_details.json if available
+    if (typeof smartPlannerShopsData !== 'undefined' && smartPlannerShopsData) {
+        Object.keys(smartPlannerShopsData).forEach(shopName => {
+            const shop = smartPlannerShopsData[shopName];
+            const searchText = `${shopName} ${shop.area || ''} ${shop.activity || ''} ${shop.licenseNo || ''} ${shop.address || ''}`.toLowerCase();
+            
+            if (searchText.includes(query)) {
+                results.push({
+                    name: shopName,
+                    area: shop.area || 'غير محدد',
+                    activity: shop.activity || 'غير محدد',
+                    license: shop.licenseNo || 'غير محدد'
+                });
+            }
+        });
+    }
+    
+    // Display results
+    if (results.length === 0) {
+        listContainer.innerHTML = '<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.7);">لم يتم العثور على نتائج مطابقة</div>';
+        statsContainer.style.display = 'none';
+    } else {
+        let html = '';
+        results.slice(0, 50).forEach(shop => {
+            html += `
+                <div class="emergency-shop-item" onclick="emergencyShowShopDetails('${shop.name.replace(/'/g, "\\'")}')">
+                    <div style="font-weight:bold; margin-bottom:4px;">${shop.name}</div>
+                    <div style="font-size:0.85em; opacity:0.8;">
+                        📍 ${shop.area} • 🏢 ${shop.activity}
+                    </div>
+                </div>
+            `;
+        });
+        
+        if (results.length > 50) {
+            html += `<div style="text-align:center; padding:10px; color:rgba(255,255,255,0.7); font-size:0.9em;">وأكثر من ${results.length - 50} نتيجة أخرى...</div>`;
+        }
+        
+        listContainer.innerHTML = html;
+        
+        // Update stats
+        totalShopsEl.textContent = Object.keys(smartPlannerShopsData || {}).length;
+        foundShopsEl.textContent = results.length;
+        statsContainer.style.display = 'grid';
+    }
+}
+
+// Show shop details
+function emergencyShowShopDetails(shopName) {
+    if (typeof smartPlannerShopsData !== 'undefined' && smartPlannerShopsData[shopName]) {
+        const shop = smartPlannerShopsData[shopName];
+        let details = `📋 تفاصيل المحل\n\n`;
+        details += `🏪 الاسم: ${shopName}\n`;
+        details += `📍 المنطقة: ${shop.area || 'غير محدد'}\n`;
+        details += `🏢 النشاط: ${shop.activity || 'غير محدد'}\n`;
+        details += `🔢 رقم الترخيص: ${shop.licenseNo || 'غير محدد'}\n`;
+        details += `📍 العنوان: ${shop.address || 'غير محدد'}\n`;
+        details += `📞 الهاتف: ${shop.contact || 'غير محدد'}\n`;
+        
+        if (shop.locationMap) {
+            details += `\n🗺️ لديه موقع على خرائط جوجل`;
+            if (confirm(details + '\n\nهل تريد فتح الموقع على الخرائط؟')) {
+                window.open(shop.locationMap, '_blank');
+            }
+        } else {
+            alert(details);
+        }
+    }
+}
+
+// Update emergency panel statistics
+function updateEmergencyStats() {
+    const statShops = document.getElementById('emergencyStatShops');
+    const statInspectors = document.getElementById('emergencyStatInspectors');
+    const statAreas = document.getElementById('emergencyStatAreas');
+    const statInspections = document.getElementById('emergencyStatInspections');
+    
+    if (statShops) {
+        const shopsCount = typeof smartPlannerShopsData !== 'undefined' ? Object.keys(smartPlannerShopsData).length : 
+                          (typeof shopsDetails !== 'undefined' ? Object.keys(shopsDetails).length : 0);
+        statShops.textContent = shopsCount;
+    }
+    
+    if (statInspectors && typeof inspectorsData !== 'undefined') {
+        statInspectors.textContent = inspectorsData.length;
+    }
+    
+    if (statAreas && typeof areasData !== 'undefined') {
+        statAreas.textContent = areasData.length;
+    }
+    
+    if (statInspections && typeof inspectionData !== 'undefined') {
+        statInspections.textContent = inspectionData.length;
+    }
+}
+
+// Sync with GitHub
+async function emergencySyncWithGitHub() {
+    if (!confirm('🔄 هل تريد مزامنة جميع البيانات مع GitHub؟\n\nسيتم حفظ:\n• خطة التفتيش\n• بيانات المحلات\n• الإعدادات\n\nوستظهر التغييرات فوراً على جميع الأجهزة.')) {
+        return;
+    }
+    
+    try {
+        showDevToast('🔄 جاري المزامنة مع GitHub...', 'info', 3000, '🔄');
+        
+        // Save main plan data
+        if (typeof savePlanDataDirectlyToGitHub === 'function') {
+            await savePlanDataDirectlyToGitHub();
+        }
+        
+        // Save shops data  
+        await emergencySaveShopsToGitHub();
+        
+        showDevToast('✅ تمت المزامنة بنجاح مع GitHub!', 'success', 5000, '✅');
+        
+        // Force refresh to get latest data
+        setTimeout(() => {
+            emergencyForceRefresh();
+        }, 2000);
+    } catch (error) {
+        console.error('Error syncing with GitHub:', error);
+        showDevToast('❌ خطأ في المزامنة: ' + error.message, 'error', 7000, '❌');
+    }
+}
+
+// Backup all data
+function emergencyBackupData() {
+    try {
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const backup = {
+            timestamp: timestamp,
+            planData: typeof planData !== 'undefined' ? planData : null,
+            shopsData: typeof smartPlannerShopsData !== 'undefined' ? smartPlannerShopsData : 
+                      (typeof shopsDetails !== 'undefined' ? shopsDetails : null),
+            inspectors: typeof inspectorsData !== 'undefined' ? inspectorsData : null,
+            areas: typeof areasData !== 'undefined' ? areasData : null
+        };
+        
+        const dataStr = JSON.stringify(backup, null, 2);
+        const dataBlob = new Blob([dataStr], {type: 'application/json'});
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `backup-monthly-inspection-${timestamp}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+        
+        showDevToast('✅ تم إنشاء النسخة الاحتياطية بنجاح!', 'success', 5000, '💾');
+    } catch (error) {
+        console.error('Error creating backup:', error);
+        showDevToast('❌ خطأ في إنشاء النسخة الاحتياطية', 'error', 5000, '❌');
+    }
+}
+
+// Export shops to Excel
+function emergencyExportShops() {
+    try {
+        const shopsData = typeof smartPlannerShopsData !== 'undefined' ? smartPlannerShopsData : 
+                         (typeof shopsDetails !== 'undefined' ? shopsDetails : {});
+        
+        if (Object.keys(shopsData).length === 0) {
+            alert('⚠️ لا توجد بيانات محلات للتصدير');
+            return;
+        }
+        
+        const exportData = [];
+        Object.keys(shopsData).forEach(shopName => {
+            const shop = shopsData[shopName];
+            exportData.push({
+                'اسم المحل': shopName,
+                'المنطقة': shop.area || '',
+                'النشاط': shop.activity || '',
+                'رقم الترخيص': shop.licenseNo || '',
+                'العنوان': shop.address || '',
+                'الهاتف': shop.contact || '',
+                'كود ADM': shop.admCode || ''
+            });
+        });
+        
+        if (typeof XLSX !== 'undefined') {
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            XLSX.utils.book_append_sheet(wb, ws, 'المحلات');
+            const timestamp = new Date().toISOString().split('T')[0];
+            XLSX.writeFile(wb, `shops-export-${timestamp}.xlsx`);
+            showDevToast('✅ تم تصدير المحلات إلى Excel بنجاح!', 'success', 5000, '📤');
+        } else {
+            alert('⚠️ مكتبة Excel غير متاحة');
+        }
+    } catch (error) {
+        console.error('Error exporting shops:', error);
+        showDevToast('❌ خطأ في التصدير', 'error', 5000, '❌');
+    }
+}
+
+// Import shops from file
+function emergencyImportShops() {
+    alert('⚙️ ميزة الاستيراد\n\nلاستيراد المحلات:\n1. قم بإعداد ملف Excel بالتنسيق الصحيح\n2. استخدم أدوات التحميل في smart-planner.html\n3. أو اتصل بالمطور للمساعدة');
+}
+
+// Validate data integrity
+function emergencyValidateData() {
+    const issues = [];
+    
+    // Check shops data
+    const shopsData = typeof smartPlannerShopsData !== 'undefined' ? smartPlannerShopsData : 
+                     (typeof shopsDetails !== 'undefined' ? shopsDetails : {});
+    const shopsCount = Object.keys(shopsData).length;
+    
+    if (shopsCount === 0) {
+        issues.push('⚠️ لا توجد بيانات محلات');
+    }
+    
+    // Check for shops without area
+    let noArea = 0;
+    Object.keys(shopsData).forEach(name => {
+        if (!shopsData[name].area) noArea++;
+    });
+    if (noArea > 0) issues.push(`⚠️ ${noArea} محل بدون منطقة محددة`);
+    
+    // Check inspectors
+    if (typeof inspectorsData === 'undefined' || inspectorsData.length === 0) {
+        issues.push('⚠️ لا توجد بيانات مفتشين');
+    }
+    
+    // Check areas
+    if (typeof areasData === 'undefined' || areasData.length === 0) {
+        issues.push('⚠️ لا توجد بيانات مناطق');
+    }
+    
+    // Show results
+    if (issues.length === 0) {
+        alert('✅ التحقق من البيانات\n\nجميع البيانات صحيحة!\n\n' +
+              `📊 المحلات: ${shopsCount}\n` +
+              `👥 المفتشون: ${typeof inspectorsData !== 'undefined' ? inspectorsData.length : 0}\n` +
+              `🗺️ المناطق: ${typeof areasData !== 'undefined' ? areasData.length : 0}`);
+        showDevToast('✅ البيانات صحيحة', 'success', 5000, '✔️');
+    } else {
+        alert('⚠️ مشاكل في البيانات:\n\n' + issues.join('\n'));
+        showDevToast('⚠️ وجدت ' + issues.length + ' مشكلة', 'warning', 5000, '⚠️');
+    }
+}
+
+// Clean duplicate shops
+function emergencyCleanDuplicates() {
+    alert('🧹 تنظيف المحلات المكررة\n\nهذه الميزة تتطلب تأكيد إضافي.\n\nيرجى استخدام أدوات التنظيف في smart-planner.html للحصول على تحكم أفضل.');
+}
+
+// Generate comprehensive report
+function emergencyGenerateReport() {
+    try {
+        const shopsData = typeof smartPlannerShopsData !== 'undefined' ? smartPlannerShopsData : 
+                         (typeof shopsDetails !== 'undefined' ? shopsDetails : {});
+        
+        let report = '📊 تقرير شامل للنظام\n';
+        report += '=' .repeat(50) + '\n\n';
+        report += `📅 التاريخ: ${new Date().toLocaleString('ar-EG')}\n\n`;
+        
+        report += '📈 الإحصائيات:\n';
+        report += `-`.repeat(30) + '\n';
+        report += `🏪 المحلات: ${Object.keys(shopsData).length}\n`;
+        report += `👥 المفتشون: ${typeof inspectorsData !== 'undefined' ? inspectorsData.length : 0}\n`;
+        report += `🗺️ المناطق: ${typeof areasData !== 'undefined' ? areasData.length : 0}\n`;
+        report += `📋 التفتيشات: ${typeof inspectionData !== 'undefined' ? inspectionData.length : 0}\n\n`;
+        
+        // Save as text file
+        const blob = new Blob([report], {type: 'text/plain;charset=utf-8'});
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `system-report-${new Date().toISOString().split('T')[0]}.txt`;
+        link.click();
+        URL.revokeObjectURL(url);
+        
+        showDevToast('✅ تم إنشاء التقرير بنجاح!', 'success', 5000, '📊');
+    } catch (error) {
+        console.error('Error generating report:', error);
+        showDevToast('❌ خطأ في إنشاء التقرير', 'error', 5000, '❌');
+    }
+}
+
+// Open Smart Planner integration
+function openSmartPlannerIntegration() {
+    if (confirm('🔄 التكامل مع Smart Planner\n\nسيتم فتح Smart Planner في نافذة جديدة.\n\nيمكنك:\n• إدارة المحلات\n• تحديث البيانات\n• المزامنة الفورية\n\nهل تريد المتابعة؟')) {
+        window.open('smart-planner.html', '_blank', 'width=1400,height=900');
+        showDevToast('✅ تم فتح Smart Planner', 'success', 3000, '🎯');
     }
 }
 

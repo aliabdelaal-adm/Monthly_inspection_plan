@@ -7592,11 +7592,158 @@ function restartMaintenanceChecker(interval) {
     console.log(`✅ Maintenance checker restarted with ${interval}ms interval`);
 }
 
+// ===== 🎵 نظام التحكم الشامل بالصوت - AUDIO CONTROL SYSTEM =====
+// Global audio configuration loaded from audio-config.json
+let audioConfig = {
+    backgroundMusic: {
+        enabled: false,
+        volume: 0.0, // MUTE by default - المطور يمكنه تغييره من audio-config.json
+        autoStopDuration: 60000
+    },
+    maintenanceMusic: {
+        enabled: false,
+        volume: 0.0, // MUTE by default - المطور يمكنه تغييره من audio-config.json
+        loop: true
+    }
+};
+
+// Load audio configuration from GitHub
+async function loadAudioConfig() {
+    try {
+        const response = await fetch('https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/audio-config.json?t=' + Date.now());
+        if (response.ok) {
+            const config = await response.json();
+            audioConfig = config;
+            console.log('✅ Loaded audio config:', config);
+            console.log('🎵 Background Music - Enabled:', audioConfig.backgroundMusic.enabled, 'Volume:', audioConfig.backgroundMusic.volume);
+            console.log('🎵 Maintenance Music - Enabled:', audioConfig.maintenanceMusic.enabled, 'Volume:', audioConfig.maintenanceMusic.volume);
+            
+            // Apply the audio configuration
+            applyAudioConfig();
+            
+            return config;
+        } else {
+            console.log('⚠️ Could not load audio config from GitHub, using defaults (MUTED)');
+        }
+    } catch (error) {
+        console.log('⚠️ Error loading audio config:', error, '- using defaults (MUTED)');
+    }
+    return audioConfig;
+}
+
+// Apply audio configuration to all audio elements
+function applyAudioConfig() {
+    console.log('🔧 Applying audio configuration...');
+    
+    // Apply background music config
+    const bgAudio = document.getElementById('backgroundMusicAudio');
+    if (bgAudio) {
+        bgAudio.volume = audioConfig.backgroundMusic.volume;
+        console.log(`🎵 Background music volume set to: ${audioConfig.backgroundMusic.volume * 100}%`);
+        
+        if (!audioConfig.backgroundMusic.enabled && !bgAudio.paused) {
+            bgAudio.pause();
+            console.log('🎵 Background music STOPPED (disabled in config)');
+        }
+    }
+    
+    // Apply maintenance music config (sync with maintenanceConfig for backward compatibility)
+    const maintAudio = document.getElementById('maintenanceAudio');
+    if (maintAudio) {
+        // Use audioConfig if available, otherwise fall back to maintenanceConfig
+        const volume = audioConfig.maintenanceMusic.volume !== undefined ? 
+                      audioConfig.maintenanceMusic.volume : 
+                      maintenanceConfig.musicVolume;
+        maintAudio.volume = volume;
+        console.log(`🎵 Maintenance music volume set to: ${volume * 100}%`);
+        
+        if (!audioConfig.maintenanceMusic.enabled && !maintAudio.paused) {
+            maintAudio.pause();
+            console.log('🎵 Maintenance music STOPPED (disabled in config)');
+        }
+    }
+    
+    console.log(`✅ Audio config applied - Background: ${audioConfig.backgroundMusic.enabled ? 'enabled' : 'disabled'}, Maintenance: ${audioConfig.maintenanceMusic.enabled ? 'enabled' : 'disabled'}`);
+}
+
+// Developer console controls for audio
+window.setBackgroundMusicVolume = function(volume) {
+    if (volume < 0 || volume > 1) {
+        console.log('❌ Volume must be between 0 (mute) and 1 (max). Example: 0.01 = 1%, 0.5 = 50%');
+        return;
+    }
+    audioConfig.backgroundMusic.volume = volume;
+    const audio = document.getElementById('backgroundMusicAudio');
+    if (audio) {
+        audio.volume = volume;
+        console.log(`✅ Background music volume set to ${volume * 100}%`);
+    }
+};
+
+window.setMaintenanceMusicVolume = function(volume) {
+    if (volume < 0 || volume > 1) {
+        console.log('❌ Volume must be between 0 (mute) and 1 (max). Example: 0.01 = 1%, 0.5 = 50%');
+        return;
+    }
+    audioConfig.maintenanceMusic.volume = volume;
+    const audio = document.getElementById('maintenanceAudio');
+    if (audio) {
+        audio.volume = volume;
+        console.log(`✅ Maintenance music volume set to ${volume * 100}%`);
+    }
+};
+
+window.enableBackgroundMusic = function(enabled = true) {
+    audioConfig.backgroundMusic.enabled = enabled;
+    console.log(`✅ Background music ${enabled ? 'ENABLED' : 'DISABLED'}`);
+    if (!enabled) {
+        const audio = document.getElementById('backgroundMusicAudio');
+        if (audio && !audio.paused) {
+            audio.pause();
+            console.log('🎵 Background music stopped');
+        }
+    }
+};
+
+window.enableMaintenanceMusic = function(enabled = true) {
+    audioConfig.maintenanceMusic.enabled = enabled;
+    console.log(`✅ Maintenance music ${enabled ? 'ENABLED' : 'DISABLED'}`);
+    if (!enabled) {
+        const audio = document.getElementById('maintenanceAudio');
+        if (audio && !audio.paused) {
+            audio.pause();
+            console.log('🎵 Maintenance music stopped');
+        }
+    }
+};
+
+window.showAudioConfig = function() {
+    console.log('🎵 ===== AUDIO CONFIGURATION =====');
+    console.log('Background Music:', audioConfig.backgroundMusic);
+    console.log('Maintenance Music:', audioConfig.maintenanceMusic);
+    console.log('');
+    console.log('💡 Developer Commands:');
+    console.log('  setBackgroundMusicVolume(0.25)  - Set volume to 25%');
+    console.log('  setMaintenanceMusicVolume(0.5)  - Set volume to 50%');
+    console.log('  enableBackgroundMusic(true)     - Enable background music');
+    console.log('  enableBackgroundMusic(false)    - Disable background music');
+    console.log('  enableMaintenanceMusic(true)    - Enable maintenance music');
+    console.log('  enableMaintenanceMusic(false)   - Disable maintenance music');
+    console.log('  toggleBackgroundMusic()         - Toggle play/pause');
+    console.log('  stopBackgroundMusic()           - Stop background music');
+    console.log('');
+    console.log('📝 To permanently change: Edit audio-config.json in GitHub');
+};
+
 // Start maintenance music with 600 seconds duration
 function startMaintenanceMusic() {
-    // Check if music is enabled in config
-    if (!maintenanceConfig.musicEnabled) {
-        console.log('🎵 Maintenance music is DISABLED in config - skipping playback');
+    // Check if music is enabled in audioConfig first (takes precedence)
+    const musicEnabled = audioConfig.maintenanceMusic.enabled !== undefined ? 
+                        audioConfig.maintenanceMusic.enabled : 
+                        maintenanceConfig.musicEnabled;
+    
+    if (!musicEnabled) {
+        console.log('🎵 Maintenance music is DISABLED in audio-config.json - To enable: set "enabled": true');
         return;
     }
     
@@ -7617,7 +7764,12 @@ function startMaintenanceMusic() {
     
     // Reset audio to start from beginning
     audio.currentTime = 0;
-    audio.volume = maintenanceConfig.musicVolume; // Use configured volume
+    
+    // Use audioConfig volume if available, otherwise fall back to maintenanceConfig
+    const volume = audioConfig.maintenanceMusic.volume !== undefined ? 
+                  audioConfig.maintenanceMusic.volume : 
+                  maintenanceConfig.musicVolume;
+    audio.volume = volume; // Use configured volume (default: 0 = MUTE)
     
     // Clear any existing timer
     if (maintenanceMusicTimer) {
@@ -7635,7 +7787,7 @@ function startMaintenanceMusic() {
     
     if (playPromise !== undefined) {
         playPromise.then(() => {
-            console.log(`🎵 Maintenance music started automatically (Level 1: Direct play) - Volume: ${Math.round(maintenanceConfig.musicVolume * 100)}%`);
+            console.log(`🎵 Maintenance music started automatically (Level 1: Direct play) - Volume: ${Math.round(volume * 100)}%`);
             
             // Set timer to stop after configured duration (if not unlimited)
             // When duration is 0, music will loop indefinitely
@@ -23719,8 +23871,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // ===== 🎵 نظام الموسيقى الخلفية للشاشة الرئيسية =====
 // Background Music System for Main Screen
-// يعمل بصوت هادئ جداً (5%) ويتوقف تلقائياً بعد دقيقة واحدة
-// Plays at very low volume (5%) and stops automatically after 1 minute
+// افتراضياً: صامت (0%) - يمكن للمطور تغييره من audio-config.json
+// Default: MUTED (0%) - Developer can change it via audio-config.json
+// للتفعيل: غيّر enabled و volume في audio-config.json
+// To enable: Change enabled and volume in audio-config.json
 
 let backgroundMusicTimer = null;
 let backgroundMusicPlaying = false;
@@ -23744,20 +23898,27 @@ function toggleBackgroundMusic() {
         return;
     }
     
+    // Check if background music is enabled in config
+    if (!audioConfig.backgroundMusic.enabled) {
+        console.log('🎵 Background music is DISABLED in audio-config.json - To enable: set "enabled": true');
+        return;
+    }
+    
     if (audio.paused) {
         // Play from current position (resume)
-        audio.volume = 0.01; // Very low volume (1%)
+        audio.volume = audioConfig.backgroundMusic.volume; // Use configured volume (default: 0 = MUTE)
         audio.play().then(() => {
             backgroundMusicPlaying = true;
             console.log('🎵 Background music started/resumed at position:', audio.currentTime.toFixed(2), 'seconds');
+            console.log(`🎵 Volume: ${audioConfig.backgroundMusic.volume * 100}%`);
             
-            // Auto-stop after 1 minute (60 seconds)
+            // Auto-stop after configured duration
             clearTimeout(backgroundMusicTimer);
             backgroundMusicTimer = setTimeout(() => {
                 audio.pause();
                 backgroundMusicPlaying = false;
-                console.log('⏸️ Background music paused automatically after 1 minute at position:', audio.currentTime.toFixed(2), 'seconds');
-            }, 60000); // 60 seconds = 1 minute
+                console.log('⏸️ Background music paused automatically after', audioConfig.backgroundMusic.autoStopDuration / 1000, 'seconds at position:', audio.currentTime.toFixed(2), 'seconds');
+            }, audioConfig.backgroundMusic.autoStopDuration);
         }).catch(error => {
             console.log('⚠️ Could not play background music:', error);
             backgroundMusicPlaying = false;
@@ -23817,6 +23978,11 @@ async function monitorForChanges() {
 
 // Initialize on page load
 window.addEventListener('load', function() {
+    // Load audio configuration from GitHub
+    loadAudioConfig().then(() => {
+        console.log('🎵 Audio configuration loaded successfully');
+    });
+    
     // Setup background music click handler
     setupBackgroundMusicClickHandler();
     

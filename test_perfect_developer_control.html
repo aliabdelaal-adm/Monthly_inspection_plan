@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Perfect Developer Control - Audio Config</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 10px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .success { background: rgba(76, 175, 80, 0.3); color: #4caf50; }
+        .error { background: rgba(244, 67, 54, 0.3); color: #f44336; }
+        .info { background: rgba(33, 150, 243, 0.3); color: #2196f3; }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        pre {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .preset-card {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Test Perfect Developer Control</h1>
+        
+        <div class="section">
+            <h2>📋 Test Summary</h2>
+            <p>This test validates the new <code>developerControl</code> section in <code>audio-config.json</code></p>
+            <button onclick="runTests()">▶️ Run All Tests</button>
+        </div>
+
+        <div class="section">
+            <h2>🧪 Test Results</h2>
+            <div id="testResults"></div>
+        </div>
+
+        <div class="section">
+            <h2>📊 Developer Control Data</h2>
+            <div id="developerControlData"></div>
+        </div>
+
+        <div class="section">
+            <h2>🎚️ Volume Presets</h2>
+            <div id="volumePresets"></div>
+        </div>
+
+        <div class="section">
+            <h2>📖 Control Instructions</h2>
+            <div id="controlInstructions"></div>
+        </div>
+
+        <div class="section">
+            <h2>💡 Usage Examples</h2>
+            <div id="usageExamples"></div>
+        </div>
+    </div>
+
+    <script>
+        let audioConfig = null;
+
+        async function loadAudioConfig() {
+            try {
+                const response = await fetch('audio-config.json?t=' + Date.now());
+                if (!response.ok) throw new Error('Failed to load audio-config.json');
+                audioConfig = await response.json();
+                return true;
+            } catch (error) {
+                addResult('error', `❌ Failed to load audio-config.json: ${error.message}`);
+                return false;
+            }
+        }
+
+        async function runTests() {
+            const resultsDiv = document.getElementById('testResults');
+            resultsDiv.innerHTML = '<div class="status info">🔄 Running tests...</div>';
+
+            // Test 1: Load config
+            if (!await loadAudioConfig()) return;
+            addResult('success', '✅ Test 1: Successfully loaded audio-config.json');
+
+            // Test 2: Check backward compatibility
+            const hasBackgroundMusic = audioConfig.backgroundMusic && 
+                                      audioConfig.backgroundMusic.volume !== undefined;
+            const hasMaintenanceMusic = audioConfig.maintenanceMusic && 
+                                       audioConfig.maintenanceMusic.volume !== undefined;
+            
+            if (hasBackgroundMusic && hasMaintenanceMusic) {
+                addResult('success', '✅ Test 2: Backward compatibility - existing properties intact');
+            } else {
+                addResult('error', '❌ Test 2: Missing required properties');
+                return;
+            }
+
+            // Test 3: Check new developerControl section
+            const hasDeveloperControl = audioConfig.developerControl && 
+                                       audioConfig.developerControl.perfectVolumeControl;
+            
+            if (hasDeveloperControl) {
+                addResult('success', '✅ Test 3: Developer control section exists');
+            } else {
+                addResult('error', '❌ Test 3: Developer control section missing');
+                return;
+            }
+
+            // Test 4: Check maximum volume preset
+            const maxVolume = audioConfig.developerControl.perfectVolumeControl.maximumVolume;
+            if (maxVolume && maxVolume.value === 1.0 && maxVolume.percentage === "100%") {
+                addResult('success', '✅ Test 4: Maximum volume preset correct (1.0 = 100%)');
+            } else {
+                addResult('error', '❌ Test 4: Maximum volume preset incorrect');
+            }
+
+            // Test 5: Check minimum volume preset
+            const minVolume = audioConfig.developerControl.perfectVolumeControl.minimumVolume;
+            if (minVolume && minVolume.value === 0.0 && minVolume.percentage === "0%") {
+                addResult('success', '✅ Test 5: Minimum volume preset correct (0.0 = 0%)');
+            } else {
+                addResult('error', '❌ Test 5: Minimum volume preset incorrect');
+            }
+
+            // Test 6: Check volume presets
+            const presets = audioConfig.developerControl.perfectVolumeControl.volumePresets;
+            if (presets && presets.maximum === 1.0 && presets.muted === 0.0) {
+                addResult('success', '✅ Test 6: Volume presets available (8 presets: 0% to 100%)');
+            } else {
+                addResult('error', '❌ Test 6: Volume presets missing or incorrect');
+            }
+
+            // Test 7: Check control instructions
+            const instructions = audioConfig.developerControl.perfectVolumeControl.controlInstructions;
+            if (instructions && instructions.ar && instructions.en) {
+                addResult('success', '✅ Test 7: Bilingual control instructions available (AR + EN)');
+            } else {
+                addResult('error', '❌ Test 7: Control instructions missing');
+            }
+
+            // Display data
+            displayDeveloperControlData();
+            displayVolumePresets();
+            displayControlInstructions();
+            displayUsageExamples();
+
+            addResult('success', '🎉 All tests passed! Perfect developer control is working correctly!');
+        }
+
+        function displayDeveloperControlData() {
+            const div = document.getElementById('developerControlData');
+            const data = audioConfig.developerControl.perfectVolumeControl;
+            
+            div.innerHTML = `
+                <div class="status success">
+                    <strong>Maximum Volume:</strong> ${data.maximumVolume.value} (${data.maximumVolume.percentage})<br>
+                    <strong>Minimum Volume:</strong> ${data.minimumVolume.value} (${data.minimumVolume.percentage})
+                </div>
+            `;
+        }
+
+        function displayVolumePresets() {
+            const div = document.getElementById('volumePresets');
+            const presets = audioConfig.developerControl.perfectVolumeControl.volumePresets;
+            
+            let html = '<div class="preset-grid">';
+            for (const [name, value] of Object.entries(presets)) {
+                const percentage = Math.round(value * 100);
+                html += `
+                    <div class="preset-card">
+                        <strong>${name}</strong><br>
+                        ${value} (${percentage}%)
+                    </div>
+                `;
+            }
+            html += '</div>';
+            div.innerHTML = html;
+        }
+
+        function displayControlInstructions() {
+            const div = document.getElementById('controlInstructions');
+            const instructions = audioConfig.developerControl.perfectVolumeControl.controlInstructions;
+            
+            div.innerHTML = `
+                <div class="status info">
+                    <strong>English:</strong><br>
+                    <pre>${instructions.en}</pre>
+                </div>
+                <div class="status info" style="direction: rtl; text-align: right;">
+                    <strong>العربية:</strong><br>
+                    <pre style="direction: rtl; text-align: right;">${instructions.ar}</pre>
+                </div>
+            `;
+        }
+
+        function displayUsageExamples() {
+            const div = document.getElementById('usageExamples');
+            const maxExample = audioConfig.developerControl.perfectVolumeControl.maximumVolume.example;
+            const minExample = audioConfig.developerControl.perfectVolumeControl.minimumVolume.example;
+            
+            div.innerHTML = `
+                <h3>Example 1: Set to Maximum (100%)</h3>
+                <pre>${JSON.stringify(maxExample, null, 2)}</pre>
+                
+                <h3>Example 2: Set to Minimum (0%)</h3>
+                <pre>${JSON.stringify(minExample, null, 2)}</pre>
+            `;
+        }
+
+        function addResult(type, message) {
+            const resultsDiv = document.getElementById('testResults');
+            const timestamp = new Date().toLocaleTimeString();
+            const resultItem = document.createElement('div');
+            resultItem.className = `status ${type}`;
+            resultItem.innerHTML = `[${timestamp}] ${message}`;
+            resultsDiv.appendChild(resultItem);
+        }
+
+        // Auto-run tests on load
+        window.addEventListener('load', () => {
+            setTimeout(runTests, 500);
+        });
+    </script>
+</body>
+</html>

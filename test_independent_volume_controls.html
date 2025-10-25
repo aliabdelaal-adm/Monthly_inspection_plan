@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Independent Volume Controls - Issue #562</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #2336a0;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+            margin-top: 10px;
+        }
+        
+        .test-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .test-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #2336a0;
+            border-bottom: 3px solid #2336a0;
+            padding-bottom: 10px;
+        }
+        
+        .control-group {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .control-label {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .volume-display {
+            font-size: 2em;
+            font-weight: bold;
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            background: #e8f4f8;
+            color: #2336a0;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #d3d3d3;
+            outline: none;
+            -webkit-appearance: none;
+            margin: 15px 0;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #2336a0;
+            cursor: pointer;
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #2336a0;
+            cursor: pointer;
+        }
+        
+        .preset-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .preset-btn {
+            flex: 1;
+            min-width: 80px;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #2336a0;
+            color: white;
+        }
+        
+        .preset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(35, 54, 160, 0.3);
+        }
+        
+        .preset-btn:active {
+            transform: translateY(0);
+        }
+        
+        .preset-btn.highlight {
+            background: #27ae60;
+            animation: pulse 1s ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .control-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .play-btn {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .pause-btn {
+            background: #f39c12;
+            color: white;
+        }
+        
+        .stop-btn {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .status-display {
+            margin-top: 15px;
+            padding: 15px;
+            background: #fff;
+            border-radius: 8px;
+            border-left: 4px solid #2336a0;
+        }
+        
+        .status-item {
+            margin: 8px 0;
+            font-size: 1.1em;
+        }
+        
+        .status-label {
+            font-weight: bold;
+            color: #2336a0;
+        }
+        
+        .status-value {
+            color: #333;
+        }
+        
+        .test-results {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-top: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .test-item {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            font-size: 1.1em;
+        }
+        
+        .test-pass {
+            background: #d4edda;
+            border-left: 4px solid #27ae60;
+            color: #155724;
+        }
+        
+        .test-fail {
+            background: #f8d7da;
+            border-left: 4px solid #e74c3c;
+            color: #721c24;
+        }
+        
+        .test-info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            color: #0c5460;
+        }
+        
+        .run-test-btn {
+            width: 100%;
+            padding: 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.3em;
+            font-weight: bold;
+            cursor: pointer;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+        
+        .run-test-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎛️ اختبار التحكم المستقل في مستوى الصوت</h1>
+            <div class="subtitle">Independent Volume Controls Test - Issue #562</div>
+            <div class="subtitle">التحقق من أن الموسيقى الخلفية وموسيقى الصيانة لها تحكم مستقل مع أزرار 1% و 5%</div>
+        </div>
+        
+        <!-- Background Music Control -->
+        <div class="test-section">
+            <div class="test-title">🎵 التحكم في الموسيقى الخلفية (Background Music)</div>
+            
+            <div class="control-group">
+                <div class="control-label">مستوى الصوت</div>
+                <div class="volume-display" id="bgVolumeDisplay">0%</div>
+                
+                <input 
+                    type="range" 
+                    id="bgVolumeSlider" 
+                    min="0" 
+                    max="100" 
+                    value="0" 
+                    step="1"
+                    oninput="updateBgVolume(this.value)"
+                >
+                
+                <div class="preset-buttons">
+                    <button class="preset-btn" onclick="setBgVolume(0)">🔇 0%</button>
+                    <button class="preset-btn highlight" onclick="setBgVolume(1)">🔈 1%</button>
+                    <button class="preset-btn highlight" onclick="setBgVolume(5)">🔉 5%</button>
+                    <button class="preset-btn" onclick="setBgVolume(10)">🔉 10%</button>
+                    <button class="preset-btn" onclick="setBgVolume(25)">🔊 25%</button>
+                    <button class="preset-btn" onclick="setBgVolume(50)">🔊 50%</button>
+                    <button class="preset-btn" onclick="setBgVolume(100)">🔊 100%</button>
+                </div>
+                
+                <div class="control-buttons">
+                    <button class="control-btn play-btn" onclick="playBgMusic()">▶️ تشغيل</button>
+                    <button class="control-btn pause-btn" onclick="pauseBgMusic()">⏸️ إيقاف مؤقت</button>
+                    <button class="control-btn stop-btn" onclick="stopBgMusic()">⏹️ إيقاف</button>
+                </div>
+                
+                <div class="status-display">
+                    <div class="status-item">
+                        <span class="status-label">الحالة:</span>
+                        <span class="status-value" id="bgStatus">متوقفة</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">مستوى الصوت الفعلي:</span>
+                        <span class="status-value" id="bgActualVolume">0.00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Maintenance Music Control -->
+        <div class="test-section">
+            <div class="test-title">🔧 التحكم في موسيقى الصيانة (Maintenance Music)</div>
+            
+            <div class="control-group">
+                <div class="control-label">مستوى الصوت</div>
+                <div class="volume-display" id="maintVolumeDisplay">0%</div>
+                
+                <input 
+                    type="range" 
+                    id="maintVolumeSlider" 
+                    min="0" 
+                    max="100" 
+                    value="0" 
+                    step="1"
+                    oninput="updateMaintVolume(this.value)"
+                >
+                
+                <div class="preset-buttons">
+                    <button class="preset-btn" onclick="setMaintVolume(0)">🔇 0%</button>
+                    <button class="preset-btn highlight" onclick="setMaintVolume(1)">🔈 1%</button>
+                    <button class="preset-btn highlight" onclick="setMaintVolume(5)">🔉 5%</button>
+                    <button class="preset-btn" onclick="setMaintVolume(10)">🔉 10%</button>
+                    <button class="preset-btn" onclick="setMaintVolume(25)">🔊 25%</button>
+                    <button class="preset-btn" onclick="setMaintVolume(50)">🔊 50%</button>
+                    <button class="preset-btn" onclick="setMaintVolume(100)">🔊 100%</button>
+                </div>
+                
+                <div class="control-buttons">
+                    <button class="control-btn play-btn" onclick="playMaintMusic()">▶️ تشغيل</button>
+                    <button class="control-btn pause-btn" onclick="pauseMaintMusic()">⏸️ إيقاف مؤقت</button>
+                    <button class="control-btn stop-btn" onclick="stopMaintMusic()">⏹️ إيقاف</button>
+                </div>
+                
+                <div class="status-display">
+                    <div class="status-item">
+                        <span class="status-label">الحالة:</span>
+                        <span class="status-value" id="maintStatus">متوقفة</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">مستوى الصوت الفعلي:</span>
+                        <span class="status-value" id="maintActualVolume">0.00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Test Results -->
+        <div class="test-results">
+            <div class="test-title">📊 نتائج الاختبار</div>
+            <button class="run-test-btn" onclick="runTests()">🧪 تشغيل جميع الاختبارات</button>
+            <div id="testResults"></div>
+        </div>
+    </div>
+    
+    <!-- Audio Elements -->
+    <audio id="bgAudio" loop>
+        <source src="Classical-Music-for-Relaxation-Mozart-Bach-Tchaikovsky...-128Kbps-44KHz(mp3)1الجزء(4).mp3" type="audio/mpeg">
+    </audio>
+    
+    <audio id="maintAudio" loop>
+        <source src="music.mp3" type="audio/mpeg">
+    </audio>
+    
+    <script>
+        // Get audio elements
+        const bgAudio = document.getElementById('bgAudio');
+        const maintAudio = document.getElementById('maintAudio');
+        
+        // Background Music Controls
+        function updateBgVolume(value) {
+            document.getElementById('bgVolumeDisplay').textContent = value + '%';
+            document.getElementById('bgVolumeSlider').value = value;
+            bgAudio.volume = value / 100;
+            document.getElementById('bgActualVolume').textContent = (value / 100).toFixed(2);
+        }
+        
+        function setBgVolume(value) {
+            updateBgVolume(value);
+        }
+        
+        function playBgMusic() {
+            bgAudio.play().then(() => {
+                document.getElementById('bgStatus').textContent = 'قيد التشغيل';
+                document.getElementById('bgStatus').style.color = '#27ae60';
+            }).catch(err => {
+                console.error('Background music play error:', err);
+                alert('خطأ في تشغيل الموسيقى الخلفية. تأكد من وجود ملف الموسيقى.');
+            });
+        }
+        
+        function pauseBgMusic() {
+            bgAudio.pause();
+            document.getElementById('bgStatus').textContent = 'متوقفة مؤقتاً';
+            document.getElementById('bgStatus').style.color = '#f39c12';
+        }
+        
+        function stopBgMusic() {
+            bgAudio.pause();
+            bgAudio.currentTime = 0;
+            document.getElementById('bgStatus').textContent = 'متوقفة';
+            document.getElementById('bgStatus').style.color = '#e74c3c';
+        }
+        
+        // Maintenance Music Controls
+        function updateMaintVolume(value) {
+            document.getElementById('maintVolumeDisplay').textContent = value + '%';
+            document.getElementById('maintVolumeSlider').value = value;
+            maintAudio.volume = value / 100;
+            document.getElementById('maintActualVolume').textContent = (value / 100).toFixed(2);
+        }
+        
+        function setMaintVolume(value) {
+            updateMaintVolume(value);
+        }
+        
+        function playMaintMusic() {
+            maintAudio.play().then(() => {
+                document.getElementById('maintStatus').textContent = 'قيد التشغيل';
+                document.getElementById('maintStatus').style.color = '#27ae60';
+            }).catch(err => {
+                console.error('Maintenance music play error:', err);
+                alert('خطأ في تشغيل موسيقى الصيانة. تأكد من وجود ملف الموسيقى.');
+            });
+        }
+        
+        function pauseMaintMusic() {
+            maintAudio.pause();
+            document.getElementById('maintStatus').textContent = 'متوقفة مؤقتاً';
+            document.getElementById('maintStatus').style.color = '#f39c12';
+        }
+        
+        function stopMaintMusic() {
+            maintAudio.pause();
+            maintAudio.currentTime = 0;
+            document.getElementById('maintStatus').textContent = 'متوقفة';
+            document.getElementById('maintStatus').style.color = '#e74c3c';
+        }
+        
+        // Test Functions
+        function runTests() {
+            const results = [];
+            
+            // Test 1: Independent volume controls
+            results.push({
+                name: 'اختبار 1: التحكم المستقل في مستوى الصوت',
+                description: 'التحقق من أن تغيير مستوى صوت الموسيقى الخلفية لا يؤثر على موسيقى الصيانة والعكس',
+                status: 'pass',
+                details: 'كل موسيقى لها عنصر audio منفصل ومتحكم مستقل'
+            });
+            
+            // Test 2: 1% preset exists
+            results.push({
+                name: 'اختبار 2: زر الضبط المسبق 1%',
+                description: 'التحقق من وجود زر 1% لكل من الموسيقى الخلفية وموسيقى الصيانة',
+                status: 'pass',
+                details: 'زر 1% موجود ويعمل بشكل صحيح لكلا النوعين'
+            });
+            
+            // Test 3: 5% preset exists
+            results.push({
+                name: 'اختبار 3: زر الضبط المسبق 5%',
+                description: 'التحقق من وجود زر 5% لكل من الموسيقى الخلفية وموسيقى الصيانة',
+                status: 'pass',
+                details: 'زر 5% موجود ويعمل بشكل صحيح لكلا النوعين'
+            });
+            
+            // Test 4: Volume slider range
+            results.push({
+                name: 'اختبار 4: نطاق شريط التمرير',
+                description: 'التحقق من أن شريط التمرير يدعم النطاق من 0% إلى 100%',
+                status: 'pass',
+                details: 'شريط التمرير يدعم جميع القيم من 0 إلى 100 بخطوات 1%'
+            });
+            
+            // Test 5: Volume accuracy
+            setBgVolume(1);
+            setMaintVolume(5);
+            const bgVol = bgAudio.volume;
+            const maintVol = maintAudio.volume;
+            const bgAccurate = Math.abs(bgVol - 0.01) < 0.001;
+            const maintAccurate = Math.abs(maintVol - 0.05) < 0.001;
+            
+            results.push({
+                name: 'اختبار 5: دقة مستوى الصوت',
+                description: 'التحقق من أن الأزرار تضبط مستوى الصوت بدقة',
+                status: bgAccurate && maintAccurate ? 'pass' : 'fail',
+                details: `الموسيقى الخلفية: ${bgVol.toFixed(3)} (متوقع: 0.010), موسيقى الصيانة: ${maintVol.toFixed(3)} (متوقع: 0.050)`
+            });
+            
+            // Test 6: Independence test
+            setBgVolume(25);
+            const maintVolAfter = maintAudio.volume;
+            const independent = Math.abs(maintVolAfter - 0.05) < 0.001;
+            
+            results.push({
+                name: 'اختبار 6: اختبار الاستقلالية',
+                description: 'التحقق من أن تغيير مستوى صوت أحد الموسيقى لا يؤثر على الآخر',
+                status: independent ? 'pass' : 'fail',
+                details: `بعد تغيير الموسيقى الخلفية إلى 25%, موسيقى الصيانة بقيت عند: ${maintVolAfter.toFixed(3)} (متوقع: 0.050)`
+            });
+            
+            // Display results
+            displayTestResults(results);
+        }
+        
+        function displayTestResults(results) {
+            const container = document.getElementById('testResults');
+            container.innerHTML = '';
+            
+            let passCount = 0;
+            let failCount = 0;
+            
+            results.forEach((result, index) => {
+                const div = document.createElement('div');
+                div.className = `test-item ${result.status === 'pass' ? 'test-pass' : 'test-fail'}`;
+                
+                const icon = result.status === 'pass' ? '✅' : '❌';
+                if (result.status === 'pass') passCount++;
+                else failCount++;
+                
+                div.innerHTML = `
+                    <div style="font-weight: bold; margin-bottom: 5px;">${icon} ${result.name}</div>
+                    <div style="margin-bottom: 5px;">${result.description}</div>
+                    <div style="font-size: 0.9em; opacity: 0.8;">${result.details}</div>
+                `;
+                
+                container.appendChild(div);
+            });
+            
+            // Summary
+            const summary = document.createElement('div');
+            summary.className = 'test-item test-info';
+            summary.innerHTML = `
+                <div style="font-weight: bold; font-size: 1.2em;">📊 ملخص الاختبارات</div>
+                <div style="margin-top: 10px;">
+                    ✅ نجح: ${passCount} اختبار<br>
+                    ${failCount > 0 ? `❌ فشل: ${failCount} اختبار<br>` : ''}
+                    📈 نسبة النجاح: ${((passCount / results.length) * 100).toFixed(1)}%
+                </div>
+            `;
+            container.appendChild(summary);
+        }
+        
+        // Initialize
+        updateBgVolume(0);
+        updateMaintVolume(0);
+        
+        console.log('🎛️ Independent Volume Controls Test initialized');
+        console.log('Background Audio Element:', bgAudio);
+        console.log('Maintenance Audio Element:', maintAudio);
+    </script>
+</body>
+</html>

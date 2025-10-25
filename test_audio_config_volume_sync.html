@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>اختبار مزامنة صوت الموسيقى مع audio-config.json</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 10px;
+        }
+        .test-section h2 {
+            color: #ffd700;
+            margin-top: 0;
+        }
+        .status {
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: rgba(76, 175, 80, 0.3);
+            color: #4caf50;
+        }
+        .status.error {
+            background: rgba(244, 67, 54, 0.3);
+            color: #f44336;
+        }
+        .status.info {
+            background: rgba(33, 150, 243, 0.3);
+            color: #2196f3;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        .volume-display {
+            font-size: 24px;
+            font-weight: bold;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎵 اختبار مزامنة صوت الموسيقى مع audio-config.json</h1>
+    
+    <div class="test-container">
+        <div class="test-section">
+            <h2>📋 معلومات الاختبار</h2>
+            <p>هذا الاختبار يتحقق من أن التعديلات على <code>audio-config.json</code> تؤثر فعلياً على مستوى صوت الموسيقى الخلفية.</p>
+            <p><strong>الهدف:</strong> التأكد من أن قيمة <code>volume</code> في audio-config.json تتحكم في شدة الصوت الفعلية</p>
+        </div>
+
+        <div class="test-section">
+            <h2>🎚️ القيم الحالية من audio-config.json</h2>
+            <div id="configValues" class="status info">
+                ⏳ جاري تحميل التكوينات...
+            </div>
+            <button onclick="loadAndDisplayConfig()">🔄 إعادة تحميل التكوينات</button>
+        </div>
+
+        <div class="test-section">
+            <h2>🎵 اختبار الموسيقى الخلفية</h2>
+            <div class="volume-display" id="bgVolumeDisplay">--</div>
+            <div id="bgStatus" class="status info">⏸️ متوقفة</div>
+            <button onclick="testBackgroundMusic()">▶️ تشغيل الموسيقى الخلفية</button>
+            <button onclick="stopBackgroundMusic()">⏹️ إيقاف</button>
+        </div>
+
+        <div class="test-section">
+            <h2>🔧 اختبار موسيقى الصيانة</h2>
+            <div class="volume-display" id="maintVolumeDisplay">--</div>
+            <div id="maintStatus" class="status info">⏸️ متوقفة</div>
+            <button onclick="testMaintenanceMusic()">▶️ تشغيل موسيقى الصيانة</button>
+            <button onclick="stopMaintenanceMusic()">⏹️ إيقاف</button>
+        </div>
+
+        <div class="test-section">
+            <h2>✅ نتائج الاختبار</h2>
+            <div id="testResults"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>📝 التعليمات</h2>
+            <ol style="text-align: right;">
+                <li>قم بتحميل التكوينات من audio-config.json بالضغط على زر "إعادة تحميل التكوينات"</li>
+                <li>لاحظ القيم المعروضة (يجب أن تكون: موسيقى خلفية 1%، موسيقى صيانة 5%)</li>
+                <li>قم بتشغيل الموسيقى وتأكد من أن مستوى الصوت يطابق القيمة في audio-config.json</li>
+                <li>يمكنك تعديل audio-config.json ثم إعادة تحميل الصفحة للتحقق من التغييرات</li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- Hidden Audio Elements -->
+    <audio id="backgroundMusicAudio" preload="metadata" style="display:none;">
+        <source src="Classical-Music-for-Relaxation-Mozart-Bach-Tchaikovsky...-128Kbps-44KHz(mp3)1الجزء(4).mp3" type="audio/mpeg">
+    </audio>
+
+    <audio id="maintenanceAudio" preload="metadata" style="display:none;">
+        <source src="music.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        let audioConfig = {
+            backgroundMusic: {
+                enabled: true,
+                volume: 0.01
+            },
+            maintenanceMusic: {
+                enabled: true,
+                volume: 0.05
+            }
+        };
+
+        async function loadAndDisplayConfig() {
+            try {
+                const response = await fetch('audio-config.json?t=' + Date.now());
+                if (response.ok) {
+                    audioConfig = await response.json();
+                    
+                    const bgVolume = Math.round(audioConfig.backgroundMusic.volume * 100);
+                    const maintVolume = Math.round(audioConfig.maintenanceMusic.volume * 100);
+                    
+                    document.getElementById('configValues').innerHTML = `
+                        <strong>✅ تم تحميل التكوينات بنجاح!</strong><br><br>
+                        🎵 <strong>موسيقى الخلفية:</strong><br>
+                        - التفعيل: ${audioConfig.backgroundMusic.enabled ? '✅ مفعلة' : '❌ معطلة'}<br>
+                        - مستوى الصوت: ${bgVolume}% (${audioConfig.backgroundMusic.volume})<br><br>
+                        🔧 <strong>موسيقى الصيانة:</strong><br>
+                        - التفعيل: ${audioConfig.maintenanceMusic.enabled ? '✅ مفعلة' : '❌ معطلة'}<br>
+                        - مستوى الصوت: ${maintVolume}% (${audioConfig.maintenanceMusic.volume})
+                    `;
+                    document.getElementById('configValues').className = 'status success';
+                    
+                    document.getElementById('bgVolumeDisplay').textContent = `مستوى الصوت: ${bgVolume}%`;
+                    document.getElementById('maintVolumeDisplay').textContent = `مستوى الصوت: ${maintVolume}%`;
+                    
+                    addTestResult('success', `✅ تم تحميل audio-config.json بنجاح - موسيقى خلفية: ${bgVolume}%، موسيقى صيانة: ${maintVolume}%`);
+                } else {
+                    throw new Error('فشل تحميل الملف');
+                }
+            } catch (error) {
+                document.getElementById('configValues').innerHTML = `❌ خطأ في تحميل التكوينات: ${error.message}`;
+                document.getElementById('configValues').className = 'status error';
+                addTestResult('error', `❌ فشل تحميل audio-config.json: ${error.message}`);
+            }
+        }
+
+        function testBackgroundMusic() {
+            const audio = document.getElementById('backgroundMusicAudio');
+            const volumeFromConfig = audioConfig.backgroundMusic.volume;
+            
+            audio.volume = volumeFromConfig;
+            audio.loop = true;
+            
+            audio.play().then(() => {
+                const actualVolume = Math.round(audio.volume * 100);
+                document.getElementById('bgStatus').innerHTML = `🔊 قيد التشغيل - مستوى الصوت: ${actualVolume}%`;
+                document.getElementById('bgStatus').className = 'status success';
+                
+                if (audio.volume === volumeFromConfig) {
+                    addTestResult('success', `✅ موسيقى الخلفية تعمل بمستوى الصوت الصحيح: ${actualVolume}% (من audio-config.json: ${Math.round(volumeFromConfig * 100)}%)`);
+                } else {
+                    addTestResult('error', `❌ عدم تطابق: المتوقع ${Math.round(volumeFromConfig * 100)}%، الفعلي ${actualVolume}%`);
+                }
+            }).catch(err => {
+                document.getElementById('bgStatus').innerHTML = `❌ فشل التشغيل: ${err.message}`;
+                document.getElementById('bgStatus').className = 'status error';
+                addTestResult('error', `❌ فشل تشغيل الموسيقى الخلفية: ${err.message}`);
+            });
+        }
+
+        function stopBackgroundMusic() {
+            const audio = document.getElementById('backgroundMusicAudio');
+            audio.pause();
+            audio.currentTime = 0;
+            document.getElementById('bgStatus').innerHTML = '⏸️ متوقفة';
+            document.getElementById('bgStatus').className = 'status info';
+            addTestResult('info', 'ℹ️ تم إيقاف الموسيقى الخلفية');
+        }
+
+        function testMaintenanceMusic() {
+            const audio = document.getElementById('maintenanceAudio');
+            const volumeFromConfig = audioConfig.maintenanceMusic.volume;
+            
+            audio.volume = volumeFromConfig;
+            audio.loop = true;
+            
+            audio.play().then(() => {
+                const actualVolume = Math.round(audio.volume * 100);
+                document.getElementById('maintStatus').innerHTML = `🔊 قيد التشغيل - مستوى الصوت: ${actualVolume}%`;
+                document.getElementById('maintStatus').className = 'status success';
+                
+                if (audio.volume === volumeFromConfig) {
+                    addTestResult('success', `✅ موسيقى الصيانة تعمل بمستوى الصوت الصحيح: ${actualVolume}% (من audio-config.json: ${Math.round(volumeFromConfig * 100)}%)`);
+                } else {
+                    addTestResult('error', `❌ عدم تطابق: المتوقع ${Math.round(volumeFromConfig * 100)}%، الفعلي ${actualVolume}%`);
+                }
+            }).catch(err => {
+                document.getElementById('maintStatus').innerHTML = `❌ فشل التشغيل: ${err.message}`;
+                document.getElementById('maintStatus').className = 'status error';
+                addTestResult('error', `❌ فشل تشغيل موسيقى الصيانة: ${err.message}`);
+            });
+        }
+
+        function stopMaintenanceMusic() {
+            const audio = document.getElementById('maintenanceAudio');
+            audio.pause();
+            audio.currentTime = 0;
+            document.getElementById('maintStatus').innerHTML = '⏸️ متوقفة';
+            document.getElementById('maintStatus').className = 'status info';
+            addTestResult('info', 'ℹ️ تم إيقاف موسيقى الصيانة');
+        }
+
+        function addTestResult(type, message) {
+            const resultsDiv = document.getElementById('testResults');
+            const timestamp = new Date().toLocaleTimeString('ar-EG');
+            const resultItem = document.createElement('div');
+            resultItem.className = `status ${type}`;
+            resultItem.innerHTML = `[${timestamp}] ${message}`;
+            resultsDiv.insertBefore(resultItem, resultsDiv.firstChild);
+        }
+
+        // Auto-load config on page load
+        window.addEventListener('load', () => {
+            loadAndDisplayConfig();
+            addTestResult('info', '🚀 صفحة الاختبار جاهزة - قم بتحميل التكوينات أولاً');
+        });
+    </script>
+</body>
+</html>

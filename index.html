@@ -12502,14 +12502,29 @@ function renderPlanTable() {
                                 shopDetails = shopsDetailsData[cleanedName];
                             }
                             
-                            // Try fuzzy matching with partial names
+                            // Try fuzzy matching with partial names and better normalization
                             if (!shopDetails) {
                                 const cleanedName = shop.replace(/^محل\s+/, '').replace(/^صيدلية\s+/, '').replace(/^صالون\s+/, '');
+                                
+                                // Normalize for comparison: remove extra spaces, normalize "ل" variations
+                                const normalizeForMatch = (text) => {
+                                    return text.trim()
+                                        .replace(/\s+/g, ' ')
+                                        .replace(/للطيور/g, 'لطيور')
+                                        .replace(/للأدوية/g, 'لأدوية')
+                                        .replace(/لأسماك/g, 'لاسماك')
+                                        .replace(/لاسماك/g, 'لاسماك')
+                                        .replace(/\s*و\s*/g, ' ')
+                                        .replace(/الزينة/g, 'الزينة')
+                                        .replace(/الزينه/g, 'الزينة');
+                                };
+                                
+                                const normalizedClean = normalizeForMatch(cleanedName);
+                                
                                 for (const [key, value] of Object.entries(shopsDetailsData || {})) {
-                                    // Check if the cleaned name contains key or vice versa (for partial matches)
-                                    const normalizedKey = key.trim().replace(/\s+/g, ' ');
-                                    const normalizedClean = cleanedName.trim().replace(/\s+/g, ' ');
+                                    const normalizedKey = normalizeForMatch(key);
                                     
+                                    // Check if the cleaned name contains key or vice versa (for partial matches)
                                     if (normalizedKey.includes(normalizedClean) || normalizedClean.includes(normalizedKey)) {
                                         shopDetails = value;
                                         break;

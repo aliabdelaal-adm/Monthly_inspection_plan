@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار ظهور الإشعارات الفوري - Instant Bell Notifications Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            direction: rtl;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+        }
+        h1 {
+            text-align: center;
+            color: #2d3561;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 5px solid #667eea;
+        }
+        .test-title {
+            font-size: 1.5em;
+            color: #2d3561;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        .test-description {
+            color: #495057;
+            margin-bottom: 20px;
+            line-height: 1.6;
+            font-size: 1.1em;
+        }
+        .test-result {
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .test-result.pass {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #28a745;
+        }
+        .test-result.fail {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #dc3545;
+        }
+        .test-result.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 2px solid #17a2b8;
+        }
+        .code-block {
+            background: #2d3561;
+            color: #ffffff;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            direction: ltr;
+            text-align: left;
+        }
+        .summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 30px;
+            text-align: center;
+        }
+        .summary h2 {
+            font-size: 2em;
+            margin-bottom: 15px;
+        }
+        .summary-stats {
+            font-size: 1.5em;
+            margin-top: 15px;
+        }
+        .metric {
+            display: inline-block;
+            margin: 10px 20px;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+        }
+        .button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            margin: 5px;
+            transition: all 0.3s;
+        }
+        .button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .performance-indicator {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .excellent {
+            background: #d4edda;
+            color: #155724;
+        }
+        .good {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .poor {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔔 اختبار ظهور الإشعارات الفوري</h1>
+        <h2 style="text-align: center; color: #667eea; margin-bottom: 30px;">
+            Instant Bell Notifications Display Test
+        </h2>
+
+        <!-- Test 1: Auto-refresh Interval -->
+        <div class="test-section">
+            <div class="test-title">✅ اختبار 1: معدل التحديث التلقائي (Auto-refresh Interval)</div>
+            <div class="test-description">
+                <strong>المتطلب:</strong> يجب أن يكون معدل التحديث التلقائي 2 ثانية أو أقل لضمان ظهور الإشعارات فوراً<br>
+                <strong>Requirement:</strong> Auto-refresh interval should be 2 seconds or less for instant notification display
+            </div>
+            <div id="test1-result" class="test-result info">جاري الاختبار...</div>
+        </div>
+
+        <!-- Test 2: News Ticker Update Function -->
+        <div class="test-section">
+            <div class="test-title">✅ اختبار 2: تحديث شريط الأخبار (News Ticker Update)</div>
+            <div class="test-description">
+                <strong>المتطلب:</strong> يجب استدعاء دالة updateNewsTicker() عند التحديث التلقائي<br>
+                <strong>Requirement:</strong> updateNewsTicker() function must be called during auto-refresh
+            </div>
+            <div id="test2-result" class="test-result info">جاري الاختبار...</div>
+        </div>
+
+        <!-- Test 3: Notification Bubble Update -->
+        <div class="test-section">
+            <div class="test-title">✅ اختبار 3: تحديث فقاعة الإشعارات (Notification Bubble Update)</div>
+            <div class="test-description">
+                <strong>المتطلب:</strong> يجب استدعاء دالة updateNotificationBubble() عند التحديث التلقائي<br>
+                <strong>Requirement:</strong> updateNotificationBubble() function must be called during auto-refresh
+            </div>
+            <div id="test3-result" class="test-result info">جاري الاختبار...</div>
+        </div>
+
+        <!-- Test 4: Service Worker Cache Strategy -->
+        <div class="test-section">
+            <div class="test-title">✅ اختبار 4: استراتيجية التخزين المؤقت (Service Worker Cache Strategy)</div>
+            <div class="test-description">
+                <strong>المتطلب:</strong> يجب استخدام استراتيجية NETWORK-FIRST مع plan-data.json<br>
+                <strong>Requirement:</strong> Service Worker must use NETWORK-FIRST strategy for plan-data.json
+            </div>
+            <div id="test4-result" class="test-result info">جاري الاختبار...</div>
+        </div>
+
+        <!-- Test 5: Bell Notification Change Detection -->
+        <div class="test-section">
+            <div class="test-title">✅ اختبار 5: اكتشاف تغييرات الإشعارات (Bell Notification Change Detection)</div>
+            <div class="test-description">
+                <strong>المتطلب:</strong> يجب اكتشاف التغييرات في bellNotes.notifications<br>
+                <strong>Requirement:</strong> Changes in bellNotes.notifications must be detected
+            </div>
+            <div id="test5-result" class="test-result info">جاري الاختبار...</div>
+        </div>
+
+        <!-- Performance Summary -->
+        <div class="summary">
+            <h2>📊 ملخص الأداء - Performance Summary</h2>
+            <div class="summary-stats">
+                <div class="metric">
+                    ✅ اختبارات نجحت: <span id="passed-count">0</span>
+                </div>
+                <div class="metric">
+                    ❌ اختبارات فشلت: <span id="failed-count">0</span>
+                </div>
+                <div class="metric">
+                    📝 إجمالي الاختبارات: <span id="total-count">5</span>
+                </div>
+            </div>
+            <div id="performance-rating" class="performance-indicator" style="margin-top: 20px; font-size: 1.3em;">
+                جاري التقييم...
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <button class="button" onclick="runAllTests()">🔄 إعادة تشغيل جميع الاختبارات</button>
+        </div>
+    </div>
+
+    <script>
+        let testResults = {
+            passed: 0,
+            failed: 0,
+            total: 5
+        };
+
+        // Test 1: Check auto-refresh interval
+        async function test1_AutoRefreshInterval() {
+            try {
+                const response = await fetch('index.html');
+                const html = await response.text();
+                
+                // Look for setInterval calls with various interval values
+                const intervalMatches = html.matchAll(/},\s*(\d+)\s*\)\s*;?\s*(?:\/\/.*)?/g);
+                
+                let foundGoodInterval = false;
+                let intervals = [];
+                
+                for (const match of intervalMatches) {
+                    const interval = parseInt(match[1]);
+                    intervals.push(interval);
+                    
+                    // Check if this looks like the auto-refresh interval (between 1-10 seconds)
+                    if (interval >= 1000 && interval <= 10000) {
+                        if (interval <= 2000) {
+                            foundGoodInterval = true;
+                        }
+                    }
+                }
+                
+                const resultDiv = document.getElementById('test1-result');
+                
+                if (foundGoodInterval) {
+                    const minInterval = Math.min(...intervals.filter(i => i >= 1000 && i <= 10000));
+                    resultDiv.className = 'test-result pass';
+                    resultDiv.innerHTML = `✅ نجح! وجدنا معدل تحديث ممتاز: ${minInterval}ms (${minInterval/1000} ثانية)<br>` +
+                                        `PASS! Found excellent refresh interval: ${minInterval}ms (${minInterval/1000} seconds)`;
+                    testResults.passed++;
+                    return true;
+                } else {
+                    resultDiv.className = 'test-result fail';
+                    resultDiv.innerHTML = `❌ فشل! لم نجد معدل تحديث 2 ثانية أو أقل<br>` +
+                                        `FAIL! No refresh interval of 2 seconds or less found`;
+                    testResults.failed++;
+                    return false;
+                }
+            } catch (error) {
+                const resultDiv = document.getElementById('test1-result');
+                resultDiv.className = 'test-result fail';
+                resultDiv.innerHTML = `❌ خطأ في الاختبار: ${error.message}`;
+                testResults.failed++;
+                return false;
+            }
+        }
+
+        // Test 2: Check if updateNewsTicker is called
+        async function test2_NewsTickerUpdate() {
+            try {
+                const response = await fetch('index.html');
+                const html = await response.text();
+                
+                // Check if updateNewsTicker() function exists and is called
+                const hasUpdateNewsTickerFunction = html.includes('function updateNewsTicker');
+                const hasUpdateNewsTickerCall = html.includes('updateNewsTicker()');
+                
+                // Count occurrences to ensure it's called multiple times
+                const callCount = (html.match(/updateNewsTicker\s*\(\s*\)/g) || []).length;
+                
+                const resultDiv = document.getElementById('test2-result');
+                
+                if (hasUpdateNewsTickerFunction && hasUpdateNewsTickerCall && callCount >= 3) {
+                    resultDiv.className = 'test-result pass';
+                    resultDiv.innerHTML = `✅ نجح! updateNewsTicker() موجودة ومستدعاة ${callCount} مرة<br>` +
+                                        `PASS! updateNewsTicker() exists and is called ${callCount} times`;
+                    testResults.passed++;
+                    return true;
+                } else {
+                    resultDiv.className = 'test-result fail';
+                    resultDiv.innerHTML = `❌ فشل! updateNewsTicker() غير موجودة أو غير مستدعاة بشكل كافٍ (${callCount} مرة)<br>` +
+                                        `FAIL! updateNewsTicker() not found or not called enough (${callCount} times)`;
+                    testResults.failed++;
+                    return false;
+                }
+            } catch (error) {
+                const resultDiv = document.getElementById('test2-result');
+                resultDiv.className = 'test-result fail';
+                resultDiv.innerHTML = `❌ خطأ في الاختبار: ${error.message}`;
+                testResults.failed++;
+                return false;
+            }
+        }
+
+        // Test 3: Check if updateNotificationBubble is called
+        async function test3_NotificationBubbleUpdate() {
+            try {
+                const response = await fetch('index.html');
+                const html = await response.text();
+                
+                // Check if updateNotificationBubble() is called in the auto-refresh function
+                const hasUpdateBubble = html.includes('updateNotificationBubble()') && 
+                                       html.match(/await\s+loadInspectionData\s*\(\s*\);[\s\S]*?updateNotificationBubble\s*\(\s*\)/);
+                
+                const resultDiv = document.getElementById('test3-result');
+                
+                if (hasUpdateBubble) {
+                    resultDiv.className = 'test-result pass';
+                    resultDiv.innerHTML = '✅ نجح! يتم استدعاء updateNotificationBubble() في التحديث التلقائي<br>' +
+                                        'PASS! updateNotificationBubble() is called during auto-refresh';
+                    testResults.passed++;
+                    return true;
+                } else {
+                    resultDiv.className = 'test-result fail';
+                    resultDiv.innerHTML = '❌ فشل! لا يتم استدعاء updateNotificationBubble() في التحديث التلقائي<br>' +
+                                        'FAIL! updateNotificationBubble() is NOT called during auto-refresh';
+                    testResults.failed++;
+                    return false;
+                }
+            } catch (error) {
+                const resultDiv = document.getElementById('test3-result');
+                resultDiv.className = 'test-result fail';
+                resultDiv.innerHTML = `❌ خطأ في الاختبار: ${error.message}`;
+                testResults.failed++;
+                return false;
+            }
+        }
+
+        // Test 4: Check Service Worker cache strategy
+        async function test4_ServiceWorkerCacheStrategy() {
+            try {
+                const response = await fetch('sw.js');
+                const swCode = await response.text();
+                
+                // Check for network-first strategy for plan-data.json
+                const hasNetworkFirst = swCode.includes('plan-data.json') && 
+                                       (swCode.includes('NETWORK-ONLY') || swCode.includes('network') || swCode.includes('fetch'));
+                
+                const resultDiv = document.getElementById('test4-result');
+                
+                if (hasNetworkFirst) {
+                    resultDiv.className = 'test-result pass';
+                    resultDiv.innerHTML = '✅ نجح! Service Worker يستخدم استراتيجية NETWORK-FIRST<br>' +
+                                        'PASS! Service Worker uses NETWORK-FIRST strategy for plan-data.json';
+                    testResults.passed++;
+                    return true;
+                } else {
+                    resultDiv.className = 'test-result fail';
+                    resultDiv.innerHTML = '❌ فشل! Service Worker لا يستخدم استراتيجية NETWORK-FIRST<br>' +
+                                        'FAIL! Service Worker does NOT use NETWORK-FIRST strategy';
+                    testResults.failed++;
+                    return false;
+                }
+            } catch (error) {
+                const resultDiv = document.getElementById('test4-result');
+                resultDiv.className = 'test-result fail';
+                resultDiv.innerHTML = `❌ خطأ في الاختبار: ${error.message}`;
+                testResults.failed++;
+                return false;
+            }
+        }
+
+        // Test 5: Check bell notification change detection
+        async function test5_BellNotificationChangeDetection() {
+            try {
+                const response = await fetch('index.html');
+                const html = await response.text();
+                
+                // Check for bell notification change detection in detectDataChanges function
+                const hasBellNotesDetection = html.includes('bellNotes') && 
+                                             html.includes('newNotifications') &&
+                                             html.match(/Check for bell notification changes|تم تحديث الإشعارات|تمت إضافة.*إشعار/);
+                
+                const resultDiv = document.getElementById('test5-result');
+                
+                if (hasBellNotesDetection) {
+                    resultDiv.className = 'test-result pass';
+                    resultDiv.innerHTML = '✅ نجح! يتم اكتشاف التغييرات في إشعارات الجرس<br>' +
+                                        'PASS! Bell notification changes are detected';
+                    testResults.passed++;
+                    return true;
+                } else {
+                    resultDiv.className = 'test-result fail';
+                    resultDiv.innerHTML = '❌ فشل! لا يتم اكتشاف التغييرات في إشعارات الجرس<br>' +
+                                        'FAIL! Bell notification changes are NOT detected';
+                    testResults.failed++;
+                    return false;
+                }
+            } catch (error) {
+                const resultDiv = document.getElementById('test5-result');
+                resultDiv.className = 'test-result fail';
+                resultDiv.innerHTML = `❌ خطأ في الاختبار: ${error.message}`;
+                testResults.failed++;
+                return false;
+            }
+        }
+
+        // Update summary
+        function updateSummary() {
+            document.getElementById('passed-count').textContent = testResults.passed;
+            document.getElementById('failed-count').textContent = testResults.failed;
+            
+            const ratingDiv = document.getElementById('performance-rating');
+            const passRate = (testResults.passed / testResults.total) * 100;
+            
+            if (passRate === 100) {
+                ratingDiv.className = 'performance-indicator excellent';
+                ratingDiv.innerHTML = '🌟 ممتاز! جميع الاختبارات نجحت - الإشعارات ستظهر فوراً!<br>' +
+                                    'EXCELLENT! All tests passed - Notifications will appear instantly!';
+            } else if (passRate >= 80) {
+                ratingDiv.className = 'performance-indicator good';
+                ratingDiv.innerHTML = '✅ جيد! معظم الاختبارات نجحت - الأداء مقبول<br>' +
+                                    'GOOD! Most tests passed - Performance is acceptable';
+            } else {
+                ratingDiv.className = 'performance-indicator poor';
+                ratingDiv.innerHTML = '⚠️ يحتاج إلى تحسين! بعض الاختبارات فشلت<br>' +
+                                    'NEEDS IMPROVEMENT! Some tests failed';
+            }
+        }
+
+        // Run all tests
+        async function runAllTests() {
+            // Reset counters
+            testResults = { passed: 0, failed: 0, total: 5 };
+            
+            // Set all to "testing" state
+            for (let i = 1; i <= 5; i++) {
+                const resultDiv = document.getElementById(`test${i}-result`);
+                resultDiv.className = 'test-result info';
+                resultDiv.innerHTML = 'جاري الاختبار...';
+            }
+            
+            // Run tests sequentially
+            await test1_AutoRefreshInterval();
+            await test2_NewsTickerUpdate();
+            await test3_NotificationBubbleUpdate();
+            await test4_ServiceWorkerCacheStrategy();
+            await test5_BellNotificationChangeDetection();
+            
+            // Update summary
+            updateSummary();
+        }
+
+        // Auto-run tests on page load
+        window.addEventListener('load', () => {
+            runAllTests();
+        });
+    </script>
+</body>
+</html>

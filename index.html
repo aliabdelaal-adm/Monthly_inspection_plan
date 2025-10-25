@@ -7596,13 +7596,15 @@ function startAutoRefresh() {
                         
                         // Load new data immediately without maintenance overlay
                         await loadInspectionData();
-                        // Force notification bubble update
+                        // Force notification ticker and bubble update for instant display
+                        updateNewsTicker();
                         updateNotificationBubble();
                         showUpdateMessage('✅ تم تحديث البيانات تلقائياً - التغييرات ظاهرة الآن');
                     } else {
                         // No specific changes detected, just update normally
                         await loadInspectionData();
-                        // Force notification bubble update
+                        // Force notification ticker and bubble update for instant display
+                        updateNewsTicker();
                         updateNotificationBubble();
                         showUpdateMessage('✅ تم تحديث البيانات تلقائياً');
                     }
@@ -7611,7 +7613,7 @@ function startAutoRefresh() {
         } catch (error) {
             console.log('Auto-refresh check failed:', error);
         }
-    }, 5000); // Check every 5 seconds for even faster sync and to prevent "frozen" page
+    }, 2000); // Check every 2 seconds for instant notification display (faster than 5 seconds)
 }
 
 // Detect what changed in the data

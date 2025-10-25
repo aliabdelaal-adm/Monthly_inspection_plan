@@ -7657,6 +7657,34 @@ function detectDataChanges(oldData, newData) {
             }
         }
         
+        // Check for bell notification changes
+        if (newData.bellNotes && oldData.bellNotes) {
+            const newNotifications = newData.bellNotes.notifications || [];
+            const oldNotifications = oldData.bellNotes.notifications || [];
+            
+            if (newNotifications.length > oldNotifications.length) {
+                const diff = newNotifications.length - oldNotifications.length;
+                changes.push(`تمت إضافة ${diff} إشعار جديد`);
+            } else if (newNotifications.length < oldNotifications.length) {
+                const diff = oldNotifications.length - newNotifications.length;
+                changes.push(`تم حذف ${diff} إشعار`);
+            } else if (newNotifications.length > 0 && oldNotifications.length > 0) {
+                // Check if notification content changed (compare timestamps of first notification)
+                const newFirstTimestamp = newNotifications[0].timestamp;
+                const oldFirstTimestamp = oldNotifications[0].timestamp;
+                
+                if (newFirstTimestamp !== oldFirstTimestamp) {
+                    changes.push('تم تحديث الإشعارات');
+                }
+            }
+        } else if (newData.bellNotes && (!oldData.bellNotes || !oldData.bellNotes.notifications)) {
+            // New bell notifications added when there were none before
+            const newNotifications = newData.bellNotes.notifications || [];
+            if (newNotifications.length > 0) {
+                changes.push(`تمت إضافة ${newNotifications.length} إشعار جديد`);
+            }
+        }
+        
         // If no specific changes detected, just say data updated
         if (changes.length === 0) {
             changes.push('تم تحديث البيانات');

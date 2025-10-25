@@ -8141,6 +8141,15 @@ function applyAudioConfig() {
         }
     }
     
+    // Sync smartControlState with audioConfig for background music
+    if (typeof smartControlState !== 'undefined') {
+        smartControlState.musicVolume = Math.round(audioConfig.backgroundMusic.volume * 100);
+        smartControlState.maintenanceMusicVolume = Math.round(audioConfig.maintenanceMusic.volume * 100);
+        saveSmartControlState();
+        updateSmartControlUI();
+        console.log(`🔄 Smart Control State synced with audio config - BG: ${smartControlState.musicVolume}%, Maintenance: ${smartControlState.maintenanceMusicVolume}%`);
+    }
+    
     // Apply maintenance music config (sync with maintenanceConfig for backward compatibility)
     const maintAudio = document.getElementById('maintenanceAudio');
     if (maintAudio) {
@@ -8482,9 +8491,9 @@ let smartControlState = {
     maintenanceMessageVisible: false,
     maintenanceAutoShowPrevented: false,
     musicPlaying: false,
-    musicVolume: 5, // Background music volume (5%) - comfortable and non-annoying
+    musicVolume: 1, // Background music volume (1%) - will be synced from audioConfig
     maintenanceMusicPlaying: false,
-    maintenanceMusicVolume: 0 // Maintenance music volume (0% = muted by default)
+    maintenanceMusicVolume: 5 // Maintenance music volume (5%) - will be synced from audioConfig
 };
 
 // Initialize smart control panel
@@ -8693,8 +8702,12 @@ function smartPlayBackgroundMusic() {
         audio.load();
     }
     
+    // Get volume from audioConfig (primary source) or smartControlState (fallback)
+    const configVolume = audioConfig.backgroundMusic.volume;
+    const volumeToUse = configVolume;
+    
     // Set volume and loop
-    audio.volume = smartControlState.musicVolume / 100;
+    audio.volume = volumeToUse;
     audio.loop = true;
     audio.currentTime = 0;
     
@@ -8704,9 +8717,10 @@ function smartPlayBackgroundMusic() {
     if (playPromise !== undefined) {
         playPromise.then(() => {
             smartControlState.musicPlaying = true;
+            smartControlState.musicVolume = Math.round(volumeToUse * 100);
             saveSmartControlState();
             updateSmartControlUI();
-            console.log(`🎵 Background music playing at ${smartControlState.musicVolume}% volume`);
+            console.log(`🎵 Background music playing at ${Math.round(volumeToUse * 100)}% volume (from audioConfig: ${configVolume})`);
         }).catch(err => {
             console.log('⚠️ Direct play failed, trying muted start...');
             
@@ -8718,11 +8732,12 @@ function smartPlayBackgroundMusic() {
                 mutedPromise.then(() => {
                     setTimeout(() => {
                         audio.muted = false;
-                        audio.volume = smartControlState.musicVolume / 100;
+                        audio.volume = volumeToUse;
                         smartControlState.musicPlaying = true;
+                        smartControlState.musicVolume = Math.round(volumeToUse * 100);
                         saveSmartControlState();
                         updateSmartControlUI();
-                        console.log(`🎵 Background music playing (after unmute) at ${smartControlState.musicVolume}% volume`);
+                        console.log(`🎵 Background music playing (after unmute) at ${Math.round(volumeToUse * 100)}% volume`);
                     }, 100);
                 }).catch(err2 => {
                     console.error('❌ Failed to play background music:', err2);
@@ -8763,6 +8778,9 @@ function smartStopBackgroundMusic() {
 function smartUpdateVolume(value) {
     smartControlState.musicVolume = parseInt(value);
     
+    // Also update audioConfig to keep them in sync
+    audioConfig.backgroundMusic.volume = parseInt(value) / 100;
+    
     // Update display
     const volumeDisplay = document.getElementById('smartVolumeDisplay');
     if (volumeDisplay) {
@@ -8775,7 +8793,7 @@ function smartUpdateVolume(value) {
         audio.volume = parseInt(value) / 100;
     }
     
-    console.log(`🔊 Background music volume updated to ${value}%`);
+    console.log(`🔊 Background music volume updated to ${value}% (audioConfig synced: ${audioConfig.backgroundMusic.volume})`);
 }
 
 function smartSaveVolume(value) {
@@ -8825,8 +8843,12 @@ function smartPlayMaintenanceMusic() {
         audio.load();
     }
     
+    // Get volume from audioConfig (primary source) or smartControlState (fallback)
+    const configVolume = audioConfig.maintenanceMusic.volume;
+    const volumeToUse = configVolume;
+    
     // Set volume and loop
-    audio.volume = smartControlState.maintenanceMusicVolume / 100;
+    audio.volume = volumeToUse;
     audio.loop = true;
     audio.currentTime = 0;
     
@@ -8836,9 +8858,10 @@ function smartPlayMaintenanceMusic() {
     if (playPromise !== undefined) {
         playPromise.then(() => {
             smartControlState.maintenanceMusicPlaying = true;
+            smartControlState.maintenanceMusicVolume = Math.round(volumeToUse * 100);
             saveSmartControlState();
             updateSmartControlUI();
-            console.log(`🔧 Maintenance music playing at ${smartControlState.maintenanceMusicVolume}% volume`);
+            console.log(`🔧 Maintenance music playing at ${Math.round(volumeToUse * 100)}% volume (from audioConfig: ${configVolume})`);
         }).catch(err => {
             console.log('⚠️ Direct play failed, trying muted start...');
             
@@ -8850,11 +8873,12 @@ function smartPlayMaintenanceMusic() {
                 mutedPromise.then(() => {
                     setTimeout(() => {
                         audio.muted = false;
-                        audio.volume = smartControlState.maintenanceMusicVolume / 100;
+                        audio.volume = volumeToUse;
                         smartControlState.maintenanceMusicPlaying = true;
+                        smartControlState.maintenanceMusicVolume = Math.round(volumeToUse * 100);
                         saveSmartControlState();
                         updateSmartControlUI();
-                        console.log(`🔧 Maintenance music playing (after unmute) at ${smartControlState.maintenanceMusicVolume}% volume`);
+                        console.log(`🔧 Maintenance music playing (after unmute) at ${Math.round(volumeToUse * 100)}% volume`);
                     }, 100);
                 }).catch(err2 => {
                     console.error('❌ Failed to play maintenance music:', err2);
@@ -8895,6 +8919,9 @@ function smartStopMaintenanceMusic() {
 function smartUpdateMaintenanceVolume(value) {
     smartControlState.maintenanceMusicVolume = parseInt(value);
     
+    // Also update audioConfig to keep them in sync
+    audioConfig.maintenanceMusic.volume = parseInt(value) / 100;
+    
     // Update display
     const volumeDisplay = document.getElementById('smartMaintenanceVolumeDisplay');
     if (volumeDisplay) {
@@ -8907,18 +8934,20 @@ function smartUpdateMaintenanceVolume(value) {
         audio.volume = parseInt(value) / 100;
     }
     
-    console.log(`🔊 Maintenance music volume updated to ${value}%`);
+    console.log(`🔊 Maintenance music volume updated to ${value}% (audioConfig synced: ${audioConfig.maintenanceMusic.volume})`);
 }
 
 function smartSaveMaintenanceVolume(value) {
     smartControlState.maintenanceMusicVolume = parseInt(value);
+    audioConfig.maintenanceMusic.volume = parseInt(value) / 100;
     saveSmartControlState();
     updateSmartControlUI();
-    console.log(`💾 Maintenance music volume saved: ${value}%`);
+    console.log(`💾 Maintenance music volume saved: ${value}% (audioConfig: ${audioConfig.maintenanceMusic.volume})`);
 }
 
 function smartSetMaintenanceVolume(value) {
     smartControlState.maintenanceMusicVolume = value;
+    audioConfig.maintenanceMusic.volume = value / 100;
     
     // Update slider
     const volumeSlider = document.getElementById('smartMaintenanceVolumeSlider');
@@ -8939,7 +8968,7 @@ function smartSetMaintenanceVolume(value) {
     }
     
     saveSmartControlState();
-    console.log(`🎚️ Maintenance music volume preset applied: ${value}%`);
+    console.log(`🎚️ Maintenance music volume preset applied: ${value}% (audioConfig: ${audioConfig.maintenanceMusic.volume})`);
 }
 
 // Quick Actions

@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار ظهور إشعارات الجرس الفورية - Test Bell Notifications Instant Display</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+        
+        .header h1 {
+            color: #2d3561;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #6c757d;
+            font-size: 1.1em;
+        }
+        
+        .test-section {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .test-section h2 {
+            color: #2d3561;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .test-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 5px solid #6c757d;
+        }
+        
+        .test-item.passed {
+            border-left-color: #28a745;
+        }
+        
+        .test-item.failed {
+            border-left-color: #dc3545;
+        }
+        
+        .test-item h3 {
+            color: #495057;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .test-item p {
+            color: #6c757d;
+            line-height: 1.6;
+            margin-top: 5px;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+        
+        .status.pass {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.fail {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .code-block {
+            background: #2d3561;
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+        
+        .summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 30px;
+            text-align: center;
+        }
+        
+        .summary h2 {
+            margin-bottom: 15px;
+            font-size: 2em;
+        }
+        
+        .summary .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        
+        .summary .stat {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px 30px;
+            border-radius: 10px;
+        }
+        
+        .summary .stat .number {
+            font-size: 2.5em;
+            font-weight: 700;
+            display: block;
+        }
+        
+        .summary .stat .label {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔔 اختبار ظهور إشعارات الجرس الفورية</h1>
+            <p>التحقق من أن إشعارات الجرس تظهر مباشرة في شاشة العرض الرئيسية index.html</p>
+        </div>
+
+        <div class="test-section">
+            <h2>📋 نظرة عامة على المشكلة</h2>
+            <div class="test-item">
+                <h3>المشكلة الأصلية</h3>
+                <p>إشعارات الجرس لا تظهر مباشرة في شاشة العرض الرئيسية index.html عند تحديثها في GitHub</p>
+                <p><strong>السبب:</strong> دالة detectDataChanges() لم تكن تتحقق من تغييرات إشعارات الجرس</p>
+            </div>
+            
+            <div class="test-item">
+                <h3>الحل المطبق</h3>
+                <p>إضافة كود للتحقق من تغييرات إشعارات الجرس في دالة detectDataChanges()</p>
+                <p><strong>النتيجة المتوقعة:</strong> ظهور الإشعارات خلال 10 ثوانٍ (فترة التحديث التلقائي)</p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🧪 اختبارات وظيفة detectDataChanges()</h2>
+            <div id="testResults"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>📝 الكود المضاف</h2>
+            <div class="code-block">
+// Check for bell notification changes
+if (newData.bellNotes && oldData.bellNotes) {
+    const newNotifications = newData.bellNotes.notifications || [];
+    const oldNotifications = oldData.bellNotes.notifications || [];
+    
+    if (newNotifications.length > oldNotifications.length) {
+        const diff = newNotifications.length - oldNotifications.length;
+        changes.push(`تمت إضافة ${diff} إشعار جديد`);
+    } else if (newNotifications.length < oldNotifications.length) {
+        const diff = oldNotifications.length - newNotifications.length;
+        changes.push(`تم حذف ${diff} إشعار`);
+    } else if (newNotifications.length > 0 && oldNotifications.length > 0) {
+        // Check if notification content changed
+        const newFirstTimestamp = newNotifications[0].timestamp;
+        const oldFirstTimestamp = oldNotifications[0].timestamp;
+        
+        if (newFirstTimestamp !== oldFirstTimestamp) {
+            changes.push('تم تحديث الإشعارات');
+        }
+    }
+} else if (newData.bellNotes && (!oldData.bellNotes || !oldData.bellNotes.notifications)) {
+    // New bell notifications added when there were none before
+    const newNotifications = newData.bellNotes.notifications || [];
+    if (newNotifications.length > 0) {
+        changes.push(`تمت إضافة ${newNotifications.length} إشعار جديد`);
+    }
+}
+            </div>
+        </div>
+
+        <div id="summary" class="summary" style="display:none;">
+            <h2>نتيجة الاختبار</h2>
+            <div class="stats">
+                <div class="stat">
+                    <span class="number" id="passCount">0</span>
+                    <span class="label">اختبارات ناجحة</span>
+                </div>
+                <div class="stat">
+                    <span class="number" id="failCount">0</span>
+                    <span class="label">اختبارات فاشلة</span>
+                </div>
+                <div class="stat">
+                    <span class="number" id="totalCount">0</span>
+                    <span class="label">إجمالي الاختبارات</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simulate the detectDataChanges function from index.html
+        // Note: This is a simplified version focusing on bell notifications testing
+        // The original function also checks inspectors, shops, and areas - omitted here for test clarity
+        function detectDataChanges(oldData, newData) {
+            const changes = [];
+            
+            if (!oldData || !oldData.inspectionData) {
+                return ['بيانات جديدة متاحة'];
+            }
+            
+            try {
+                // Check for new inspections
+                if (newData.inspectionData && oldData.inspectionData) {
+                    const newCount = newData.inspectionData.length;
+                    const oldCount = oldData.inspectionData.length;
+                    
+                    if (newCount > oldCount) {
+                        const diff = newCount - oldCount;
+                        changes.push(`تمت إضافة ${diff} تفتيش جديد`);
+                    } else if (newCount < oldCount) {
+                        const diff = oldCount - newCount;
+                        changes.push(`تم حذف ${diff} تفتيش`);
+                    }
+                }
+                
+                // Check for bell notification changes (NEW CODE)
+                if (newData.bellNotes && oldData.bellNotes) {
+                    const newNotifications = newData.bellNotes.notifications || [];
+                    const oldNotifications = oldData.bellNotes.notifications || [];
+                    
+                    if (newNotifications.length > oldNotifications.length) {
+                        const diff = newNotifications.length - oldNotifications.length;
+                        changes.push(`تمت إضافة ${diff} إشعار جديد`);
+                    } else if (newNotifications.length < oldNotifications.length) {
+                        const diff = oldNotifications.length - newNotifications.length;
+                        changes.push(`تم حذف ${diff} إشعار`);
+                    } else if (newNotifications.length > 0 && oldNotifications.length > 0) {
+                        // Check if notification content changed
+                        const newFirstTimestamp = newNotifications[0].timestamp;
+                        const oldFirstTimestamp = oldNotifications[0].timestamp;
+                        
+                        if (newFirstTimestamp !== oldFirstTimestamp) {
+                            changes.push('تم تحديث الإشعارات');
+                        }
+                    }
+                } else if (newData.bellNotes && (!oldData.bellNotes || !oldData.bellNotes.notifications)) {
+                    // New bell notifications added when there were none before
+                    const newNotifications = newData.bellNotes.notifications || [];
+                    if (newNotifications.length > 0) {
+                        changes.push(`تمت إضافة ${newNotifications.length} إشعار جديد`);
+                    }
+                }
+                
+                // If no specific changes detected, just say data updated
+                if (changes.length === 0) {
+                    changes.push('تم تحديث البيانات');
+                }
+            } catch (e) {
+                console.error('Error detecting changes:', e);
+                changes.push('تم تحديث البيانات');
+            }
+            
+            return changes;
+        }
+
+        // Test cases
+        const tests = [
+            {
+                name: 'إضافة إشعار جديد',
+                description: 'التحقق من اكتشاف إضافة إشعار واحد',
+                oldData: {
+                    inspectionData: [],
+                    bellNotes: {
+                        notifications: [
+                            { id: '1', text: 'إشعار قديم', timestamp: '2025-10-01T00:00:00Z' }
+                        ]
+                    }
+                },
+                newData: {
+                    inspectionData: [],
+                    bellNotes: {
+                        notifications: [
+                            { id: '2', text: 'إشعار جديد', timestamp: '2025-10-02T00:00:00Z' },
+                            { id: '1', text: 'إشعار قديم', timestamp: '2025-10-01T00:00:00Z' }
+                        ]
+                    }
+                },
+                expectedChange: 'تمت إضافة 1 إشعار جديد'
+            },
+            {
+                name: 'إضافة عدة إشعارات',
+                description: 'التحقق من اكتشاف إضافة 3 إشعارات جديدة',
+                oldData: {
+                    inspectionData: [],
+                    bellNotes: {
+                        notifications: [
+                            { id: '1', text: 'إشعار قديم', timestamp: '2025-10-01T00:00:00Z' }
+                        ]
+                    }
+                },
+                newData: {
+                    inspectionData: [],
+                    bellNotes: {
+                        notifications: [
+                            { id: '4', text: 'إشعار 4', timestamp: '2025-10-04T00:00:00Z' },
+                            { id: '3', text: 'إشعار 3', timestamp: '2025-10-03T00:00:00Z' },
+                            { id: '2', text: 'إشعار 2', timestamp: '2025-10-02T00:00:00Z' },
+                            { id: '1', text: 'إشعار قديم', timestamp: '2025-10-01T00:00:00Z' }
+                        ]
+                    }
+                },
+                expectedChange: 'تمت إضافة 3 إشعار جديد'
+            },
+            {
+                name: 'حذف إشعار',
+                description: 'التحقق من اكتشاف حذف إشعار',
+                oldData: {
+                    inspectionData: [],
+                    bellNotes: {
+                        notifications: [
+                            { id: '2', text: 'إشعار 2', timestamp: '2025-10-02T00:00:00Z' },
+                            { id: '1', text: 'إشعار 1', timestamp: '2025-10-01T00:00:00Z' }
+                        ]
+                    }
+                },
+                newData: {
+                    inspectionData: [],
+                    bellNotes: {
+                        notifications: [
+                            { id: '1', text: 'إشعار 1', timestamp: '2025-10-01T00:00:00Z' }
+                        ]
+                    }
+                },
+                expectedChange: 'تم حذف 1 إشعار'
+            },
+            {
+                name: 'تحديث محتوى الإشعار',
+                description: 'التحقق من اكتشاف تعديل محتوى الإشعار الأول',
+                oldData: {
+                    inspectionData: [],
+                    bellNotes: {
+                        notifications: [
+                            { id: '1', text: 'إشعار قديم', timestamp: '2025-10-01T00:00:00Z' }
+                        ]
+                    }
+                },
+                newData: {
+                    inspectionData: [],
+                    bellNotes: {
+                        notifications: [
+                            { id: '1', text: 'إشعار محدث', timestamp: '2025-10-02T00:00:00Z' }
+                        ]
+                    }
+                },
+                expectedChange: 'تم تحديث الإشعارات'
+            },
+            {
+                name: 'إضافة إشعارات لأول مرة',
+                description: 'التحقق من اكتشاف إضافة إشعارات عند عدم وجود إشعارات سابقاً',
+                oldData: {
+                    inspectionData: [],
+                    bellNotes: {
+                        notifications: []
+                    }
+                },
+                newData: {
+                    inspectionData: [],
+                    bellNotes: {
+                        notifications: [
+                            { id: '2', text: 'إشعار 2', timestamp: '2025-10-02T00:00:00Z' },
+                            { id: '1', text: 'إشعار 1', timestamp: '2025-10-01T00:00:00Z' }
+                        ]
+                    }
+                },
+                expectedChange: 'تمت إضافة 2 إشعار جديد'
+            },
+            {
+                name: 'لا يوجد تغيير في الإشعارات',
+                description: 'التحقق من عدم اكتشاف تغيير عندما تكون الإشعارات متطابقة',
+                oldData: {
+                    inspectionData: [],
+                    bellNotes: {
+                        notifications: [
+                            { id: '1', text: 'إشعار', timestamp: '2025-10-01T00:00:00Z' }
+                        ]
+                    }
+                },
+                newData: {
+                    inspectionData: [],
+                    bellNotes: {
+                        notifications: [
+                            { id: '1', text: 'إشعار', timestamp: '2025-10-01T00:00:00Z' }
+                        ]
+                    }
+                },
+                expectedChange: 'تم تحديث البيانات'
+            }
+        ];
+
+        // Run tests
+        let passCount = 0;
+        let failCount = 0;
+        const resultsDiv = document.getElementById('testResults');
+
+        tests.forEach((test, index) => {
+            const changes = detectDataChanges(test.oldData, test.newData);
+            const passed = changes.includes(test.expectedChange);
+            
+            if (passed) passCount++;
+            else failCount++;
+
+            const testDiv = document.createElement('div');
+            testDiv.className = `test-item ${passed ? 'passed' : 'failed'}`;
+            testDiv.innerHTML = `
+                <h3>
+                    <span class="status ${passed ? 'pass' : 'fail'}">${passed ? '✓ نجح' : '✗ فشل'}</span>
+                    ${test.name}
+                </h3>
+                <p><strong>الوصف:</strong> ${test.description}</p>
+                <p><strong>التغيير المتوقع:</strong> ${test.expectedChange}</p>
+                <p><strong>التغييرات المكتشفة:</strong> ${changes.join(', ')}</p>
+            `;
+            resultsDiv.appendChild(testDiv);
+        });
+
+        // Update summary
+        document.getElementById('passCount').textContent = passCount;
+        document.getElementById('failCount').textContent = failCount;
+        document.getElementById('totalCount').textContent = tests.length;
+        document.getElementById('summary').style.display = 'block';
+
+        // Log results to console
+        console.log('Test Results:', {
+            passed: passCount,
+            failed: failCount,
+            total: tests.length,
+            success: failCount === 0
+        });
+    </script>
+</body>
+</html>

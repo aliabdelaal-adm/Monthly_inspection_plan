@@ -119,6 +119,15 @@
                 } else if (!lastLoadTime) {
                     sessionStorage.setItem('pageLoadTime', now.toString());
                 }
+                
+                // Force immediate data refresh and UI update when page becomes visible
+                console.log('🔄 Page became visible - refreshing data and UI');
+                if (typeof loadInspectionData === 'function') {
+                    loadInspectionData();
+                }
+                if (typeof updateNotificationBubble === 'function') {
+                    updateNotificationBubble();
+                }
             }
         });
         
@@ -7587,10 +7596,14 @@ function startAutoRefresh() {
                         
                         // Load new data immediately without maintenance overlay
                         await loadInspectionData();
+                        // Force notification bubble update
+                        updateNotificationBubble();
                         showUpdateMessage('✅ تم تحديث البيانات تلقائياً - التغييرات ظاهرة الآن');
                     } else {
                         // No specific changes detected, just update normally
                         await loadInspectionData();
+                        // Force notification bubble update
+                        updateNotificationBubble();
                         showUpdateMessage('✅ تم تحديث البيانات تلقائياً');
                     }
                 }
@@ -7598,7 +7611,7 @@ function startAutoRefresh() {
         } catch (error) {
             console.log('Auto-refresh check failed:', error);
         }
-    }, 10000); // Check every 10 seconds - reduced from 30 seconds for faster sync across devices
+    }, 5000); // Check every 5 seconds for even faster sync and to prevent "frozen" page
 }
 
 // Detect what changed in the data
@@ -7692,6 +7705,9 @@ function startDailyRefresh() {
                 // Just refresh the table to show new day's inspections
                 renderPlanTable();
             }
+            
+            // Force notification bubble update on day change
+            updateNotificationBubble();
             
             const todayStr = now.toLocaleDateString('ar-EG');
             showUpdateMessage(`تم تحديث التفتيشات اليومية - عرض تفتيشات ${todayStr}`);
@@ -10428,6 +10444,8 @@ async function loadInspectionData() {
                     }
                     // Update news ticker with loaded notifications
                     updateNewsTicker();
+                    // Update notification bubble immediately
+                    updateNotificationBubble();
                 }
                 // Update global allPlanData with loaded data
                 allPlanData = {
@@ -10447,6 +10465,12 @@ async function loadInspectionData() {
                     console.log('✅ Data cached in localStorage with version:', data.lastUpdate);
                 } catch (e) {
                     console.warn('Failed to cache data in localStorage:', e);
+                }
+                
+                // Ensure shops details are loaded before rendering table
+                if (Object.keys(shopsDetailsData).length === 0) {
+                    console.log('🔄 Loading shop details before rendering table...');
+                    await loadShopsDetails();
                 }
                 
                 // Display last update date/time for all users
@@ -12469,16 +12493,24 @@ function renderPlanTable() {
                             const isRed = shouldShopBeRed(shop, row.area);
                             const shopStyle = isRed ? 'cursor:pointer;color:#ff0000;font-weight:600;' : 'cursor:pointer;';
                             
-                            // Get shop details for Google Maps link
+                            // Get shop details for Google Maps link - IMPROVED MATCHING
                             let shopDetails = shopsDetailsData[shop];
+                            
+                            // Try without "محل " prefix
                             if (!shopDetails) {
-                                const cleanedName = shop.replace(/^محل\\s+/, '');
+                                const cleanedName = shop.replace(/^محل\s+/, '');
                                 shopDetails = shopsDetailsData[cleanedName];
                             }
+                            
+                            // Try fuzzy matching with partial names
                             if (!shopDetails) {
-                                const cleanedName = shop.replace(/^محل\\s+/, '');
+                                const cleanedName = shop.replace(/^محل\s+/, '').replace(/^صيدلية\s+/, '').replace(/^صالون\s+/, '');
                                 for (const [key, value] of Object.entries(shopsDetailsData || {})) {
-                                    if (key.includes(cleanedName) || cleanedName.includes(key)) {
+                                    // Check if the cleaned name contains key or vice versa (for partial matches)
+                                    const normalizedKey = key.trim().replace(/\s+/g, ' ');
+                                    const normalizedClean = cleanedName.trim().replace(/\s+/g, ' ');
+                                    
+                                    if (normalizedKey.includes(normalizedClean) || normalizedClean.includes(normalizedKey)) {
                                         shopDetails = value;
                                         break;
                                     }

@@ -5054,10 +5054,10 @@
                     </button>
                 </div>
                 
-                <!-- Volume Control -->
+                <!-- Background Music Volume Control -->
                 <div class="volume-control">
                     <label for="smartVolumeSlider">
-                        🔊 مستوى الصوت: <span id="smartVolumeDisplay">15%</span>
+                        🔊 مستوى صوت الموسيقى الخلفية: <span id="smartVolumeDisplay">15%</span>
                     </label>
                     <input 
                         type="range" 
@@ -5071,6 +5071,8 @@
                     >
                     <div class="volume-presets">
                         <button class="preset-btn" onclick="smartSetVolume(0)">🔇 0%</button>
+                        <button class="preset-btn" onclick="smartSetVolume(1)">🔈 1%</button>
+                        <button class="preset-btn" onclick="smartSetVolume(5)">🔉 5%</button>
                         <button class="preset-btn" onclick="smartSetVolume(10)">🔉 10%</button>
                         <button class="preset-btn" onclick="smartSetVolume(25)">🔊 25%</button>
                         <button class="preset-btn" onclick="smartSetVolume(50)">🔊 50%</button>
@@ -5080,6 +5082,56 @@
                 
                 <div class="control-info">
                     <small id="musicControlInfo">الموسيقى متوقفة ومستقلة عن رسالة التحديث</small>
+                </div>
+            </div>
+            
+            <!-- Maintenance Music Control Section -->
+            <div class="control-section">
+                <h4>🔧 التحكم في موسيقى الصيانة</h4>
+                <div class="control-status">
+                    <span class="status-label">الحالة:</span>
+                    <span id="maintenanceMusicStatusIndicator" class="status-value">🔇 متوقفة</span>
+                </div>
+                <div class="control-buttons">
+                    <button class="smart-btn play-btn" onclick="smartPlayMaintenanceMusic()">
+                        ▶️ تشغيل موسيقى الصيانة
+                    </button>
+                    <button class="smart-btn pause-btn" onclick="smartPauseMaintenanceMusic()">
+                        ⏸️ إيقاف مؤقت
+                    </button>
+                    <button class="smart-btn stop-btn" onclick="smartStopMaintenanceMusic()">
+                        ⏹️ إيقاف نهائي
+                    </button>
+                </div>
+                
+                <!-- Maintenance Music Volume Control -->
+                <div class="volume-control">
+                    <label for="smartMaintenanceVolumeSlider">
+                        🔊 مستوى صوت الصيانة: <span id="smartMaintenanceVolumeDisplay">0%</span>
+                    </label>
+                    <input 
+                        type="range" 
+                        id="smartMaintenanceVolumeSlider" 
+                        min="0" 
+                        max="100" 
+                        value="0" 
+                        step="1"
+                        oninput="smartUpdateMaintenanceVolume(this.value)"
+                        onchange="smartSaveMaintenanceVolume(this.value)"
+                    >
+                    <div class="volume-presets">
+                        <button class="preset-btn" onclick="smartSetMaintenanceVolume(0)">🔇 0%</button>
+                        <button class="preset-btn" onclick="smartSetMaintenanceVolume(1)">🔈 1%</button>
+                        <button class="preset-btn" onclick="smartSetMaintenanceVolume(5)">🔉 5%</button>
+                        <button class="preset-btn" onclick="smartSetMaintenanceVolume(10)">🔉 10%</button>
+                        <button class="preset-btn" onclick="smartSetMaintenanceVolume(25)">🔊 25%</button>
+                        <button class="preset-btn" onclick="smartSetMaintenanceVolume(50)">🔊 50%</button>
+                        <button class="preset-btn" onclick="smartSetMaintenanceVolume(100)">🔊 100%</button>
+                    </div>
+                </div>
+                
+                <div class="control-info">
+                    <small id="maintenanceMusicControlInfo">موسيقى الصيانة متوقفة</small>
                 </div>
             </div>
             
@@ -8164,15 +8216,23 @@ window.showAudioConfig = function() {
     console.log('Background Music:', audioConfig.backgroundMusic);
     console.log('Maintenance Music:', audioConfig.maintenanceMusic);
     console.log('');
-    console.log('💡 Developer Commands:');
-    console.log('  setBackgroundMusicVolume(0.25)  - Set volume to 25%');
-    console.log('  setMaintenanceMusicVolume(0.5)  - Set volume to 50%');
-    console.log('  enableBackgroundMusic(true)     - Enable background music');
-    console.log('  enableBackgroundMusic(false)    - Disable background music');
-    console.log('  enableMaintenanceMusic(true)    - Enable maintenance music');
-    console.log('  enableMaintenanceMusic(false)   - Disable maintenance music');
-    console.log('  toggleBackgroundMusic()         - Toggle play/pause');
-    console.log('  stopBackgroundMusic()           - Stop background music');
+    console.log('💡 Developer Console Commands:');
+    console.log('  setBackgroundMusicVolume(0.05)   - Set background volume to 5%');
+    console.log('  setMaintenanceMusicVolume(0.05)  - Set maintenance volume to 5%');
+    console.log('  setBackgroundMusicVolume(0.01)   - Set background volume to 1%');
+    console.log('  setMaintenanceMusicVolume(0.01)  - Set maintenance volume to 1%');
+    console.log('  enableBackgroundMusic(true)      - Enable background music');
+    console.log('  enableBackgroundMusic(false)     - Disable background music');
+    console.log('  enableMaintenanceMusic(true)     - Enable maintenance music');
+    console.log('  enableMaintenanceMusic(false)    - Disable maintenance music');
+    console.log('  toggleBackgroundMusic()          - Toggle play/pause');
+    console.log('  stopBackgroundMusic()            - Stop background music');
+    console.log('');
+    console.log('🎛️ Smart Control Panel (Developer UI):');
+    console.log('  - Click the 🎛️ button in bottom-right corner');
+    console.log('  - Separate controls for Background Music and Maintenance Music');
+    console.log('  - Volume sliders with 0-100% range (1% step precision)');
+    console.log('  - Quick preset buttons: 0%, 1%, 5%, 10%, 25%, 50%, 100%');
     console.log('');
     console.log('📝 To permanently change: Edit audio-config.json in GitHub');
 };
@@ -8422,7 +8482,9 @@ let smartControlState = {
     maintenanceMessageVisible: false,
     maintenanceAutoShowPrevented: false,
     musicPlaying: false,
-    musicVolume: 5 // Very low volume (5%) - comfortable and non-annoying
+    musicVolume: 5, // Background music volume (5%) - comfortable and non-annoying
+    maintenanceMusicPlaying: false,
+    maintenanceMusicVolume: 0 // Maintenance music volume (0% = muted by default)
 };
 
 // Initialize smart control panel
@@ -8484,7 +8546,7 @@ function updateSmartControlUI() {
         maintenanceInfo.textContent = info;
     }
     
-    // Update music status indicator
+    // Update background music status indicator
     const musicStatus = document.getElementById('musicStatusIndicator');
     if (musicStatus) {
         if (smartControlState.musicPlaying) {
@@ -8496,7 +8558,7 @@ function updateSmartControlUI() {
         }
     }
     
-    // Update music control info
+    // Update background music control info
     const musicInfo = document.getElementById('musicControlInfo');
     if (musicInfo) {
         musicInfo.textContent = smartControlState.musicPlaying 
@@ -8504,16 +8566,48 @@ function updateSmartControlUI() {
             : 'الموسيقى متوقفة ومستقلة عن رسالة التحديث';
     }
     
-    // Update volume display
+    // Update background music volume display
     const volumeDisplay = document.getElementById('smartVolumeDisplay');
     if (volumeDisplay) {
         volumeDisplay.textContent = `${smartControlState.musicVolume}%`;
     }
     
-    // Update volume slider
+    // Update background music volume slider
     const volumeSlider = document.getElementById('smartVolumeSlider');
     if (volumeSlider) {
         volumeSlider.value = smartControlState.musicVolume;
+    }
+    
+    // Update maintenance music status indicator
+    const maintenanceMusicStatus = document.getElementById('maintenanceMusicStatusIndicator');
+    if (maintenanceMusicStatus) {
+        if (smartControlState.maintenanceMusicPlaying) {
+            maintenanceMusicStatus.textContent = '🔊 قيد التشغيل';
+            maintenanceMusicStatus.style.color = '#38ef7d';
+        } else {
+            maintenanceMusicStatus.textContent = '🔇 متوقفة';
+            maintenanceMusicStatus.style.color = '#ff6b6b';
+        }
+    }
+    
+    // Update maintenance music control info
+    const maintenanceMusicInfo = document.getElementById('maintenanceMusicControlInfo');
+    if (maintenanceMusicInfo) {
+        maintenanceMusicInfo.textContent = smartControlState.maintenanceMusicPlaying 
+            ? `موسيقى الصيانة تعمل بصوت ${smartControlState.maintenanceMusicVolume}%`
+            : 'موسيقى الصيانة متوقفة';
+    }
+    
+    // Update maintenance music volume display
+    const maintenanceVolumeDisplay = document.getElementById('smartMaintenanceVolumeDisplay');
+    if (maintenanceVolumeDisplay) {
+        maintenanceVolumeDisplay.textContent = `${smartControlState.maintenanceMusicVolume}%`;
+    }
+    
+    // Update maintenance music volume slider
+    const maintenanceVolumeSlider = document.getElementById('smartMaintenanceVolumeSlider');
+    if (maintenanceVolumeSlider) {
+        maintenanceVolumeSlider.value = smartControlState.maintenanceMusicVolume;
     }
 }
 
@@ -8587,10 +8681,10 @@ function smartAllowMaintenanceMessage() {
 // Background Music Control Functions
 
 function smartPlayBackgroundMusic() {
-    const audio = document.getElementById('maintenanceAudio');
+    const audio = document.getElementById('backgroundMusicAudio');
     
     if (!audio) {
-        console.error('❌ Audio element not found');
+        console.error('❌ Background audio element not found');
         return;
     }
     
@@ -8640,7 +8734,7 @@ function smartPlayBackgroundMusic() {
 }
 
 function smartPauseBackgroundMusic() {
-    const audio = document.getElementById('maintenanceAudio');
+    const audio = document.getElementById('backgroundMusicAudio');
     
     if (audio) {
         audio.pause();
@@ -8652,7 +8746,7 @@ function smartPauseBackgroundMusic() {
 }
 
 function smartStopBackgroundMusic() {
-    const audio = document.getElementById('maintenanceAudio');
+    const audio = document.getElementById('backgroundMusicAudio');
     
     if (audio) {
         audio.pause();
@@ -8676,19 +8770,19 @@ function smartUpdateVolume(value) {
     }
     
     // Update audio volume if playing
-    const audio = document.getElementById('maintenanceAudio');
+    const audio = document.getElementById('backgroundMusicAudio');
     if (audio) {
         audio.volume = parseInt(value) / 100;
     }
     
-    console.log(`🔊 Volume updated to ${value}%`);
+    console.log(`🔊 Background music volume updated to ${value}%`);
 }
 
 function smartSaveVolume(value) {
     smartControlState.musicVolume = parseInt(value);
     saveSmartControlState();
     updateSmartControlUI();
-    console.log(`💾 Volume saved: ${value}%`);
+    console.log(`💾 Background music volume saved: ${value}%`);
 }
 
 function smartSetVolume(value) {
@@ -8707,13 +8801,145 @@ function smartSetVolume(value) {
     }
     
     // Update audio volume if playing
+    const audio = document.getElementById('backgroundMusicAudio');
+    if (audio) {
+        audio.volume = value / 100;
+    }
+    
+    saveSmartControlState();
+    console.log(`🎚️ Background music volume preset applied: ${value}%`);
+}
+
+// Maintenance Music Control Functions
+
+function smartPlayMaintenanceMusic() {
+    const audio = document.getElementById('maintenanceAudio');
+    
+    if (!audio) {
+        console.error('❌ Maintenance audio element not found');
+        return;
+    }
+    
+    // Load audio if needed
+    if (audio.readyState < 2) {
+        audio.load();
+    }
+    
+    // Set volume and loop
+    audio.volume = smartControlState.maintenanceMusicVolume / 100;
+    audio.loop = true;
+    audio.currentTime = 0;
+    
+    // Play audio
+    const playPromise = audio.play();
+    
+    if (playPromise !== undefined) {
+        playPromise.then(() => {
+            smartControlState.maintenanceMusicPlaying = true;
+            saveSmartControlState();
+            updateSmartControlUI();
+            console.log(`🔧 Maintenance music playing at ${smartControlState.maintenanceMusicVolume}% volume`);
+        }).catch(err => {
+            console.log('⚠️ Direct play failed, trying muted start...');
+            
+            // Try muted start then unmute
+            audio.muted = true;
+            const mutedPromise = audio.play();
+            
+            if (mutedPromise !== undefined) {
+                mutedPromise.then(() => {
+                    setTimeout(() => {
+                        audio.muted = false;
+                        audio.volume = smartControlState.maintenanceMusicVolume / 100;
+                        smartControlState.maintenanceMusicPlaying = true;
+                        saveSmartControlState();
+                        updateSmartControlUI();
+                        console.log(`🔧 Maintenance music playing (after unmute) at ${smartControlState.maintenanceMusicVolume}% volume`);
+                    }, 100);
+                }).catch(err2 => {
+                    console.error('❌ Failed to play maintenance music:', err2);
+                    alert('⚠️ لا يمكن تشغيل موسيقى الصيانة تلقائياً\n\nيرجى التفاعل مع الصفحة (نقرة أو لمسة) ثم المحاولة مرة أخرى');
+                });
+            }
+        });
+    }
+}
+
+function smartPauseMaintenanceMusic() {
+    const audio = document.getElementById('maintenanceAudio');
+    
+    if (audio) {
+        audio.pause();
+        smartControlState.maintenanceMusicPlaying = false;
+        saveSmartControlState();
+        updateSmartControlUI();
+        console.log('⏸️ Maintenance music paused');
+    }
+}
+
+function smartStopMaintenanceMusic() {
+    const audio = document.getElementById('maintenanceAudio');
+    
+    if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
+        smartControlState.maintenanceMusicPlaying = false;
+        saveSmartControlState();
+        updateSmartControlUI();
+        console.log('⏹️ Maintenance music stopped');
+    }
+}
+
+// Maintenance Music Volume Control Functions
+
+function smartUpdateMaintenanceVolume(value) {
+    smartControlState.maintenanceMusicVolume = parseInt(value);
+    
+    // Update display
+    const volumeDisplay = document.getElementById('smartMaintenanceVolumeDisplay');
+    if (volumeDisplay) {
+        volumeDisplay.textContent = `${value}%`;
+    }
+    
+    // Update audio volume if playing
+    const audio = document.getElementById('maintenanceAudio');
+    if (audio) {
+        audio.volume = parseInt(value) / 100;
+    }
+    
+    console.log(`🔊 Maintenance music volume updated to ${value}%`);
+}
+
+function smartSaveMaintenanceVolume(value) {
+    smartControlState.maintenanceMusicVolume = parseInt(value);
+    saveSmartControlState();
+    updateSmartControlUI();
+    console.log(`💾 Maintenance music volume saved: ${value}%`);
+}
+
+function smartSetMaintenanceVolume(value) {
+    smartControlState.maintenanceMusicVolume = value;
+    
+    // Update slider
+    const volumeSlider = document.getElementById('smartMaintenanceVolumeSlider');
+    if (volumeSlider) {
+        volumeSlider.value = value;
+    }
+    
+    // Update display
+    const volumeDisplay = document.getElementById('smartMaintenanceVolumeDisplay');
+    if (volumeDisplay) {
+        volumeDisplay.textContent = `${value}%`;
+    }
+    
+    // Update audio volume if playing
     const audio = document.getElementById('maintenanceAudio');
     if (audio) {
         audio.volume = value / 100;
     }
     
     saveSmartControlState();
-    console.log(`🎚️ Volume preset applied: ${value}%`);
+    console.log(`🎚️ Maintenance music volume preset applied: ${value}%`);
 }
 
 // Quick Actions
@@ -8723,14 +8949,16 @@ function smartResetAll() {
         // Hide maintenance message
         smartHideMaintenanceMessage();
         
-        // Stop music
+        // Stop all music
         smartStopBackgroundMusic();
+        smartStopMaintenanceMusic();
         
         // Allow auto-show
         smartAllowMaintenanceMessage();
         
-        // Reset volume to default
-        smartSetVolume(15);
+        // Reset volumes to defaults
+        smartSetVolume(5);  // Background music: 5%
+        smartSetMaintenanceVolume(0);  // Maintenance music: 0% (muted)
         
         console.log('🔄 All settings reset to default');
     }

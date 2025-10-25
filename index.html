@@ -20740,9 +20740,9 @@ function buildShopsAreaMapping() {
     }
     
     // Map shops to areas based on shops_details.json address field
-    if (typeof allShopsDetails !== 'undefined' && allShopsDetails) {
-        Object.keys(allShopsDetails).forEach(shopName => {
-            const shopDetail = allShopsDetails[shopName];
+    if (typeof shopsDetailsData !== 'undefined' && shopsDetailsData) {
+        Object.keys(shopsDetailsData).forEach(shopName => {
+            const shopDetail = shopsDetailsData[shopName];
             const address = shopDetail.address || '';
             
             // Find matching area
@@ -20753,6 +20753,8 @@ function buildShopsAreaMapping() {
             if (matchingArea) {
                 smartPlannerShopsData[shopName] = {
                     name: shopName,
+                    nameEn: shopDetail.nameEn || '',
+                    licenseNo: shopDetail.licenseNo || '',
                     areaId: matchingArea.id,
                     areaName: matchingArea.name,
                     address: address,
@@ -20770,6 +20772,8 @@ function buildShopsAreaMapping() {
                 // Shop not linked to any area
                 smartPlannerShopsData[shopName] = {
                     name: shopName,
+                    nameEn: shopDetail.nameEn || '',
+                    licenseNo: shopDetail.licenseNo || '',
                     areaId: null,
                     areaName: 'غير محدد',
                     address: address,

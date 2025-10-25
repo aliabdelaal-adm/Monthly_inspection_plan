@@ -17,10 +17,11 @@ Edit `audio-config.json`:
 Edit `audio-config.json`:
 ```json
 "backgroundMusic": {
-  "enabled": false,
+  "enabled": true,
   "volume": 0.0
 }
 ```
+Note: Volume 0.0 makes it silent even if enabled is true. Set enabled to false to completely disable the feature.
 
 ---
 

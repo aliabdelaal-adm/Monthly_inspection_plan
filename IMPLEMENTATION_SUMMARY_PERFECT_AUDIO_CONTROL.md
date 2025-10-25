@@ -78,11 +78,12 @@ Edit `audio-config.json`:
 ```json
 {
   "backgroundMusic": {
-    "enabled": false,
+    "enabled": true,
     "volume": 0.0  ← Set to 0.0 for 0% volume (silent)
   }
 }
 ```
+Note: Volume 0.0 makes it silent. Use `"enabled": false` to completely disable the audio feature.
 
 ---
 
@@ -133,8 +134,16 @@ audio-config.json
 └── developerControl (NEW)
     └── perfectVolumeControl
         ├── maximumVolume (1.0 = 100%)
+        │   ├── value: 1.0
+        │   ├── percentage: "100%"
+        │   ├── description: { ar, en }
+        │   └── example: { backgroundMusic, maintenanceMusic }
         ├── minimumVolume (0.0 = 0%)
-        ├── volumePresets (8 presets)
+        │   ├── value: 0.0
+        │   ├── percentage: "0%"
+        │   ├── description: { ar, en }
+        │   └── example: { backgroundMusic, maintenanceMusic }
+        ├── volumePresets (8 presets: muted to maximum)
         └── controlInstructions (AR + EN)
 ```
 

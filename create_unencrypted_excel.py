@@ -6,16 +6,21 @@ This replaces the encrypted pet-shop-list-updated.xlsx file
 """
 
 import json
+import traceback
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
-from datetime import datetime
 
-def create_excel_from_json():
-    """Create an unencrypted Excel file from shops_details.json"""
+def create_excel_from_json(input_file='shops_details.json', output_file='pet-shop-list-updated.xlsx'):
+    """Create an unencrypted Excel file from shops_details.json
+    
+    Args:
+        input_file: Path to the JSON file containing shop data (default: 'shops_details.json')
+        output_file: Path to the output Excel file (default: 'pet-shop-list-updated.xlsx')
+    """
     
     # Load the JSON data
-    print("Loading shops data from shops_details.json...")
-    with open('shops_details.json', 'r', encoding='utf-8') as f:
+    print(f"Loading shops data from {input_file}...")
+    with open(input_file, 'r', encoding='utf-8') as f:
         shops_data = json.load(f)
     
     print(f"Loaded {len(shops_data)} shops")
@@ -81,22 +86,20 @@ def create_excel_from_json():
     ws.freeze_panes = "A2"
     
     # Save the file
-    output_filename = 'pet-shop-list-updated.xlsx'
-    print(f"\nSaving to {output_filename}...")
-    wb.save(output_filename)
+    print(f"\nSaving to {output_file}...")
+    wb.save(output_file)
     
     print(f"✅ Successfully created unencrypted Excel file!")
     print(f"   - Total shops: {len(shops_data)}")
-    print(f"   - File: {output_filename}")
+    print(f"   - File: {output_file}")
     print(f"   - Size: {len(shops_data)} rows + 1 header row")
     print(f"\nThe file can now be opened in Excel without a password!")
     
-    return output_filename
+    return output_file
 
 if __name__ == "__main__":
     try:
         create_excel_from_json()
     except Exception as e:
         print(f"❌ Error: {e}")
-        import traceback
         traceback.print_exc()

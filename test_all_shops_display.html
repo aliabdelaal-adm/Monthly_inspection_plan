@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار عرض جميع المحلات</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+        }
+        
+        .stat-value {
+            font-size: 3em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .area-section {
+            margin-bottom: 30px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        
+        .area-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .area-name {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        
+        .area-count {
+            background: white;
+            color: #667eea;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        
+        .shops-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 10px;
+        }
+        
+        .shop-item {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .shop-name {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .shop-info {
+            font-size: 0.85em;
+            color: #666;
+        }
+        
+        .success {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #155724;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏪 اختبار عرض جميع المحلات حسب المناطق</h1>
+        
+        <div class="success">
+            ✅ تم تحميل وعرض جميع المحلات بنجاح مع تقسيمها حسب المناطق
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalShops">0</div>
+                <div class="stat-label">إجمالي المحلات</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalAreas">0</div>
+                <div class="stat-label">عدد المناطق</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="shopsWithAreas">0</div>
+                <div class="stat-label">محلات لها مناطق</div>
+            </div>
+        </div>
+        
+        <div id="areasContainer"></div>
+    </div>
+
+    <script>
+        async function loadAndDisplayShops() {
+            try {
+                // Load shops_details.json
+                const response = await fetch('shops_details.json?' + new Date().getTime());
+                const shopsDetails = await response.json();
+                
+                // Load plan-data.json for areas
+                const planResponse = await fetch('plan-data.json?' + new Date().getTime());
+                const planData = await planResponse.json();
+                
+                const totalShops = Object.keys(shopsDetails).length;
+                const areas = planData.areas || [];
+                
+                // Group shops by area
+                const shopsByArea = {};
+                let shopsWithAreaCount = 0;
+                
+                Object.entries(shopsDetails).forEach(([shopName, shopInfo]) => {
+                    if (shopInfo.area && shopInfo.areaId) {
+                        shopsWithAreaCount++;
+                        if (!shopsByArea[shopInfo.area]) {
+                            shopsByArea[shopInfo.area] = [];
+                        }
+                        shopsByArea[shopInfo.area].push({
+                            name: shopInfo.nameAr || shopName,
+                            licenseNo: shopInfo.licenseNo || '',
+                            address: shopInfo.address || ''
+                        });
+                    }
+                });
+                
+                // Update statistics
+                document.getElementById('totalShops').textContent = totalShops;
+                document.getElementById('totalAreas').textContent = Object.keys(shopsByArea).length;
+                document.getElementById('shopsWithAreas').textContent = shopsWithAreaCount;
+                
+                // Display shops by area
+                const container = document.getElementById('areasContainer');
+                container.innerHTML = '';
+                
+                // Sort areas by shop count
+                const sortedAreas = Object.entries(shopsByArea).sort((a, b) => b[1].length - a[1].length);
+                
+                sortedAreas.forEach(([areaName, shops]) => {
+                    const areaSection = document.createElement('div');
+                    areaSection.className = 'area-section';
+                    
+                    const areaHeader = document.createElement('div');
+                    areaHeader.className = 'area-header';
+                    areaHeader.innerHTML = `
+                        <div class="area-name">📍 ${areaName}</div>
+                        <div class="area-count">${shops.length} محل</div>
+                    `;
+                    
+                    const shopsGrid = document.createElement('div');
+                    shopsGrid.className = 'shops-grid';
+                    
+                    shops.forEach(shop => {
+                        const shopItem = document.createElement('div');
+                        shopItem.className = 'shop-item';
+                        shopItem.innerHTML = `
+                            <div class="shop-name">${shop.name}</div>
+                            ${shop.licenseNo ? `<div class="shop-info">🔖 ${shop.licenseNo}</div>` : ''}
+                            ${shop.address ? `<div class="shop-info">📍 ${shop.address}</div>` : ''}
+                        `;
+                        shopsGrid.appendChild(shopItem);
+                    });
+                    
+                    areaSection.appendChild(areaHeader);
+                    areaSection.appendChild(shopsGrid);
+                    container.appendChild(areaSection);
+                });
+                
+                console.log('✅ Successfully loaded and displayed all shops');
+                
+            } catch (error) {
+                console.error('❌ Error loading shops:', error);
+                alert('حدث خطأ في تحميل البيانات: ' + error.message);
+            }
+        }
+        
+        // Load shops on page load
+        loadAndDisplayShops();
+    </script>
+</body>
+</html>

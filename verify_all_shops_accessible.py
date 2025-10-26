@@ -24,18 +24,15 @@ def verify_shops():
     print(f"\n📊 shops_details.json:")
     print(f"  Total shops: {len(shops_details)}")
     
-    # Verify all shops in shops_details have area and areaId
-    shops_with_area = 0
-    shops_with_areaid = 0
-    shops_complete = 0
+    # Helper function to check if shop has valid area data
+    def has_complete_area_data(shop_info):
+        """Check if shop has both area and areaId fields with valid values"""
+        return 'area' in shop_info and shop_info['area'] and 'areaId' in shop_info and shop_info['areaId']
     
-    for shop_name, shop_info in shops_details.items():
-        if 'area' in shop_info and shop_info['area']:
-            shops_with_area += 1
-        if 'areaId' in shop_info and shop_info['areaId']:
-            shops_with_areaid += 1
-        if 'area' in shop_info and shop_info['area'] and 'areaId' in shop_info and shop_info['areaId']:
-            shops_complete += 1
+    # Verify all shops in shops_details have area and areaId
+    shops_with_area = sum(1 for s in shops_details.values() if 'area' in s and s['area'])
+    shops_with_areaid = sum(1 for s in shops_details.values() if 'areaId' in s and s['areaId'])
+    shops_complete = sum(1 for s in shops_details.values() if has_complete_area_data(s))
     
     print(f"  Shops with 'area': {shops_with_area}")
     print(f"  Shops with 'areaId': {shops_with_areaid}")
@@ -49,17 +46,9 @@ def verify_shops():
     print(f"  Total shops: {len(shops)}")
     
     # Verify all shops in plan-data have area and areaId
-    plan_shops_with_area = 0
-    plan_shops_with_areaid = 0
-    plan_shops_complete = 0
-    
-    for shop in shops:
-        if 'area' in shop and shop['area']:
-            plan_shops_with_area += 1
-        if 'areaId' in shop and shop['areaId']:
-            plan_shops_with_areaid += 1
-        if 'area' in shop and shop['area'] and 'areaId' in shop and shop['areaId']:
-            plan_shops_complete += 1
+    plan_shops_with_area = sum(1 for s in shops if 'area' in s and s['area'])
+    plan_shops_with_areaid = sum(1 for s in shops if 'areaId' in s and s['areaId'])
+    plan_shops_complete = sum(1 for s in shops if has_complete_area_data(s))
     
     print(f"  Shops with 'area': {plan_shops_with_area}")
     print(f"  Shops with 'areaId': {plan_shops_with_areaid}")
@@ -90,14 +79,14 @@ def verify_shops():
     print("SUMMARY")
     print("="*70)
     
-    total_accessible = shops_complete
     all_complete = shops_complete == len(shops_details) and plan_shops_complete == len(shops)
     
     status = "✅ PASS" if all_complete else "❌ FAIL"
     print(f"{status}")
     print(f"  shops_details.json: {shops_complete}/{len(shops_details)} shops complete")
     print(f"  plan-data.json: {plan_shops_complete}/{len(shops)} shops complete")
-    print(f"  Total shops accessible in Smart Planner: {total_accessible}")
+    print(f"\n  Smart Planner displays shops from shops_details.json: {shops_complete} shops")
+    print(f"  Smart Planner also includes shops from plan-data.json: {plan_shops_complete} additional shops")
     
     if all_complete:
         print("\n🎉 SUCCESS! All shops are properly configured with area assignments.")

@@ -88,8 +88,12 @@ Successfully completed the migration to show only pet shops from `pet-shop-list-
 
 ## Technical Notes
 
-### Why pet-shop-list-updated.xlsx is Encrypted
-The Excel file uses Microsoft Office encryption (MSMAMARPCRYPT/AES/CBC). This is a security feature that requires a password to decrypt. However, the data has already been successfully extracted and integrated into the JSON format used by the website.
+### Excel File Status (Updated October 26, 2025)
+The Excel file `pet-shop-list-updated.xlsx` has been **converted to an unencrypted format** and can now be opened directly in Excel without a password. The encrypted version has been backed up as `pet-shop-list-updated.xlsx.encrypted.backup`.
+
+**Previous Issue**: The file was encrypted with Microsoft Office encryption (MSMAMARPCRYPT/AES/CBC) and required a password to open.
+
+**Current Status**: The file is now a standard Excel 2007+ format (.xlsx) that opens normally in any Excel application. See `EXCEL_FILE_FIX_SUMMARY.md` for details about the fix.
 
 ### Data Flow
 ```

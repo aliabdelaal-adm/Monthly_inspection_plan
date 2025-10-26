@@ -1958,6 +1958,12 @@
                         <button class="btn btn-success" onclick="openSmartShopListModal()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; font-weight: bold;">
                             <span>📋</span> قائمة المحلات الذكية
                         </button>
+                        <button class="btn btn-success" onclick="openShopsByAreaModal()" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); border: none; font-weight: bold;">
+                            <span>🏘️</span> عرض المحلات مرتبة حسب المنطقة
+                        </button>
+                        <button class="btn btn-warning" onclick="openMoveShopsModal()" style="border: none; font-weight: bold;">
+                            <span>↔️</span> نقل محلات بين المناطق
+                        </button>
                     </div>
                     
                     <!-- Filter and Search -->
@@ -2255,6 +2261,9 @@
                         </button>
                         <button class="btn btn-success" onclick="generateAreasReport()">
                             <span>📊</span> تقرير المناطق
+                        </button>
+                        <button class="btn btn-primary" onclick="openAreaShopsViewModal()" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); border: none; font-weight: bold;">
+                            <span>🏪</span> عرض محلات منطقة معينة
                         </button>
                     </div>
                     
@@ -2822,6 +2831,169 @@
                 </div>
                 
                 <div class="status-message" id="smartShopListStatus"></div>
+            </div>
+        </div>
+        
+        <!-- Shops By Area View Modal -->
+        <div id="shopsByAreaModal" class="modal">
+            <div class="modal-content" style="max-width: 95%; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-header">
+                    <h2>🏘️ عرض المحلات مرتبة حسب المنطقة</h2>
+                    <span class="modal-close" onclick="closeShopsByAreaModal()">&times;</span>
+                </div>
+                
+                <!-- Search and Filter -->
+                <div style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); padding: 20px; border-radius: 10px; margin-bottom: 20px; color: white;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">بحث عن محل:</label>
+                            <input type="text" id="shopsByAreaSearch" class="form-control" placeholder="ابحث بالاسم..." oninput="updateShopsByAreaView()">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">فلترة حسب المنطقة:</label>
+                            <select id="shopsByAreaFilter" class="form-control" onchange="updateShopsByAreaView()">
+                                <option value="">جميع المناطق</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">عرض:</label>
+                            <select id="shopsByAreaViewType" class="form-control" onchange="updateShopsByAreaView()">
+                                <option value="grouped">مجموعة حسب المنطقة</option>
+                                <option value="list">قائمة كاملة</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Statistics -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px;">
+                    <div style="background: #e74c3c; color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 2em; font-weight: bold;" id="shopsByAreaTotalShops">0</div>
+                        <div>إجمالي المحلات</div>
+                    </div>
+                    <div style="background: #3498db; color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 2em; font-weight: bold;" id="shopsByAreaTotalAreas">0</div>
+                        <div>عدد المناطق</div>
+                    </div>
+                    <div style="background: #11998e; color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 2em; font-weight: bold;" id="shopsByAreaDisplayed">0</div>
+                        <div>محلات معروضة</div>
+                    </div>
+                </div>
+                
+                <!-- Content -->
+                <div id="shopsByAreaContent" style="margin-top: 20px;">
+                    <p style="text-align: center; padding: 40px; color: #999;">
+                        جاري تحميل البيانات...
+                    </p>
+                </div>
+                
+                <div class="status-message" id="shopsByAreaStatus"></div>
+            </div>
+        </div>
+        
+        <!-- Area Shops View Modal (for viewing shops of a specific area) -->
+        <div id="areaShopsViewModal" class="modal">
+            <div class="modal-content" style="max-width: 90%; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-header">
+                    <h2>🏪 عرض محلات منطقة معينة</h2>
+                    <span class="modal-close" onclick="closeAreaShopsViewModal()">&times;</span>
+                </div>
+                
+                <!-- Area Selection -->
+                <div style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); padding: 20px; border-radius: 10px; margin-bottom: 20px; color: white;">
+                    <h3 style="margin-bottom: 15px;">اختر المنطقة</h3>
+                    <select id="areaShopsViewSelect" class="form-control" onchange="loadShopsForSelectedArea()" style="font-size: 1.1em; padding: 12px;">
+                        <option value="">-- اختر منطقة --</option>
+                    </select>
+                </div>
+                
+                <!-- Selected Area Info -->
+                <div id="selectedAreaInfo" style="display: none; background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                    <h3 style="color: #2c3e50; margin-bottom: 15px;">
+                        <span>📍</span> المنطقة: <span id="selectedAreaName" style="color: #e74c3c;">-</span>
+                    </h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                        <div style="background: #3498db; color: white; padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 2em; font-weight: bold;" id="selectedAreaShopsCount">0</div>
+                            <div>عدد المحلات</div>
+                        </div>
+                        <div style="background: #11998e; color: white; padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 2em; font-weight: bold;" id="selectedAreaInspections">0</div>
+                            <div>التفتيشات المقررة</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Shops List -->
+                <div id="areaShopsViewContent" style="margin-top: 20px;">
+                    <p style="text-align: center; padding: 40px; color: #999;">
+                        اختر منطقة لعرض المحلات التابعة لها
+                    </p>
+                </div>
+                
+                <div class="status-message" id="areaShopsViewStatus"></div>
+            </div>
+        </div>
+        
+        <!-- Move Shops Between Areas Modal -->
+        <div id="moveShopsModal" class="modal">
+            <div class="modal-content" style="max-width: 800px;">
+                <div class="modal-header">
+                    <h2>↔️ نقل محلات بين المناطق</h2>
+                    <span class="modal-close" onclick="closeMoveShopsModal()">&times;</span>
+                </div>
+                
+                <!-- Source Area Selection -->
+                <div class="form-group">
+                    <label class="form-label" style="font-size: 1.1em;">
+                        <span>📍</span> المنطقة المصدر (نقل من):
+                    </label>
+                    <select id="moveShopsSourceArea" class="form-control" onchange="loadShopsForMove()" style="font-size: 1.05em; padding: 12px;">
+                        <option value="">-- اختر المنطقة المصدر --</option>
+                    </select>
+                </div>
+                
+                <!-- Shops Selection -->
+                <div id="moveShopsSelection" style="display: none; margin: 20px 0;">
+                    <label class="form-label" style="font-size: 1.1em;">
+                        <span>🏪</span> اختر المحلات المراد نقلها:
+                    </label>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; max-height: 300px; overflow-y: auto; border: 2px solid #dee2e6;">
+                        <div style="margin-bottom: 10px;">
+                            <button class="btn btn-sm btn-primary" onclick="selectAllShopsForMove()">
+                                <span>☑️</span> تحديد الكل
+                            </button>
+                            <button class="btn btn-sm btn-secondary" onclick="deselectAllShopsForMove()">
+                                <span>⬜</span> إلغاء التحديد
+                            </button>
+                            <span id="moveShopsSelectedCount" style="margin-right: 15px; font-weight: bold; color: #28a745;"></span>
+                        </div>
+                        <div id="moveShopsList"></div>
+                    </div>
+                </div>
+                
+                <!-- Destination Area Selection -->
+                <div id="moveShopsDestination" style="display: none; margin: 20px 0;">
+                    <label class="form-label" style="font-size: 1.1em;">
+                        <span>🎯</span> المنطقة المستهدفة (نقل إلى):
+                    </label>
+                    <select id="moveShopsTargetArea" class="form-control" style="font-size: 1.05em; padding: 12px;">
+                        <option value="">-- اختر المنطقة المستهدفة --</option>
+                    </select>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn btn-success" onclick="executeMoveShops()" style="flex: 1;">
+                        <span>✅</span> تنفيذ عملية النقل
+                    </button>
+                    <button class="btn btn-secondary" onclick="closeMoveShopsModal()" style="flex: 1;">
+                        <span>❌</span> إلغاء
+                    </button>
+                </div>
+                
+                <div class="status-message" id="moveShopsStatus"></div>
             </div>
         </div>
         
@@ -4932,6 +5104,7 @@
                     <td style="font-family: monospace; font-size: 0.85em;">${area.id}</td>
                     <td>${shopsCount} محل</td>
                     <td>
+                        <span class="action-icon" onclick="viewAreaShops('${area.id}')" title="عرض المحلات" style="color: #3498db;">🏪</span>
                         <span class="action-icon edit-icon" onclick="openEditAreaModal('${area.id}')" title="تعديل">✏️</span>
                         <span class="action-icon delete-icon" onclick="deleteArea('${area.id}')" title="حذف">🗑️</span>
                         <span class="action-icon copy-icon" onclick="copyAreaId('${area.id}')" title="نسخ المعرف">📋</span>
@@ -5082,6 +5255,685 @@
             navigator.clipboard.writeText(areaId).then(() => {
                 showMessage('areasManagementStatus', 'success', '✅ تم نسخ المعرف');
             });
+        }
+        
+        // ============================================
+        // SHOPS BY AREA VIEW FUNCTIONS
+        // ============================================
+        
+        // Open shops by area modal
+        function openShopsByAreaModal() {
+            document.getElementById('shopsByAreaModal').style.display = 'block';
+            populateShopsByAreaFilter();
+            updateShopsByAreaView();
+        }
+        
+        // Close shops by area modal
+        function closeShopsByAreaModal() {
+            document.getElementById('shopsByAreaModal').style.display = 'none';
+        }
+        
+        // Populate area filter for shops by area view
+        function populateShopsByAreaFilter() {
+            const select = document.getElementById('shopsByAreaFilter');
+            select.innerHTML = '<option value="">جميع المناطق</option>';
+            
+            if (planData && planData.areas) {
+                planData.areas.forEach(area => {
+                    const option = document.createElement('option');
+                    option.value = area.id;
+                    option.textContent = area.name;
+                    select.appendChild(option);
+                });
+            }
+        }
+        
+        // Update shops by area view
+        async function updateShopsByAreaView() {
+            const searchTerm = document.getElementById('shopsByAreaSearch').value.toLowerCase();
+            const filterAreaId = document.getElementById('shopsByAreaFilter').value;
+            const viewType = document.getElementById('shopsByAreaViewType').value;
+            const contentDiv = document.getElementById('shopsByAreaContent');
+            
+            // Load shops_details.json for complete information
+            let shopsDetails = {};
+            try {
+                const response = await fetch('shops_details.json?' + new Date().getTime());
+                if (response.ok) {
+                    shopsDetails = await response.json();
+                }
+            } catch (error) {
+                console.error('Error loading shops_details.json:', error);
+            }
+            
+            // Create combined shop list
+            const allShops = [];
+            
+            // Add shops from shops_details.json
+            Object.entries(shopsDetails).forEach(([shopName, shopInfo]) => {
+                allShops.push({
+                    name: shopInfo.nameAr || shopName,
+                    nameEn: shopInfo.nameEn || '',
+                    licenseNo: shopInfo.licenseNo || '',
+                    admCode: shopInfo.admCode || '',
+                    address: shopInfo.address || '',
+                    contact: shopInfo.contact || '',
+                    locationMap: shopInfo.locationMap || '',
+                    activity: shopInfo.activity || '',
+                    area: shopInfo.area || '',
+                    areaId: shopInfo.areaId || '',
+                });
+            });
+            
+            // Add shops from plan-data.json if not already in list
+            if (planData && planData.shops) {
+                planData.shops.forEach(shop => {
+                    if (!allShops.find(s => s.name === shop.name)) {
+                        allShops.push(shop);
+                    }
+                });
+            }
+            
+            // Filter shops
+            let filteredShops = allShops.filter(shop => {
+                const matchesSearch = shop.name.toLowerCase().includes(searchTerm) ||
+                                    (shop.nameEn && shop.nameEn.toLowerCase().includes(searchTerm)) ||
+                                    (shop.licenseNo && shop.licenseNo.toLowerCase().includes(searchTerm));
+                const matchesArea = !filterAreaId || shop.areaId === filterAreaId;
+                return matchesSearch && matchesArea;
+            });
+            
+            // Update statistics
+            const uniqueAreas = new Set(allShops.map(s => s.areaId).filter(id => id));
+            document.getElementById('shopsByAreaTotalShops').textContent = allShops.length;
+            document.getElementById('shopsByAreaTotalAreas').textContent = uniqueAreas.size;
+            document.getElementById('shopsByAreaDisplayed').textContent = filteredShops.length;
+            
+            // Display based on view type
+            if (viewType === 'grouped') {
+                displayShopsGroupedByArea(filteredShops, contentDiv);
+            } else {
+                displayShopsAsList(filteredShops, contentDiv);
+            }
+        }
+        
+        // Display shops grouped by area
+        function displayShopsGroupedByArea(shops, contentDiv) {
+            const shopsByArea = {};
+            
+            // Group shops by area
+            shops.forEach(shop => {
+                const area = planData?.areas?.find(a => a.id === shop.areaId);
+                const areaName = area ? area.name : (shop.area || 'غير محدد');
+                const areaId = shop.areaId || 'unknown';
+                
+                if (!shopsByArea[areaId]) {
+                    shopsByArea[areaId] = {
+                        name: areaName,
+                        shops: []
+                    };
+                }
+                shopsByArea[areaId].shops.push(shop);
+            });
+            
+            let html = '';
+            
+            // Sort areas alphabetically
+            const sortedAreas = Object.entries(shopsByArea).sort((a, b) => 
+                a[1].name.localeCompare(b[1].name, 'ar')
+            );
+            
+            sortedAreas.forEach(([areaId, areaData]) => {
+                html += `
+                    <div style="margin-bottom: 30px; background: #f8f9fa; padding: 20px; border-radius: 10px; border-right: 5px solid #e74c3c;">
+                        <h3 style="color: #2c3e50; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between;">
+                            <span>
+                                <span style="color: #e74c3c;">📍</span> ${areaData.name}
+                                <span style="background: #e74c3c; color: white; padding: 3px 12px; border-radius: 15px; font-size: 0.85em; margin-right: 10px;">
+                                    ${areaData.shops.length} محل
+                                </span>
+                            </span>
+                            <button class="btn btn-sm btn-primary" onclick="viewAreaShops('${areaId}')" style="padding: 5px 15px;">
+                                <span>🔍</span> عرض التفاصيل
+                            </button>
+                        </h3>
+                        <div style="overflow-x: auto;">
+                            <table class="inspections-table">
+                                <thead>
+                                    <tr>
+                                        <th>اسم المحل</th>
+                                        <th>رقم الرخصة</th>
+                                        <th>كود ADM</th>
+                                        <th>العنوان</th>
+                                        <th>الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+                
+                areaData.shops.forEach(shop => {
+                    html += `
+                        <tr>
+                            <td>
+                                <strong>${shop.name}</strong>
+                                ${shop.nameEn ? `<br><small style="color: #666;">${shop.nameEn}</small>` : ''}
+                            </td>
+                            <td>${shop.licenseNo || '-'}</td>
+                            <td style="font-family: monospace;">${shop.admCode || '-'}</td>
+                            <td>${shop.address || '-'}</td>
+                            <td>
+                                <span class="action-icon" onclick="viewShopDetails('${escapeHtml(shop.name)}')" title="عرض التفاصيل" style="color: #3498db;">👁️</span>
+                                ${shop.locationMap ? `<span class="action-icon" onclick="window.open('${shop.locationMap}', '_blank')" title="موقع على الخريطة" style="color: #27ae60;">🗺️</span>` : ''}
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            if (html === '') {
+                html = '<p style="text-align: center; padding: 40px; color: #999;">لا توجد محلات مطابقة</p>';
+            }
+            
+            contentDiv.innerHTML = html;
+        }
+        
+        // Display shops as a list
+        function displayShopsAsList(shops, contentDiv) {
+            let html = `
+                <div style="overflow-x: auto;">
+                    <table class="inspections-table">
+                        <thead>
+                            <tr>
+                                <th>اسم المحل</th>
+                                <th>المنطقة</th>
+                                <th>رقم الرخصة</th>
+                                <th>كود ADM</th>
+                                <th>العنوان</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            shops.forEach(shop => {
+                const area = planData?.areas?.find(a => a.id === shop.areaId);
+                const areaName = area ? area.name : (shop.area || 'غير محدد');
+                
+                html += `
+                    <tr>
+                        <td>
+                            <strong>${shop.name}</strong>
+                            ${shop.nameEn ? `<br><small style="color: #666;">${shop.nameEn}</small>` : ''}
+                        </td>
+                        <td><span style="background: #e74c3c; color: white; padding: 3px 10px; border-radius: 5px; font-size: 0.9em;">${areaName}</span></td>
+                        <td>${shop.licenseNo || '-'}</td>
+                        <td style="font-family: monospace;">${shop.admCode || '-'}</td>
+                        <td>${shop.address || '-'}</td>
+                        <td>
+                            <span class="action-icon" onclick="viewShopDetails('${escapeHtml(shop.name)}')" title="عرض التفاصيل" style="color: #3498db;">👁️</span>
+                            ${shop.locationMap ? `<span class="action-icon" onclick="window.open('${shop.locationMap}', '_blank')" title="موقع على الخريطة" style="color: #27ae60;">🗺️</span>` : ''}
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            if (shops.length === 0) {
+                html = '<p style="text-align: center; padding: 40px; color: #999;">لا توجد محلات مطابقة</p>';
+            }
+            
+            contentDiv.innerHTML = html;
+        }
+        
+        // ============================================
+        // AREA SHOPS VIEW FUNCTIONS (View shops of specific area)
+        // ============================================
+        
+        // Open area shops view modal
+        function openAreaShopsViewModal() {
+            document.getElementById('areaShopsViewModal').style.display = 'block';
+            populateAreaShopsViewSelect();
+        }
+        
+        // Close area shops view modal
+        function closeAreaShopsViewModal() {
+            document.getElementById('areaShopsViewModal').style.display = 'none';
+            document.getElementById('selectedAreaInfo').style.display = 'none';
+            document.getElementById('areaShopsViewContent').innerHTML = '<p style="text-align: center; padding: 40px; color: #999;">اختر منطقة لعرض المحلات التابعة لها</p>';
+        }
+        
+        // Populate area select for area shops view
+        function populateAreaShopsViewSelect() {
+            const select = document.getElementById('areaShopsViewSelect');
+            select.innerHTML = '<option value="">-- اختر منطقة --</option>';
+            
+            if (planData && planData.areas) {
+                planData.areas.forEach(area => {
+                    const option = document.createElement('option');
+                    option.value = area.id;
+                    option.textContent = area.name;
+                    select.appendChild(option);
+                });
+            }
+        }
+        
+        // Load shops for selected area
+        async function loadShopsForSelectedArea() {
+            const areaId = document.getElementById('areaShopsViewSelect').value;
+            const contentDiv = document.getElementById('areaShopsViewContent');
+            const infoDiv = document.getElementById('selectedAreaInfo');
+            
+            if (!areaId) {
+                infoDiv.style.display = 'none';
+                contentDiv.innerHTML = '<p style="text-align: center; padding: 40px; color: #999;">اختر منطقة لعرض المحلات التابعة لها</p>';
+                return;
+            }
+            
+            const area = planData?.areas?.find(a => a.id === areaId);
+            if (!area) {
+                showMessage('areaShopsViewStatus', 'error', '❌ المنطقة غير موجودة');
+                return;
+            }
+            
+            // Show area info
+            infoDiv.style.display = 'block';
+            document.getElementById('selectedAreaName').textContent = area.name;
+            
+            // Load shops_details.json
+            let shopsDetails = {};
+            try {
+                const response = await fetch('shops_details.json?' + new Date().getTime());
+                if (response.ok) {
+                    shopsDetails = await response.json();
+                }
+            } catch (error) {
+                console.error('Error loading shops_details.json:', error);
+            }
+            
+            // Get shops for this area
+            const areaShops = [];
+            
+            // From shops_details.json
+            Object.entries(shopsDetails).forEach(([shopName, shopInfo]) => {
+                if (shopInfo.areaId === areaId) {
+                    areaShops.push({
+                        name: shopInfo.nameAr || shopName,
+                        nameEn: shopInfo.nameEn || '',
+                        licenseNo: shopInfo.licenseNo || '',
+                        admCode: shopInfo.admCode || '',
+                        address: shopInfo.address || '',
+                        contact: shopInfo.contact || '',
+                        locationMap: shopInfo.locationMap || '',
+                        activity: shopInfo.activity || '',
+                    });
+                }
+            });
+            
+            // From plan-data.json
+            if (planData && planData.shops) {
+                planData.shops.forEach(shop => {
+                    if (shop.areaId === areaId && !areaShops.find(s => s.name === shop.name)) {
+                        areaShops.push(shop);
+                    }
+                });
+            }
+            
+            // Count inspections for this area
+            const inspectionsCount = planData?.inspectionData?.filter(insp => insp.area === area.name).length || 0;
+            
+            // Update statistics
+            document.getElementById('selectedAreaShopsCount').textContent = areaShops.length;
+            document.getElementById('selectedAreaInspections').textContent = inspectionsCount;
+            
+            // Display shops
+            if (areaShops.length === 0) {
+                contentDiv.innerHTML = `
+                    <div style="text-align: center; padding: 40px; background: #fff3cd; border-radius: 10px; color: #856404;">
+                        <h3>⚠️ لا توجد محلات في هذه المنطقة</h3>
+                        <p style="margin-top: 10px;">يمكنك إضافة محلات جديدة أو نقل محلات من مناطق أخرى</p>
+                        <button class="btn btn-success" onclick="closeAreaShopsViewModal(); openAddShopModal();" style="margin-top: 15px;">
+                            <span>➕</span> إضافة محل جديد
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = `
+                <div style="background: white; padding: 20px; border-radius: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="color: #2c3e50;">📋 قائمة المحلات (${areaShops.length} محل)</h3>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-success" onclick="closeAreaShopsViewModal(); openAddShopModal();">
+                                <span>➕</span> إضافة محل
+                            </button>
+                            <button class="btn btn-warning" onclick="openMoveShopsFromArea('${areaId}')">
+                                <span>↔️</span> نقل محلات
+                            </button>
+                        </div>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="inspections-table">
+                            <thead>
+                                <tr>
+                                    <th>اسم المحل</th>
+                                    <th>رقم الرخصة</th>
+                                    <th>كود ADM</th>
+                                    <th>العنوان</th>
+                                    <th>الهاتف</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+            `;
+            
+            areaShops.forEach((shop, idx) => {
+                html += `
+                    <tr>
+                        <td>
+                            <strong>${shop.name}</strong>
+                            ${shop.nameEn ? `<br><small style="color: #666;">${shop.nameEn}</small>` : ''}
+                        </td>
+                        <td>${shop.licenseNo || '-'}</td>
+                        <td style="font-family: monospace;">${shop.admCode || '-'}</td>
+                        <td>${shop.address || '-'}</td>
+                        <td>${shop.contact || '-'}</td>
+                        <td>
+                            <span class="action-icon" onclick="viewShopDetails('${escapeHtml(shop.name)}')" title="عرض التفاصيل" style="color: #3498db;">👁️</span>
+                            <span class="action-icon edit-icon" onclick="openEditShopModal('${shop.id || idx}')" title="تعديل">✏️</span>
+                            ${shop.locationMap ? `<span class="action-icon" onclick="window.open('${shop.locationMap}', '_blank')" title="موقع على الخريطة" style="color: #27ae60;">🗺️</span>` : ''}
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            
+            contentDiv.innerHTML = html;
+        }
+        
+        // View shops for a specific area (called from areas table)
+        function viewAreaShops(areaId) {
+            openAreaShopsViewModal();
+            document.getElementById('areaShopsViewSelect').value = areaId;
+            loadShopsForSelectedArea();
+        }
+        
+        // ============================================
+        // MOVE SHOPS BETWEEN AREAS FUNCTIONS
+        // ============================================
+        
+        let selectedShopsForMove = [];
+        
+        // Open move shops modal
+        function openMoveShopsModal() {
+            document.getElementById('moveShopsModal').style.display = 'block';
+            populateMoveShopsAreas();
+            selectedShopsForMove = [];
+            document.getElementById('moveShopsSelection').style.display = 'none';
+            document.getElementById('moveShopsDestination').style.display = 'none';
+        }
+        
+        // Open move shops modal from a specific area
+        function openMoveShopsFromArea(areaId) {
+            closeAreaShopsViewModal();
+            openMoveShopsModal();
+            document.getElementById('moveShopsSourceArea').value = areaId;
+            loadShopsForMove();
+        }
+        
+        // Close move shops modal
+        function closeMoveShopsModal() {
+            document.getElementById('moveShopsModal').style.display = 'none';
+            selectedShopsForMove = [];
+        }
+        
+        // Populate area selects for move shops
+        function populateMoveShopsAreas() {
+            const sourceSelect = document.getElementById('moveShopsSourceArea');
+            const targetSelect = document.getElementById('moveShopsTargetArea');
+            
+            sourceSelect.innerHTML = '<option value="">-- اختر المنطقة المصدر --</option>';
+            targetSelect.innerHTML = '<option value="">-- اختر المنطقة المستهدفة --</option>';
+            
+            if (planData && planData.areas) {
+                planData.areas.forEach(area => {
+                    const option1 = document.createElement('option');
+                    option1.value = area.id;
+                    option1.textContent = area.name;
+                    sourceSelect.appendChild(option1);
+                    
+                    const option2 = document.createElement('option');
+                    option2.value = area.id;
+                    option2.textContent = area.name;
+                    targetSelect.appendChild(option2);
+                });
+            }
+        }
+        
+        // Load shops for move
+        async function loadShopsForMove() {
+            const areaId = document.getElementById('moveShopsSourceArea').value;
+            const listDiv = document.getElementById('moveShopsList');
+            
+            if (!areaId) {
+                document.getElementById('moveShopsSelection').style.display = 'none';
+                document.getElementById('moveShopsDestination').style.display = 'none';
+                return;
+            }
+            
+            // Load shops_details.json
+            let shopsDetails = {};
+            try {
+                const response = await fetch('shops_details.json?' + new Date().getTime());
+                if (response.ok) {
+                    shopsDetails = await response.json();
+                }
+            } catch (error) {
+                console.error('Error loading shops_details.json:', error);
+            }
+            
+            // Get shops for this area
+            const areaShops = [];
+            
+            // From shops_details.json
+            Object.entries(shopsDetails).forEach(([shopName, shopInfo]) => {
+                if (shopInfo.areaId === areaId) {
+                    areaShops.push({
+                        name: shopInfo.nameAr || shopName,
+                        originalName: shopName,
+                        areaId: areaId
+                    });
+                }
+            });
+            
+            // From plan-data.json
+            if (planData && planData.shops) {
+                planData.shops.forEach(shop => {
+                    if (shop.areaId === areaId && !areaShops.find(s => s.name === shop.name)) {
+                        areaShops.push({
+                            name: shop.name,
+                            originalName: shop.name,
+                            areaId: areaId
+                        });
+                    }
+                });
+            }
+            
+            if (areaShops.length === 0) {
+                listDiv.innerHTML = '<p style="text-align: center; padding: 20px; color: #999;">لا توجد محلات في هذه المنطقة</p>';
+                document.getElementById('moveShopsSelection').style.display = 'block';
+                document.getElementById('moveShopsDestination').style.display = 'none';
+                return;
+            }
+            
+            // Display shops as checkboxes
+            let html = '';
+            areaShops.forEach((shop, idx) => {
+                html += `
+                    <div style="padding: 8px; border-bottom: 1px solid #dee2e6;">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" class="move-shop-checkbox" value="${idx}" data-shop-name="${escapeHtml(shop.originalName)}" onchange="updateMoveShopsCount()" style="margin-left: 10px; transform: scale(1.3);">
+                            <span style="font-weight: 500;">${shop.name}</span>
+                        </label>
+                    </div>
+                `;
+            });
+            
+            listDiv.innerHTML = html;
+            document.getElementById('moveShopsSelection').style.display = 'block';
+            document.getElementById('moveShopsDestination').style.display = 'block';
+            updateMoveShopsCount();
+        }
+        
+        // Select all shops for move
+        function selectAllShopsForMove() {
+            document.querySelectorAll('.move-shop-checkbox').forEach(cb => {
+                cb.checked = true;
+            });
+            updateMoveShopsCount();
+        }
+        
+        // Deselect all shops for move
+        function deselectAllShopsForMove() {
+            document.querySelectorAll('.move-shop-checkbox').forEach(cb => {
+                cb.checked = false;
+            });
+            updateMoveShopsCount();
+        }
+        
+        // Update move shops count
+        function updateMoveShopsCount() {
+            const checkedBoxes = document.querySelectorAll('.move-shop-checkbox:checked');
+            const count = checkedBoxes.length;
+            const countSpan = document.getElementById('moveShopsSelectedCount');
+            
+            if (count > 0) {
+                countSpan.textContent = `تم تحديد ${count} محل`;
+                countSpan.style.color = '#28a745';
+            } else {
+                countSpan.textContent = 'لم يتم تحديد أي محل';
+                countSpan.style.color = '#dc3545';
+            }
+        }
+        
+        // Execute move shops
+        async function executeMoveShops() {
+            const sourceAreaId = document.getElementById('moveShopsSourceArea').value;
+            const targetAreaId = document.getElementById('moveShopsTargetArea').value;
+            const checkedBoxes = document.querySelectorAll('.move-shop-checkbox:checked');
+            
+            if (!sourceAreaId) {
+                showMessage('moveShopsStatus', 'error', '❌ يرجى اختيار المنطقة المصدر');
+                return;
+            }
+            
+            if (checkedBoxes.length === 0) {
+                showMessage('moveShopsStatus', 'error', '❌ يرجى تحديد محل واحد على الأقل');
+                return;
+            }
+            
+            if (!targetAreaId) {
+                showMessage('moveShopsStatus', 'error', '❌ يرجى اختيار المنطقة المستهدفة');
+                return;
+            }
+            
+            if (sourceAreaId === targetAreaId) {
+                showMessage('moveShopsStatus', 'error', '❌ المنطقة المصدر والمستهدفة متطابقتان');
+                return;
+            }
+            
+            const sourceArea = planData.areas.find(a => a.id === sourceAreaId);
+            const targetArea = planData.areas.find(a => a.id === targetAreaId);
+            
+            if (!sourceArea || !targetArea) {
+                showMessage('moveShopsStatus', 'error', '❌ المنطقة غير موجودة');
+                return;
+            }
+            
+            // Get selected shop names
+            const shopNames = Array.from(checkedBoxes).map(cb => cb.getAttribute('data-shop-name'));
+            
+            if (!confirm(`هل أنت متأكد من نقل ${shopNames.length} محل من "${sourceArea.name}" إلى "${targetArea.name}"؟`)) {
+                return;
+            }
+            
+            showMessage('moveShopsStatus', 'info', '⏳ جاري نقل المحلات...');
+            
+            try {
+                // Load and update shops_details.json
+                let shopsDetails = {};
+                try {
+                    const response = await fetch('shops_details.json?' + new Date().getTime());
+                    if (response.ok) {
+                        shopsDetails = await response.json();
+                    }
+                } catch (error) {
+                    console.error('Error loading shops_details.json:', error);
+                }
+                
+                // Update shops in shops_details.json
+                let updatedCount = 0;
+                shopNames.forEach(shopName => {
+                    if (shopsDetails[shopName]) {
+                        shopsDetails[shopName].areaId = targetAreaId;
+                        shopsDetails[shopName].area = targetArea.name;
+                        updatedCount++;
+                    }
+                });
+                
+                // Update shops in plan-data.json
+                if (planData && planData.shops) {
+                    planData.shops.forEach(shop => {
+                        if (shopNames.includes(shop.name)) {
+                            shop.areaId = targetAreaId;
+                            shop.area = targetArea.name;
+                            updatedCount++;
+                        }
+                    });
+                }
+                
+                // Save both files would require GitHub API calls
+                // For now, we'll save to plan-data.json
+                planData.lastUpdate = new Date().toISOString();
+                await savePlanDataToGitHub(`نقل ${shopNames.length} محل من ${sourceArea.name} إلى ${targetArea.name}`);
+                
+                showMessage('moveShopsStatus', 'success', `✅ تم نقل ${shopNames.length} محل بنجاح إلى "${targetArea.name}"`);
+                
+                setTimeout(() => {
+                    closeMoveShopsModal();
+                    // Refresh displays
+                    if (document.getElementById('shopsByAreaModal').style.display === 'block') {
+                        updateShopsByAreaView();
+                    }
+                    if (document.getElementById('shopsTab').classList.contains('active')) {
+                        displayShopsList();
+                    }
+                    if (document.getElementById('areasTab').classList.contains('active')) {
+                        displayAreasList();
+                    }
+                }, 2000);
+                
+            } catch (error) {
+                showMessage('moveShopsStatus', 'error', '❌ فشل نقل المحلات: ' + error.message);
+            }
         }
         
         // ============================================

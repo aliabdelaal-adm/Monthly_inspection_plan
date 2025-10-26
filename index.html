@@ -4740,6 +4740,9 @@
                     <button id="hideUpdateMessageBtn" onclick="hideMaintenanceProgress()" style="background:#dc3545;color:#fff;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-weight:bold;box-shadow:0 2px 5px rgba(0,0,0,0.2);min-height:44px;font-size:1em;">
                         ❌ إخفاء رسالة التحديث
                     </button>
+                    <button id="toggleEmergencyPanelBtn" onclick="toggleEmergencyPanelVisibility()" style="background:#6f42c1;color:#fff;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-weight:bold;box-shadow:0 2px 5px rgba(0,0,0,0.2);min-height:44px;font-size:1em;">
+                        🚨 لوحة التحكم الطارئة
+                    </button>
                 </div>
                 <p style="margin:8px 0 0 0;font-size:0.85em;color:#666;">
                     💡 عند تفعيل وضع الصيانة، سيرى جميع المستخدمين (عدا المطور) رسالة التحديث ولن يتمكنوا من استخدام النظام<br>
@@ -7148,9 +7151,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update maintenance close button visibility
         updateMaintenanceCloseButton();
         
-        // 🚨 Show emergency developer control panel
-        showEmergencyPanel();
-        console.log('✅ Emergency developer control panel initialized');
+        // 🚨 Emergency developer control panel is available but NOT shown automatically
+        // Developer can manually show it if needed
+        console.log('✅ Emergency developer control panel available (hidden by default)');
         
         // 🔔 Start monitoring maintenance changes
         monitorMaintenanceChanges();
@@ -7158,7 +7161,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Show welcome toast
         setTimeout(() => {
-            showDevToast('👋 مرحباً بك! لوحة التحكم الطارئة جاهزة', 'success', 6000, '👋');
+            showDevToast('👋 مرحباً بك! جلسة المطور نشطة', 'success', 4000, '👋');
         }, 1000);
     }
     
@@ -10183,6 +10186,22 @@ function hideEmergencyPanel() {
     const panel = document.getElementById('emergencyDevPanel');
     if (panel) {
         panel.style.display = 'none';
+    }
+}
+
+// Toggle emergency panel visibility (show/hide)
+function toggleEmergencyPanelVisibility() {
+    const panel = document.getElementById('emergencyDevPanel');
+    if (!panel) return;
+    
+    if (panel.style.display === 'none' || panel.style.display === '') {
+        // Show the panel
+        showEmergencyPanel();
+        showDevToast('✅ تم عرض لوحة التحكم الطارئة', 'success', 3000, '🚨');
+    } else {
+        // Hide the panel
+        hideEmergencyPanel();
+        showDevToast('❌ تم إخفاء لوحة التحكم الطارئة', 'info', 3000, '🚨');
     }
 }
 

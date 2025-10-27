@@ -9642,8 +9642,23 @@
         }
         
         // View Shops on Map - INTERACTIVE AND HEATMAP IMPLEMENTATION
-        function viewShopsOnMap() {
-            if (!planData || !planData.shops || planData.shops.length === 0) {
+        async function viewShopsOnMap() {
+            // Load shops details if not already loaded
+            if (!shopsDetails) {
+                try {
+                    // Cache-busting parameter ensures users always get latest data after updates
+                    const response = await fetch('shops_details.json?v=' + new Date().getTime());
+                    shopsDetails = await response.json();
+                } catch (error) {
+                    console.error('Error loading shops_details.json:', error);
+                }
+            }
+            
+            // Clear cached array when reloading shopsDetails
+            window.cachedAllShopsArray = null;
+            window.cachedUniqueAreas = null;
+            
+            if (!shopsDetails || Object.keys(shopsDetails).length === 0) {
                 alert('⚠️ لا توجد محلات لعرضها على الخريطة');
                 return;
             }
@@ -9738,16 +9753,33 @@
             
             document.body.appendChild(modal);
             
-            // Populate area filter
+            // Populate area filter with all unique areas from shopsDetails
             const areaFilter = document.getElementById('mapFilterArea');
-            if (planData.areas) {
-                planData.areas.forEach(area => {
-                    const option = document.createElement('option');
-                    option.value = area.id;
-                    option.textContent = area.name;
-                    areaFilter.appendChild(option);
+            const uniqueAreas = new Set();
+            
+            // Get areas from shopsDetails
+            if (shopsDetails) {
+                Object.values(shopsDetails).forEach(shop => {
+                    if (shop.area && shop.area !== 'غير محدد') {
+                        uniqueAreas.add(shop.area);
+                    }
                 });
             }
+            
+            // Add areas from planData if available
+            if (planData && planData.areas) {
+                planData.areas.forEach(area => {
+                    uniqueAreas.add(area.name);
+                });
+            }
+            
+            // Sort and add to filter
+            Array.from(uniqueAreas).sort().forEach((areaName, index) => {
+                const option = document.createElement('option');
+                option.value = areaName; // Use area name instead of ID for filtering
+                option.textContent = areaName;
+                areaFilter.appendChild(option);
+            });
             
             // Initial map render
             updateMapView();
@@ -9756,19 +9788,54 @@
         // Update map view based on selected mode
         window.updateMapView = function() {
             const mode = document.getElementById('mapViewMode').value;
-            const filterAreaId = document.getElementById('mapFilterArea').value;
+            const filterAreaName = document.getElementById('mapFilterArea').value;
             const mapCanvas = document.getElementById('mapCanvas');
             
-            // Filter shops
-            let shopsToDisplay = planData.shops || [];
-            if (filterAreaId) {
-                shopsToDisplay = shopsToDisplay.filter(s => s.areaId === filterAreaId);
+            // Convert shopsDetails object to array format (cache this in a global variable)
+            if (!window.cachedAllShopsArray) {
+                window.cachedAllShopsArray = [];
+                window.cachedUniqueAreas = new Set();
+                
+                if (shopsDetails) {
+                    // Create area lookup map for better performance
+                    const areaLookup = new Map();
+                    if (planData && planData.areas) {
+                        planData.areas.forEach(area => {
+                            areaLookup.set(area.name, area);
+                        });
+                    }
+                    
+                    Object.entries(shopsDetails).forEach(([shopName, shopData]) => {
+                        const area = areaLookup.get(shopData.area);
+                        const areaName = shopData.area || 'غير محدد';
+                        
+                        window.cachedAllShopsArray.push({
+                            name: shopName,
+                            areaId: area ? area.id : null,
+                            areaName: areaName,
+                            ...shopData
+                        });
+                        
+                        if (areaName && areaName !== 'غير محدد') {
+                            window.cachedUniqueAreas.add(areaName);
+                        }
+                    });
+                }
+            }
+            
+            const allShopsArray = window.cachedAllShopsArray;
+            const uniqueAreas = window.cachedUniqueAreas;
+            
+            // Filter shops by area name
+            let shopsToDisplay = allShopsArray;
+            if (filterAreaName) {
+                shopsToDisplay = shopsToDisplay.filter(s => s.areaName === filterAreaName);
             }
             
             // Update stats
-            document.getElementById('mapTotalShops').textContent = planData.shops.length;
+            document.getElementById('mapTotalShops').textContent = allShopsArray.length;
             document.getElementById('mapVisibleShops').textContent = shopsToDisplay.length;
-            document.getElementById('mapAreasCount').textContent = new Set(planData.shops.map(s => s.areaId)).size;
+            document.getElementById('mapAreasCount').textContent = uniqueAreas.size;
             
             // Clear canvas
             mapCanvas.innerHTML = '';
@@ -9785,8 +9852,8 @@
         // Render interactive map
         function renderInteractiveMap(shops, container) {
             shops.forEach((shop, index) => {
-                const area = planData.areas.find(a => a.id === shop.areaId);
-                const areaName = area ? area.name : 'غير محدد';
+                // Use areaName directly from shop data
+                const areaName = shop.areaName || shop.area || 'غير محدد';
                 
                 // Calculate priority color
                 let color = '#667eea';
@@ -9850,8 +9917,8 @@
             // Group shops by area
             const areaGroups = {};
             shops.forEach(shop => {
-                const area = planData.areas.find(a => a.id === shop.areaId);
-                const areaName = area ? area.name : 'غير محدد';
+                // Use areaName directly from shop data
+                const areaName = shop.areaName || shop.area || 'غير محدد';
                 if (!areaGroups[areaName]) {
                     areaGroups[areaName] = [];
                 }
@@ -9906,8 +9973,8 @@
             // Similar to heatmap but with different visualization
             const areaGroups = {};
             shops.forEach(shop => {
-                const area = planData.areas.find(a => a.id === shop.areaId);
-                const areaName = area ? area.name : 'غير محدد';
+                // Use areaName directly from shop data
+                const areaName = shop.areaName || shop.area || 'غير محدد';
                 if (!areaGroups[areaName]) {
                     areaGroups[areaName] = [];
                 }

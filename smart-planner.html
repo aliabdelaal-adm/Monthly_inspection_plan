@@ -2347,8 +2347,14 @@
                         <button class="btn btn-primary" onclick="refreshAreasList()">
                             <span>🔄</span> تحديث القائمة
                         </button>
+                        <button class="btn btn-warning" onclick="sortAreasBySmartPriority()">
+                            <span>⭐</span> ترتيب ذكي بالأولوية
+                        </button>
                         <button class="btn btn-warning" onclick="sortAreasByName()">
                             <span>🔤</span> ترتيب أبجدياً
+                        </button>
+                        <button class="btn btn-warning" onclick="sortAreasByShopCount()">
+                            <span>🏪</span> ترتيب بعدد المحلات
                         </button>
                         <button class="btn btn-info" onclick="mergeAreas()">
                             <span>🔗</span> دمج مناطق
@@ -2792,6 +2798,8 @@
                         <div>
                             <label style="display: block; margin-bottom: 5px; font-weight: bold;">الترتيب الرئيسي:</label>
                             <select id="primarySort" class="form-control" onchange="updateSmartShopList()">
+                                <option value="smartPriority">⭐ ترتيب ذكي بالأولوية</option>
+                                <option value="areaProximity">📍 ترتيب بالقرب الجغرافي</option>
                                 <option value="rating">حسب التقييم (الأعلى أولاً)</option>
                                 <option value="area">حسب المنطقة</option>
                                 <option value="activity">حسب النشاط</option>
@@ -3624,6 +3632,17 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+        
+        // Escape string for use in JavaScript (single-quoted strings)
+        function escapeJs(text) {
+            if (!text) return '';
+            return text
+                .replace(/\\/g, '\\\\')  // Escape backslashes first
+                .replace(/'/g, "\\'")     // Escape single quotes
+                .replace(/"/g, '\\"')     // Escape double quotes
+                .replace(/\n/g, '\\n')    // Escape newlines
+                .replace(/\r/g, '\\r');   // Escape carriage returns
         }
         
         // Display shops
@@ -5309,6 +5328,81 @@
             planData.areas.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
             displayAreasList();
             showMessage('areasManagementStatus', 'success', '✅ تم ترتيب المناطق أبجدياً');
+        }
+        
+        // Sort areas by smart priority (areas with more shops and lower ratings get priority)
+        function sortAreasBySmartPriority() {
+            if (!planData || !planData.areas) return;
+            
+            planData.areas.sort((a, b) => {
+                // Calculate priority score for each area
+                const scoreA = calculateAreaPriorityScore(a);
+                const scoreB = calculateAreaPriorityScore(b);
+                return scoreB - scoreA; // Higher priority first
+            });
+            
+            displayAreasList();
+            showMessage('areasManagementStatus', 'success', '✅ تم ترتيب المناطق حسب الأولوية الذكية');
+        }
+        
+        // Sort areas by shop count (descending)
+        function sortAreasByShopCount() {
+            if (!planData || !planData.areas) return;
+            
+            planData.areas.sort((a, b) => {
+                const countA = planData.shops.filter(s => s.areaId === a.id).length;
+                const countB = planData.shops.filter(s => s.areaId === b.id).length;
+                return countB - countA; // More shops first
+            });
+            
+            displayAreasList();
+            showMessage('areasManagementStatus', 'success', '✅ تم ترتيب المناطق حسب عدد المحلات');
+        }
+        
+        // Calculate area priority score
+        function calculateAreaPriorityScore(area) {
+            let score = 0;
+            
+            // Get shops in this area
+            const shopsInArea = planData.shops.filter(s => s.areaId === area.id);
+            const shopCount = shopsInArea.length;
+            
+            // 1. Shop count factor (0-40 points) - More shops = higher priority
+            score += Math.min(shopCount * 4, 40);
+            
+            // 2. Average rating factor (0-40 points) - Lower average rating = higher priority
+            if (shopCount > 0 && shopsDetails) {
+                let totalRating = 0;
+                let ratedShops = 0;
+                
+                shopsInArea.forEach(shop => {
+                    const shopDetail = shopsDetails[shop.name];
+                    if (shopDetail) {
+                        const ratingData = calculateShopRating(shop.name);
+                        totalRating += ratingData.rating;
+                        ratedShops++;
+                    }
+                });
+                
+                if (ratedShops > 0) {
+                    const avgRating = totalRating / ratedShops;
+                    // Invert: 0% avg rating = 40 points, 100% avg rating = 0 points
+                    score += (100 - avgRating) * 0.4;
+                }
+            }
+            
+            // 3. Inspection coverage factor (0-20 points) - Fewer inspected shops = higher priority
+            if (shopCount > 0) {
+                const inspectedShops = shopsInArea.filter(shop => {
+                    const lastInsp = getLastInspectionForShop(shop.name);
+                    return lastInsp !== null;
+                }).length;
+                const coveragePercent = (inspectedShops / shopCount) * 100;
+                // Lower coverage = higher priority
+                score += (100 - coveragePercent) * 0.2;
+            }
+            
+            return score;
         }
         
         // Open add area modal
@@ -10753,6 +10847,33 @@
         }
         
         // Update Smart Shop List based on filters
+        // Calculate smart priority score for a shop
+        // Higher score = higher priority (needs attention)
+        function calculateSmartPriorityScore(shop) {
+            let score = 0;
+            
+            // 1. Rating factor (0-40 points) - Lower rating = higher priority
+            // Invert the rating: 0% rating gets 40 points, 100% rating gets 0 points
+            score += (100 - shop.rating) * 0.4;
+            
+            // 2. Last inspection factor (0-40 points) - Older inspection = higher priority
+            if (shop.lastInspection) {
+                const daysSinceInspection = (new Date() - new Date(shop.lastInspection.day)) / (1000 * 60 * 60 * 24);
+                // More than 60 days = max 40 points, recent inspection = fewer points
+                score += Math.min(daysSinceInspection / 60 * 40, 40);
+            } else {
+                // Never inspected = maximum priority
+                score += 40;
+            }
+            
+            // 3. Inspection count factor (0-20 points) - Fewer inspections = higher priority
+            // 0 inspections = 20 points, 10+ inspections = 0 points
+            const inspectionBonus = Math.max(20 - (shop.inspectionCount * 2), 0);
+            score += inspectionBonus;
+            
+            return score;
+        }
+        
         function updateSmartShopList() {
             const primarySort = document.getElementById('primarySort').value;
             const areaFilter = document.getElementById('smartListAreaFilter').value;
@@ -10804,7 +10925,24 @@
             }
             
             // Apply sorting
-            if (primarySort === 'rating') {
+            if (primarySort === 'smartPriority') {
+                // Smart priority sorting: combines rating, last inspection date, and inspection count
+                allShops.sort((a, b) => {
+                    // Calculate priority score (0-100, higher is more priority)
+                    const scoreA = calculateSmartPriorityScore(a);
+                    const scoreB = calculateSmartPriorityScore(b);
+                    return scoreB - scoreA; // Higher priority first
+                });
+            } else if (primarySort === 'areaProximity') {
+                // Area proximity sorting: groups by area and sorts by rating within each area
+                allShops.sort((a, b) => {
+                    // First sort by area
+                    const areaCompare = a.area.localeCompare(b.area, 'ar');
+                    if (areaCompare !== 0) return areaCompare;
+                    // Then by rating within the same area (higher first)
+                    return b.rating - a.rating;
+                });
+            } else if (primarySort === 'rating') {
                 allShops.sort((a, b) => b.rating - a.rating);
             } else if (primarySort === 'area') {
                 allShops.sort((a, b) => a.area.localeCompare(b.area, 'ar'));
@@ -10895,7 +11033,7 @@
                 html += `<td style="text-align: center;">
                     <input type="checkbox" 
                            ${isSelected ? 'checked' : ''} 
-                           onchange="toggleShopSelection('${escapeHtml(shop.name)}')"
+                           onchange="toggleShopSelection('${escapeJs(shop.name)}')"
                            style="width: 20px; height: 20px; cursor: pointer;">
                 </td>`;
                 html += `<td>${idx + 1}</td>`;
@@ -10906,9 +11044,9 @@
                 html += `<td>${lastInspectionText}</td>`;
                 html += `<td style="text-align: center;">${shop.inspectionCount}</td>`;
                 html += `<td>
-                    <button onclick="showShopRatingDetails('${escapeHtml(shop.name)}')" class="btn btn-sm btn-info" style="padding: 5px 10px; margin: 2px;" title="عرض التفاصيل">👁️</button>
-                    <button onclick="editShopFromSmartList('${escapeHtml(shop.name)}')" class="btn btn-sm btn-warning" style="padding: 5px 10px; margin: 2px;" title="تعديل">✏️</button>
-                    <button onclick="deleteShopFromSmartList('${escapeHtml(shop.name)}')" class="btn btn-sm btn-danger" style="padding: 5px 10px; margin: 2px;" title="حذف">🗑️</button>
+                    <button onclick="showShopRatingDetails('${escapeJs(shop.name)}')" class="btn btn-sm btn-info" style="padding: 5px 10px; margin: 2px;" title="عرض التفاصيل">👁️</button>
+                    <button onclick="editShopFromSmartList('${escapeJs(shop.name)}')" class="btn btn-sm btn-warning" style="padding: 5px 10px; margin: 2px;" title="تعديل">✏️</button>
+                    <button onclick="deleteShopFromSmartList('${escapeJs(shop.name)}')" class="btn btn-sm btn-danger" style="padding: 5px 10px; margin: 2px;" title="حذف">🗑️</button>
                 </td>`;
                 html += '</tr>';
             });

@@ -1102,7 +1102,7 @@
       <div class="content-card">
         <div class="content-card-header">
           <h3 class="content-card-title">إدارة المناطق</h3>
-          <div style="display: flex; gap: 10px;">
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
             <button class="btn btn-primary" onclick="addArea()">
               <i class="fas fa-map-marker-alt"></i>
               إضافة منطقة جديدة
@@ -1111,6 +1111,10 @@
               <i class="fas fa-save"></i>
               <i class="fab fa-github"></i>
               حفظ في GitHub
+            </button>
+            <button class="btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;" onclick="showProximitySortModal()">
+              <i class="fas fa-route"></i>
+              ترتيب ذكي حسب القرب
             </button>
           </div>
         </div>
@@ -1141,7 +1145,7 @@
       <div class="content-card">
         <div class="content-card-header">
           <h3 class="content-card-title">إدارة المحلات</h3>
-          <div style="display: flex; gap: 10px;">
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
             <button class="btn btn-primary" onclick="addShop()">
               <i class="fas fa-store"></i>
               إضافة محل جديد
@@ -1154,6 +1158,14 @@
             <button class="btn btn-warning" onclick="loadShops()">
               <i class="fas fa-sync-alt"></i>
               تحديث القائمة
+            </button>
+            <button class="btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;" onclick="showProximitySortModal()">
+              <i class="fas fa-route"></i>
+              ترتيب ذكي حسب القرب
+            </button>
+            <button class="btn" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;" onclick="sortShopsByInspectionFrequency()">
+              <i class="fas fa-star"></i>
+              ترتيب حسب الأولوية
             </button>
           </div>
         </div>
@@ -2800,29 +2812,40 @@
     }
     
     // Delete Area
-    function deleteArea(name) {
+    // Delete Area - Enhanced to save automatically
+    async function deleteArea(name) {
       if (!confirm(`⚠️ هل أنت متأكد من حذف جميع سجلات المنطقة "${name}"؟\n\nهذا الإجراء لا يمكن التراجع عنه!`)) {
         return;
       }
       
-      const beforeCount = planData.inspectionData.length;
-      planData.inspectionData = planData.inspectionData.filter(inspection => inspection.area !== name);
-      const deletedCount = beforeCount - planData.inspectionData.length;
-      
-      if (deletedCount === 0) {
-        showMessage("areasStatus", "warning", "لم يتم العثور على سجلات للحذف!");
-        return;
+      try {
+        showMessage("areasStatus", "info", "جاري حذف المنطقة...");
+        
+        const beforeCount = planData.inspectionData.length;
+        planData.inspectionData = planData.inspectionData.filter(inspection => inspection.area !== name);
+        const deletedCount = beforeCount - planData.inspectionData.length;
+        
+        if (deletedCount === 0) {
+          showMessage("areasStatus", "warning", "لم يتم العثور على سجلات للحذف!");
+          return;
+        }
+        
+        // Update the plan editor
+        document.getElementById('planEditor').value = JSON.stringify(planData, null, 2);
+        
+        // Save to GitHub automatically
+        await savePlanToGitHub();
+        
+        // Reload the list
+        loadAreasList();
+        populateAreaFilter();
+        
+        showMessage("areasStatus", "success", `✅ تم حذف ${deletedCount} سجل للمنطقة "${name}" بنجاح وحفظ التغييرات!`);
+        logActivity("حذف منطقة", `تم حذف ${deletedCount} سجل للمنطقة "${name}"`);
+      } catch (error) {
+        showMessage("areasStatus", "error", "❌ حدث خطأ أثناء الحذف: " + error.message);
+        console.error('Delete area error:', error);
       }
-      
-      // Update the plan editor
-      document.getElementById('planEditor').value = JSON.stringify(planData, null, 2);
-      
-      // Reload the list
-      loadAreasList();
-      populateAreaFilter();
-      
-      showMessage("areasStatus", "success", `✅ تم حذف ${deletedCount} سجل للمنطقة "${name}"! اضغط "حفظ في GitHub" لحفظ التغييرات.`);
-      logActivity("حذف منطقة", `تم حذف ${deletedCount} سجل للمنطقة "${name}"`);
     }
     
     // Edit Shop
@@ -3070,43 +3093,366 @@
       }
     }
     
-    // Delete Shop
-    function deleteShop(name) {
+    // Delete Shop - Enhanced to delete from both plan-data.json and shops_details.json
+    async function deleteShop(name) {
       // Check if data is loaded
       if (!planData || !planData.inspectionData) {
         alert('⚠️ لم يتم تحميل البيانات بعد!\n\nالرجاء الضغط على زر "تحديث القائمة" أولاً لتحميل البيانات.');
         return;
       }
       
-      if (!confirm(`⚠️ هل أنت متأكد من حذف المحل "${name}" من جميع السجلات؟\n\nهذا الإجراء لا يمكن التراجع عنه!`)) {
+      if (!confirm(`⚠️ هل أنت متأكد من حذف المحل "${name}" بالكامل من جميع السجلات وقاعدة البيانات؟\n\nهذا الإجراء لا يمكن التراجع عنه!`)) {
         return;
       }
       
-      let deleteCount = 0;
-      planData.inspectionData.forEach(inspection => {
-        if (inspection.shops && Array.isArray(inspection.shops)) {
-          const beforeLength = inspection.shops.length;
-          inspection.shops = inspection.shops.filter(shop => shop !== name);
-          if (inspection.shops.length < beforeLength) {
-            deleteCount++;
+      try {
+        showMessage("shopsStatus", "info", "جاري حذف المحل...");
+        
+        // Step 1: Delete from inspection data
+        let deleteCount = 0;
+        planData.inspectionData.forEach(inspection => {
+          if (inspection.shops && Array.isArray(inspection.shops)) {
+            const beforeLength = inspection.shops.length;
+            inspection.shops = inspection.shops.filter(shop => shop !== name);
+            if (inspection.shops.length < beforeLength) {
+              deleteCount++;
+            }
+          }
+        });
+        
+        if (deleteCount === 0) {
+          showMessage("shopsStatus", "warning", "لم يتم العثور على المحل في السجلات!");
+          return;
+        }
+        
+        // Step 2: Delete from shops_details.json
+        const token = getToken();
+        if (token) {
+          try {
+            // Get current shops_details.json file
+            const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/shops_details.json`, {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/vnd.github.v3+json'
+              }
+            });
+            
+            if (getRes.ok) {
+              const file = await getRes.json();
+              const sha = file.sha;
+              
+              // Decode and parse current content
+              const currentContent = JSON.parse(decodeURIComponent(escape(atob(file.content))));
+              
+              // Delete shop from shops_details
+              if (currentContent[name]) {
+                delete currentContent[name];
+                
+                // Prepare updated content
+                const content = btoa(unescape(encodeURIComponent(JSON.stringify(currentContent, null, 2))));
+                
+                // Update file
+                const updateRes = await fetch(`https://api.github.com/repos/${repo}/contents/shops_details.json`, {
+                  method: 'PUT',
+                  headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    message: `حذف المحل: ${name}`,
+                    content: content,
+                    sha: sha
+                  })
+                });
+                
+                if (!updateRes.ok) {
+                  console.warn('فشل حذف المحل من shops_details.json');
+                }
+              }
+            }
+          } catch (error) {
+            console.error('Error deleting from shops_details:', error);
+            // Continue even if shops_details deletion fails
           }
         }
-      });
+        
+        // Step 3: Update the plan editor
+        document.getElementById('planEditor').value = JSON.stringify(planData, null, 2);
+        
+        // Step 4: Save to GitHub
+        await savePlanToGitHub();
+        
+        // Step 5: Reload the list
+        loadShopsList();
+        
+        showMessage("shopsStatus", "success", `✅ تم حذف المحل "${name}" بنجاح من ${deleteCount} سجل تفتيش ومن قاعدة البيانات!`);
+        logActivity("حذف محل", `تم حذف المحل "${name}" من ${deleteCount} سجل`);
+      } catch (error) {
+        showMessage("shopsStatus", "error", "❌ حدث خطأ أثناء الحذف: " + error.message);
+        console.error('Delete shop error:', error);
+      }
+    }
+    
+    // ========================
+    // Smart Sorting Functions
+    // ========================
+    
+    // Helper function to extract coordinates from Google Maps URL
+    function extractCoordinates(locationMapUrl) {
+      if (!locationMapUrl) return null;
       
-      if (deleteCount === 0) {
-        showMessage("shopsStatus", "warning", "لم يتم العثور على المحل في السجلات!");
+      // Handle different Google Maps URL formats
+      // Format 1: query=lat,lng
+      const queryMatch = locationMapUrl.match(/query=([0-9.-]+)%2C([0-9.-]+)|query=([0-9.-]+),([0-9.-]+)/);
+      if (queryMatch) {
+        return {
+          lat: parseFloat(queryMatch[1] || queryMatch[3]),
+          lng: parseFloat(queryMatch[2] || queryMatch[4])
+        };
+      }
+      
+      // Format 2: @lat,lng
+      const atMatch = locationMapUrl.match(/@([0-9.-]+),([0-9.-]+)/);
+      if (atMatch) {
+        return {
+          lat: parseFloat(atMatch[1]),
+          lng: parseFloat(atMatch[2])
+        };
+      }
+      
+      return null;
+    }
+    
+    // Calculate distance between two coordinates using Haversine formula
+    function calculateDistance(coord1, coord2) {
+      if (!coord1 || !coord2) return Infinity;
+      
+      const R = 6371; // Earth's radius in kilometers
+      const dLat = (coord2.lat - coord1.lat) * Math.PI / 180;
+      const dLng = (coord2.lng - coord1.lng) * Math.PI / 180;
+      
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(coord1.lat * Math.PI / 180) * Math.cos(coord2.lat * Math.PI / 180) *
+                Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const distance = R * c;
+      
+      return distance;
+    }
+    
+    // Sort shops by proximity in a specific area
+    async function sortShopsByProximity(areaName) {
+      if (!planData || !planData.inspectionData) {
+        alert('⚠️ لم يتم تحميل البيانات بعد!');
         return;
       }
       
-      // Update the plan editor
-      document.getElementById('planEditor').value = JSON.stringify(planData, null, 2);
-      
-      // Reload the list
-      loadShopsList();
-      
-      showMessage("shopsStatus", "success", `✅ تم حذف المحل "${name}" من ${deleteCount} سجل! اضغط "حفظ في GitHub" لحفظ التغييرات.`);
-      logActivity("حذف محل", `تم حذف المحل "${name}" من ${deleteCount} سجل`);
+      try {
+        showMessage("shopsStatus", "info", "جاري ترتيب المحلات حسب القرب من بعضها...");
+        
+        // Load shops details if not loaded
+        let shopsDetailsData = shopsDetails;
+        if (!shopsDetailsData) {
+          const response = await fetch('shops_details.json?' + new Date().getTime());
+          shopsDetailsData = await response.json();
+        }
+        
+        // Get all shops in the area with their coordinates
+        const areaInspections = planData.inspectionData.filter(i => i.area === areaName);
+        const shopsSet = new Set();
+        areaInspections.forEach(i => {
+          if (i.shops && Array.isArray(i.shops)) {
+            i.shops.forEach(shop => shopsSet.add(shop));
+          }
+        });
+        
+        const shopsWithCoords = [];
+        shopsSet.forEach(shopName => {
+          const shopDetails = shopsDetailsData[shopName];
+          if (shopDetails && shopDetails.locationMap) {
+            const coords = extractCoordinates(shopDetails.locationMap);
+            if (coords) {
+              shopsWithCoords.push({
+                name: shopName,
+                coords: coords,
+                details: shopDetails
+              });
+            }
+          }
+        });
+        
+        if (shopsWithCoords.length < 2) {
+          showMessage("shopsStatus", "warning", "عدد المحلات التي لديها إحداثيات غير كافٍ للترتيب!");
+          return;
+        }
+        
+        // Sort using nearest neighbor algorithm
+        const sortedShops = [];
+        let remaining = [...shopsWithCoords];
+        
+        // Start with the first shop
+        let current = remaining.shift();
+        sortedShops.push(current);
+        
+        // Find nearest neighbor for each shop
+        while (remaining.length > 0) {
+          let nearestIndex = 0;
+          let minDistance = Infinity;
+          
+          for (let i = 0; i < remaining.length; i++) {
+            const distance = calculateDistance(current.coords, remaining[i].coords);
+            if (distance < minDistance) {
+              minDistance = distance;
+              nearestIndex = i;
+            }
+          }
+          
+          current = remaining.splice(nearestIndex, 1)[0];
+          sortedShops.push(current);
+        }
+        
+        // Update all inspections in this area with sorted shops
+        let updateCount = 0;
+        planData.inspectionData.forEach(inspection => {
+          if (inspection.area === areaName && inspection.shops && Array.isArray(inspection.shops)) {
+            const sortedShopNames = sortedShops.map(s => s.name);
+            // Keep only shops that are in this inspection
+            inspection.shops = sortedShopNames.filter(name => inspection.shops.includes(name));
+            updateCount++;
+          }
+        });
+        
+        // Update the plan editor
+        document.getElementById('planEditor').value = JSON.stringify(planData, null, 2);
+        
+        // Save to GitHub
+        await savePlanToGitHub();
+        
+        // Reload lists
+        loadShopsList();
+        loadAreasList();
+        
+        showMessage("shopsStatus", "success", `✅ تم ترتيب ${sortedShops.length} محل في منطقة "${areaName}" حسب القرب من بعضها وحفظ التغييرات!`);
+        logActivity("ترتيب المحلات حسب القرب", `تم ترتيب المحلات في منطقة "${areaName}"`);
+      } catch (error) {
+        showMessage("shopsStatus", "error", "❌ حدث خطأ أثناء الترتيب: " + error.message);
+        console.error('Sort by proximity error:', error);
+      }
     }
+    
+    // Sort shops by inspection frequency (priority recommendation)
+    async function sortShopsByInspectionFrequency() {
+      if (!planData || !planData.inspectionData) {
+        alert('⚠️ لم يتم تحميل البيانات بعد!');
+        return;
+      }
+      
+      try {
+        showMessage("shopsStatus", "info", "جاري تحليل وترتيب المحلات حسب أولوية التفتيش...");
+        
+        // Calculate inspection frequency for each shop
+        const shopFrequency = {};
+        planData.inspectionData.forEach(inspection => {
+          if (inspection.shops && Array.isArray(inspection.shops)) {
+            inspection.shops.forEach(shop => {
+              if (!shopFrequency[shop]) {
+                shopFrequency[shop] = 0;
+              }
+              shopFrequency[shop]++;
+            });
+          }
+        });
+        
+        // Sort shops by frequency (ascending - shops with fewer inspections get priority)
+        const sortedShops = Object.entries(shopFrequency)
+          .sort((a, b) => a[1] - b[1])
+          .map(([name, count]) => ({ name, count }));
+        
+        // Display results in a modal or alert
+        let message = "🎯 ترتيب المحلات حسب أولوية التفتيش:\n\n";
+        message += "المحلات الأقل تفتيشاً (أولوية عالية):\n";
+        sortedShops.slice(0, 10).forEach((shop, index) => {
+          message += `${index + 1}. ${shop.name} - عدد التفتيشات: ${shop.count}\n`;
+        });
+        
+        if (sortedShops.length > 10) {
+          message += `\n... و ${sortedShops.length - 10} محل آخر`;
+        }
+        
+        alert(message);
+        
+        // Log the activity
+        logActivity("تحليل أولويات التفتيش", `تم تحليل ${sortedShops.length} محل`);
+        
+        // Store in console for detailed analysis
+        console.log("تحليل كامل لأولويات التفتيش:", sortedShops);
+        
+        showMessage("shopsStatus", "success", `✅ تم تحليل ${sortedShops.length} محل وترتيبها حسب أولوية التفتيش!`);
+      } catch (error) {
+        showMessage("shopsStatus", "error", "❌ حدث خطأ أثناء التحليل: " + error.message);
+        console.error('Sort by frequency error:', error);
+      }
+    }
+    
+    // Show modal for selecting area for proximity sorting
+    async function showProximitySortModal() {
+      if (!planData || !planData.inspectionData) {
+        alert('⚠️ لم يتم تحميل البيانات بعد!');
+        return;
+      }
+      
+      // Get unique areas
+      const areas = [...new Set(planData.inspectionData.map(i => i.area))].sort();
+      
+      if (areas.length === 0) {
+        alert('⚠️ لا توجد مناطق في البيانات!');
+        return;
+      }
+      
+      // Create selection modal
+      let areaOptions = '';
+      areas.forEach(area => {
+        areaOptions += `<option value="${area.replace(/"/g, '&quot;')}">${area}</option>`;
+      });
+      
+      const modalHtml = `
+        <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 10000; display: flex; align-items: center; justify-content: center;" id="proximitySortModal">
+          <div style="background: white; padding: 30px; border-radius: 15px; max-width: 500px; width: 90%;">
+            <h3 style="margin-bottom: 20px; color: #2d3561;">🗺️ ترتيب المحلات حسب القرب</h3>
+            <p style="margin-bottom: 20px; color: #666;">اختر المنطقة التي تريد ترتيب محلاتها حسب قربها من بعضها على خرائط جوجل:</p>
+            <select id="areaSelectForSort" style="width: 100%; padding: 10px; margin-bottom: 20px; border: 2px solid #ddd; border-radius: 8px; font-family: 'Cairo', sans-serif;">
+              ${areaOptions}
+            </select>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+              <button onclick="closeProximitySortModal()" style="padding: 10px 20px; border: none; background: #6c757d; color: white; border-radius: 8px; cursor: pointer; font-family: 'Cairo', sans-serif;">
+                إلغاء
+              </button>
+              <button onclick="executeProximitySort()" style="padding: 10px 20px; border: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px; cursor: pointer; font-family: 'Cairo', sans-serif;">
+                ترتيب المحلات
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.body.insertAdjacentHTML('beforeend', modalHtml);
+    }
+    
+    window.closeProximitySortModal = function() {
+      const modal = document.getElementById('proximitySortModal');
+      if (modal) modal.remove();
+    };
+    
+    window.executeProximitySort = async function() {
+      const areaSelect = document.getElementById('areaSelectForSort');
+      if (areaSelect) {
+        const selectedArea = areaSelect.value;
+        closeProximitySortModal();
+        await sortShopsByProximity(selectedArea);
+      }
+    };
     
     // ========================
     // Maintenance Mode

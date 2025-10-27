@@ -530,6 +530,102 @@
         .delete-icon { color: #dc3545; }
         .copy-icon { color: #17a2b8; }
         
+        /* Professional Action Buttons for Shops and Areas Management */
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 8px 14px;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .action-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .action-btn span:first-child {
+            font-size: 1.2em;
+        }
+        
+        .action-btn-text {
+            font-size: 0.85em;
+        }
+        
+        .action-btn-view {
+            border-color: #3498db;
+            color: #3498db;
+        }
+        
+        .action-btn-view:hover {
+            background: #3498db;
+            color: white;
+        }
+        
+        .action-btn-edit {
+            border-color: #f39c12;
+            color: #f39c12;
+        }
+        
+        .action-btn-edit:hover {
+            background: #f39c12;
+            color: white;
+        }
+        
+        .action-btn-delete {
+            border-color: #e74c3c;
+            color: #e74c3c;
+        }
+        
+        .action-btn-delete:hover {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .action-btn-copy {
+            border-color: #1abc9c;
+            color: #1abc9c;
+        }
+        
+        .action-btn-copy:hover {
+            background: #1abc9c;
+            color: white;
+        }
+        
+        .action-btn-map {
+            border-color: #27ae60;
+            color: #27ae60;
+        }
+        
+        .action-btn-map:hover {
+            background: #27ae60;
+            color: white;
+        }
+        
+        /* Responsive for smaller screens */
+        @media (max-width: 768px) {
+            .action-btn-text {
+                display: none;
+            }
+            
+            .action-btn {
+                padding: 8px 10px;
+            }
+        }
+        
         .filter-bar {
             display: flex;
             gap: 15px;
@@ -4693,11 +4789,28 @@
                     <td>${area ? area.name : (shop.area || 'غير محدد')}</td>
                     <td style="font-family: monospace; font-size: 0.85em;">${shop.id || shop.admCode || idx}</td>
                     <td>
-                        <span class="action-icon" onclick="viewShopDetails('${escapeHtml(shop.name)}')" title="عرض التفاصيل" style="color: #3498db;">👁️</span>
-                        <span class="action-icon edit-icon" onclick="openEditShopModal('${shop.id || idx}')" title="تعديل">✏️</span>
-                        <span class="action-icon delete-icon" onclick="deleteShop('${shop.id || idx}')" title="حذف">🗑️</span>
-                        <span class="action-icon copy-icon" onclick="copyShopInfo('${escapeHtml(shop.name)}')" title="نسخ المعلومات">📋</span>
-                        ${shop.locationMap ? `<span class="action-icon" onclick="window.open('${shop.locationMap}', '_blank')" title="موقع على الخريطة" style="color: #27ae60;">🗺️</span>` : ''}
+                        <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+                            <button class="action-btn action-btn-view" onclick="viewShopDetails('${escapeHtml(shop.name)}')" title="عرض التفاصيل">
+                                <span>👁️</span>
+                                <span class="action-btn-text">عرض</span>
+                            </button>
+                            <button class="action-btn action-btn-edit" onclick="openEditShopModal('${escapeHtml(shop.name)}')" title="تعديل المحل">
+                                <span>✏️</span>
+                                <span class="action-btn-text">تعديل</span>
+                            </button>
+                            <button class="action-btn action-btn-delete" onclick="deleteShop('${escapeHtml(shop.name)}')" title="حذف المحل">
+                                <span>🗑️</span>
+                                <span class="action-btn-text">حذف</span>
+                            </button>
+                            <button class="action-btn action-btn-copy" onclick="copyShopInfo('${escapeHtml(shop.name)}')" title="نسخ المعلومات">
+                                <span>📋</span>
+                                <span class="action-btn-text">نسخ</span>
+                            </button>
+                            ${shop.locationMap ? `<button class="action-btn action-btn-map" onclick="window.open('${shop.locationMap}', '_blank')" title="موقع على الخريطة">
+                                <span>🗺️</span>
+                                <span class="action-btn-text">خريطة</span>
+                            </button>` : ''}
+                        </div>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -4818,13 +4931,29 @@
             document.getElementById('shopModal').style.display = 'block';
         }
         
-        // Open edit shop modal
-        function openEditShopModal(shopId) {
-            const shop = planData.shops.find(s => s.id === shopId);
-            if (!shop) return;
+        // Open edit shop modal - accepts shop ID or shop name
+        function openEditShopModal(shopIdOrName) {
+            // Try to find shop by ID first, then by name
+            let shop = planData.shops.find(s => s.id === shopIdOrName);
+            if (!shop) {
+                // Try finding by name
+                shop = planData.shops.find(s => s.name === shopIdOrName);
+            }
+            
+            // If still not found, create a new shop entry
+            if (!shop) {
+                // This might be a shop from shops_details.json not yet in plan-data
+                console.log('Shop not found in plan-data, will create new entry:', shopIdOrName);
+                shop = {
+                    id: '',  // Will be generated when saving
+                    name: shopIdOrName,
+                    areaId: '',
+                    area: ''
+                };
+            }
             
             document.getElementById('shopModalTitle').innerHTML = '✏️ تعديل محل';
-            document.getElementById('shopModalId').value = shop.id;
+            document.getElementById('shopModalId').value = shop.id || '';
             document.getElementById('shopModalName').value = shop.name;
             
             // Populate areas dropdown
@@ -5032,9 +5161,17 @@
         }
         
         // Delete shop
-        async function deleteShop(shopId) {
-            const shop = planData.shops.find(s => s.id === shopId);
-            if (!shop) return;
+        async function deleteShop(shopIdOrName) {
+            // Try to find shop by ID first, then by name
+            let shop = planData.shops.find(s => s.id === shopIdOrName);
+            if (!shop) {
+                shop = planData.shops.find(s => s.name === shopIdOrName);
+            }
+            
+            if (!shop) {
+                showMessage('shopsManagementStatus', 'error', '❌ المحل غير موجود في قاعدة البيانات');
+                return;
+            }
             
             if (!confirm(`هل أنت متأكد من حذف المحل "${shop.name}"؟`)) {
                 return;
@@ -5043,8 +5180,8 @@
             showMessage('shopsManagementStatus', 'info', '⏳ جاري الحذف...');
             
             try {
-                // Remove shop from array
-                planData.shops = planData.shops.filter(s => s.id !== shopId);
+                // Remove shop from array using both id and name for safety
+                planData.shops = planData.shops.filter(s => s.id !== shop.id && s.name !== shop.name);
                 
                 // Save to GitHub
                 await savePlanDataToGitHub();
@@ -5124,10 +5261,24 @@
                     <td style="font-family: monospace; font-size: 0.85em;">${area.id}</td>
                     <td>${shopsCount} محل</td>
                     <td>
-                        <span class="action-icon" onclick="viewAreaShops('${area.id}')" title="عرض المحلات" style="color: #3498db;" role="button" aria-label="عرض محلات المنطقة">🏪</span>
-                        <span class="action-icon edit-icon" onclick="openEditAreaModal('${area.id}')" title="تعديل">✏️</span>
-                        <span class="action-icon delete-icon" onclick="deleteArea('${area.id}')" title="حذف">🗑️</span>
-                        <span class="action-icon copy-icon" onclick="copyAreaId('${area.id}')" title="نسخ المعرف">📋</span>
+                        <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+                            <button class="action-btn action-btn-view" onclick="viewAreaShops('${area.id}')" title="عرض المحلات" role="button" aria-label="عرض محلات المنطقة">
+                                <span>🏪</span>
+                                <span class="action-btn-text">محلات</span>
+                            </button>
+                            <button class="action-btn action-btn-edit" onclick="openEditAreaModal('${area.id}')" title="تعديل المنطقة">
+                                <span>✏️</span>
+                                <span class="action-btn-text">تعديل</span>
+                            </button>
+                            <button class="action-btn action-btn-delete" onclick="deleteArea('${area.id}')" title="حذف المنطقة">
+                                <span>🗑️</span>
+                                <span class="action-btn-text">حذف</span>
+                            </button>
+                            <button class="action-btn action-btn-copy" onclick="copyAreaId('${area.id}')" title="نسخ المعرف">
+                                <span>📋</span>
+                                <span class="action-btn-text">نسخ</span>
+                            </button>
+                        </div>
                     </td>
                 `;
                 tbody.appendChild(tr);

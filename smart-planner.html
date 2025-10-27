@@ -9624,12 +9624,17 @@
             // Load shops details if not already loaded
             if (!shopsDetails) {
                 try {
-                    const response = await fetch('shops_details.json?' + new Date().getTime());
+                    // Cache-busting parameter ensures users always get latest data after updates
+                    const response = await fetch('shops_details.json?v=' + new Date().getTime());
                     shopsDetails = await response.json();
                 } catch (error) {
                     console.error('Error loading shops_details.json:', error);
                 }
             }
+            
+            // Clear cached array when reloading shopsDetails
+            window.cachedAllShopsArray = null;
+            window.cachedUniqueAreas = null;
             
             if (!shopsDetails || Object.keys(shopsDetails).length === 0) {
                 alert('⚠️ لا توجد محلات لعرضها على الخريطة');
@@ -9764,20 +9769,40 @@
             const filterAreaName = document.getElementById('mapFilterArea').value;
             const mapCanvas = document.getElementById('mapCanvas');
             
-            // Convert shopsDetails object to array format
-            const allShopsArray = [];
-            if (shopsDetails) {
-                Object.entries(shopsDetails).forEach(([shopName, shopData]) => {
-                    // Find the area ID for this shop
-                    const area = planData && planData.areas ? planData.areas.find(a => a.name === shopData.area) : null;
-                    allShopsArray.push({
-                        name: shopName,
-                        areaId: area ? area.id : null,
-                        areaName: shopData.area || 'غير محدد',
-                        ...shopData
+            // Convert shopsDetails object to array format (cache this in a global variable)
+            if (!window.cachedAllShopsArray) {
+                window.cachedAllShopsArray = [];
+                window.cachedUniqueAreas = new Set();
+                
+                if (shopsDetails) {
+                    // Create area lookup map for better performance
+                    const areaLookup = new Map();
+                    if (planData && planData.areas) {
+                        planData.areas.forEach(area => {
+                            areaLookup.set(area.name, area);
+                        });
+                    }
+                    
+                    Object.entries(shopsDetails).forEach(([shopName, shopData]) => {
+                        const area = areaLookup.get(shopData.area);
+                        const areaName = shopData.area || 'غير محدد';
+                        
+                        window.cachedAllShopsArray.push({
+                            name: shopName,
+                            areaId: area ? area.id : null,
+                            areaName: areaName,
+                            ...shopData
+                        });
+                        
+                        if (areaName && areaName !== 'غير محدد') {
+                            window.cachedUniqueAreas.add(areaName);
+                        }
                     });
-                });
+                }
             }
+            
+            const allShopsArray = window.cachedAllShopsArray;
+            const uniqueAreas = window.cachedUniqueAreas;
             
             // Filter shops by area name
             let shopsToDisplay = allShopsArray;
@@ -9786,7 +9811,6 @@
             }
             
             // Update stats
-            const uniqueAreas = new Set(allShopsArray.map(s => s.areaName).filter(a => a && a !== 'غير محدد'));
             document.getElementById('mapTotalShops').textContent = allShopsArray.length;
             document.getElementById('mapVisibleShops').textContent = shopsToDisplay.length;
             document.getElementById('mapAreasCount').textContent = uniqueAreas.size;

@@ -4589,24 +4589,29 @@
             const searchTerm = document.getElementById('searchShop').value.toLowerCase();
             const filterAreaId = document.getElementById('filterShopArea').value;
             
-            // Load shops_details.json for complete information
-            let shopsDetails = {};
-            try {
-                const response = await fetch('shops_details.json?' + new Date().getTime());
-                if (response.ok) {
-                    shopsDetails = await response.json();
+            // Use global shopsDetails for consistency with Smart Shop List
+            // This ensures all 306 shops are visible to developers
+            let currentShopsDetails = shopsDetails || {};
+            
+            // If global shopsDetails is not loaded (e.g., not logged in), try loading from local file
+            if (!shopsDetails || Object.keys(shopsDetails).length === 0) {
+                try {
+                    const response = await fetch('shops_details.json?' + new Date().getTime());
+                    if (response.ok) {
+                        currentShopsDetails = await response.json();
+                    }
+                } catch (error) {
+                    console.error('Error loading shops_details.json:', error);
                 }
-            } catch (error) {
-                console.error('Error loading shops_details.json:', error);
             }
             
-            const totalShopsInDetails = Object.keys(shopsDetails).length;
+            const totalShopsInDetails = Object.keys(currentShopsDetails).length;
             
             // Create combined shop list from both sources
             const allShops = [];
             
-            // Add shops from shops_details.json
-            Object.entries(shopsDetails).forEach(([shopName, shopInfo]) => {
+            // Add ALL shops from shops_details.json for developer access
+            Object.entries(currentShopsDetails).forEach(([shopName, shopInfo]) => {
                 allShops.push({
                     name: shopInfo.nameAr || shopName,
                     nameEn: shopInfo.nameEn || '',
@@ -5295,22 +5300,26 @@
             const viewType = document.getElementById('shopsByAreaViewType').value;
             const contentDiv = document.getElementById('shopsByAreaContent');
             
-            // Load shops_details.json for complete information
-            let shopsDetails = {};
-            try {
-                const response = await fetch('shops_details.json?' + new Date().getTime());
-                if (response.ok) {
-                    shopsDetails = await response.json();
+            // Use global shopsDetails for consistency, ensuring all shops are visible
+            let currentShopsDetails = shopsDetails || {};
+            
+            // If global shopsDetails is not loaded, try loading from local file
+            if (!shopsDetails || Object.keys(shopsDetails).length === 0) {
+                try {
+                    const response = await fetch('shops_details.json?' + new Date().getTime());
+                    if (response.ok) {
+                        currentShopsDetails = await response.json();
+                    }
+                } catch (error) {
+                    console.error('Error loading shops_details.json:', error);
                 }
-            } catch (error) {
-                console.error('Error loading shops_details.json:', error);
             }
             
             // Create combined shop list
             const allShops = [];
             
-            // Add shops from shops_details.json
-            Object.entries(shopsDetails).forEach(([shopName, shopInfo]) => {
+            // Add ALL shops from shops_details.json
+            Object.entries(currentShopsDetails).forEach(([shopName, shopInfo]) => {
                 allShops.push({
                     name: shopInfo.nameAr || shopName,
                     nameEn: shopInfo.nameEn || '',
@@ -5551,22 +5560,26 @@
             infoDiv.style.display = 'block';
             document.getElementById('selectedAreaName').textContent = area.name;
             
-            // Load shops_details.json
-            let shopsDetails = {};
-            try {
-                const response = await fetch('shops_details.json?' + new Date().getTime());
-                if (response.ok) {
-                    shopsDetails = await response.json();
+            // Use global shopsDetails for consistency
+            let currentShopsDetails = shopsDetails || {};
+            
+            // If global shopsDetails is not loaded, try loading from local file
+            if (!shopsDetails || Object.keys(shopsDetails).length === 0) {
+                try {
+                    const response = await fetch('shops_details.json?' + new Date().getTime());
+                    if (response.ok) {
+                        currentShopsDetails = await response.json();
+                    }
+                } catch (error) {
+                    console.error('Error loading shops_details.json:', error);
                 }
-            } catch (error) {
-                console.error('Error loading shops_details.json:', error);
             }
             
             // Get shops for this area
             const areaShops = [];
             
             // From shops_details.json
-            Object.entries(shopsDetails).forEach(([shopName, shopInfo]) => {
+            Object.entries(currentShopsDetails).forEach(([shopName, shopInfo]) => {
                 if (shopInfo.areaId === areaId) {
                     areaShops.push({
                         name: shopInfo.nameAr || shopName,
@@ -5739,22 +5752,26 @@
                 return;
             }
             
-            // Load shops_details.json
-            let shopsDetails = {};
-            try {
-                const response = await fetch('shops_details.json?' + new Date().getTime());
-                if (response.ok) {
-                    shopsDetails = await response.json();
+            // Use global shopsDetails for consistency
+            let currentShopsDetails = shopsDetails || {};
+            
+            // If global shopsDetails is not loaded, try loading from local file
+            if (!shopsDetails || Object.keys(shopsDetails).length === 0) {
+                try {
+                    const response = await fetch('shops_details.json?' + new Date().getTime());
+                    if (response.ok) {
+                        currentShopsDetails = await response.json();
+                    }
+                } catch (error) {
+                    console.error('Error loading shops_details.json:', error);
                 }
-            } catch (error) {
-                console.error('Error loading shops_details.json:', error);
             }
             
             // Get shops for this area
             const areaShops = [];
             
             // From shops_details.json
-            Object.entries(shopsDetails).forEach(([shopName, shopInfo]) => {
+            Object.entries(currentShopsDetails).forEach(([shopName, shopInfo]) => {
                 if (shopInfo.areaId === areaId) {
                     areaShops.push({
                         name: shopInfo.nameAr || shopName,
@@ -5878,23 +5895,27 @@
             showMessage('moveShopsStatus', 'info', '⏳ جاري نقل المحلات...');
             
             try {
-                // Load and update shops_details.json
-                let shopsDetails = {};
-                try {
-                    const response = await fetch('shops_details.json?' + new Date().getTime());
-                    if (response.ok) {
-                        shopsDetails = await response.json();
+                // Use global shopsDetails for consistency
+                let currentShopsDetails = shopsDetails || {};
+                
+                // If global shopsDetails is not loaded, try loading from local file
+                if (!shopsDetails || Object.keys(shopsDetails).length === 0) {
+                    try {
+                        const response = await fetch('shops_details.json?' + new Date().getTime());
+                        if (response.ok) {
+                            currentShopsDetails = await response.json();
+                        }
+                    } catch (error) {
+                        console.error('Error loading shops_details.json:', error);
                     }
-                } catch (error) {
-                    console.error('Error loading shops_details.json:', error);
                 }
                 
                 // Update shops in shops_details.json
                 let updatedCount = 0;
                 shopNames.forEach(shopName => {
-                    if (shopsDetails[shopName]) {
-                        shopsDetails[shopName].areaId = targetAreaId;
-                        shopsDetails[shopName].area = targetArea.name;
+                    if (currentShopsDetails[shopName]) {
+                        currentShopsDetails[shopName].areaId = targetAreaId;
+                        currentShopsDetails[shopName].area = targetArea.name;
                         updatedCount++;
                     }
                 });

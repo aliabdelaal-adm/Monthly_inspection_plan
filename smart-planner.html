@@ -5181,6 +5181,12 @@
         
         // Delete shop
         async function deleteShop(shopIdOrName) {
+            // Check authentication first
+            if (!githubToken) {
+                alert('⚠️ يجب تسجيل الدخول أولاً لحذف المحلات');
+                return;
+            }
+            
             // Try to find shop by ID first, then by name
             let shop = planData.shops.find(s => s.id === shopIdOrName);
             if (!shop) {
@@ -5189,10 +5195,11 @@
             
             if (!shop) {
                 showMessage('shopsManagementStatus', 'error', '❌ المحل غير موجود في قاعدة البيانات');
+                alert('❌ المحل غير موجود في قاعدة البيانات');
                 return;
             }
             
-            if (!confirm(`هل أنت متأكد من حذف المحل "${shop.name}"؟`)) {
+            if (!confirm(`هل أنت متأكد من حذف المحل "${shop.name}"؟\n\n⚠️ هذا الإجراء لا يمكن التراجع عنه`)) {
                 return;
             }
             
@@ -5203,14 +5210,22 @@
                 planData.shops = planData.shops.filter(s => s.id !== shop.id && s.name !== shop.name);
                 
                 // Save to GitHub
-                await savePlanDataToGitHub();
+                await savePlanDataToGitHub(`حذف محل: ${shop.name}`);
                 
                 showMessage('shopsManagementStatus', 'success', '✅ تم حذف المحل بنجاح');
                 displayShopsList();
                 populateAreas(); // Refresh main form areas
                 
+                // If the area shops view modal is open, refresh it
+                const areaShopsModal = document.getElementById('areaShopsViewModal');
+                if (areaShopsModal && areaShopsModal.style.display === 'block') {
+                    loadShopsForSelectedArea();
+                }
+                
             } catch (error) {
+                console.error('Error deleting shop:', error);
                 showMessage('shopsManagementStatus', 'error', '❌ فشل الحذف: ' + error.message);
+                alert('❌ فشل الحذف: ' + error.message);
             }
         }
         
@@ -5475,6 +5490,12 @@
         
         // Delete area
         async function deleteArea(areaId) {
+            // Check authentication first
+            if (!githubToken) {
+                alert('⚠️ يجب تسجيل الدخول أولاً لحذف المناطق');
+                return;
+            }
+            
             const area = planData.areas.find(a => a.id === areaId);
             if (!area) return;
             
@@ -5504,7 +5525,7 @@
                 });
                 
                 // Save to GitHub
-                await savePlanDataToGitHub();
+                await savePlanDataToGitHub(`حذف منطقة: ${area.name}`);
                 
                 showMessage('areasManagementStatus', 'success', '✅ تم حذف المنطقة بنجاح');
                 displayAreasList();
@@ -5926,6 +5947,7 @@
                         <td>
                             <span class="action-icon" onclick="viewShopDetails('${escapeJs(shop.name)}')" title="عرض التفاصيل" style="color: #3498db;">👁️</span>
                             <span class="action-icon edit-icon" onclick="openEditShopModal('${shop.id || idx}')" title="تعديل">✏️</span>
+                            <span class="action-icon delete-icon" onclick="deleteShop('${escapeJs(shop.name)}')" title="حذف">🗑️</span>
                             ${shop.locationMap ? `<span class="action-icon" onclick="window.open('${shop.locationMap}', '_blank')" title="موقع على الخريطة" style="color: #27ae60;">🗺️</span>` : ''}
                         </td>
                     </tr>

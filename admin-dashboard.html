@@ -1469,6 +1469,96 @@
       </div>
     </div>
   </div>
+
+  <!-- Shop Edit Modal -->
+  <div id="shopEditModal" class="modal">
+    <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+      <div class="modal-header">
+        <h3 class="modal-title">✏️ تعديل بيانات المحل</h3>
+        <button class="modal-close" onclick="closeShopEditModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="shopEditOriginalName">
+        
+        <!-- Required Fields Section -->
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+          <h4 style="color: #2d3561; font-size: 1.1em; margin-bottom: 15px;">📋 المعلومات الأساسية (إجبارية)</h4>
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">اسم المحل <span style="color: red;">*</span></label>
+            <input type="text" id="shopEditName" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="أدخل اسم المحل">
+          </div>
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">المنطقة <span style="color: red;">*</span></label>
+            <select id="shopEditArea" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+              <option value="">اختر المنطقة...</option>
+            </select>
+          </div>
+        </div>
+        
+        <!-- Optional Details Section -->
+        <div style="background: #e8f4f8; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+          <h4 style="color: #2d3561; font-size: 1.1em; margin-bottom: 15px;">📝 التفاصيل الإضافية (اختيارية)</h4>
+          
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">اسم المحل بالإنجليزية</label>
+            <input type="text" id="shopEditNameEn" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Shop Name in English">
+          </div>
+          
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">رقم الترخيص</label>
+            <input type="text" id="shopEditLicense" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="مثال: CN-1234567">
+          </div>
+          
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">العنوان</label>
+            <input type="text" id="shopEditAddress" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="العنوان الكامل للمحل">
+          </div>
+          
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">رقم الهاتف</label>
+            <input type="tel" id="shopEditPhone" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="مثال: 0501234567">
+          </div>
+          
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">البريد الإلكتروني</label>
+            <input type="email" id="shopEditEmail" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="example@email.com">
+          </div>
+          
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">🗺️ موقع المحل على خرائط جوجل</label>
+            <input type="url" id="shopEditGoogleMaps" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="https://maps.google.com/...">
+            <small style="color: #666; display: block; margin-top: 5px;">
+              💡 نسخ رابط الموقع من خرائط جوجل لتسهيل الوصول إلى المحل
+            </small>
+          </div>
+          
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">طبيعة نشاط المحل</label>
+            <textarea id="shopEditActivity" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" rows="3" placeholder="مثال: بيع الحيوانات الأليفة، بيع أسماك الزينة، بيع الطيور..."></textarea>
+          </div>
+          
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">رمز ADM</label>
+            <input type="text" id="shopEditAdmCode" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="مثال: ADM0001">
+          </div>
+        </div>
+        
+        <div class="status-message" id="shopEditStatus"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" onclick="saveShopEdit()">
+          <i class="fas fa-save"></i>
+          💾 حفظ فوراً
+        </button>
+        <button class="btn btn-warning" onclick="closeShopEditModal()">
+          <i class="fas fa-times"></i>
+          ✕ إلغاء
+        </button>
+      </div>
+    </div>
+  </div>
   
   <script>
     // ========================
@@ -2505,6 +2595,11 @@
       return await putRes.json();
     }
     
+    // Wrapper function for compatibility with smart-planner style calls
+    async function savePlanDataToGitHub(commitMessage) {
+      return await savePlanToGitHub();
+    }
+    
     // Filter shops by area
     function filterShopsByArea() {
       const selectedArea = document.getElementById("areaFilterSelect").value;
@@ -2729,41 +2824,248 @@
     }
     
     // Edit Shop
-    function editShop(oldName) {
+    async function editShop(shopName) {
       // Check if data is loaded
-      if (!planData || !planData.inspectionData) {
+      if (!planData || !planData.shops) {
         alert('⚠️ لم يتم تحميل البيانات بعد!\n\nالرجاء الضغط على زر "تحديث القائمة" أولاً لتحميل البيانات.');
         return;
       }
       
-      const newName = prompt(`تعديل اسم المحل:\n\nالاسم الحالي: ${oldName}\n\nأدخل الاسم الجديد:`, oldName);
-      
-      if (!newName || newName === oldName) return;
-      
-      if (!confirm(`هل تريد تغيير اسم المحل من "${oldName}" إلى "${newName}"؟\n\nسيتم تحديث جميع السجلات المرتبطة.`)) {
+      // Find the shop in planData
+      const shop = planData.shops.find(s => s.name === shopName);
+      if (!shop) {
+        alert('❌ لم يتم العثور على المحل في قاعدة البيانات');
         return;
       }
       
-      // Update all inspections that contain this shop
-      let updateCount = 0;
-      planData.inspectionData.forEach(inspection => {
-        if (inspection.shops && Array.isArray(inspection.shops)) {
-          const index = inspection.shops.indexOf(oldName);
-          if (index !== -1) {
-            inspection.shops[index] = newName;
-            updateCount++;
+      // Store original name for update
+      document.getElementById('shopEditOriginalName').value = shopName;
+      
+      // Populate required fields
+      document.getElementById('shopEditName').value = shop.name;
+      
+      // Populate areas dropdown
+      const areaSelect = document.getElementById('shopEditArea');
+      areaSelect.innerHTML = '<option value="">اختر المنطقة...</option>';
+      if (planData.areas) {
+        planData.areas.forEach(area => {
+          const option = document.createElement('option');
+          option.value = area.id;
+          option.textContent = area.name;
+          areaSelect.appendChild(option);
+        });
+      }
+      areaSelect.value = shop.areaId || '';
+      
+      // Load additional details from shops_details.json
+      try {
+        const response = await fetch('shops_details.json?' + new Date().getTime());
+        const shopsDetails = await response.json();
+        const details = shopsDetails[shopName];
+        
+        if (details) {
+          document.getElementById('shopEditNameEn').value = details.nameEn || '';
+          document.getElementById('shopEditLicense').value = details.licenseNo || '';
+          document.getElementById('shopEditAddress').value = details.address || '';
+          document.getElementById('shopEditPhone').value = details.contact || '';
+          document.getElementById('shopEditEmail').value = details.email || '';
+          document.getElementById('shopEditGoogleMaps').value = details.locationMap || '';
+          document.getElementById('shopEditActivity').value = details.activity || '';
+          document.getElementById('shopEditAdmCode').value = details.admCode || '';
+        } else {
+          // Clear optional fields if no details found
+          document.getElementById('shopEditNameEn').value = '';
+          document.getElementById('shopEditLicense').value = '';
+          document.getElementById('shopEditAddress').value = '';
+          document.getElementById('shopEditPhone').value = '';
+          document.getElementById('shopEditEmail').value = '';
+          document.getElementById('shopEditGoogleMaps').value = '';
+          document.getElementById('shopEditActivity').value = '';
+          document.getElementById('shopEditAdmCode').value = '';
+        }
+      } catch (error) {
+        console.error('Error loading shop details:', error);
+        // Clear optional fields on error
+        document.getElementById('shopEditNameEn').value = '';
+        document.getElementById('shopEditLicense').value = '';
+        document.getElementById('shopEditAddress').value = '';
+        document.getElementById('shopEditPhone').value = '';
+        document.getElementById('shopEditEmail').value = '';
+        document.getElementById('shopEditGoogleMaps').value = '';
+        document.getElementById('shopEditActivity').value = '';
+        document.getElementById('shopEditAdmCode').value = '';
+      }
+      
+      // Show modal
+      document.getElementById('shopEditModal').classList.add('show');
+    }
+    
+    // Close shop edit modal
+    function closeShopEditModal() {
+      document.getElementById('shopEditModal').classList.remove('show');
+    }
+    
+    // Save shop edit
+    async function saveShopEdit() {
+      const originalName = document.getElementById('shopEditOriginalName').value;
+      const newName = document.getElementById('shopEditName').value.trim();
+      const areaId = document.getElementById('shopEditArea').value;
+      
+      // Get optional fields
+      const nameEn = document.getElementById('shopEditNameEn').value.trim();
+      const licenseNo = document.getElementById('shopEditLicense').value.trim();
+      const address = document.getElementById('shopEditAddress').value.trim();
+      const contact = document.getElementById('shopEditPhone').value.trim();
+      const email = document.getElementById('shopEditEmail').value.trim();
+      const locationMap = document.getElementById('shopEditGoogleMaps').value.trim();
+      const activity = document.getElementById('shopEditActivity').value.trim();
+      const admCode = document.getElementById('shopEditAdmCode').value.trim();
+      
+      if (!newName) {
+        showMessage('shopEditStatus', 'error', '❌ يرجى إدخال اسم المحل');
+        return;
+      }
+      
+      if (!areaId) {
+        showMessage('shopEditStatus', 'error', '❌ يرجى اختيار المنطقة');
+        return;
+      }
+      
+      const token = getToken();
+      if (!token) {
+        showTokenModal();
+        return;
+      }
+      
+      showMessage('shopEditStatus', 'info', '⏳ جاري الحفظ...');
+      
+      try {
+        // Update shop in planData
+        const shopIndex = planData.shops.findIndex(s => s.name === originalName);
+        if (shopIndex !== -1) {
+          planData.shops[shopIndex].name = newName;
+          planData.shops[shopIndex].areaId = areaId;
+          // Update area name from areaId
+          const area = planData.areas.find(a => a.id === areaId);
+          if (area) {
+            planData.shops[shopIndex].area = area.name;
           }
         }
-      });
+        
+        // Update all inspections that contain this shop
+        if (originalName !== newName) {
+          planData.inspectionData.forEach(inspection => {
+            if (inspection.shops && Array.isArray(inspection.shops)) {
+              const index = inspection.shops.indexOf(originalName);
+              if (index !== -1) {
+                inspection.shops[index] = newName;
+              }
+            }
+          });
+        }
+        
+        // Save to plan-data.json on GitHub
+        await savePlanDataToGitHub(`تحديث محل: ${newName}`);
+        
+        // Save additional details to shops_details.json if any optional field is filled
+        if (nameEn || licenseNo || address || contact || email || locationMap || activity || admCode) {
+          await saveShopDetailsToGitHub(originalName, newName, {
+            nameAr: newName,
+            nameEn: nameEn,
+            licenseNo: licenseNo,
+            address: address,
+            contact: contact,
+            email: email,
+            locationMap: locationMap,
+            activity: activity,
+            admCode: admCode,
+            area: planData.shops[shopIndex].area,
+            areaId: areaId
+          });
+        }
+        
+        showMessage('shopEditStatus', 'success', '✅ تم الحفظ بنجاح');
+        setTimeout(() => {
+          closeShopEditModal();
+          loadShopsList();
+          logActivity("تعديل محل", `تم تحديث بيانات المحل: ${newName}`);
+        }, 1500);
+        
+      } catch (error) {
+        showMessage('shopEditStatus', 'error', '❌ فشل الحفظ: ' + error.message);
+      }
+    }
+    
+    // Save shop details to shops_details.json on GitHub
+    async function saveShopDetailsToGitHub(oldName, newName, details) {
+      const token = getToken();
+      if (!token) return;
       
-      // Update the plan editor
-      document.getElementById('planEditor').value = JSON.stringify(planData, null, 2);
-      
-      // Reload the list
-      loadShopsList();
-      
-      showMessage("shopsStatus", "success", `✅ تم تحديث ${updateCount} سجل بنجاح! اضغط "حفظ في GitHub" لحفظ التغييرات.`);
-      logActivity("تعديل محل", `تم تغيير اسم المحل من "${oldName}" إلى "${newName}"`);
+      try {
+        // Get current shops_details.json file
+        const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/shops_details.json`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+        
+        if (!getRes.ok) {
+          throw new Error('فشل الحصول على ملف shops_details.json');
+        }
+        
+        const file = await getRes.json();
+        const sha = file.sha;
+        
+        // Decode and parse current content
+        const currentContent = JSON.parse(decodeURIComponent(escape(atob(file.content))));
+        
+        // If name changed, delete old entry
+        if (oldName !== newName && currentContent[oldName]) {
+          delete currentContent[oldName];
+        }
+        
+        // Update or add shop details - remove empty fields
+        const cleanDetails = {};
+        if (details.nameAr) cleanDetails.nameAr = details.nameAr;
+        if (details.nameEn) cleanDetails.nameEn = details.nameEn;
+        if (details.licenseNo) cleanDetails.licenseNo = details.licenseNo;
+        if (details.address) cleanDetails.address = details.address;
+        if (details.contact) cleanDetails.contact = details.contact;
+        if (details.email) cleanDetails.email = details.email;
+        if (details.locationMap) cleanDetails.locationMap = details.locationMap;
+        if (details.activity) cleanDetails.activity = details.activity;
+        if (details.admCode) cleanDetails.admCode = details.admCode;
+        if (details.area) cleanDetails.area = details.area;
+        if (details.areaId) cleanDetails.areaId = details.areaId;
+        
+        currentContent[newName] = cleanDetails;
+        
+        // Prepare content
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(currentContent, null, 2))));
+        
+        // Update file
+        const updateRes = await fetch(`https://api.github.com/repos/${repo}/contents/shops_details.json`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: `تحديث تفاصيل المحل: ${newName}`,
+            content: content,
+            sha: sha
+          })
+        });
+        
+        if (!updateRes.ok) {
+          throw new Error('فشل تحديث ملف shops_details.json');
+        }
+      } catch (error) {
+        console.error('Error saving shop details:', error);
+        // Don't throw - optional details save failure shouldn't block main save
+      }
     }
     
     // Delete Shop

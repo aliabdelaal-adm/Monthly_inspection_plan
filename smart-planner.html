@@ -5280,6 +5280,69 @@
             }
         }
         
+        // Delete shop from shops_details.json on GitHub
+        async function deleteShopDetailsFromGitHub(shopName) {
+            try {
+                // Get current shops_details.json file
+                const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/shops_details.json`, {
+                    headers: {
+                        'Authorization': `Bearer ${githubToken}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (!getRes.ok) {
+                    throw new Error('فشل الحصول على ملف shops_details.json');
+                }
+                
+                const file = await getRes.json();
+                const sha = file.sha;
+                
+                // Decode and parse current content
+                const currentContent = JSON.parse(decodeURIComponent(escape(atob(file.content))));
+                
+                // Check if shop exists in shops_details.json
+                if (!currentContent[shopName]) {
+                    return false; // Shop not found in shops_details
+                }
+                
+                // Delete shop from shops_details
+                delete currentContent[shopName];
+                
+                // Update global shopsDetails if it exists
+                if (shopsDetails && shopsDetails[shopName]) {
+                    delete shopsDetails[shopName];
+                }
+                
+                // Prepare content
+                const content = btoa(unescape(encodeURIComponent(JSON.stringify(currentContent, null, 2))));
+                
+                // Update file
+                const updateRes = await fetch(`https://api.github.com/repos/${repo}/contents/shops_details.json`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${githubToken}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: `حذف تفاصيل المحل: ${shopName}`,
+                        content: content,
+                        sha: sha
+                    })
+                });
+                
+                if (!updateRes.ok) {
+                    throw new Error('فشل حذف المحل من shops_details.json');
+                }
+                
+                return true; // Successfully deleted
+            } catch (error) {
+                console.error('Error deleting shop from shops_details:', error);
+                throw error;
+            }
+        }
+        
         // Delete shop
         async function deleteShop(shopIdOrName) {
             // Check authentication first
@@ -5320,8 +5383,14 @@
                 }
             }
             
-            // If shop not found in shops array or inspection data
-            if (!shop && !foundInInspections) {
+            // Check if shop exists in shops_details.json
+            let foundInShopsDetails = false;
+            if (shopsDetails && shopsDetails[shopNameToDelete]) {
+                foundInShopsDetails = true;
+            }
+            
+            // If shop not found in any source (shops array, inspection data, or shops_details)
+            if (!shop && !foundInInspections && !foundInShopsDetails) {
                 showMessage('shopsManagementStatus', 'error', '❌ المحل غير موجود في قاعدة البيانات');
                 alert('❌ المحل غير موجود في قاعدة البيانات');
                 return;
@@ -5334,6 +5403,9 @@
             }
             if (foundInInspections) {
                 confirmMsg += `📋 موجود في ${inspectionCount} جدول تفتيش\n`;
+            }
+            if (foundInShopsDetails) {
+                confirmMsg += `📝 موجود في قاعدة تفاصيل المحلات\n`;
             }
             confirmMsg += `\n⚠️ هذا الإجراء لا يمكن التراجع عنه`;
             
@@ -5364,10 +5436,35 @@
                     }
                 }
                 
-                // Save to GitHub
-                await savePlanDataToGitHub(`حذف محل: ${shopNameToDelete} (${changesCount} تعديل)`);
+                // Save plan-data.json changes to GitHub if there were any changes
+                let planDataChanges = changesCount;
+                if (planDataChanges > 0) {
+                    await savePlanDataToGitHub(`حذف محل: ${shopNameToDelete} (${planDataChanges} تعديل)`);
+                }
                 
-                showMessage('shopsManagementStatus', 'success', `✅ تم حذف المحل بنجاح (${changesCount} تعديل)`);
+                // Delete shop from shops_details.json if it exists there
+                let shopsDetailsDeleted = false;
+                if (foundInShopsDetails) {
+                    try {
+                        await deleteShopDetailsFromGitHub(shopNameToDelete);
+                        shopsDetailsDeleted = true;
+                    } catch (error) {
+                        console.error('Error deleting from shops_details:', error);
+                        // Continue even if shops_details deletion fails
+                    }
+                }
+                
+                // Build success message
+                let successMsg = '✅ تم حذف المحل بنجاح';
+                if (planDataChanges > 0 && shopsDetailsDeleted) {
+                    successMsg += ` (${planDataChanges} تعديل في plan-data + حذف من shops_details)`;
+                } else if (planDataChanges > 0) {
+                    successMsg += ` (${planDataChanges} تعديل في plan-data)`;
+                } else if (shopsDetailsDeleted) {
+                    successMsg += ` (حذف من shops_details فقط)`;
+                }
+                
+                showMessage('shopsManagementStatus', 'success', successMsg);
                 displayShopsList();
                 populateAreas(); // Refresh main form areas
                 

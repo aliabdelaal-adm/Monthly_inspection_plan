@@ -4847,27 +4847,48 @@
                 .then(response => response.json())
                 .then(shopsDetails => {
                     const shop = shopsDetails[shopName];
-                    if (!shop) {
-                        alert('❌ لم يتم العثور على تفاصيل المحل');
-                        return;
+                    
+                    // Find shop in planData to get area information
+                    let planShop = null;
+                    if (planData && planData.shops) {
+                        planShop = planData.shops.find(s => s.name === shopName);
                     }
                     
                     let details = `🏪 تفاصيل المحل الكاملة\n`;
                     details += `${'='.repeat(50)}\n\n`;
-                    details += `📝 الاسم بالعربي: ${shop.nameAr || shopName}\n`;
-                    if (shop.nameEn) details += `📝 الاسم بالإنجليزي: ${shop.nameEn}\n`;
-                    if (shop.licenseNo) details += `🔖 رقم الرخصة: ${shop.licenseNo}\n`;
-                    if (shop.admCode) details += `🔢 كود ADM: ${shop.admCode}\n`;
-                    if (shop.address) details += `📍 العنوان: ${shop.address}\n`;
-                    if (shop.contact) details += `📞 الهاتف: ${shop.contact}\n`;
-                    if (shop.activity) details += `💼 النشاط: ${shop.activity}\n`;
-                    if (shop.locationMap) details += `🗺️ الموقع: متوفر على الخريطة\n`;
+                    details += `📝 الاسم بالعربي: ${shop?.nameAr || shopName}\n`;
+                    
+                    if (shop?.nameEn) details += `📝 الاسم بالإنجليزي: ${shop.nameEn}\n`;
+                    if (shop?.licenseNo) details += `🔖 رقم الرخصة: ${shop.licenseNo}\n`;
+                    if (shop?.admCode) details += `🔢 كود ADM: ${shop.admCode}\n`;
+                    if (shop?.address) details += `📍 العنوان: ${shop.address}\n`;
+                    if (shop?.contact) details += `📞 الهاتف: ${shop.contact}\n`;
+                    if (shop?.activity) details += `💼 النشاط: ${shop.activity}\n`;
+                    if (shop?.locationMap) details += `🗺️ الموقع: متوفر على الخريطة\n`;
+                    
+                    // Add area information from planData if available
+                    if (planShop) {
+                        if (planShop.id) details += `🆔 المعرف: ${planShop.id}\n`;
+                        if (planShop.area) details += `🗺️ المنطقة: ${planShop.area}\n`;
+                    }
+                    
+                    // If no detailed info found, show basic info
+                    if (!shop && !planShop) {
+                        details += `\n⚠️ لا توجد تفاصيل إضافية متوفرة لهذا المحل\n`;
+                        details += `ℹ️ يظهر المحل في جداول التفتيش فقط\n`;
+                    }
                     
                     alert(details);
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('❌ فشل تحميل تفاصيل المحل');
+                    // Show basic shop info even on error
+                    let details = `🏪 تفاصيل المحل الأساسية\n`;
+                    details += `${'='.repeat(50)}\n\n`;
+                    details += `📝 الاسم: ${shopName}\n`;
+                    details += `\n⚠️ فشل تحميل التفاصيل الكاملة من الخادم\n`;
+                    details += `ℹ️ يرجى المحاولة مرة أخرى\n`;
+                    alert(details);
                 });
         }
         
@@ -5064,22 +5085,46 @@
             showMessage('shopModalStatus', 'info', '⏳ جاري الحفظ...');
             
             try {
+                let oldShopName = null;
+                
                 // Update or add shop in plan-data.json
                 if (shopId) {
                     // Edit existing shop
                     const shopIndex = planData.shops.findIndex(s => s.id === shopId);
                     if (shopIndex !== -1) {
+                        oldShopName = planData.shops[shopIndex].name;
                         planData.shops[shopIndex].name = shopName;
                         planData.shops[shopIndex].areaId = areaId;
+                        
+                        // Get area name for display
+                        const area = planData.areas.find(a => a.id === areaId);
+                        if (area) {
+                            planData.shops[shopIndex].area = area.name;
+                        }
                     }
                 } else {
                     // Add new shop
+                    const area = planData.areas.find(a => a.id === areaId);
                     const newShop = {
                         id: 'shop_' + Date.now(),
                         name: shopName,
-                        areaId: areaId
+                        areaId: areaId,
+                        area: area ? area.name : ''
                     };
                     planData.shops.push(newShop);
+                }
+                
+                // If shop name changed, update it in all inspection data
+                if (oldShopName && oldShopName !== shopName) {
+                    if (planData.inspectionData) {
+                        for (const inspection of planData.inspectionData) {
+                            if (inspection.shops) {
+                                inspection.shops = inspection.shops.map(s => 
+                                    s === oldShopName ? shopName : s
+                                );
+                            }
+                        }
+                    }
                 }
                 
                 // Save to plan-data.json on GitHub
@@ -5099,6 +5144,9 @@
                         admCode: admCode
                     });
                 }
+                
+                // Reload plan data from GitHub to ensure we have the latest data
+                await loadPlanData();
                 
                 showMessage('shopModalStatus', 'success', '✅ تم الحفظ بنجاح - المحل ظاهر الآن في القائمة');
                 setTimeout(() => {
@@ -5187,32 +5235,75 @@
                 return;
             }
             
-            // Try to find shop by ID first, then by name
+            // Try to find shop by ID first, then by name in shops array
             let shop = planData.shops.find(s => s.id === shopIdOrName);
             if (!shop) {
                 shop = planData.shops.find(s => s.name === shopIdOrName);
             }
             
-            if (!shop) {
+            // Determine the shop name to delete
+            let shopNameToDelete = shop ? shop.name : shopIdOrName;
+            
+            // Check if shop exists in inspection data
+            let foundInInspections = false;
+            let inspectionCount = 0;
+            if (planData.inspectionData) {
+                for (const inspection of planData.inspectionData) {
+                    if (inspection.shops && inspection.shops.includes(shopNameToDelete)) {
+                        foundInInspections = true;
+                        inspectionCount++;
+                    }
+                }
+            }
+            
+            // If shop not found in shops array or inspection data
+            if (!shop && !foundInInspections) {
                 showMessage('shopsManagementStatus', 'error', '❌ المحل غير موجود في قاعدة البيانات');
                 alert('❌ المحل غير موجود في قاعدة البيانات');
                 return;
             }
             
-            if (!confirm(`هل أنت متأكد من حذف المحل "${shop.name}"؟\n\n⚠️ هذا الإجراء لا يمكن التراجع عنه`)) {
+            // Build confirmation message
+            let confirmMsg = `هل أنت متأكد من حذف المحل "${shopNameToDelete}"؟\n\n`;
+            if (shop) {
+                confirmMsg += `📍 موجود في قائمة المحلات الرئيسية\n`;
+            }
+            if (foundInInspections) {
+                confirmMsg += `📋 موجود في ${inspectionCount} جدول تفتيش\n`;
+            }
+            confirmMsg += `\n⚠️ هذا الإجراء لا يمكن التراجع عنه`;
+            
+            if (!confirm(confirmMsg)) {
                 return;
             }
             
             showMessage('shopsManagementStatus', 'info', '⏳ جاري الحذف...');
             
             try {
-                // Remove shop from array using both id and name for safety
-                planData.shops = planData.shops.filter(s => s.id !== shop.id && s.name !== shop.name);
+                let changesCount = 0;
+                
+                // Remove shop from shops array if it exists there
+                if (shop) {
+                    const beforeCount = planData.shops.length;
+                    planData.shops = planData.shops.filter(s => s.id !== shop.id && s.name !== shop.name);
+                    changesCount += (beforeCount - planData.shops.length);
+                }
+                
+                // Remove shop from all inspection data
+                if (planData.inspectionData) {
+                    for (const inspection of planData.inspectionData) {
+                        if (inspection.shops) {
+                            const beforeCount = inspection.shops.length;
+                            inspection.shops = inspection.shops.filter(s => s !== shopNameToDelete);
+                            changesCount += (beforeCount - inspection.shops.length);
+                        }
+                    }
+                }
                 
                 // Save to GitHub
-                await savePlanDataToGitHub(`حذف محل: ${shop.name}`);
+                await savePlanDataToGitHub(`حذف محل: ${shopNameToDelete} (${changesCount} تعديل)`);
                 
-                showMessage('shopsManagementStatus', 'success', '✅ تم حذف المحل بنجاح');
+                showMessage('shopsManagementStatus', 'success', `✅ تم حذف المحل بنجاح (${changesCount} تعديل)`);
                 displayShopsList();
                 populateAreas(); // Refresh main form areas
                 

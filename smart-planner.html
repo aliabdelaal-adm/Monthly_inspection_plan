@@ -2058,6 +2058,9 @@
                         <button class="btn btn-info" onclick="validateShopsData()">
                             <span>✅</span> التحقق من البيانات
                         </button>
+                        <button class="btn btn-secondary" onclick="findOrphanShops()" style="background: #6c757d; border: none;">
+                            <span>🔍</span> عرض المحلات المعزولة
+                        </button>
                         <button class="btn btn-warning" onclick="viewShopsOnMap()">
                             <span>🗺️</span> عرض على الخريطة
                         </button>
@@ -5341,6 +5344,100 @@
             URL.revokeObjectURL(url);
             
             showMessage('shopsManagementStatus', 'success', '✅ تم تصدير البيانات');
+        }
+        
+        // Find orphan shops (shops in inspection data but not in shops array)
+        function findOrphanShops() {
+            if (!planData || !planData.inspectionData) {
+                alert('❌ لا توجد بيانات متاحة');
+                return;
+            }
+            
+            // Get all shops from shops array
+            const shopsInArray = new Set(planData.shops.map(s => s.name));
+            
+            // Get all unique shops from inspection data
+            const shopsInInspections = new Set();
+            planData.inspectionData.forEach(inspection => {
+                if (inspection.shops) {
+                    inspection.shops.forEach(shop => shopsInInspections.add(shop));
+                }
+            });
+            
+            // Find orphan shops
+            const orphanShops = Array.from(shopsInInspections).filter(shop => !shopsInArray.has(shop));
+            
+            if (orphanShops.length === 0) {
+                alert(`✅ لا توجد محلات معزولة!\n\nجميع المحلات في جداول التفتيش (${shopsInInspections.size}) موجودة في قائمة المحلات الرئيسية (${shopsInArray.size})`);
+                return;
+            }
+            
+            // Show report
+            let report = `📊 تقرير المحلات المعزولة\n`;
+            report += `${'='.repeat(50)}\n\n`;
+            report += `إجمالي المحلات في جداول التفتيش: ${shopsInInspections.size}\n`;
+            report += `إجمالي المحلات في القائمة الرئيسية: ${shopsInArray.size}\n`;
+            report += `المحلات المعزولة (موجودة في التفتيش فقط): ${orphanShops.length}\n\n`;
+            report += `قائمة المحلات المعزولة:\n`;
+            report += `${'='.repeat(50)}\n`;
+            
+            orphanShops.sort().forEach((shop, idx) => {
+                report += `${idx + 1}. ${shop}\n`;
+            });
+            
+            report += `\n${'='.repeat(50)}\n`;
+            report += `💡 نصيحة: يمكنك إضافة هذه المحلات إلى القائمة الرئيسية\n`;
+            report += `من خلال زر "إضافة محل جديد" في إدارة المحلات`;
+            
+            // Create a modal to show the report
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            `;
+            
+            const content = document.createElement('div');
+            content.style.cssText = `
+                background: white;
+                padding: 30px;
+                border-radius: 15px;
+                max-width: 90%;
+                max-height: 90%;
+                overflow: auto;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            `;
+            
+            const pre = document.createElement('pre');
+            pre.textContent = report;
+            pre.style.cssText = `
+                white-space: pre-wrap;
+                font-family: 'Cairo', monospace;
+                font-size: 14px;
+                line-height: 1.6;
+                direction: rtl;
+            `;
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.textContent = '✖ إغلاق';
+            closeBtn.className = 'btn btn-secondary';
+            closeBtn.style.cssText = 'margin-top: 20px; width: 100%; padding: 10px;';
+            closeBtn.onclick = () => document.body.removeChild(modal);
+            
+            content.appendChild(pre);
+            content.appendChild(closeBtn);
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+            
+            // Also log to console for developers
+            console.log('Orphan Shops Report:', orphanShops);
         }
         
         // ============================================

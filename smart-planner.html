@@ -3273,9 +3273,48 @@
                     `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
                 loadCalendar();
             } else if (tabName === 'shops') {
-                loadShopsManagement();
+                // Load planData if not already loaded
+                if (!planData) {
+                    loadPlanData().then(() => {
+                        loadShopsManagement();
+                    }).catch(error => {
+                        console.error('Error loading plan data:', error);
+                        // Initialize empty planData for read-only mode
+                        if (!planData) {
+                            planData = {
+                                shops: [],
+                                areas: [],
+                                inspectionData: [],
+                                inspectors: []
+                            };
+                        }
+                        // Still try to load shops from shops_details.json
+                        loadShopsManagement();
+                    });
+                } else {
+                    loadShopsManagement();
+                }
             } else if (tabName === 'areas') {
-                loadAreasManagement();
+                // Load planData if not already loaded
+                if (!planData) {
+                    loadPlanData().then(() => {
+                        loadAreasManagement();
+                    }).catch(error => {
+                        console.error('Error loading plan data:', error);
+                        // Initialize empty planData for read-only mode
+                        if (!planData) {
+                            planData = {
+                                shops: [],
+                                areas: [],
+                                inspectionData: [],
+                                inspectors: []
+                            };
+                        }
+                        loadAreasManagement();
+                    });
+                } else {
+                    loadAreasManagement();
+                }
             }
         }
         
@@ -4976,6 +5015,17 @@
         
         // Open edit shop modal - accepts shop ID or shop name
         function openEditShopModal(shopIdOrName) {
+            // Check if planData is loaded
+            if (!planData) {
+                alert('⚠️ يرجى الانتظار حتى يتم تحميل البيانات');
+                return;
+            }
+            
+            // Initialize shops array if it doesn't exist
+            if (!planData.shops) {
+                planData.shops = [];
+            }
+            
             // Try to find shop by ID first, then by name
             let shop = planData.shops.find(s => s.id === shopIdOrName);
             if (!shop) {
@@ -5236,6 +5286,17 @@
             if (!githubToken) {
                 alert('⚠️ يجب تسجيل الدخول أولاً لحذف المحلات');
                 return;
+            }
+            
+            // Check if planData is loaded
+            if (!planData) {
+                alert('⚠️ يرجى الانتظار حتى يتم تحميل البيانات');
+                return;
+            }
+            
+            // Initialize shops array if it doesn't exist
+            if (!planData.shops) {
+                planData.shops = [];
             }
             
             // Try to find shop by ID first, then by name in shops array
@@ -5618,6 +5679,17 @@
         
         // Open edit area modal
         function openEditAreaModal(areaId) {
+            // Check if planData is loaded
+            if (!planData) {
+                alert('⚠️ يرجى الانتظار حتى يتم تحميل البيانات');
+                return;
+            }
+            
+            // Initialize areas array if it doesn't exist
+            if (!planData.areas) {
+                planData.areas = [];
+            }
+            
             const area = planData.areas.find(a => a.id === areaId);
             if (!area) return;
             
@@ -5682,6 +5754,20 @@
             if (!githubToken) {
                 alert('⚠️ يجب تسجيل الدخول أولاً لحذف المناطق');
                 return;
+            }
+            
+            // Check if planData is loaded
+            if (!planData) {
+                alert('⚠️ يرجى الانتظار حتى يتم تحميل البيانات');
+                return;
+            }
+            
+            // Initialize arrays if they don't exist
+            if (!planData.areas) {
+                planData.areas = [];
+            }
+            if (!planData.shops) {
+                planData.shops = [];
             }
             
             const area = planData.areas.find(a => a.id === areaId);
@@ -12485,10 +12571,23 @@
         
         // Edit Shop from Smart List
         function editShopFromSmartList(shopName) {
+            // Check if planData is loaded
+            if (!planData) {
+                alert('⚠️ يرجى الانتظار حتى يتم تحميل البيانات');
+                return;
+            }
+            
+            // Initialize shops array if it doesn't exist
+            if (!planData.shops) {
+                planData.shops = [];
+            }
+            
             // Find the shop in planData.shops to get the ID
             const planShop = planData.shops.find(s => s.name === shopName);
             if (!planShop) {
-                alert('❌ لم يتم العثور على المحل في قاعدة البيانات');
+                // Shop might be in shops_details.json but not in plan-data yet
+                // Open edit modal with the shop name, it will create a new entry
+                openEditShopModal(shopName);
                 return;
             }
             

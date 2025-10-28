@@ -5437,22 +5437,34 @@
                 }
                 
                 // Save plan-data.json changes to GitHub if there were any changes
-                if (changesCount > 0) {
-                    await savePlanDataToGitHub(`حذف محل: ${shopNameToDelete} (${changesCount} تعديل)`);
+                let planDataChanges = changesCount;
+                if (planDataChanges > 0) {
+                    await savePlanDataToGitHub(`حذف محل: ${shopNameToDelete} (${planDataChanges} تعديل)`);
                 }
                 
                 // Delete shop from shops_details.json if it exists there
+                let shopsDetailsDeleted = false;
                 if (foundInShopsDetails) {
                     try {
                         await deleteShopDetailsFromGitHub(shopNameToDelete);
-                        changesCount++; // Count deletion from shops_details
+                        shopsDetailsDeleted = true;
                     } catch (error) {
                         console.error('Error deleting from shops_details:', error);
                         // Continue even if shops_details deletion fails
                     }
                 }
                 
-                showMessage('shopsManagementStatus', 'success', `✅ تم حذف المحل بنجاح (${changesCount} تعديل)`);
+                // Build success message
+                let successMsg = '✅ تم حذف المحل بنجاح';
+                if (planDataChanges > 0 && shopsDetailsDeleted) {
+                    successMsg += ` (${planDataChanges} تعديل في plan-data + حذف من shops_details)`;
+                } else if (planDataChanges > 0) {
+                    successMsg += ` (${planDataChanges} تعديل في plan-data)`;
+                } else if (shopsDetailsDeleted) {
+                    successMsg += ` (حذف من shops_details فقط)`;
+                }
+                
+                showMessage('shopsManagementStatus', 'success', successMsg);
                 displayShopsList();
                 populateAreas(); // Refresh main form areas
                 

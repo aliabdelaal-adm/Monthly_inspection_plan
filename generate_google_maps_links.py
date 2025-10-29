@@ -1,10 +1,44 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Smart Google Maps Location Generator
-Generates Google Maps links for all shops based on their complete information
+Smart Google Maps Location Generator - DISABLED
+==================================================
+⚠️ WARNING: This script is DISABLED ⚠️
+
+تحذير: هذا السكريبت مُعطَّل
+==================================================
+
+This script used to automatically generate Google Maps links based on shop names and addresses.
+It has been DISABLED per requirement to ensure that all Google Maps locations are manually 
+provided via direct Google Maps links only.
+
+كان هذا السكريبت يولد روابط خرائط جوجل تلقائياً بناءً على أسماء وعناوين المحلات.
+تم تعطيله حسب المتطلبات لضمان أن جميع مواقع خرائط جوجل يتم توفيرها يدوياً فقط 
+عبر روابط مباشرة من خرائط جوجل.
+
+DO NOT USE THIS SCRIPT. Location links must be manually provided for each shop.
+لا تستخدم هذا السكريبت. يجب توفير روابط المواقع يدوياً لكل محل.
 """
 
+import sys
+
+# Exit immediately with error message
+print("=" * 80)
+print("⚠️  ERROR: This script is DISABLED")
+print("=" * 80)
+print()
+print("This script used to auto-generate Google Maps links from shop data.")
+print("It has been disabled to ensure all locations use manual Google Maps links only.")
+print()
+print("هذا السكريبت كان يولد روابط خرائط جوجل تلقائياً من بيانات المحلات.")
+print("تم تعطيله لضمان أن جميع المواقع تستخدم روابط خرائط جوجل اليدوية فقط.")
+print()
+print("Please provide Google Maps links manually for each shop in shops_details.json")
+print("يرجى توفير روابط خرائط جوجل يدوياً لكل محل في shops_details.json")
+print("=" * 80)
+sys.exit(1)
+
+# Original code below (kept for reference but never executed due to sys.exit above)
 import json
 import urllib.parse
 from typing import Dict, Any

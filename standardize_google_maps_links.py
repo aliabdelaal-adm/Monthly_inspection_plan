@@ -1,10 +1,44 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Google Maps Links Standardization Script
-Standardizes all Google Maps location links to use the consistent Google Maps Search API format
+Google Maps Links Standardization Script - DISABLED
+====================================================
+⚠️ WARNING: This script is DISABLED ⚠️
+
+تحذير: هذا السكريبت مُعطَّل
+====================================================
+
+This script used to standardize and auto-generate Google Maps links from shop data.
+It has been DISABLED per requirement to ensure that all Google Maps locations are manually 
+provided via direct Google Maps links only.
+
+كان هذا السكريبت يوحد ويولد روابط خرائط جوجل تلقائياً من بيانات المحلات.
+تم تعطيله حسب المتطلبات لضمان أن جميع مواقع خرائط جوجل يتم توفيرها يدوياً فقط 
+عبر روابط مباشرة من خرائط جوجل.
+
+DO NOT USE THIS SCRIPT. Location links must be manually provided for each shop.
+لا تستخدم هذا السكريبت. يجب توفير روابط المواقع يدوياً لكل محل.
 """
 
+import sys
+
+# Exit immediately with error message
+print("=" * 80)
+print("⚠️  ERROR: This script is DISABLED")
+print("=" * 80)
+print()
+print("This script used to standardize and auto-generate Google Maps links.")
+print("It has been disabled to ensure all locations use manual Google Maps links only.")
+print()
+print("هذا السكريبت كان يوحد ويولد روابط خرائط جوجل تلقائياً.")
+print("تم تعطيله لضمان أن جميع المواقع تستخدم روابط خرائط جوجل اليدوية فقط.")
+print()
+print("Please provide Google Maps links manually for each shop in shops_details.json")
+print("يرجى توفير روابط خرائط جوجل يدوياً لكل محل في shops_details.json")
+print("=" * 80)
+sys.exit(1)
+
+# Original code below (kept for reference but never executed due to sys.exit above)
 import json
 import urllib.parse
 import re

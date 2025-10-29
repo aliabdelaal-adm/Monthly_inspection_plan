@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار روابط خرائط جوجل اليدوية - Manual Google Maps Links Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        
+        .warning-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .warning-box h2 {
+            color: #856404;
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+        
+        .warning-box p {
+            color: #856404;
+            line-height: 1.6;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .shop-list {
+            max-height: 600px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .shop-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-right: 4px solid #667eea;
+        }
+        
+        .shop-item.no-link {
+            border-right-color: #dc3545;
+            background: #ffe5e5;
+        }
+        
+        .shop-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        
+        .shop-link {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .shop-link:hover {
+            background: #218838;
+        }
+        
+        .no-link-msg {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        
+        .link-preview {
+            color: #666;
+            font-size: 12px;
+            margin-top: 5px;
+            word-break: break-all;
+        }
+        
+        .filter-section {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .filter-btn:not(.active) {
+            background: #e9ecef;
+            color: #333;
+        }
+        
+        .filter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗺️ اختبار روابط خرائط جوجل اليدوية</h1>
+        <p class="subtitle">Manual Google Maps Links Test</p>
+        
+        <div class="warning-box">
+            <h2>⚠️ ملاحظة هامة - Important Notice</h2>
+            <p>
+                <strong>تم تعطيل السكريبتات التي تولد روابط خرائط جوجل تلقائياً.</strong><br>
+                جميع الروابط المعروضة هنا هي روابط يدوية تم إضافتها مباشرة في ملف shops_details.json<br><br>
+                <strong>The scripts that auto-generate Google Maps links have been disabled.</strong><br>
+                All links shown here are manual links added directly in shops_details.json
+            </p>
+        </div>
+        
+        <div class="stats" id="stats"></div>
+        
+        <div class="filter-section">
+            <button class="filter-btn active" onclick="filterShops('all')">الكل - All</button>
+            <button class="filter-btn" onclick="filterShops('with-link')">مع روابط - With Links</button>
+            <button class="filter-btn" onclick="filterShops('without-link')">بدون روابط - Without Links</button>
+        </div>
+        
+        <div class="shop-list" id="shopList"></div>
+    </div>
+
+    <script>
+        let shopsData = {};
+        let currentFilter = 'all';
+
+        async function loadShopsData() {
+            try {
+                const response = await fetch('shops_details.json');
+                shopsData = await response.json();
+                displayStats();
+                displayShops();
+            } catch (error) {
+                console.error('Error loading shops data:', error);
+                document.getElementById('shopList').innerHTML = 
+                    '<p style="color: red; text-align: center;">خطأ في تحميل البيانات - Error loading data</p>';
+            }
+        }
+
+        function displayStats() {
+            const total = Object.keys(shopsData).length;
+            const withLinks = Object.values(shopsData).filter(s => s.locationMap && s.locationMap !== '').length;
+            const withoutLinks = total - withLinks;
+            const percentage = (withLinks / total * 100).toFixed(1);
+
+            const statsHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${total}</div>
+                    <div class="stat-label">إجمالي المحلات<br>Total Shops</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${withLinks}</div>
+                    <div class="stat-label">مع روابط<br>With Links</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${withoutLinks}</div>
+                    <div class="stat-label">بدون روابط<br>Without Links</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${percentage}%</div>
+                    <div class="stat-label">نسبة التغطية<br>Coverage</div>
+                </div>
+            `;
+            
+            document.getElementById('stats').innerHTML = statsHTML;
+        }
+
+        function displayShops() {
+            const shopList = document.getElementById('shopList');
+            let html = '';
+            let count = 0;
+
+            for (const [name, details] of Object.entries(shopsData)) {
+                const hasLink = details.locationMap && details.locationMap !== '';
+                
+                // Apply filter
+                if (currentFilter === 'with-link' && !hasLink) continue;
+                if (currentFilter === 'without-link' && hasLink) continue;
+
+                const itemClass = hasLink ? 'shop-item' : 'shop-item no-link';
+                
+                html += `
+                    <div class="${itemClass}">
+                        <div class="shop-name">${count + 1}. ${name}</div>
+                        ${hasLink ? `
+                            <a href="${details.locationMap}" target="_blank" class="shop-link">
+                                🗺️ فتح على الخريطة - Open on Map
+                            </a>
+                            <div class="link-preview">
+                                ${details.locationMap.substring(0, 100)}${details.locationMap.length > 100 ? '...' : ''}
+                            </div>
+                        ` : `
+                            <div class="no-link-msg">❌ لا يوجد رابط - No link available</div>
+                        `}
+                    </div>
+                `;
+                count++;
+            }
+
+            if (count === 0) {
+                html = '<p style="text-align: center; color: #666; padding: 20px;">لا توجد محلات تطابق الفلتر - No shops match the filter</p>';
+            }
+
+            shopList.innerHTML = html;
+        }
+
+        function filterShops(filter) {
+            currentFilter = filter;
+            
+            // Update button states
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            displayShops();
+        }
+
+        // Load data on page load
+        loadShopsData();
+    </script>
+</body>
+</html>

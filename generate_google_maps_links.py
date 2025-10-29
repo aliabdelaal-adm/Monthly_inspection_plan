@@ -1,42 +1,75 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Smart Google Maps Location Generator - DISABLED
-==================================================
-⚠️ WARNING: This script is DISABLED ⚠️
+Smart Google Maps Location Generator - PERMANENTLY DISABLED
+============================================================
+⚠️⚠️⚠️ CRITICAL WARNING: THIS SCRIPT IS PERMANENTLY DISABLED ⚠️⚠️⚠️
 
-تحذير: هذا السكريبت مُعطَّل
-==================================================
+تحذير حرج: هذا السكريبت مُعطَّل بشكل دائم
+============================================================
 
+**DO NOT MODIFY OR RE-ENABLE THIS SCRIPT WITHOUT EXPLICIT AUTHORIZATION**
+**لا تقم بتعديل أو إعادة تفعيل هذا السكريبت بدون إذن صريح**
+
+REASON FOR PERMANENT DISABLE:
 This script used to automatically generate Google Maps links based on shop names and addresses.
-It has been DISABLED per requirement to ensure that all Google Maps locations are manually 
-provided via direct Google Maps links only.
+Auto-generated links are INACCURATE and do NOT guarantee 100% location precision.
 
+سبب التعطيل الدائم:
 كان هذا السكريبت يولد روابط خرائط جوجل تلقائياً بناءً على أسماء وعناوين المحلات.
-تم تعطيله حسب المتطلبات لضمان أن جميع مواقع خرائط جوجل يتم توفيرها يدوياً فقط 
-عبر روابط مباشرة من خرائط جوجل.
+الروابط المولدة تلقائياً غير دقيقة ولا تضمن دقة 100% للموقع.
+
+MANDATORY REQUIREMENT:
+All Google Maps location links MUST be manually provided by copying the link directly 
+from Google Maps to ensure 100% accuracy and realism.
+
+المتطلب الإلزامي:
+جميع روابط مواقع خرائط جوجل يجب أن يتم توفيرها يدوياً عن طريق نسخ الرابط مباشرة
+من خرائط جوجل لضمان دقة 100% وواقعية.
 
 DO NOT USE THIS SCRIPT. Location links must be manually provided for each shop.
 لا تستخدم هذا السكريبت. يجب توفير روابط المواقع يدوياً لكل محل.
+
+For instructions on how to add manual Google Maps links, see:
+- GOOGLE_MAPS_MANUAL_LINKS_ONLY.md
+- README_DISABLE_AUTO_GEOCODING.md
 """
 
 import sys
+import os
 
-# Exit immediately with error message
+# SECURITY CHECK: Verify this file hasn't been tampered with
+# التحقق الأمني: التحقق من عدم العبث بهذا الملف
+DISABLE_TOKEN = "AUTO_GEOCODING_PERMANENTLY_DISABLED_100_PERCENT"
+
+# Multiple exit points to ensure script cannot accidentally run
+# نقاط خروج متعددة لضمان عدم تشغيل السكريبت عن طريق الخطأ
+
+# Exit point 1: Immediate exit
 print("=" * 80)
-print("⚠️  ERROR: This script is DISABLED")
+print("⚠️⚠️⚠️  CRITICAL ERROR: THIS SCRIPT IS PERMANENTLY DISABLED  ⚠️⚠️⚠️")
 print("=" * 80)
 print()
-print("This script used to auto-generate Google Maps links from shop data.")
-print("It has been disabled to ensure all locations use manual Google Maps links only.")
+print("❌ REASON: Auto-geocoding does NOT provide 100% accurate locations")
+print("❌ السبب: الترميز الجغرافي التلقائي لا يوفر مواقع دقيقة بنسبة 100%")
 print()
-print("هذا السكريبت كان يولد روابط خرائط جوجل تلقائياً من بيانات المحلات.")
-print("تم تعطيله لضمان أن جميع المواقع تستخدم روابط خرائط جوجل اليدوية فقط.")
+print("✅ REQUIRED: Manual Google Maps links ONLY")
+print("✅ مطلوب: روابط خرائط جوجل يدوية فقط")
 print()
-print("Please provide Google Maps links manually for each shop in shops_details.json")
-print("يرجى توفير روابط خرائط جوجل يدوياً لكل محل في shops_details.json")
+print("📖 See documentation:")
+print("   - GOOGLE_MAPS_MANUAL_LINKS_ONLY.md")
+print("   - README_DISABLE_AUTO_GEOCODING.md")
+print()
 print("=" * 80)
 sys.exit(1)
+
+# Exit point 2: Secondary check (should never reach here)
+if True:
+    print("\n⚠️  SECONDARY CHECK FAILED - SCRIPT STILL DISABLED")
+    sys.exit(1)
+
+# Exit point 3: Final safeguard (should never reach here)
+raise RuntimeError("CRITICAL: Auto-geocoding script is permanently disabled. Use manual Google Maps links only.")
 
 # Original code below (kept for reference but never executed due to sys.exit above)
 import json

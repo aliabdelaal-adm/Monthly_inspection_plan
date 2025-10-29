@@ -20,11 +20,14 @@ Successfully disabled scripts that auto-generated Google Maps links from shop da
 
 ### 2. الوثائق الجديدة - New Documentation
 
-| الملف - File | الوصف - Description |
-|-------------|---------------------|
-| `GOOGLE_MAPS_MANUAL_LINKS_ONLY.md` | دليل شامل لإضافة روابط يدوية - Comprehensive guide for adding manual links |
-| `README_DISABLE_AUTO_GEOCODING.md` | ملخص كامل للتحديث - Complete update summary |
-| `test_manual_google_maps_links.html` | صفحة اختبار تفاعلية - Interactive test page |
+| الملف | الوصف |
+|------|-------|
+| `GOOGLE_MAPS_MANUAL_LINKS_ONLY.md` | دليل شامل لإضافة روابط يدوية |
+| | Comprehensive guide for adding manual links |
+| `README_DISABLE_AUTO_GEOCODING.md` | ملخص كامل للتحديث |
+| | Complete update summary |
+| `test_manual_google_maps_links.html` | صفحة اختبار تفاعلية |
+| | Interactive test page |
 
 ### 3. التحديثات - Updates
 
@@ -93,7 +96,16 @@ $ python3 generate_google_maps_links.py
 ================================================================================
 ⚠️  ERROR: This script is DISABLED
 ================================================================================
-[رسالة خطأ واضحة بالعربية والإنجليزية]
+
+This script used to auto-generate Google Maps links from shop data.
+It has been disabled to ensure all locations use manual Google Maps links only.
+
+هذا السكريبت كان يولد روابط خرائط جوجل تلقائياً من بيانات المحلات.
+تم تعطيله لضمان أن جميع المواقع تستخدم روابط خرائط جوجل اليدوية فقط.
+
+Please provide Google Maps links manually for each shop in shops_details.json
+يرجى توفير روابط خرائط جوجل يدوياً لكل محل في shops_details.json
+================================================================================
 ```
 
 **النتيجة:** ✅ السكريبت معطل بنجاح
@@ -215,7 +227,7 @@ For questions or help:
 
 ---
 
-**التاريخ - Date:** 2025-10-29  
+**التاريخ - Date:** 2024-10-29  
 **الإصدار - Version:** 1.0  
 **الحالة - Status:** ✅ مكتمل بنجاح - Successfully Completed
 

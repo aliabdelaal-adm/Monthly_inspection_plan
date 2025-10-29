@@ -194,7 +194,7 @@ Where `24.5100` is latitude and `54.3787` is longitude.
 
 ## تاريخ التحديث - Update History
 
-**تاريخ - Date:** 2025-10-29
+**تاريخ - Date:** 2024-10-29
 **السبب - Reason:** تحسين دقة مواقع المحلات بالاعتماد على روابط يدوية فقط
 **Reason:** Improve shop location accuracy by relying on manual links only
 

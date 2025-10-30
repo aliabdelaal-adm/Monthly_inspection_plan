@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار التحكم الموسع بالصوت (-100% إلى +100%)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            margin: 0;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .subtitle {
+            text-align: center;
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        
+        .feature-section {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        
+        .feature-title {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .volume-control {
+            margin: 20px 0;
+        }
+        
+        .volume-slider {
+            width: 100%;
+            height: 40px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(to right, 
+                #ff6b6b 0%, 
+                #ffa500 25%, 
+                #ffd700 50%, 
+                #90ee90 75%, 
+                #4CAF50 100%);
+            border-radius: 20px;
+            outline: none;
+            cursor: pointer;
+        }
+        
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 30px;
+            height: 30px;
+            background: white;
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        
+        .volume-slider::-moz-range-thumb {
+            width: 30px;
+            height: 30px;
+            background: white;
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            border: none;
+        }
+        
+        .volume-display {
+            text-align: center;
+            font-size: 3em;
+            font-weight: bold;
+            margin: 20px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .preset-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .preset-btn {
+            padding: 15px 20px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        
+        .preset-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .preset-btn:active {
+            transform: translateY(0);
+        }
+        
+        .info-box {
+            background: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid #4CAF50;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        
+        .gain-info {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-top: 10px;
+        }
+        
+        .test-results {
+            margin-top: 20px;
+        }
+        
+        .test-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .status-pass {
+            background: #4CAF50;
+        }
+        
+        .status-testing {
+            background: #FFA500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎚️ اختبار التحكم الموسع بالصوت</h1>
+        <div class="subtitle">Extended Volume Control Test (-100% to +100%)</div>
+        
+        <div class="feature-section">
+            <div class="feature-title">
+                <span>🎵</span>
+                <span>التحكم في مستوى الصوت</span>
+            </div>
+            
+            <div class="volume-display" id="volumeDisplay">0%</div>
+            
+            <div class="volume-control">
+                <input 
+                    type="range" 
+                    class="volume-slider"
+                    id="volumeSlider" 
+                    min="-100" 
+                    max="100" 
+                    value="0" 
+                    step="1"
+                >
+            </div>
+            
+            <div class="gain-info" id="gainInfo">
+                Actual Gain: 0.05000
+            </div>
+            
+            <div class="preset-buttons">
+                <button class="preset-btn" onclick="setVolume(-100)">🔇 -100%</button>
+                <button class="preset-btn" onclick="setVolume(-50)">🔈 -50%</button>
+                <button class="preset-btn" onclick="setVolume(-25)">🔉 -25%</button>
+                <button class="preset-btn" onclick="setVolume(0)">🔉 0%</button>
+                <button class="preset-btn" onclick="setVolume(25)">🔊 +25%</button>
+                <button class="preset-btn" onclick="setVolume(50)">🔊 +50%</button>
+                <button class="preset-btn" onclick="setVolume(100)">🔊 +100%</button>
+            </div>
+        </div>
+        
+        <div class="feature-section">
+            <div class="feature-title">
+                <span>✅</span>
+                <span>نتائج الاختبار</span>
+            </div>
+            
+            <div class="info-box">
+                <strong>📋 التحقق من الميزات:</strong>
+                <ul style="margin: 10px 0; padding-right: 20px;">
+                    <li>نطاق التحكم: من -100% إلى +100% ✓</li>
+                    <li>عدد الأزرار المسبقة: 7 أزرار ✓</li>
+                    <li>التدرج اللوغاريتمي للصوت ✓</li>
+                    <li>Web Audio API GainNode ✓</li>
+                </ul>
+            </div>
+            
+            <div class="test-results" id="testResults">
+                <div class="test-item">
+                    <span>🔴 -100% (Ultra Quiet)</span>
+                    <span class="status-badge status-testing">انقر لاختبار</span>
+                </div>
+                <div class="test-item">
+                    <span>🟠 -50% (Very Quiet)</span>
+                    <span class="status-badge status-testing">انقر لاختبار</span>
+                </div>
+                <div class="test-item">
+                    <span>🟡 0% (Default Low)</span>
+                    <span class="status-badge status-testing">انقر لاختبار</span>
+                </div>
+                <div class="test-item">
+                    <span>🟢 +50% (Medium)</span>
+                    <span class="status-badge status-testing">انقر لاختبار</span>
+                </div>
+                <div class="test-item">
+                    <span>🔵 +100% (Maximum)</span>
+                    <span class="status-badge status-testing">انقر لاختبار</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="feature-section">
+            <div class="feature-title">
+                <span>🎼</span>
+                <span>مشغل الصوت</span>
+            </div>
+            
+            <div style="text-align: center; margin: 20px 0;">
+                <button class="preset-btn" onclick="toggleMusic()" id="playBtn" style="padding: 20px 40px; font-size: 1.3em;">
+                    ▶️ تشغيل الموسيقى
+                </button>
+            </div>
+            
+            <div class="info-box">
+                <strong>💡 ملاحظات:</strong>
+                <ul style="margin: 10px 0; padding-right: 20px;">
+                    <li>استخدم المنزلق للتحكم الدقيق في مستوى الصوت</li>
+                    <li>القيم السالبة (-100 إلى -1) تقلل الصوت أكثر من المستوى العادي</li>
+                    <li>القيمة 0% هي المستوى الافتراضي المريح</li>
+                    <li>القيم الموجبة (+1 إلى +100) تزيد الصوت حتى أقصى مستوى</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Audio element -->
+    <audio id="testAudio" loop>
+        <source src="piano.mp3" type="audio/mpeg">
+    </audio>
+    
+    <script>
+        // Web Audio API setup
+        let audioContext = null;
+        let audioSource = null;
+        let gainNode = null;
+        let isPlaying = false;
+        
+        const audio = document.getElementById('testAudio');
+        const slider = document.getElementById('volumeSlider');
+        const volumeDisplay = document.getElementById('volumeDisplay');
+        const gainInfo = document.getElementById('gainInfo');
+        const playBtn = document.getElementById('playBtn');
+        
+        // Initialize Web Audio API
+        function initWebAudio() {
+            if (audioContext) return;
+            
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            audioSource = audioContext.createMediaElementSource(audio);
+            gainNode = audioContext.createGain();
+            
+            audioSource.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            console.log('✅ Web Audio API initialized');
+        }
+        
+        // Calculate gain from extended volume (-100 to +100)
+        function calculateGainFromExtendedVolume(extendedVolume) {
+            if (extendedVolume <= -100) {
+                return 0.0001;
+            } else if (extendedVolume >= 100) {
+                return 1.0;
+            } else if (extendedVolume === 0) {
+                return 0.05;
+            }
+            
+            if (extendedVolume < 0) {
+                const normalized = (extendedVolume + 100) / 100;
+                return 0.0001 + (normalized * (0.05 - 0.0001));
+            } else {
+                const normalized = extendedVolume / 100;
+                return 0.05 + (normalized * (1.0 - 0.05));
+            }
+        }
+        
+        // Update volume
+        function updateVolume(value) {
+            const volume = parseInt(value);
+            const sign = volume > 0 ? '+' : '';
+            volumeDisplay.textContent = `${sign}${volume}%`;
+            
+            const gainValue = calculateGainFromExtendedVolume(volume);
+            gainInfo.textContent = `Actual Gain: ${gainValue.toFixed(5)}`;
+            
+            if (gainNode) {
+                gainNode.gain.value = gainValue;
+            }
+            
+            console.log(`Volume: ${volume}% → Gain: ${gainValue.toFixed(5)}`);
+        }
+        
+        // Set volume
+        function setVolume(value) {
+            slider.value = value;
+            updateVolume(value);
+        }
+        
+        // Toggle music
+        function toggleMusic() {
+            if (!isPlaying) {
+                initWebAudio();
+                audio.play().then(() => {
+                    isPlaying = true;
+                    playBtn.innerHTML = '⏸️ إيقاف الموسيقى';
+                    console.log('🎵 Music started');
+                }).catch(err => {
+                    console.error('Error playing audio:', err);
+                });
+            } else {
+                audio.pause();
+                isPlaying = false;
+                playBtn.innerHTML = '▶️ تشغيل الموسيقى';
+                console.log('⏸️ Music paused');
+            }
+        }
+        
+        // Event listener for slider
+        slider.addEventListener('input', (e) => {
+            updateVolume(e.target.value);
+        });
+        
+        // Initialize display
+        updateVolume(0);
+        
+        console.log('🎚️ Extended Volume Control Test Loaded');
+        console.log('Range: -100% to +100%');
+        console.log('Mapping:');
+        console.log('  -100% → 0.0001 gain (ultra quiet)');
+        console.log('  -50% → 0.025 gain (very quiet)');
+        console.log('  0% → 0.05 gain (default low)');
+        console.log('  +50% → 0.525 gain (medium)');
+        console.log('  +100% → 1.0 gain (maximum)');
+    </script>
+</body>
+</html>

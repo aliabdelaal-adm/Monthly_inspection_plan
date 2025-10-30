@@ -23,14 +23,16 @@ The background music system has been updated to play `piano.mp3` continuously an
 ```json
 {
   "backgroundMusic": {
-    "enabled": true,
-    "volume": 0.25,
+    "enabled": true,           // ✅ Controls auto-start on page load
+    "volume": 0.25,            // ✅ Volume level (0.0 to 1.0)
     "volumeLabel": "متوسط منخفض (25%)",
-    "autoStopDuration": 60000,  // ⚠️ Not used anymore for continuous playback
-    "autoStopLabel": "إيقاف عند النقر"  // ⚠️ Feature disabled
+    "autoStopDuration": 60000, // ℹ️ Legacy field - retained for compatibility, not active
+    "autoStopLabel": "إيقاف عند النقر"  // ℹ️ Legacy field - retained for compatibility, not active
   }
 }
 ```
+
+**Note:** The `autoStopDuration` and `autoStopLabel` fields are legacy fields that remain in the configuration for backward compatibility but are no longer actively used by the continuous playback implementation. They can be safely ignored.
 
 ### How to Control
 
@@ -132,14 +134,7 @@ toggleBackgroundMusic()
 
 ## Testing
 
-A test file has been created to verify the continuous playback:
-- Location: `/tmp/test_continuous_music.html`
-- Features:
-  - Auto-start music on page load
-  - Volume control buttons
-  - Click detection (should NOT pause music)
-  - Real-time status monitoring
-  - Console logs display
+A test file concept has been created to verify the continuous playback. For actual testing, create a file named `test_continuous_piano.html` in the project root with similar functionality.
 
 ### Test Checklist
 - [x] Music starts automatically on page load
@@ -192,10 +187,10 @@ Modern browsers (Chrome, Safari, Firefox) block auto-play of audio until user in
 1. `audio-config.json` - Configuration file (no changes needed)
    - `enabled: true` - Already enabled
    - `volume: 0.25` - Current volume setting
-   - Note: `autoStopDuration` field still exists but is no longer used
+   - Note: Legacy fields (`autoStopDuration`, `autoStopLabel`) remain for backward compatibility but are not actively used
 
-### Test Files Created
-1. `test_continuous_music.html` - Standalone test file
+### Documentation Created
+1. `CONTINUOUS_BACKGROUND_MUSIC_GUIDE.md` - This comprehensive guide
 
 ## Troubleshooting
 

@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Audio API GainNode Fix Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        .test-section h2 {
+            margin-top: 0;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 10px;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            margin: 5px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px 0 rgba(0, 0, 0, 0.2);
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px 0 rgba(0, 0, 0, 0.3);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .status {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+            font-family: 'Courier New', monospace;
+            min-height: 60px;
+        }
+        .status.error {
+            border-left-color: #f44336;
+        }
+        .status.warning {
+            border-left-color: #ff9800;
+        }
+        .success {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .error {
+            color: #f44336;
+            font-weight: bold;
+        }
+        .info {
+            color: #2196F3;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .volume-slider {
+            width: 100%;
+            margin: 10px 0;
+        }
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.3);
+            outline: none;
+        }
+        .test-result {
+            display: inline-block;
+            margin: 5px;
+            padding: 5px 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔊 Web Audio API GainNode Fix Verification</h1>
+        <p style="text-align: center; font-size: 18px;">Testing the fix for issue #593 - No voice heard after adding extended volume control</p>
+
+        <!-- Test 1: AudioContext State -->
+        <div class="test-section">
+            <h2>Test 1: AudioContext State and Resume</h2>
+            <p>This test verifies that the AudioContext is properly resumed before playing audio.</p>
+            <div class="controls">
+                <button onclick="test1CreateContext()">1. Create AudioContext</button>
+                <button onclick="test1CheckState()">2. Check State</button>
+                <button onclick="test1Resume()">3. Resume Context</button>
+                <button onclick="test1PlayAudio()">4. Play Audio</button>
+            </div>
+            <div class="status" id="status1">Status: Not started</div>
+            <audio id="audio1" loop style="display: none;">
+                <source src="piano.mp3" type="audio/mpeg">
+            </audio>
+        </div>
+
+        <!-- Test 2: GainNode Initial Value -->
+        <div class="test-section">
+            <h2>Test 2: GainNode Initial Value</h2>
+            <p>This test verifies that GainNode.gain.value is set correctly during initialization.</p>
+            <div class="controls">
+                <button onclick="test2InitWithoutGain()">Init WITHOUT setting gain (BUGGY)</button>
+                <button onclick="test2InitWithGain()">Init WITH setting gain (FIXED)</button>
+                <button onclick="test2Stop()">Stop All</button>
+            </div>
+            <div class="status" id="status2">Status: Not started</div>
+            <audio id="audio2a" loop style="display: none;">
+                <source src="piano.mp3" type="audio/mpeg">
+            </audio>
+            <audio id="audio2b" loop style="display: none;">
+                <source src="piano.mp3" type="audio/mpeg">
+            </audio>
+        </div>
+
+        <!-- Test 3: Complete Fixed Implementation -->
+        <div class="test-section">
+            <h2>Test 3: Complete Fixed Implementation</h2>
+            <p>This test simulates the complete fixed implementation with AudioContext.resume() and proper GainNode initialization.</p>
+            <div class="controls">
+                <button onclick="test3Init()">Initialize Web Audio API (FIXED)</button>
+                <button onclick="test3Play()">Play Audio</button>
+                <button onclick="test3SetVolume(0.05)">Set Volume to 5%</button>
+                <button onclick="test3SetVolume(0.25)">Set Volume to 25%</button>
+                <button onclick="test3SetVolume(0.5)">Set Volume to 50%</button>
+                <button onclick="test3Stop()">Stop</button>
+            </div>
+            <div class="volume-slider">
+                <label>Volume: <span id="volumeLabel3">5%</span></label>
+                <input type="range" min="0" max="100" value="5" oninput="test3UpdateVolume(this.value)">
+            </div>
+            <div class="status" id="status3">Status: Not started</div>
+            <audio id="audio3" loop style="display: none;">
+                <source src="piano.mp3" type="audio/mpeg">
+            </audio>
+        </div>
+
+        <!-- Test 4: Extended Volume Control (-100% to +100%) -->
+        <div class="test-section">
+            <h2>Test 4: Extended Volume Control (-100% to +100%)</h2>
+            <p>This test verifies the extended volume control feature works correctly.</p>
+            <div class="controls">
+                <button onclick="test4Init()">Initialize</button>
+                <button onclick="test4SetExtended(-100)">-100% (Ultra Quiet)</button>
+                <button onclick="test4SetExtended(-50)">-50% (Very Quiet)</button>
+                <button onclick="test4SetExtended(0)">0% (Default)</button>
+                <button onclick="test4SetExtended(50)">+50% (Medium)</button>
+                <button onclick="test4SetExtended(100)">+100% (Maximum)</button>
+                <button onclick="test4Stop()">Stop</button>
+            </div>
+            <div class="volume-slider">
+                <label>Extended Volume: <span id="volumeLabel4">0%</span></label>
+                <input type="range" min="-100" max="100" value="0" oninput="test4UpdateVolume(this.value)">
+            </div>
+            <div class="status" id="status4">Status: Not started</div>
+            <audio id="audio4" loop style="display: none;">
+                <source src="piano.mp3" type="audio/mpeg">
+            </audio>
+        </div>
+
+        <!-- Summary -->
+        <div class="test-section">
+            <h2>📊 Test Summary</h2>
+            <div id="summary">
+                <p>Run all tests to see the summary.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables for tests
+        let ctx1 = null, source1 = null, gain1 = null;
+        let ctx2 = null, source2a = null, gain2a = null, source2b = null, gain2b = null;
+        let ctx3 = null, source3 = null, gain3 = null;
+        let ctx4 = null, source4 = null, gain4 = null;
+
+        // Volume control constants (same as in main app)
+        const VOLUME_CONTROL = {
+            MIN_GAIN: 0.0001,
+            DEFAULT_GAIN: 0.05,
+            MAX_GAIN: 1.0,
+            MIN_PERCENT: -100,
+            MAX_PERCENT: 100
+        };
+
+        function calculateGainFromExtendedVolume(extendedVolume) {
+            if (extendedVolume <= VOLUME_CONTROL.MIN_PERCENT) {
+                return VOLUME_CONTROL.MIN_GAIN;
+            } else if (extendedVolume >= VOLUME_CONTROL.MAX_PERCENT) {
+                return VOLUME_CONTROL.MAX_GAIN;
+            } else if (extendedVolume === 0) {
+                return VOLUME_CONTROL.DEFAULT_GAIN;
+            }
+            
+            if (extendedVolume < 0) {
+                const normalized = (extendedVolume + 100) / 100;
+                return VOLUME_CONTROL.MIN_GAIN + (normalized * (VOLUME_CONTROL.DEFAULT_GAIN - VOLUME_CONTROL.MIN_GAIN));
+            } else {
+                const normalized = extendedVolume / 100;
+                return VOLUME_CONTROL.DEFAULT_GAIN + (normalized * (VOLUME_CONTROL.MAX_GAIN - VOLUME_CONTROL.DEFAULT_GAIN));
+            }
+        }
+
+        // Test 1: AudioContext State
+        function test1CreateContext() {
+            ctx1 = new (window.AudioContext || window.webkitAudioContext)();
+            document.getElementById('status1').innerHTML = 
+                `✅ AudioContext created<br>State: <span class="${ctx1.state === 'suspended' ? 'warning' : 'success'}">${ctx1.state}</span>`;
+        }
+
+        function test1CheckState() {
+            if (!ctx1) {
+                document.getElementById('status1').innerHTML = '❌ Create AudioContext first!';
+                return;
+            }
+            document.getElementById('status1').innerHTML = 
+                `AudioContext state: <span class="${ctx1.state === 'suspended' ? 'warning' : 'success'}">${ctx1.state}</span><br>` +
+                `${ctx1.state === 'suspended' ? '⚠️ Audio will NOT play until context is resumed!' : '✅ Audio can play'}`;
+        }
+
+        function test1Resume() {
+            if (!ctx1) {
+                document.getElementById('status1').innerHTML = '❌ Create AudioContext first!';
+                return;
+            }
+            ctx1.resume().then(() => {
+                document.getElementById('status1').innerHTML = 
+                    `✅ AudioContext resumed successfully!<br>State: <span class="success">${ctx1.state}</span>`;
+            }).catch(err => {
+                document.getElementById('status1').innerHTML = `❌ Error resuming context: ${err.message}`;
+            });
+        }
+
+        function test1PlayAudio() {
+            if (!ctx1) {
+                document.getElementById('status1').innerHTML = '❌ Create AudioContext first!';
+                return;
+            }
+
+            const audio = document.getElementById('audio1');
+            
+            if (!source1) {
+                source1 = ctx1.createMediaElementSource(audio);
+                gain1 = ctx1.createGain();
+                gain1.gain.value = 0.05;
+                source1.connect(gain1);
+                gain1.connect(ctx1.destination);
+            }
+
+            audio.play().then(() => {
+                document.getElementById('status1').innerHTML = 
+                    `<span class="success">✅ Audio playing!</span><br>` +
+                    `State: ${ctx1.state}<br>` +
+                    `Gain: ${gain1.gain.value} (${gain1.gain.value * 100}%)`;
+            }).catch(err => {
+                document.getElementById('status1').innerHTML = `❌ Play error: ${err.message}`;
+            });
+        }
+
+        // Test 2: GainNode Initial Value
+        function test2InitWithoutGain() {
+            const audio = document.getElementById('audio2a');
+            
+            if (!ctx2) {
+                ctx2 = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            
+            ctx2.resume().then(() => {
+                if (!source2a) {
+                    source2a = ctx2.createMediaElementSource(audio);
+                    gain2a = ctx2.createGain();
+                    // BUG: NOT setting gain2a.gain.value - defaults to 1.0!
+                    source2a.connect(gain2a);
+                    gain2a.connect(ctx2.destination);
+                }
+                
+                audio.play().then(() => {
+                    document.getElementById('status2').innerHTML = 
+                        `<span class="error">❌ BUGGY VERSION Playing</span><br>` +
+                        `Expected gain: 0.05 (5%)<br>` +
+                        `Actual gain: <span class="error">${gain2a.gain.value} (${gain2a.gain.value * 100}%)</span><br>` +
+                        `Result: Audio is TOO LOUD (playing at ${gain2a.gain.value * 100}% instead of 5%)!`;
+                }).catch(err => {
+                    document.getElementById('status2').innerHTML = `❌ Play error: ${err.message}`;
+                });
+            });
+        }
+
+        function test2InitWithGain() {
+            test2Stop(); // Stop previous audio
+            
+            const audio = document.getElementById('audio2b');
+            
+            if (!ctx2) {
+                ctx2 = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            
+            ctx2.resume().then(() => {
+                if (!source2b) {
+                    source2b = ctx2.createMediaElementSource(audio);
+                    gain2b = ctx2.createGain();
+                    // FIXED: Setting gain value during initialization!
+                    gain2b.gain.value = 0.05;
+                    source2b.connect(gain2b);
+                    gain2b.connect(ctx2.destination);
+                }
+                
+                audio.play().then(() => {
+                    document.getElementById('status2').innerHTML = 
+                        `<span class="success">✅ FIXED VERSION Playing</span><br>` +
+                        `Expected gain: 0.05 (5%)<br>` +
+                        `Actual gain: <span class="success">${gain2b.gain.value} (${gain2b.gain.value * 100}%)</span><br>` +
+                        `Result: Audio plays at correct volume!`;
+                }).catch(err => {
+                    document.getElementById('status2').innerHTML = `❌ Play error: ${err.message}`;
+                });
+            });
+        }
+
+        function test2Stop() {
+            const audio2a = document.getElementById('audio2a');
+            const audio2b = document.getElementById('audio2b');
+            audio2a.pause();
+            audio2b.pause();
+        }
+
+        // Test 3: Complete Fixed Implementation
+        function test3Init() {
+            const audio = document.getElementById('audio3');
+            
+            if (!source3) {
+                if (!ctx3) {
+                    ctx3 = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                
+                // FIXED: Resume AudioContext if suspended
+                if (ctx3.state === 'suspended') {
+                    ctx3.resume().then(() => {
+                        console.log('✅ AudioContext resumed');
+                    });
+                }
+                
+                source3 = ctx3.createMediaElementSource(audio);
+                gain3 = ctx3.createGain();
+                
+                // FIXED: Set initial gain value
+                gain3.gain.value = 0.05;
+                
+                source3.connect(gain3);
+                gain3.connect(ctx3.destination);
+                
+                document.getElementById('status3').innerHTML = 
+                    `<span class="success">✅ Web Audio API initialized correctly</span><br>` +
+                    `Context state: ${ctx3.state}<br>` +
+                    `Initial gain: ${gain3.gain.value} (${gain3.gain.value * 100}%)`;
+            } else {
+                document.getElementById('status3').innerHTML = 
+                    `ℹ️ Already initialized<br>` +
+                    `Context state: ${ctx3.state}<br>` +
+                    `Current gain: ${gain3.gain.value} (${gain3.gain.value * 100}%)`;
+            }
+        }
+
+        function test3Play() {
+            if (!source3) {
+                test3Init();
+            }
+            
+            const audio = document.getElementById('audio3');
+            
+            // Ensure context is resumed
+            if (ctx3.state === 'suspended') {
+                ctx3.resume();
+            }
+            
+            audio.play().then(() => {
+                document.getElementById('status3').innerHTML = 
+                    `<span class="success">✅ Audio playing!</span><br>` +
+                    `Context state: ${ctx3.state}<br>` +
+                    `Gain: ${gain3.gain.value} (${gain3.gain.value * 100}%)`;
+            }).catch(err => {
+                document.getElementById('status3').innerHTML = `❌ Play error: ${err.message}`;
+            });
+        }
+
+        function test3SetVolume(value) {
+            if (!gain3) {
+                document.getElementById('status3').innerHTML = '❌ Initialize first!';
+                return;
+            }
+            
+            gain3.gain.value = value;
+            document.getElementById('volumeLabel3').textContent = `${Math.round(value * 100)}%`;
+            document.getElementById('status3').innerHTML = 
+                `<span class="success">✅ Volume updated</span><br>` +
+                `Gain: ${gain3.gain.value} (${gain3.gain.value * 100}%)`;
+        }
+
+        function test3UpdateVolume(value) {
+            test3SetVolume(parseInt(value) / 100);
+        }
+
+        function test3Stop() {
+            const audio = document.getElementById('audio3');
+            audio.pause();
+            document.getElementById('status3').innerHTML = 'Stopped';
+        }
+
+        // Test 4: Extended Volume Control
+        function test4Init() {
+            const audio = document.getElementById('audio4');
+            
+            if (!source4) {
+                if (!ctx4) {
+                    ctx4 = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                
+                if (ctx4.state === 'suspended') {
+                    ctx4.resume();
+                }
+                
+                source4 = ctx4.createMediaElementSource(audio);
+                gain4 = ctx4.createGain();
+                gain4.gain.value = VOLUME_CONTROL.DEFAULT_GAIN; // 0% = 0.05
+                source4.connect(gain4);
+                gain4.connect(ctx4.destination);
+                
+                audio.play();
+                
+                document.getElementById('status4').innerHTML = 
+                    `<span class="success">✅ Extended volume control initialized</span><br>` +
+                    `Default gain: ${gain4.gain.value} (0% = comfortable low level)`;
+            }
+        }
+
+        function test4SetExtended(percent) {
+            if (!gain4) {
+                test4Init();
+                return;
+            }
+            
+            const gainValue = calculateGainFromExtendedVolume(percent);
+            gain4.gain.value = gainValue;
+            
+            document.getElementById('volumeLabel4').textContent = 
+                `${percent >= 0 ? '+' : ''}${percent}%`;
+            
+            const descriptions = {
+                '-100': 'Ultra Quiet - barely audible',
+                '-50': 'Very Quiet - below normal',
+                '0': 'Default - comfortable low level',
+                '50': 'Medium volume',
+                '100': 'Maximum volume'
+            };
+            
+            document.getElementById('status4').innerHTML = 
+                `<span class="success">✅ Extended volume: ${percent >= 0 ? '+' : ''}${percent}%</span><br>` +
+                `Actual gain: ${gainValue.toFixed(4)} (${(gainValue * 100).toFixed(2)}%)<br>` +
+                `Description: ${descriptions[percent.toString()] || 'Custom level'}`;
+        }
+
+        function test4UpdateVolume(value) {
+            test4SetExtended(parseInt(value));
+        }
+
+        function test4Stop() {
+            const audio = document.getElementById('audio4');
+            audio.pause();
+            document.getElementById('status4').innerHTML = 'Stopped';
+        }
+    </script>
+</body>
+</html>

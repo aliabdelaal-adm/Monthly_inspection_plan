@@ -25151,19 +25151,16 @@ function setupTapToStopMusic() {
         return;
     }
     
-    console.log('👆 Tap-to-stop feature is ENABLED - tap anywhere to stop background music');
+    console.log('👆 Tap-to-stop feature is ENABLED - tap ANYWHERE on screen to stop background music');
     
-    // Add tap-to-stop handler
+    // Add tap-to-stop handler - works on ANY click anywhere on screen
     const tapToStopHandler = function(event) {
-        // Prevent stopping music when clicking on buttons or interactive elements
-        const target = event.target;
-        const isInteractive = target.closest('button, a, input, select, textarea, [onclick], .smart-control-panel');
-        
-        if (!isInteractive && !audio.paused) {
+        // Stop music on ANY click/tap anywhere on the screen
+        if (!audio.paused) {
             audio.pause();
             audio.currentTime = 0;
             backgroundMusicPlaying = false;
-            console.log('🎵 Background music stopped by user tap/click');
+            console.log('🎵 Background music stopped by user tap/click anywhere on screen');
             
             // Show a brief notification
             const notification = document.createElement('div');

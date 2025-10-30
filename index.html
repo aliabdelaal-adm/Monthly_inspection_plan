@@ -25119,7 +25119,7 @@ function autoStartBackgroundMusic() {
         return;
     }
     
-    // Set volume from config
+    // Set volume from config and ensure loop is enabled
     audio.volume = audioConfig.backgroundMusic.volume;
     audio.loop = true;
     
@@ -25135,6 +25135,7 @@ function autoStartBackgroundMusic() {
             console.log('⚠️ Auto-play blocked by browser. Waiting for user interaction...');
             
             // Setup one-time interaction handler to start music
+            // The { once: true } option automatically removes the listener after first execution
             const startOnInteraction = function() {
                 audio.play().then(() => {
                     backgroundMusicPlaying = true;
@@ -25143,14 +25144,9 @@ function autoStartBackgroundMusic() {
                 }).catch(err2 => {
                     console.log('⚠️ Could not start background music:', err2);
                 });
-                
-                // Remove the one-time handler
-                document.removeEventListener('click', startOnInteraction);
-                document.removeEventListener('touchstart', startOnInteraction);
-                document.removeEventListener('keydown', startOnInteraction);
             };
             
-            // Add listeners for user interaction
+            // Add listeners for user interaction with automatic cleanup
             document.addEventListener('click', startOnInteraction, { once: true });
             document.addEventListener('touchstart', startOnInteraction, { once: true });
             document.addEventListener('keydown', startOnInteraction, { once: true });
@@ -25164,9 +25160,11 @@ window.addEventListener('load', function() {
         console.log('🎵 Audio configuration loaded successfully');
         
         // Auto-start background music after config is loaded
+        // Small delay to ensure audio element is fully initialized
+        const AUDIO_INIT_DELAY = 500; // milliseconds
         setTimeout(() => {
             autoStartBackgroundMusic();
-        }, 500);
+        }, AUDIO_INIT_DELAY);
     });
     
     // Setup background music click handler

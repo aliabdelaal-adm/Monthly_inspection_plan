@@ -25000,12 +25000,14 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // ===== 🎵 نظام الموسيقى الخلفية للشاشة الرئيسية =====
 // Background Music System for Main Screen
-// افتراضياً: صامت (0%) - يمكن للمطور تغييره من audio-config.json
-// Default: MUTED (0%) - Developer can change it via audio-config.json
-// للتفعيل: غيّر enabled و volume في audio-config.json
-// To enable: Change enabled and volume in audio-config.json
+// الموسيقى تعمل بشكل مستمر ومتواصل 100% - piano.mp3
+// Music plays continuously and endlessly 100% - piano.mp3
+// للتحكم في مستوى الصوت: غيّر volume في audio-config.json
+// To control volume: Change volume in audio-config.json
+// للتفعيل/الإيقاف: غيّر enabled في audio-config.json
+// To enable/disable: Change enabled in audio-config.json
 
-let backgroundMusicTimer = null;
+let backgroundMusicTimer = null; // Kept for compatibility, not used for continuous playback
 let backgroundMusicPlaying = false;
 let lastKnownDataHash = null;
 let isMonitoringActive = false;
@@ -25018,7 +25020,7 @@ function calculateDataHash(data) {
     }, 0);
 }
 
-// Toggle background music on main screen click
+// Toggle background music on main screen click (disabled for continuous playback)
 function toggleBackgroundMusic() {
     const audio = document.getElementById('backgroundMusicAudio');
     
@@ -25034,49 +25036,29 @@ function toggleBackgroundMusic() {
     }
     
     if (audio.paused) {
-        // Play from current position (resume)
-        audio.volume = audioConfig.backgroundMusic.volume; // Use configured volume (default: 0 = MUTE)
+        // Play from current position (resume) - no auto-stop for continuous playback
+        audio.volume = audioConfig.backgroundMusic.volume;
         audio.play().then(() => {
             backgroundMusicPlaying = true;
             console.log('🎵 Background music started/resumed at position:', audio.currentTime.toFixed(2), 'seconds');
             console.log(`🎵 Volume: ${audioConfig.backgroundMusic.volume * 100}%`);
-            
-            // Auto-stop after configured duration
-            clearTimeout(backgroundMusicTimer);
-            backgroundMusicTimer = setTimeout(() => {
-                audio.pause();
-                backgroundMusicPlaying = false;
-                console.log('⏸️ Background music paused automatically after', audioConfig.backgroundMusic.autoStopDuration / 1000, 'seconds at position:', audio.currentTime.toFixed(2), 'seconds');
-            }, audioConfig.backgroundMusic.autoStopDuration);
+            console.log('🎵 Music will play continuously in a loop');
         }).catch(error => {
             console.log('⚠️ Could not play background music:', error);
             backgroundMusicPlaying = false;
         });
     } else {
-        // Already playing, pause it
-        audio.pause();
-        clearTimeout(backgroundMusicTimer);
-        backgroundMusicPlaying = false;
-        console.log('⏸️ Background music paused at position:', audio.currentTime.toFixed(2), 'seconds');
+        // Note: For continuous playback, pause is disabled
+        // Music continues playing
+        console.log('🎵 Background music is already playing continuously');
     }
 }
 
-// Setup click handler for main screen
+// Setup click handler for main screen (disabled for continuous playback)
 function setupBackgroundMusicClickHandler() {
-    document.addEventListener('click', function(event) {
-        // Only trigger on body clicks or main container, not on buttons/inputs
-        const targetElement = event.target;
-        const isButton = targetElement.tagName === 'BUTTON' || targetElement.closest('button');
-        const isInput = targetElement.tagName === 'INPUT' || targetElement.tagName === 'SELECT' || targetElement.tagName === 'TEXTAREA';
-        const isLink = targetElement.tagName === 'A' || targetElement.closest('a');
-        
-        // Only toggle music if not clicking on interactive elements
-        if (!isButton && !isInput && !isLink) {
-            toggleBackgroundMusic();
-        }
-    }, { passive: true, capture: false });
-    
-    console.log('🎵 Background music click handler initialized');
+    // Click handler disabled - background music plays continuously
+    // without user interaction toggle
+    console.log('🎵 Background music will play continuously (click toggle disabled)');
 }
 
 // Monitor for data changes (keep monitoring functionality)
@@ -25193,9 +25175,25 @@ window.stopBackgroundMusic = function() {
     const audio = document.getElementById('backgroundMusicAudio');
     if (audio) {
         audio.pause();
-        clearTimeout(backgroundMusicTimer);
         backgroundMusicPlaying = false;
         console.log('⏹️ Background music stopped at position:', audio.currentTime.toFixed(2), 'seconds');
+        console.log('⚠️ Note: Music is set to play continuously. Use toggleBackgroundMusic() to restart.');
+    }
+};
+window.startBackgroundMusic = function() {
+    const audio = document.getElementById('backgroundMusicAudio');
+    if (audio && audio.paused) {
+        audio.volume = audioConfig.backgroundMusic.volume;
+        audio.loop = true;
+        audio.play().then(() => {
+            backgroundMusicPlaying = true;
+            console.log('🎵 Background music started manually');
+            console.log('🎵 Playing continuously at', (audioConfig.backgroundMusic.volume * 100).toFixed(0) + '% volume');
+        }).catch(err => {
+            console.log('⚠️ Could not start background music:', err);
+        });
+    } else if (!audio.paused) {
+        console.log('🎵 Background music is already playing');
     }
 };
 

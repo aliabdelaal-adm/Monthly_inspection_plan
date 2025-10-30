@@ -384,7 +384,6 @@
         }
         .main-container {
             background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
             border-radius: 20px;
             box-shadow: 
                 0 4px 24px rgba(0, 0, 0, 0.08),
@@ -396,6 +395,27 @@
             display: flex; flex-direction: column; align-items: center;
             width: 95%;
             border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+        
+        /* Enhanced glassmorphism effect for modern browsers */
+        @supports (backdrop-filter: blur(10px)) {
+            .main-container {
+                backdrop-filter: blur(10px);
+            }
+        }
+        
+        /* Respect user's motion preferences for accessibility */
+        @media (prefers-reduced-motion: reduce) {
+            body {
+                animation: none;
+                background: #f5f7fa;
+            }
+            body::before {
+                animation: none;
+            }
+            .bg-shape {
+                animation: none;
+            }
         }
         .header-top-bar {
             width:100%;

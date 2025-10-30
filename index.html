@@ -5150,6 +5150,22 @@
         </div>
     </div>
     
+    <!-- Monthly Duty Schedule Section - Visible on Main Screen -->
+    <div id="dutyScheduleSection" style="margin: 20px auto; max-width: 95%; display: none;">
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.15); margin-bottom: 20px;">
+            <h2 style="margin: 0 0 15px 0; color: white; text-align: center; font-size: 1.8em;">
+                📅 جدول المناوبات الشهري
+            </h2>
+            <p style="margin: 0; color: rgba(255,255,255,0.9); text-align: center; font-size: 1.1em;">
+                عرض توزيع المناوبات على جميع المفتشين خلال الشهر
+            </p>
+        </div>
+        
+        <div id="dutyScheduleContent" style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <!-- Duty schedule calendar will be populated here -->
+        </div>
+    </div>
+    
     <!-- Data Table Container - Hidden when maintenance is active -->
     <div id="planTableContainer" class="plan-table-container"></div>
     
@@ -11249,6 +11265,7 @@ async function loadInspectionData() {
         fillAreasDropdowns();
         fillShopsDropdowns();
         renderPlanTable();
+        renderDutySchedule(); // Render duty schedule on main screen
         if (statusDiv) {
             setTimeout(() => statusDiv.style.display = 'none', 1000);
         }
@@ -13301,6 +13318,9 @@ function renderPlanTable() {
     });
     html += `</tbody></table>`;
     container.innerHTML = html;
+    
+    // Also render the duty schedule when rendering the plan table
+    renderDutySchedule();
 }
 
 function toggleInspectorSort() {
@@ -13369,6 +13389,139 @@ function deletePlan(idx) {
     inspectionData.splice(idx,1);
     saveInspectionData();
     renderPlanTable();
+}
+
+// --- Render Monthly Duty Schedule on Main Screen ---
+function renderDutySchedule() {
+    const dutyScheduleSection = document.getElementById('dutyScheduleSection');
+    const dutyScheduleContent = document.getElementById('dutyScheduleContent');
+    
+    if (!dutyScheduleSection || !dutyScheduleContent) return;
+    
+    // Get current month's data
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    
+    // Filter data for current month
+    const monthlyData = inspectionData.filter(item => {
+        const itemDate = new Date(item.day);
+        return itemDate.getMonth() === currentMonth && itemDate.getFullYear() === currentYear;
+    });
+    
+    if (monthlyData.length === 0) {
+        dutyScheduleSection.style.display = 'none';
+        return;
+    }
+    
+    // Show the section
+    dutyScheduleSection.style.display = 'block';
+    
+    // Group data by inspector
+    const inspectorSchedules = {};
+    monthlyData.forEach(item => {
+        if (!inspectorSchedules[item.inspector]) {
+            inspectorSchedules[item.inspector] = [];
+        }
+        inspectorSchedules[item.inspector].push(item);
+    });
+    
+    // Sort inspectors alphabetically
+    const sortedInspectors = Object.keys(inspectorSchedules).sort((a, b) => a.localeCompare(b));
+    
+    // Generate calendar view HTML
+    let html = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px;">';
+    
+    sortedInspectors.forEach(inspector => {
+        const duties = inspectorSchedules[inspector];
+        
+        // Count shifts
+        const morningShifts = duties.filter(d => d.shift === 'صباحية').length;
+        const eveningShifts = duties.filter(d => d.shift === 'مسائية').length;
+        
+        html += `
+            <div style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); 
+                        padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+                        transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden;"
+                 onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.15)';"
+                 onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)';">
+                
+                <!-- Background Icon -->
+                <div style="position: absolute; top: -20px; right: -20px; font-size: 120px; opacity: 0.1;">
+                    📅
+                </div>
+                
+                <div style="position: relative; z-index: 1;">
+                    <!-- Inspector Header -->
+                    <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                    width: 50px; height: 50px; border-radius: 50%;
+                                    display: flex; align-items: center; justify-content: center;
+                                    font-size: 24px; margin-left: 12px;">
+                            👤
+                        </div>
+                        <div style="flex: 1;">
+                            <h3 style="margin: 0; color: #2d3748; font-size: 1.2em;">${inspector}</h3>
+                            <p style="margin: 5px 0 0 0; color: #718096; font-size: 0.9em;">
+                                ${duties.length} مناوبة هذا الشهر
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Shift Summary with Icons -->
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <div style="flex: 1; background: rgba(255, 255, 255, 0.7); padding: 12px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 28px; margin-bottom: 5px;">🌅</div>
+                            <div style="font-size: 1.3em; font-weight: bold; color: #2d3748;">${morningShifts}</div>
+                            <div style="font-size: 0.85em; color: #718096;">صباحية</div>
+                        </div>
+                        <div style="flex: 1; background: rgba(255, 255, 255, 0.7); padding: 12px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 28px; margin-bottom: 5px;">🌆</div>
+                            <div style="font-size: 1.3em; font-weight: bold; color: #2d3748;">${eveningShifts}</div>
+                            <div style="font-size: 0.85em; color: #718096;">مسائية</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Duties -->
+                    <div style="background: rgba(255, 255, 255, 0.5); padding: 12px; border-radius: 8px; max-height: 200px; overflow-y: auto;">
+                        <div style="font-weight: bold; color: #2d3748; margin-bottom: 10px; font-size: 0.95em;">
+                            📋 المناوبات القادمة:
+                        </div>
+                        ${duties
+                            .filter(d => new Date(d.day) >= today)
+                            .sort((a, b) => new Date(a.day) - new Date(b.day))
+                            .slice(0, 5)
+                            .map(duty => {
+                                const date = new Date(duty.day);
+                                const dayNames = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+                                const dayName = dayNames[date.getDay()];
+                                const shiftIcon = duty.shift === 'صباحية' ? '🌅' : '🌆';
+                                const areaColor = (getAreaName(duty.area) === 'سوق الميناء' || getAreaName(duty.area) === 'سوق التراث') ? '#1976d2' : '#d32f2f';
+                                
+                                return `
+                                    <div style="display: flex; align-items: center; padding: 8px; margin-bottom: 6px;
+                                                background: white; border-radius: 6px; border-right: 4px solid ${areaColor};">
+                                        <div style="font-size: 20px; margin-left: 10px;">${shiftIcon}</div>
+                                        <div style="flex: 1;">
+                                            <div style="font-weight: bold; color: #2d3748; font-size: 0.9em;">
+                                                ${dayName} ${duty.day}
+                                            </div>
+                                            <div style="color: ${areaColor}; font-size: 0.85em; font-weight: 600;">
+                                                ${getAreaName(duty.area)} • ${duty.shops.length} محلات
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    
+    dutyScheduleContent.innerHTML = html;
 }
 
 // --- وظيفة إظهار/إخفاء قائمة المحلات المنسدلة - محدثة ---

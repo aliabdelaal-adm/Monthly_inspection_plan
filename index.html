@@ -8351,17 +8351,30 @@ function initWebAudioForBackgroundMusic() {
             webAudioContext = new (window.AudioContext || window.webkitAudioContext)();
         }
         
+        // Resume AudioContext if suspended (required by modern browsers)
+        if (webAudioContext.state === 'suspended') {
+            webAudioContext.resume().then(() => {
+                console.log('✅ AudioContext resumed for background music');
+            }).catch(err => {
+                console.warn('⚠️ Could not resume AudioContext:', err);
+            });
+        }
+        
         // Create MediaElementSource from audio element
         backgroundMusicSource = webAudioContext.createMediaElementSource(audio);
         
         // Create GainNode for volume control
         backgroundMusicGain = webAudioContext.createGain();
         
+        // Set initial gain value from config (default to 0.05 if not set)
+        backgroundMusicGain.gain.value = audioConfig.backgroundMusic.volume || 0.05;
+        
         // Connect: source -> gain -> destination
         backgroundMusicSource.connect(backgroundMusicGain);
         backgroundMusicGain.connect(webAudioContext.destination);
         
         console.log('✅ Web Audio API initialized for background music with extended volume control');
+        console.log(`🎚️ Initial gain value set to: ${backgroundMusicGain.gain.value} (${backgroundMusicGain.gain.value * 100}%)`);
     } catch (error) {
         console.error('❌ Error initializing Web Audio API:', error);
     }
@@ -8378,17 +8391,30 @@ function initWebAudioForMaintenanceMusic() {
             webAudioContext = new (window.AudioContext || window.webkitAudioContext)();
         }
         
+        // Resume AudioContext if suspended (required by modern browsers)
+        if (webAudioContext.state === 'suspended') {
+            webAudioContext.resume().then(() => {
+                console.log('✅ AudioContext resumed for maintenance music');
+            }).catch(err => {
+                console.warn('⚠️ Could not resume AudioContext:', err);
+            });
+        }
+        
         // Create MediaElementSource from audio element
         maintenanceMusicSource = webAudioContext.createMediaElementSource(audio);
         
         // Create GainNode for volume control
         maintenanceMusicGain = webAudioContext.createGain();
         
+        // Set initial gain value from config (default to 0.05 if not set)
+        maintenanceMusicGain.gain.value = audioConfig.maintenanceMusic.volume || 0.05;
+        
         // Connect: source -> gain -> destination
         maintenanceMusicSource.connect(maintenanceMusicGain);
         maintenanceMusicGain.connect(webAudioContext.destination);
         
         console.log('✅ Web Audio API initialized for maintenance music with extended volume control');
+        console.log(`🎚️ Initial gain value set to: ${maintenanceMusicGain.gain.value} (${maintenanceMusicGain.gain.value * 100}%)`);
     } catch (error) {
         console.error('❌ Error initializing Web Audio API:', error);
     }
@@ -8456,6 +8482,12 @@ function applyAudioConfig() {
         bgAudio.volume = audioConfig.backgroundMusic.volume;
         console.log(`🎵 Background music volume set to: ${audioConfig.backgroundMusic.volume * 100}%`);
         
+        // CRITICAL: Also update GainNode if Web Audio API is active
+        if (backgroundMusicGain) {
+            backgroundMusicGain.gain.value = audioConfig.backgroundMusic.volume;
+            console.log(`🎚️ Background music GainNode updated to: ${backgroundMusicGain.gain.value * 100}%`);
+        }
+        
         if (!audioConfig.backgroundMusic.enabled && !bgAudio.paused) {
             bgAudio.pause();
             console.log('🎵 Background music STOPPED (disabled in config)');
@@ -8481,6 +8513,12 @@ function applyAudioConfig() {
         maintAudio.volume = volume;
         console.log(`🎵 Maintenance music volume set to: ${volume * 100}%`);
         
+        // CRITICAL: Also update GainNode if Web Audio API is active
+        if (maintenanceMusicGain) {
+            maintenanceMusicGain.gain.value = volume;
+            console.log(`🎚️ Maintenance music GainNode updated to: ${volume * 100}%`);
+        }
+        
         if (!audioConfig.maintenanceMusic.enabled && !maintAudio.paused) {
             maintAudio.pause();
             console.log('🎵 Maintenance music STOPPED (disabled in config)');
@@ -8500,6 +8538,12 @@ window.setBackgroundMusicVolume = function(volume) {
     const audio = document.getElementById('backgroundMusicAudio');
     if (audio) {
         audio.volume = volume;
+    }
+    // CRITICAL: Also update GainNode if Web Audio API is active
+    if (backgroundMusicGain) {
+        backgroundMusicGain.gain.value = volume;
+        console.log(`✅ Background music volume set to ${volume * 100}% (GainNode updated)`);
+    } else {
         console.log(`✅ Background music volume set to ${volume * 100}%`);
     }
 };
@@ -8513,6 +8557,12 @@ window.setMaintenanceMusicVolume = function(volume) {
     const audio = document.getElementById('maintenanceAudio');
     if (audio) {
         audio.volume = volume;
+    }
+    // CRITICAL: Also update GainNode if Web Audio API is active
+    if (maintenanceMusicGain) {
+        maintenanceMusicGain.gain.value = volume;
+        console.log(`✅ Maintenance music volume set to ${volume * 100}% (GainNode updated)`);
+    } else {
         console.log(`✅ Maintenance music volume set to ${volume * 100}%`);
     }
 };
@@ -9114,7 +9164,13 @@ function smartUpdateVolume(value) {
         audio.volume = parseInt(value) / 100;
     }
     
-    console.log(`🔊 Background music volume updated to ${value}% (audioConfig synced: ${audioConfig.backgroundMusic.volume})`);
+    // CRITICAL: Also update GainNode if Web Audio API is active
+    if (backgroundMusicGain) {
+        backgroundMusicGain.gain.value = parseInt(value) / 100;
+        console.log(`🔊 Background music volume updated to ${value}% (GainNode updated: ${backgroundMusicGain.gain.value})`);
+    } else {
+        console.log(`🔊 Background music volume updated to ${value}% (audioConfig synced: ${audioConfig.backgroundMusic.volume})`);
+    }
 }
 
 function smartSaveVolume(value) {
@@ -9255,12 +9311,24 @@ function smartUpdateMaintenanceVolume(value) {
         audio.volume = parseInt(value) / 100;
     }
     
-    console.log(`🔊 Maintenance music volume updated to ${value}% (audioConfig synced: ${audioConfig.maintenanceMusic.volume})`);
+    // CRITICAL: Also update GainNode if Web Audio API is active
+    if (maintenanceMusicGain) {
+        maintenanceMusicGain.gain.value = parseInt(value) / 100;
+        console.log(`🔊 Maintenance music volume updated to ${value}% (GainNode updated: ${maintenanceMusicGain.gain.value})`);
+    } else {
+        console.log(`🔊 Maintenance music volume updated to ${value}% (audioConfig synced: ${audioConfig.maintenanceMusic.volume})`);
+    }
 }
 
 function smartSaveMaintenanceVolume(value) {
     smartControlState.maintenanceMusicVolume = parseInt(value);
     audioConfig.maintenanceMusic.volume = parseInt(value) / 100;
+    
+    // CRITICAL: Also update GainNode if Web Audio API is active
+    if (maintenanceMusicGain) {
+        maintenanceMusicGain.gain.value = parseInt(value) / 100;
+    }
+    
     saveSmartControlState();
     updateSmartControlUI();
     console.log(`💾 Maintenance music volume saved: ${value}% (audioConfig: ${audioConfig.maintenanceMusic.volume})`);
@@ -9269,6 +9337,11 @@ function smartSaveMaintenanceVolume(value) {
 function smartSetMaintenanceVolume(value) {
     smartControlState.maintenanceMusicVolume = value;
     audioConfig.maintenanceMusic.volume = value / 100;
+    
+    // CRITICAL: Also update GainNode if Web Audio API is active
+    if (maintenanceMusicGain) {
+        maintenanceMusicGain.gain.value = value / 100;
+    }
     
     // Update slider
     const volumeSlider = document.getElementById('smartMaintenanceVolumeSlider');
@@ -25600,6 +25673,15 @@ function autoStartBackgroundMusic() {
         initWebAudioForBackgroundMusic();
     }
     
+    // Resume AudioContext if suspended (critical for audio to play!)
+    if (webAudioContext && webAudioContext.state === 'suspended') {
+        webAudioContext.resume().then(() => {
+            console.log('✅ AudioContext resumed before playing background music');
+        }).catch(err => {
+            console.warn('⚠️ Could not resume AudioContext:', err);
+        });
+    }
+    
     // Set volume from config and ensure loop is enabled
     audio.volume = audioConfig.backgroundMusic.volume;
     audio.loop = true;
@@ -25607,6 +25689,7 @@ function autoStartBackgroundMusic() {
     // Also set gain if Web Audio is initialized
     if (backgroundMusicGain) {
         backgroundMusicGain.gain.value = audioConfig.backgroundMusic.volume;
+        console.log(`🎚️ Background music gain set to: ${backgroundMusicGain.gain.value} (${backgroundMusicGain.gain.value * 100}%)`);
     }
     
     // Try to auto-play (may be blocked by browser policy)
@@ -25627,6 +25710,21 @@ function autoStartBackgroundMusic() {
                 // Initialize Web Audio API on user interaction if not already done
                 if (!backgroundMusicSource) {
                     initWebAudioForBackgroundMusic();
+                }
+                
+                // Resume AudioContext on user interaction (critical!)
+                if (webAudioContext && webAudioContext.state === 'suspended') {
+                    webAudioContext.resume().then(() => {
+                        console.log('✅ AudioContext resumed after user interaction');
+                    }).catch(err => {
+                        console.warn('⚠️ Could not resume AudioContext:', err);
+                    });
+                }
+                
+                // Ensure gain is set
+                if (backgroundMusicGain) {
+                    backgroundMusicGain.gain.value = audioConfig.backgroundMusic.volume;
+                    console.log(`🎚️ Background music gain set to: ${backgroundMusicGain.gain.value} (${backgroundMusicGain.gain.value * 100}%)`);
                 }
                 
                 audio.play().then(() => {

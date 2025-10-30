@@ -5344,7 +5344,7 @@
             <input 
                 type="range" 
                 id="linearVolumeSlider" 
-                min="0" 
+                min="-100" 
                 max="100" 
                 value="5" 
                 step="1"
@@ -5353,10 +5353,12 @@
         </div>
         
         <div class="volume-preset-buttons">
-            <button class="volume-preset-btn" onclick="setLinearVolume(0)">🔇 صامت</button>
-            <button class="volume-preset-btn" onclick="setLinearVolume(5)">🔉 5%</button>
+            <button class="volume-preset-btn" onclick="setLinearVolume(-100)">🔇 -100%</button>
+            <button class="volume-preset-btn" onclick="setLinearVolume(-50)">🔈 -50%</button>
+            <button class="volume-preset-btn" onclick="setLinearVolume(0)">🔉 0%</button>
             <button class="volume-preset-btn" onclick="setLinearVolume(25)">🔊 25%</button>
             <button class="volume-preset-btn" onclick="setLinearVolume(50)">🔊 50%</button>
+            <button class="volume-preset-btn" onclick="setLinearVolume(100)">🔊 100%</button>
         </div>
         
         <div class="volume-save-info">
@@ -8313,6 +8315,104 @@ let audioConfig = {
         loop: true
     }
 };
+
+// Web Audio API for extended volume control (-100% to +100%)
+let webAudioContext = null;
+let backgroundMusicSource = null;
+let backgroundMusicGain = null;
+let maintenanceMusicSource = null;
+let maintenanceMusicGain = null;
+
+// Volume control constants for extended range
+const VOLUME_CONTROL = {
+    MIN_GAIN: 0.0001,      // Ultra quiet - barely audible (-100%)
+    DEFAULT_GAIN: 0.05,     // Default comfortable level (0%)
+    MAX_GAIN: 1.0,          // Maximum volume (+100%)
+    MIN_PERCENT: -100,      // Minimum extended volume percentage
+    MAX_PERCENT: 100        // Maximum extended volume percentage
+};
+
+// Initialize Web Audio API for background music
+function initWebAudioForBackgroundMusic() {
+    try {
+        const audio = document.getElementById('backgroundMusicAudio');
+        if (!audio || backgroundMusicSource) return; // Already initialized
+        
+        // Create AudioContext
+        if (!webAudioContext) {
+            webAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        
+        // Create MediaElementSource from audio element
+        backgroundMusicSource = webAudioContext.createMediaElementSource(audio);
+        
+        // Create GainNode for volume control
+        backgroundMusicGain = webAudioContext.createGain();
+        
+        // Connect: source -> gain -> destination
+        backgroundMusicSource.connect(backgroundMusicGain);
+        backgroundMusicGain.connect(webAudioContext.destination);
+        
+        console.log('✅ Web Audio API initialized for background music with extended volume control');
+    } catch (error) {
+        console.error('❌ Error initializing Web Audio API:', error);
+    }
+}
+
+// Initialize Web Audio API for maintenance music
+function initWebAudioForMaintenanceMusic() {
+    try {
+        const audio = document.getElementById('maintenanceAudio');
+        if (!audio || maintenanceMusicSource) return; // Already initialized
+        
+        // Create AudioContext if not exists
+        if (!webAudioContext) {
+            webAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        
+        // Create MediaElementSource from audio element
+        maintenanceMusicSource = webAudioContext.createMediaElementSource(audio);
+        
+        // Create GainNode for volume control
+        maintenanceMusicGain = webAudioContext.createGain();
+        
+        // Connect: source -> gain -> destination
+        maintenanceMusicSource.connect(maintenanceMusicGain);
+        maintenanceMusicGain.connect(webAudioContext.destination);
+        
+        console.log('✅ Web Audio API initialized for maintenance music with extended volume control');
+    } catch (error) {
+        console.error('❌ Error initializing Web Audio API:', error);
+    }
+}
+
+// Convert extended volume (-100 to +100) to gain value
+// -100% = MIN_GAIN (near silent), 0% = DEFAULT_GAIN (low), +100% = MAX_GAIN (max)
+function calculateGainFromExtendedVolume(extendedVolume) {
+    // extendedVolume ranges from -100 to +100
+    // We map this to a logarithmic scale for better perceived control
+    
+    if (extendedVolume <= VOLUME_CONTROL.MIN_PERCENT) {
+        return VOLUME_CONTROL.MIN_GAIN; // Near silent but not completely muted
+    } else if (extendedVolume >= VOLUME_CONTROL.MAX_PERCENT) {
+        return VOLUME_CONTROL.MAX_GAIN; // Maximum volume
+    } else if (extendedVolume === 0) {
+        return VOLUME_CONTROL.DEFAULT_GAIN; // Default comfortable level
+    }
+    
+    // Logarithmic mapping for better control
+    // -100 to 0: maps to MIN_GAIN to DEFAULT_GAIN
+    // 0 to 100: maps to DEFAULT_GAIN to MAX_GAIN
+    if (extendedVolume < 0) {
+        // Map -100 to 0 -> MIN_GAIN to DEFAULT_GAIN
+        const normalized = (extendedVolume + 100) / 100; // 0 to 1
+        return VOLUME_CONTROL.MIN_GAIN + (normalized * (VOLUME_CONTROL.DEFAULT_GAIN - VOLUME_CONTROL.MIN_GAIN));
+    } else {
+        // Map 0 to 100 -> DEFAULT_GAIN to MAX_GAIN
+        const normalized = extendedVolume / 100; // 0 to 1
+        return VOLUME_CONTROL.DEFAULT_GAIN + (normalized * (VOLUME_CONTROL.MAX_GAIN - VOLUME_CONTROL.DEFAULT_GAIN));
+    }
+}
 
 // Load audio configuration from GitHub
 async function loadAudioConfig() {
@@ -25311,9 +25411,19 @@ function autoStartBackgroundMusic() {
         return;
     }
     
+    // Initialize Web Audio API for extended volume control
+    if (!backgroundMusicSource) {
+        initWebAudioForBackgroundMusic();
+    }
+    
     // Set volume from config and ensure loop is enabled
     audio.volume = audioConfig.backgroundMusic.volume;
     audio.loop = true;
+    
+    // Also set gain if Web Audio is initialized
+    if (backgroundMusicGain) {
+        backgroundMusicGain.gain.value = audioConfig.backgroundMusic.volume;
+    }
     
     // Try to auto-play (may be blocked by browser policy)
     const playPromise = audio.play();
@@ -25323,16 +25433,23 @@ function autoStartBackgroundMusic() {
             backgroundMusicPlaying = true;
             console.log('🎵 Background music (piano.mp3) started automatically at', (audioConfig.backgroundMusic.volume * 100).toFixed(0) + '% volume');
             console.log('🎵 Music will play continuously in the background');
+            console.log('🎚️ Extended volume control enabled (-100% to +100%)');
         }).catch(err => {
             console.log('⚠️ Auto-play blocked by browser. Waiting for user interaction...');
             
             // Setup one-time interaction handler to start music
             // The { once: true } option automatically removes the listener after first execution
             const startOnInteraction = function() {
+                // Initialize Web Audio API on user interaction if not already done
+                if (!backgroundMusicSource) {
+                    initWebAudioForBackgroundMusic();
+                }
+                
                 audio.play().then(() => {
                     backgroundMusicPlaying = true;
                     console.log('🎵 Background music (piano.mp3) started after user interaction');
                     console.log('🎵 Music will play continuously in the background');
+                    console.log('🎚️ Extended volume control enabled (-100% to +100%)');
                 }).catch(err2 => {
                     console.log('⚠️ Could not start background music:', err2);
                 });
@@ -25355,21 +25472,23 @@ function initializeVolumeBars() {
     const container = document.getElementById('volumeBarsContainer');
     if (!container) return;
     
-    // Create 10 volume bars
+    // Create 20 volume bars (-100% to +100%)
     container.innerHTML = '';
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 20; i++) {
         const bar = document.createElement('div');
         bar.className = 'volume-bar';
-        bar.style.height = `${20 + (i * 8)}px`; // Increasing height
-        bar.dataset.level = (i + 1) * 10; // 10%, 20%, ..., 100%
+        bar.style.height = `${15 + (i * 4)}px`; // Increasing height
+        bar.dataset.level = -100 + (i + 1) * 10; // -90%, -80%, ..., 0%, ..., 90%, 100%
         container.appendChild(bar);
     }
 }
 
-// Update volume bars based on current volume
+// Update volume bars based on current volume (-100 to +100)
 function updateVolumeBars(volume) {
     const bars = document.querySelectorAll('.volume-bar');
-    const activeLevel = Math.ceil(volume / 10);
+    // Map volume from -100 to +100 to bar index 0 to 19
+    const normalizedVolume = volume + 100; // Convert to 0-200 range
+    const activeLevel = Math.ceil(normalizedVolume / 10);
     
     bars.forEach((bar, index) => {
         if (index < activeLevel) {
@@ -25390,16 +25509,41 @@ function showLinearVolumeIndicator() {
         initializeVolumeBars();
     }
     
-    // Get current volume from audio element
-    const audio = document.getElementById('backgroundMusicAudio');
-    const currentVolume = audio ? Math.round(audio.volume * 100) : 5;
+    // Get current volume from localStorage or calculate from audio element
+    let currentVolume = 0;
+    const savedVolume = localStorage.getItem('developerMusicVolume');
+    
+    if (savedVolume !== null) {
+        currentVolume = parseInt(savedVolume);
+    } else {
+        // Try to reverse-calculate from audio gain
+        const audio = document.getElementById('backgroundMusicAudio');
+        if (backgroundMusicGain) {
+            const gainValue = backgroundMusicGain.gain.value;
+            // Reverse the calculation - this is approximate
+            if (gainValue <= 0.05) {
+                currentVolume = Math.round(((gainValue - 0.0001) / (0.05 - 0.0001)) * 100 - 100);
+            } else {
+                currentVolume = Math.round(((gainValue - 0.05) / (1.0 - 0.05)) * 100);
+            }
+        } else if (audio) {
+            // Fallback to simple volume if Web Audio not initialized
+            currentVolume = Math.round((audio.volume - 0.05) / (1.0 - 0.05) * 100);
+        }
+    }
+    
+    // Clamp to valid range
+    currentVolume = Math.max(-100, Math.min(100, currentVolume));
     
     // Update slider and display
     const slider = document.getElementById('linearVolumeSlider');
     const display = document.getElementById('volumeValueDisplay');
     
     if (slider) slider.value = currentVolume;
-    if (display) display.textContent = `${currentVolume}%`;
+    if (display) {
+        const sign = currentVolume > 0 ? '+' : '';
+        display.textContent = `${sign}${currentVolume}%`;
+    }
     
     // Update bars
     updateVolumeBars(currentVolume);
@@ -25432,8 +25576,8 @@ function hideLinearVolumeIndicator() {
 function updateLinearVolume(value) {
     const volume = parseInt(value);
     
-    // Validate volume is a number between 0-100
-    if (isNaN(volume) || volume < 0 || volume > 100) {
+    // Validate volume is a number between -100 and +100
+    if (isNaN(volume) || volume < -100 || volume > 100) {
         console.error('Invalid volume value:', value);
         return;
     }
@@ -25441,26 +25585,41 @@ function updateLinearVolume(value) {
     // Update display
     const display = document.getElementById('volumeValueDisplay');
     if (display) {
-        display.textContent = `${volume}%`;
+        const sign = volume > 0 ? '+' : '';
+        display.textContent = `${sign}${volume}%`;
     }
     
     // Update bars
     updateVolumeBars(volume);
     
-    // Update audio volume
-    const audio = document.getElementById('backgroundMusicAudio');
-    if (audio) {
-        audio.volume = volume / 100;
+    // Calculate actual gain value from extended volume
+    const gainValue = calculateGainFromExtendedVolume(volume);
+    
+    // Initialize Web Audio API if not already done
+    if (!backgroundMusicSource) {
+        initWebAudioForBackgroundMusic();
+    }
+    
+    // Update audio volume using Web Audio API GainNode if available
+    if (backgroundMusicGain) {
+        backgroundMusicGain.gain.value = gainValue;
+        console.log(`🎚️ Volume updated to ${volume}% (gain: ${gainValue.toFixed(4)})`);
+    } else {
+        // Fallback to regular HTML5 audio volume if Web Audio not available
+        const audio = document.getElementById('backgroundMusicAudio');
+        if (audio) {
+            audio.volume = Math.max(0, Math.min(1, gainValue));
+        }
     }
     
     // Update audioConfig
-    audioConfig.backgroundMusic.volume = volume / 100;
+    audioConfig.backgroundMusic.volume = gainValue;
     
     // Save to localStorage
     saveVolumeToLocalStorage(volume);
     
     // Log for developer
-    console.log(`🎚️ Volume updated to ${volume}% (saved to localStorage)`);
+    console.log(`🎚️ Extended volume control: ${volume}% → actual gain: ${gainValue.toFixed(4)} (saved to localStorage)`);
     
     // Reset auto-hide timer
     if (window.volumeIndicatorTimeout) {
@@ -25502,22 +25661,34 @@ function loadVolumeFromLocalStorage() {
         if (savedVolume !== null) {
             const volume = parseInt(savedVolume);
             
-            // Validate volume is a number between 0-100
-            if (isNaN(volume) || volume < 0 || volume > 100) {
-                console.error('Invalid saved volume, using default');
+            // Validate volume is a number between -100 and +100
+            if (isNaN(volume) || volume < -100 || volume > 100) {
+                console.error('Invalid saved volume, using default (0%)');
                 return null;
             }
             
-            // Update audio config
-            audioConfig.backgroundMusic.volume = volume / 100;
+            // Calculate gain value
+            const gainValue = calculateGainFromExtendedVolume(volume);
             
-            // Update audio element
-            const audio = document.getElementById('backgroundMusicAudio');
-            if (audio) {
-                audio.volume = volume / 100;
+            // Update audio config
+            audioConfig.backgroundMusic.volume = gainValue;
+            
+            // Initialize Web Audio API
+            if (!backgroundMusicSource) {
+                initWebAudioForBackgroundMusic();
             }
             
-            console.log(`📂 Loaded saved volume from localStorage: ${volume}%`);
+            // Update gain node or fallback to audio element
+            if (backgroundMusicGain) {
+                backgroundMusicGain.gain.value = gainValue;
+            } else {
+                const audio = document.getElementById('backgroundMusicAudio');
+                if (audio) {
+                    audio.volume = Math.max(0, Math.min(1, gainValue));
+                }
+            }
+            
+            console.log(`📂 Loaded saved volume from localStorage: ${volume}% (gain: ${gainValue.toFixed(4)})`);
             return volume;
         }
     } catch (e) {

@@ -4551,10 +4551,10 @@
     </button>
 </div>
 
-<!-- Background music for main screen - plays on click -->
-<audio id="backgroundMusicAudio" preload="metadata" playsinline webkit-playsinline style="display:none;" crossorigin="anonymous">
-    <source src="Classical-Music-for-Relaxation-Mozart-Bach-Tchaikovsky...-128Kbps-44KHz(mp3)1الجزء(4).mp3" type="audio/mpeg">
-    <source src="Classical-Music-for-Relaxation-Mozart-Bach-Tchaikovsky...-128Kbps-44KHz(mp3)1الجزء(4).mp3" type="audio/mp3">
+<!-- Background music for main screen - plays continuously with piano.mp3 -->
+<audio id="backgroundMusicAudio" preload="metadata" playsinline webkit-playsinline style="display:none;" loop crossorigin="anonymous">
+    <source src="piano.mp3" type="audio/mpeg">
+    <source src="piano.mp3" type="audio/mp3">
     متصفحك لا يدعم تشغيل الملفات الصوتية.
 </audio>
 
@@ -25106,10 +25106,65 @@ async function monitorForChanges() {
 }
 
 // Initialize on page load
+// Auto-start background music when enabled in config
+function autoStartBackgroundMusic() {
+    if (!audioConfig.backgroundMusic.enabled) {
+        console.log('🎵 Background music auto-start skipped (disabled in config)');
+        return;
+    }
+    
+    const audio = document.getElementById('backgroundMusicAudio');
+    if (!audio) {
+        console.log('⚠️ Background music audio element not found');
+        return;
+    }
+    
+    // Set volume from config and ensure loop is enabled
+    audio.volume = audioConfig.backgroundMusic.volume;
+    audio.loop = true;
+    
+    // Try to auto-play (may be blocked by browser policy)
+    const playPromise = audio.play();
+    
+    if (playPromise !== undefined) {
+        playPromise.then(() => {
+            backgroundMusicPlaying = true;
+            console.log('🎵 Background music (piano.mp3) started automatically at', (audioConfig.backgroundMusic.volume * 100).toFixed(0) + '% volume');
+            console.log('🎵 Music will play continuously in the background');
+        }).catch(err => {
+            console.log('⚠️ Auto-play blocked by browser. Waiting for user interaction...');
+            
+            // Setup one-time interaction handler to start music
+            // The { once: true } option automatically removes the listener after first execution
+            const startOnInteraction = function() {
+                audio.play().then(() => {
+                    backgroundMusicPlaying = true;
+                    console.log('🎵 Background music (piano.mp3) started after user interaction');
+                    console.log('🎵 Music will play continuously in the background');
+                }).catch(err2 => {
+                    console.log('⚠️ Could not start background music:', err2);
+                });
+            };
+            
+            // Add listeners for user interaction with automatic cleanup
+            document.addEventListener('click', startOnInteraction, { once: true });
+            document.addEventListener('touchstart', startOnInteraction, { once: true });
+            document.addEventListener('keydown', startOnInteraction, { once: true });
+        });
+    }
+}
+
 window.addEventListener('load', function() {
     // Load audio configuration from GitHub
     loadAudioConfig().then(() => {
         console.log('🎵 Audio configuration loaded successfully');
+        
+        // Auto-start background music after config is loaded
+        // Small delay to ensure audio element is fully initialized
+        const AUDIO_INIT_DELAY = 500; // milliseconds
+        setTimeout(() => {
+            autoStartBackgroundMusic();
+        }, AUDIO_INIT_DELAY);
     });
     
     // Setup background music click handler

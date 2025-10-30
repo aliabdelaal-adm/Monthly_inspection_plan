@@ -142,7 +142,7 @@ def find_area_match(address, areas):
     if 'الرحبة' in address or 'مزارع الرحبة' in address:
         # Create default for farms - can be mapped to a specific area if needed
         for area in area_map:
-            if area['name'] == 'حديقة حيوانات':  # Use zoo area for farms
+            if area['name'] == 'حديقة حيوان':  # Use zoo area for farms
                 return area['id'], area['name']
     
     # Handle industrial areas - default to المصفح

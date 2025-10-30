@@ -25136,6 +25136,69 @@ function autoStartBackgroundMusic() {
     }
 }
 
+// Setup tap to stop background music
+function setupTapToStopMusic() {
+    const audio = document.getElementById('backgroundMusicAudio');
+    
+    if (!audio) {
+        console.log('⚠️ Background music audio element not found for tap-to-stop');
+        return;
+    }
+    
+    // Check if tap-to-stop is enabled in config
+    if (!audioConfig.backgroundMusic.tapToStop) {
+        console.log('👆 Tap-to-stop is DISABLED in audio-config.json');
+        return;
+    }
+    
+    console.log('👆 Tap-to-stop feature is ENABLED - tap anywhere to stop background music');
+    
+    // Add tap-to-stop handler
+    const tapToStopHandler = function(event) {
+        // Prevent stopping music when clicking on buttons or interactive elements
+        const target = event.target;
+        const isInteractive = target.closest('button, a, input, select, textarea, [onclick], .smart-control-panel');
+        
+        if (!isInteractive && !audio.paused) {
+            audio.pause();
+            audio.currentTime = 0;
+            backgroundMusicPlaying = false;
+            console.log('🎵 Background music stopped by user tap/click');
+            
+            // Show a brief notification
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 20px 40px;
+                border-radius: 10px;
+                font-size: 1.2em;
+                font-weight: bold;
+                z-index: 999999;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            `;
+            notification.textContent = '🔇 تم إيقاف الموسيقى';
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 2000);
+            
+            // Remove the tap-to-stop handler after first use
+            document.removeEventListener('click', tapToStopHandler);
+            document.removeEventListener('touchstart', tapToStopHandler);
+        }
+    };
+    
+    // Add listeners
+    document.addEventListener('click', tapToStopHandler);
+    document.addEventListener('touchstart', tapToStopHandler);
+}
+
 window.addEventListener('load', function() {
     // Load audio configuration from GitHub
     loadAudioConfig().then(() => {
@@ -25146,6 +25209,8 @@ window.addEventListener('load', function() {
         const AUDIO_INIT_DELAY = 500; // milliseconds
         setTimeout(() => {
             autoStartBackgroundMusic();
+            // Setup tap-to-stop after music starts
+            setupTapToStopMusic();
         }, AUDIO_INIT_DELAY);
     });
     

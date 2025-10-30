@@ -8323,6 +8323,15 @@ let backgroundMusicGain = null;
 let maintenanceMusicSource = null;
 let maintenanceMusicGain = null;
 
+// Volume control constants for extended range
+const VOLUME_CONTROL = {
+    MIN_GAIN: 0.0001,      // Ultra quiet - barely audible (-100%)
+    DEFAULT_GAIN: 0.05,     // Default comfortable level (0%)
+    MAX_GAIN: 1.0,          // Maximum volume (+100%)
+    MIN_PERCENT: -100,      // Minimum extended volume percentage
+    MAX_PERCENT: 100        // Maximum extended volume percentage
+};
+
 // Initialize Web Audio API for background music
 function initWebAudioForBackgroundMusic() {
     try {
@@ -8378,30 +8387,30 @@ function initWebAudioForMaintenanceMusic() {
 }
 
 // Convert extended volume (-100 to +100) to gain value
-// -100% = 0.0001 (near silent), 0% = 0.05 (low), +100% = 1.0 (max)
+// -100% = MIN_GAIN (near silent), 0% = DEFAULT_GAIN (low), +100% = MAX_GAIN (max)
 function calculateGainFromExtendedVolume(extendedVolume) {
     // extendedVolume ranges from -100 to +100
     // We map this to a logarithmic scale for better perceived control
     
-    if (extendedVolume <= -100) {
-        return 0.0001; // Near silent but not completely muted
-    } else if (extendedVolume >= 100) {
-        return 1.0; // Maximum volume
+    if (extendedVolume <= VOLUME_CONTROL.MIN_PERCENT) {
+        return VOLUME_CONTROL.MIN_GAIN; // Near silent but not completely muted
+    } else if (extendedVolume >= VOLUME_CONTROL.MAX_PERCENT) {
+        return VOLUME_CONTROL.MAX_GAIN; // Maximum volume
     } else if (extendedVolume === 0) {
-        return 0.05; // Default comfortable level
+        return VOLUME_CONTROL.DEFAULT_GAIN; // Default comfortable level
     }
     
     // Logarithmic mapping for better control
-    // -100 to 0: maps to 0.0001 to 0.05
-    // 0 to 100: maps to 0.05 to 1.0
+    // -100 to 0: maps to MIN_GAIN to DEFAULT_GAIN
+    // 0 to 100: maps to DEFAULT_GAIN to MAX_GAIN
     if (extendedVolume < 0) {
-        // Map -100 to 0 -> 0.0001 to 0.05
+        // Map -100 to 0 -> MIN_GAIN to DEFAULT_GAIN
         const normalized = (extendedVolume + 100) / 100; // 0 to 1
-        return 0.0001 + (normalized * (0.05 - 0.0001));
+        return VOLUME_CONTROL.MIN_GAIN + (normalized * (VOLUME_CONTROL.DEFAULT_GAIN - VOLUME_CONTROL.MIN_GAIN));
     } else {
-        // Map 0 to 100 -> 0.05 to 1.0
+        // Map 0 to 100 -> DEFAULT_GAIN to MAX_GAIN
         const normalized = extendedVolume / 100; // 0 to 1
-        return 0.05 + (normalized * (1.0 - 0.05));
+        return VOLUME_CONTROL.DEFAULT_GAIN + (normalized * (VOLUME_CONTROL.MAX_GAIN - VOLUME_CONTROL.DEFAULT_GAIN));
     }
 }
 

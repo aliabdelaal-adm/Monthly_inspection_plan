@@ -28,23 +28,32 @@ The extended volume percentage is mapped to actual gain values using a logarithm
 ### Calculation Formula
 
 ```javascript
+// Volume control constants for better maintainability
+const VOLUME_CONTROL = {
+    MIN_GAIN: 0.0001,      // Ultra quiet - barely audible (-100%)
+    DEFAULT_GAIN: 0.05,     // Default comfortable level (0%)
+    MAX_GAIN: 1.0,          // Maximum volume (+100%)
+    MIN_PERCENT: -100,      // Minimum extended volume percentage
+    MAX_PERCENT: 100        // Maximum extended volume percentage
+};
+
 function calculateGainFromExtendedVolume(extendedVolume) {
-    if (extendedVolume <= -100) {
-        return 0.0001; // Near silent
-    } else if (extendedVolume >= 100) {
-        return 1.0; // Maximum
+    if (extendedVolume <= VOLUME_CONTROL.MIN_PERCENT) {
+        return VOLUME_CONTROL.MIN_GAIN; // Near silent
+    } else if (extendedVolume >= VOLUME_CONTROL.MAX_PERCENT) {
+        return VOLUME_CONTROL.MAX_GAIN; // Maximum
     } else if (extendedVolume === 0) {
-        return 0.05; // Default
+        return VOLUME_CONTROL.DEFAULT_GAIN; // Default
     }
     
     if (extendedVolume < 0) {
-        // Map -100 to 0 → 0.0001 to 0.05
+        // Map -100 to 0 → MIN_GAIN to DEFAULT_GAIN
         const normalized = (extendedVolume + 100) / 100;
-        return 0.0001 + (normalized * (0.05 - 0.0001));
+        return VOLUME_CONTROL.MIN_GAIN + (normalized * (VOLUME_CONTROL.DEFAULT_GAIN - VOLUME_CONTROL.MIN_GAIN));
     } else {
-        // Map 0 to 100 → 0.05 to 1.0
+        // Map 0 to 100 → DEFAULT_GAIN to MAX_GAIN
         const normalized = extendedVolume / 100;
-        return 0.05 + (normalized * (1.0 - 0.05));
+        return VOLUME_CONTROL.DEFAULT_GAIN + (normalized * (VOLUME_CONTROL.MAX_GAIN - VOLUME_CONTROL.DEFAULT_GAIN));
     }
 }
 ```

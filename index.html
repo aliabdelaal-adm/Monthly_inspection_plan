@@ -5448,7 +5448,7 @@
                 </div>
 
                 <!-- Schedule Management Category -->
-                <div class="service-category developer-only-category" id="scheduleCategory">
+                <div class="service-category" id="scheduleCategory">
                     <div class="service-category-title">📋 إدارة الجداول</div>
                     <div class="service-icons-grid">
                         <button class="icon-btn monthly-schedule-btn tooltip" onclick="showMonthlyScheduleModal()" data-tooltip="جدول المناوبات الشهري لجميع المفتشين">
@@ -5456,12 +5456,12 @@
                             <span class="label">جدول المناوبات</span>
                         </button>
                         
-                        <button class="icon-btn smart-rotation-btn tooltip" onclick="showSmartRotationModal()" data-tooltip="توزيع ذكي للمحلات على المفتشين">
+                        <button class="icon-btn smart-rotation-btn tooltip developer-only-btn" onclick="showSmartRotationModal()" data-tooltip="توزيع ذكي للمحلات على المفتشين" style="display: none;">
                             <span class="icon">🔄</span>
                             <span class="label">التوزيع الذكي</span>
                         </button>
                         
-                        <button class="icon-btn vacation-tracker-btn tooltip" onclick="showVacationTrackerModal()" data-tooltip="تتبع إجازات المفتشين">
+                        <button class="icon-btn vacation-tracker-btn tooltip developer-only-btn" onclick="showVacationTrackerModal()" data-tooltip="تتبع إجازات المفتشين" style="display: none;">
                             <span class="icon">🏖️</span>
                             <span class="label">تتبع الإجازات</span>
                         </button>
@@ -5934,6 +5934,14 @@
                         <option value="">جميع المفتشين</option>
                     </select>
                 </div>
+            </div>
+        </div>
+        
+        <!-- عرض الملفات المتاحة بشكل احترافي -->
+        <div id="scheduleFilesSection" style="margin-bottom: 20px;">
+            <h4 style="color: #2336a0; margin-bottom: 15px; text-align: center; font-size: 1.2em;">📅 جداول المناوبات الشهرية المتاحة</h4>
+            <div id="scheduleFilesGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                <!-- سيتم ملء الملفات هنا -->
             </div>
         </div>
         
@@ -12664,6 +12672,12 @@ document.getElementById("devLoginBtn").onclick = async function() {
             console.log('📊 PR#317: Shown category:', cat.id);
         });
         
+        // Show developer-only buttons
+        const developerButtons = document.querySelectorAll('.developer-only-btn');
+        developerButtons.forEach(btn => {
+            btn.style.display = 'flex';
+        });
+        
         // Show file library button for developer
         const fileLibraryBtn = document.getElementById("fileLibraryBtn");
         if (fileLibraryBtn) {
@@ -17999,6 +18013,9 @@ function showMonthlyScheduleModal() {
     // تحديث فلاتر الشهور والمفتشين
     updateScheduleFilters();
     
+    // عرض ملفات Excel المتاحة
+    displayAvailableScheduleFiles();
+    
     // عرض الجدول الكامل
     displayFullScheduleTable();
     
@@ -18026,6 +18043,159 @@ function closeMonthlyScheduleModal() {
     const modalElement = document.getElementById('monthlyScheduleModal');
     modalElement.style.display = 'none';
     modalElement.classList.remove('nested-modal');
+}
+
+// عرض ملفات جداول المناوبات المتاحة
+function displayAvailableScheduleFiles() {
+    const filesGrid = document.getElementById('scheduleFilesGrid');
+    
+    // قائمة ملفات جداول المناوبات المتاحة
+    const scheduleFiles = [
+        {
+            month: 'أكتوبر',
+            year: '2025',
+            file: '10.xlsx',
+            icon: '📅',
+            color: '#007bff',
+            description: 'جدول المناوبات لشهر أكتوبر 2025'
+        },
+        {
+            month: 'نوفمبر',
+            year: '2025',
+            file: '11.xlsx',
+            icon: '📆',
+            color: '#28a745',
+            description: 'جدول المناوبات لشهر نوفمبر 2025'
+        }
+    ];
+    
+    let html = '';
+    scheduleFiles.forEach(schedule => {
+        html += `
+            <div style="background: linear-gradient(135deg, ${schedule.color} 0%, ${schedule.color}dd 100%); 
+                        padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                        color: white; cursor: pointer; transition: all 0.3s ease;
+                        position: relative; overflow: hidden;"
+                 onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.2)';"
+                 onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.1)';">
+                
+                <div style="position: absolute; top: -20px; right: -20px; font-size: 100px; opacity: 0.1;">
+                    ${schedule.icon}
+                </div>
+                
+                <div style="position: relative; z-index: 1;">
+                    <div style="font-size: 2.5em; margin-bottom: 10px; text-align: center;">
+                        ${schedule.icon}
+                    </div>
+                    <h3 style="margin: 0 0 10px 0; text-align: center; font-size: 1.3em;">
+                        ${schedule.month} ${schedule.year}
+                    </h3>
+                    <p style="margin: 0 0 15px 0; text-align: center; font-size: 0.9em; opacity: 0.9;">
+                        ${schedule.description}
+                    </p>
+                    
+                    <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+                        <button onclick="viewScheduleFile('${schedule.file}')" 
+                                style="background: white; color: ${schedule.color}; border: none; padding: 8px 15px;
+                                       border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.9em;
+                                       transition: all 0.2s ease;"
+                                onmouseover="this.style.transform='scale(1.05)';"
+                                onmouseout="this.style.transform='scale(1)';">
+                            👁️ عرض
+                        </button>
+                        <button onclick="downloadScheduleFile('${schedule.file}')" 
+                                style="background: rgba(255,255,255,0.2); color: white; border: 1px solid white; 
+                                       padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer;
+                                       font-size: 0.9em; transition: all 0.2s ease;"
+                                onmouseover="this.style.background='rgba(255,255,255,0.3)';"
+                                onmouseout="this.style.background='rgba(255,255,255,0.2)';">
+                            ⬇️ تحميل
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    filesGrid.innerHTML = html;
+}
+
+// عرض ملف جدول المناوبات
+function viewScheduleFile(filename) {
+    const url = `./${filename}`;
+    
+    // فتح معاينة الملف في نافذة جديدة
+    const viewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(window.location.origin + window.location.pathname.replace('index.html', '') + filename)}`;
+    
+    // إنشاء نافذة معاينة
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.8); z-index: 10000;
+        display: flex; align-items: center; justify-content: center;
+        padding: 20px;
+    `;
+    
+    modal.innerHTML = `
+        <div style="background: white; width: 95%; height: 95%; border-radius: 12px; 
+                    display: flex; flex-direction: column; overflow: hidden;">
+            <div style="padding: 15px; background: #2336a0; color: white; 
+                        display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0;">📋 معاينة جدول المناوبات - ${filename}</h3>
+                <button onclick="this.closest('div').parentElement.parentElement.remove()"
+                        style="background: white; color: #2336a0; border: none; 
+                               padding: 5px 15px; border-radius: 6px; cursor: pointer;
+                               font-weight: bold; font-size: 1.2em;">
+                    ×
+                </button>
+            </div>
+            <iframe src="${viewerUrl}" 
+                    style="flex: 1; border: none; width: 100%;">
+            </iframe>
+            <div style="padding: 10px; text-align: center; background: #f8f9fa; color: #666; font-size: 0.9em;">
+                💡 نصيحة: يمكنك تحميل الملف للتعديل عليه أو طباعته
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // إغلاق عند النقر على الخلفية
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+}
+
+// تحميل ملف جدول المناوبات
+function downloadScheduleFile(filename) {
+    const link = document.createElement('a');
+    link.href = `./${filename}`;
+    link.download = filename;
+    link.click();
+    
+    // عرض رسالة تأكيد
+    showScheduleNotification(`✅ جاري تحميل ملف ${filename}...`, 'success');
+}
+
+// عرض رسالة إشعار بسيطة
+function showScheduleNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+        background: ${type === 'success' ? '#28a745' : '#dc3545'};
+        color: white; padding: 15px 30px; border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 10001;
+        font-weight: bold; animation: slideDown 0.3s ease;
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideUp 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
 }
 
 function updateScheduleFilters() {

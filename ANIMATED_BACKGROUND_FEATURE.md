@@ -59,7 +59,8 @@ Added an attractive animated background to the main display page while maintaini
 4. **rotate360**: دوران كامل للأشكال التقنية | Full rotation for tech shapes
 
 ### Properties:
-- **opacity**: 0.12 (شفافية عالية للأشكال)
+- **opacity**: 0.08 (شفافية عالية للأشكال - محسّنة للرؤية مع الحفاظ على الخفوت)
+- **radial gradients opacity**: 0.04-0.05 (خلفية متدرجة فائقة الخفوت)
 - **z-index**: -1 (خلف المحتوى)
 - **position**: fixed (ثابتة مع التمرير)
 - **pointer-events**: none (لا تتداخل مع التفاعل)
@@ -154,7 +155,14 @@ Added an attractive animated background to the main display page while maintaini
 
 ```css
 .bg-shape {
-    opacity: 0.12; /* غير 0.12 (0.0 - 1.0) | Change 0.12 (0.0 - 1.0) */
+    opacity: 0.08; /* غير 0.08 (0.0 - 1.0) | Change 0.08 (0.0 - 1.0) */
+}
+
+/* Radial gradients in body::before */
+body::before {
+    background: 
+        radial-gradient(circle at 15% 25%, rgba(99, 102, 241, 0.05) 0%, transparent 50%),
+        /* Adjust 0.05 to your preferred opacity (0.0 - 1.0) */
 }
 ```
 

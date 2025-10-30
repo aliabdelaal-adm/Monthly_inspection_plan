@@ -5504,6 +5504,13 @@ ${Object.entries(stats.months).sort().map(([month, count]) =>
       9: 'سبتمبر', 10: 'أكتوبر', 11: 'نوفمبر', 12: 'ديسمبر'
     };
     
+    // Local schedule files available in repository
+    // Add new monthly schedules here as they become available
+    const LOCAL_SCHEDULE_FILES = [
+      '10.xlsx.pdf',  // October schedule
+      '11.xslx.pdf'   // November schedule (note: filename has typo in repo)
+    ];
+    
     let currentPdfUrl = '';
     let currentPdfFileName = '';
     
@@ -5544,9 +5551,8 @@ ${Object.entries(stats.months).sort().map(([month, count]) =>
         
         // Fallback to local files if GitHub API failed
         if (scheduleFiles.length === 0) {
-          // Known local PDF files
-          const localFiles = ['10.xlsx.pdf', '11.xslx.pdf'];
-          scheduleFiles = localFiles.map(name => ({
+          // Use configured local schedule files
+          scheduleFiles = LOCAL_SCHEDULE_FILES.map(name => ({
             name: name,
             url: name,
             source: 'local'

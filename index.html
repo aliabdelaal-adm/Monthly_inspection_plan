@@ -25408,7 +25408,9 @@ function showLinearVolumeIndicator() {
     indicator.classList.add('show');
     
     // Auto-hide after 5 seconds
-    clearTimeout(window.volumeIndicatorTimeout);
+    if (window.volumeIndicatorTimeout) {
+        clearTimeout(window.volumeIndicatorTimeout);
+    }
     window.volumeIndicatorTimeout = setTimeout(() => {
         hideLinearVolumeIndicator();
     }, 5000);
@@ -25420,12 +25422,21 @@ function hideLinearVolumeIndicator() {
     if (!indicator) return;
     
     indicator.classList.remove('show');
-    clearTimeout(window.volumeIndicatorTimeout);
+    if (window.volumeIndicatorTimeout) {
+        clearTimeout(window.volumeIndicatorTimeout);
+        window.volumeIndicatorTimeout = null;
+    }
 }
 
 // Update linear volume (called on slider input)
 function updateLinearVolume(value) {
     const volume = parseInt(value);
+    
+    // Validate volume is a number between 0-100
+    if (isNaN(volume) || volume < 0 || volume > 100) {
+        console.error('Invalid volume value:', value);
+        return;
+    }
     
     // Update display
     const display = document.getElementById('volumeValueDisplay');
@@ -25452,7 +25463,9 @@ function updateLinearVolume(value) {
     console.log(`🎚️ Volume updated to ${volume}% (saved to localStorage)`);
     
     // Reset auto-hide timer
-    clearTimeout(window.volumeIndicatorTimeout);
+    if (window.volumeIndicatorTimeout) {
+        clearTimeout(window.volumeIndicatorTimeout);
+    }
     window.volumeIndicatorTimeout = setTimeout(() => {
         hideLinearVolumeIndicator();
     }, 5000);
@@ -25488,6 +25501,12 @@ function loadVolumeFromLocalStorage() {
         const savedVolume = localStorage.getItem('developerMusicVolume');
         if (savedVolume !== null) {
             const volume = parseInt(savedVolume);
+            
+            // Validate volume is a number between 0-100
+            if (isNaN(volume) || volume < 0 || volume > 100) {
+                console.error('Invalid saved volume, using default');
+                return null;
+            }
             
             // Update audio config
             audioConfig.backgroundMusic.volume = volume / 100;
@@ -25525,8 +25544,19 @@ function setupTapToStopMusic() {
     
     console.log('👆 Tap-to-toggle feature is ENABLED - tap ANYWHERE on screen to toggle background music');
     
+    // Debounce flag to prevent double-firing on touch devices
+    let lastToggleTime = 0;
+    const TOGGLE_DEBOUNCE_MS = 300;
+    
     // Add tap-to-toggle handler - works on ANY click anywhere on screen
     const tapToToggleHandler = function(event) {
+        // Debounce to prevent double-firing from both click and touchstart
+        const now = Date.now();
+        if (now - lastToggleTime < TOGGLE_DEBOUNCE_MS) {
+            return; // Too soon after last toggle
+        }
+        lastToggleTime = now;
+        
         // Ignore clicks on interactive elements (buttons, inputs, links, etc.)
         const target = event.target;
         const isInteractive = target.tagName === 'BUTTON' || 

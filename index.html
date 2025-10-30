@@ -18122,6 +18122,13 @@ function displayAvailableScheduleFiles() {
 
 // عرض ملف جدول المناوبات
 function viewScheduleFile(filename) {
+    // Validate filename to prevent malicious URLs
+    const allowedFiles = ['10.xlsx', '11.xlsx'];
+    if (!allowedFiles.includes(filename)) {
+        showScheduleNotification('⚠️ ملف غير صالح', 'error');
+        return;
+    }
+    
     const url = `./${filename}`;
     
     // فتح معاينة الملف في نافذة جديدة
@@ -18170,6 +18177,13 @@ function viewScheduleFile(filename) {
 
 // تحميل ملف جدول المناوبات
 function downloadScheduleFile(filename) {
+    // Validate filename to prevent malicious downloads
+    const allowedFiles = ['10.xlsx', '11.xlsx'];
+    if (!allowedFiles.includes(filename)) {
+        showScheduleNotification('⚠️ ملف غير صالح', 'error');
+        return;
+    }
+    
     const link = document.createElement('a');
     link.href = `./${filename}`;
     link.download = filename;

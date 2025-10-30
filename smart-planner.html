@@ -2250,6 +2250,12 @@
                                 <button class="btn btn-sm" onclick="setVolumePreset(0)" style="background: white; color: #11998e;">
                                     <span>🔇</span> كتم الصوت
                                 </button>
+                                <button class="btn btn-sm" onclick="setVolumePreset(1)" style="background: white; color: #11998e;">
+                                    <span>🔉</span> 1% (خافت جداً)
+                                </button>
+                                <button class="btn btn-sm" onclick="setVolumePreset(5)" style="background: white; color: #11998e;">
+                                    <span>🔉</span> 5% (خافت)
+                                </button>
                                 <button class="btn btn-sm" onclick="setVolumePreset(10)" style="background: white; color: #11998e;">
                                     <span>🔉</span> 10%
                                 </button>
@@ -2268,6 +2274,30 @@
                                 <button class="btn btn-sm" onclick="setVolumePreset(100)" style="background: white; color: #11998e;">
                                     <span>🔊</span> 100%
                                 </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Tap to Stop Feature -->
+                        <div class="form-group" style="margin-top: 20px;">
+                            <label class="form-label" style="color: white; font-size: 1.1em;">
+                                <span>👆</span> ميزة إيقاف الموسيقى عند النقر
+                            </label>
+                            <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 10px; margin-top: 10px;">
+                                <p style="margin-bottom: 10px; font-size: 0.95em;">
+                                    تفعيل هذه الميزة يجعل الموسيقى تتوقف تلقائياً عند النقر على أي مكان في الشاشة
+                                </p>
+                                <div style="display: flex; gap: 10px;">
+                                    <button class="btn btn-sm" onclick="setTapToStop(true)" style="background: white; color: #11998e; flex: 1;">
+                                        <span>✅</span> تفعيل النقر للإيقاف
+                                    </button>
+                                    <button class="btn btn-sm" onclick="setTapToStop(false)" style="background: white; color: #e74c3c; flex: 1;">
+                                        <span>❌</span> تعطيل النقر للإيقاف
+                                    </button>
+                                </div>
+                                <div style="margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.15); border-radius: 5px;">
+                                    <span style="font-weight: 600;">الحالة:</span>
+                                    <span id="tapToStopStatus" style="font-weight: 700; margin-right: 10px;">⏳ جاري التحميل...</span>
+                                </div>
                             </div>
                         </div>
                         
@@ -6719,11 +6749,27 @@
             }
             document.getElementById('musicDurationLabel').textContent = durationText;
             
+            // Load and update tap to stop status
+            loadTapToStopStatus();
+            
             // Update last update info
             const lastUpdate = maintenanceConfigData.lastUpdated || 'غير محدد';
             const updatedBy = maintenanceConfigData.updatedBy || 'غير محدد';
             document.getElementById('lastUpdateLabel').textContent = new Date(lastUpdate).toLocaleString('ar-EG');
             document.getElementById('updatedByLabel').textContent = updatedBy;
+        }
+        
+        // Load tap to stop status
+        async function loadTapToStopStatus() {
+            try {
+                const audioConfigData = await loadAudioConfig();
+                const tapToStopEnabled = audioConfigData.backgroundMusic?.tapToStop || false;
+                updateTapToStopUI(tapToStopEnabled);
+            } catch (error) {
+                console.error('Error loading tap to stop status:', error);
+                // Default to disabled
+                updateTapToStopUI(false);
+            }
         }
         
         // Toggle maintenance message on/off
@@ -6900,6 +6946,107 @@
                 
             } catch (error) {
                 showMessage('musicControlStatus', 'error', '❌ فشل التحديث: ' + error.message);
+            }
+        }
+        
+        // Set tap to stop feature
+        async function setTapToStop(enabled) {
+            if (!githubToken) {
+                showMessage('musicControlStatus', 'error', '❌ يرجى تسجيل الدخول أولاً');
+                return;
+            }
+            
+            showMessage('musicControlStatus', 'info', '⏳ جاري تحديث ميزة النقر للإيقاف...');
+            
+            try {
+                // Update audio-config.json
+                const audioConfigData = await loadAudioConfig();
+                
+                if (!audioConfigData.backgroundMusic) {
+                    audioConfigData.backgroundMusic = {};
+                }
+                
+                audioConfigData.backgroundMusic.tapToStop = enabled;
+                audioConfigData.lastUpdated = new Date().toISOString();
+                audioConfigData.updatedBy = 'المطور - Smart Planner';
+                
+                await saveAudioConfig(audioConfigData, `تحديث ميزة النقر للإيقاف: ${enabled ? 'مفعلة' : 'معطلة'}`);
+                
+                showMessage('musicControlStatus', 'success', 
+                    `✅ تم ${enabled ? 'تفعيل' : 'تعطيل'} ميزة النقر للإيقاف بنجاح! التغييرات انعكست فوراً في GitHub`);
+                
+                // Update UI
+                updateTapToStopUI(enabled);
+                
+                // Force cache clear
+                setTimeout(() => forceCacheClear(), 1000);
+                
+            } catch (error) {
+                showMessage('musicControlStatus', 'error', '❌ فشل التحديث: ' + error.message);
+            }
+        }
+        
+        // Load audio config from GitHub
+        async function loadAudioConfig() {
+            const response = await fetch(`https://api.github.com/repos/${repo}/contents/audio-config.json`, {
+                headers: {
+                    'Authorization': `Bearer ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error('فشل الحصول على ملف audio-config.json');
+            }
+            
+            const file = await response.json();
+            const content = atob(file.content);
+            return JSON.parse(content);
+        }
+        
+        // Save audio config to GitHub
+        async function saveAudioConfig(audioConfigData, commitMessage) {
+            // Get current file SHA
+            const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/audio-config.json`, {
+                headers: {
+                    'Authorization': `Bearer ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+            
+            if (!getRes.ok) {
+                throw new Error('فشل الحصول على ملف audio-config.json');
+            }
+            
+            const file = await getRes.json();
+            
+            // Update file
+            const updateRes = await fetch(`https://api.github.com/repos/${repo}/contents/audio-config.json`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: commitMessage,
+                    content: btoa(unescape(encodeURIComponent(JSON.stringify(audioConfigData, null, 2)))),
+                    sha: file.sha
+                })
+            });
+            
+            if (!updateRes.ok) {
+                const errorData = await updateRes.json();
+                throw new Error(errorData.message || 'فشل تحديث ملف audio-config.json');
+            }
+        }
+        
+        // Update tap to stop UI
+        function updateTapToStopUI(enabled) {
+            const statusElement = document.getElementById('tapToStopStatus');
+            if (statusElement) {
+                statusElement.textContent = enabled ? '✅ مفعلة' : '❌ معطلة';
+                statusElement.style.color = enabled ? '#38ef7d' : '#ff6b6b';
             }
         }
         

@@ -5,7 +5,7 @@
 ### ✅ Issue Requirements Met
 
 The developer requested:
-> "I need the most and smart and potent and fully controlled 100% by developer to decrease the voice volume of the background music to spread the control of developer to reach from increasing to +100% and reach decreasing of volume to -100% because still voice very load and high even if the developer make the volume 0%"
+> "I need the most and smart and potent and fully controlled 100% by developer to decrease the voice volume of the background music to spread the control of developer to reach from increasing to +100% and reach decreasing of volume to -100% because still voice very loud and high even if the developer make the volume 0%"
 
 **Requirements:**
 1. ✅ Full developer control over music volume
@@ -158,17 +158,26 @@ Complete guides available:
 
 **Via Console:**
 ```javascript
-// Set specific volume
-updateLinearVolume(-75);  // Very quiet
-updateLinearVolume(0);    // Default
-updateLinearVolume(50);   // Medium
+// Set specific volume using preset values
+updateLinearVolume(-100);  // Ultra quiet
+updateLinearVolume(-50);   // Very quiet  
+updateLinearVolume(0);     // Default comfortable
+updateLinearVolume(50);    // Medium
+
+// Or any value in the range -100 to +100
+updateLinearVolume(-75);   // Between very quiet and default
+updateLinearVolume(25);    // Between default and medium
 ```
 
 **Via audio-config.json:**
 ```json
 {
   "backgroundMusic": {
-    "volume": 0.05,  // This is 0% (default)
+    "volume": 0.05,  // This equals 0% in extended volume system (default comfortable level)
+                     // Note: In extended volume system, gain values map differently:
+                     // - 0.0001 = -100% (ultra quiet)
+                     // - 0.05 = 0% (default comfortable)
+                     // - 1.0 = +100% (maximum)
     "enabled": true
   }
 }

@@ -3810,6 +3810,173 @@
             font-size: 0.9em;
         }
         
+        /* Linear Volume Indicator (Developer Only) - Phone-style volume control */
+        #linearVolumeIndicator {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 30px 25px;
+            border-radius: 20px;
+            z-index: 999999;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            min-width: 300px;
+        }
+        
+        #linearVolumeIndicator.show {
+            display: block;
+            animation: fadeInScale 0.2s ease-out;
+        }
+        
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+        
+        .volume-indicator-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .volume-indicator-title {
+            color: white;
+            font-size: 1.1em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .volume-indicator-close {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .volume-indicator-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .volume-bars-container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            height: 100px;
+            gap: 8px;
+            margin: 20px 0;
+        }
+        
+        .volume-bar {
+            width: 18px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+        
+        .volume-bar.active {
+            background: linear-gradient(to top, #667eea, #764ba2);
+            box-shadow: 0 0 10px rgba(118, 75, 162, 0.5);
+        }
+        
+        .volume-slider-container {
+            margin: 20px 0;
+        }
+        
+        .volume-value-display {
+            text-align: center;
+            color: white;
+            font-size: 2em;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+        
+        #linearVolumeSlider {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+        
+        #linearVolumeSlider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        #linearVolumeSlider::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .volume-preset-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 15px;
+        }
+        
+        .volume-preset-btn {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: none;
+            padding: 10px 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.2s;
+        }
+        
+        .volume-preset-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+        }
+        
+        .volume-preset-btn:active {
+            transform: translateY(0);
+        }
+        
+        .volume-save-info {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.85em;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
         /* Responsive design for smart control panel */
         @media (max-width: 768px) {
             #smartControlPanel {
@@ -5157,6 +5324,45 @@
     <button id="smartControlToggle" class="smart-control-toggle" onclick="toggleSmartControlPanel()" title="لوحة التحكم الذكية">
         🎛️
     </button>
+    
+    <!-- Linear Volume Indicator (Developer Only) - Phone-style volume control -->
+    <div id="linearVolumeIndicator">
+        <div class="volume-indicator-header">
+            <div class="volume-indicator-title">
+                🎵 التحكم في مستوى الصوت
+            </div>
+            <button class="volume-indicator-close" onclick="hideLinearVolumeIndicator()">×</button>
+        </div>
+        
+        <div class="volume-value-display" id="volumeValueDisplay">5%</div>
+        
+        <div class="volume-bars-container" id="volumeBarsContainer">
+            <!-- Will be populated by JavaScript -->
+        </div>
+        
+        <div class="volume-slider-container">
+            <input 
+                type="range" 
+                id="linearVolumeSlider" 
+                min="0" 
+                max="100" 
+                value="5" 
+                step="1"
+                oninput="updateLinearVolume(this.value)"
+            >
+        </div>
+        
+        <div class="volume-preset-buttons">
+            <button class="volume-preset-btn" onclick="setLinearVolume(0)">🔇 صامت</button>
+            <button class="volume-preset-btn" onclick="setLinearVolume(5)">🔉 5%</button>
+            <button class="volume-preset-btn" onclick="setLinearVolume(25)">🔊 25%</button>
+            <button class="volume-preset-btn" onclick="setLinearVolume(50)">🔊 50%</button>
+        </div>
+        
+        <div class="volume-save-info">
+            💾 يتم الحفظ تلقائياً عند التغيير
+        </div>
+    </div>
     
     <!-- Main Quick Actions -->
     <div class="actions-row">
@@ -25140,64 +25346,240 @@ function autoStartBackgroundMusic() {
     }
 }
 
-// Setup tap to stop background music
+// ============================================
+// Linear Volume Indicator Functions (Developer Only)
+// ============================================
+
+// Initialize volume bars
+function initializeVolumeBars() {
+    const container = document.getElementById('volumeBarsContainer');
+    if (!container) return;
+    
+    // Create 10 volume bars
+    container.innerHTML = '';
+    for (let i = 0; i < 10; i++) {
+        const bar = document.createElement('div');
+        bar.className = 'volume-bar';
+        bar.style.height = `${20 + (i * 8)}px`; // Increasing height
+        bar.dataset.level = (i + 1) * 10; // 10%, 20%, ..., 100%
+        container.appendChild(bar);
+    }
+}
+
+// Update volume bars based on current volume
+function updateVolumeBars(volume) {
+    const bars = document.querySelectorAll('.volume-bar');
+    const activeLevel = Math.ceil(volume / 10);
+    
+    bars.forEach((bar, index) => {
+        if (index < activeLevel) {
+            bar.classList.add('active');
+        } else {
+            bar.classList.remove('active');
+        }
+    });
+}
+
+// Show linear volume indicator
+function showLinearVolumeIndicator() {
+    const indicator = document.getElementById('linearVolumeIndicator');
+    if (!indicator) return;
+    
+    // Initialize bars if not already done
+    if (!indicator.querySelector('.volume-bar')) {
+        initializeVolumeBars();
+    }
+    
+    // Get current volume from audio element
+    const audio = document.getElementById('backgroundMusicAudio');
+    const currentVolume = audio ? Math.round(audio.volume * 100) : 5;
+    
+    // Update slider and display
+    const slider = document.getElementById('linearVolumeSlider');
+    const display = document.getElementById('volumeValueDisplay');
+    
+    if (slider) slider.value = currentVolume;
+    if (display) display.textContent = `${currentVolume}%`;
+    
+    // Update bars
+    updateVolumeBars(currentVolume);
+    
+    // Show indicator
+    indicator.classList.add('show');
+    
+    // Auto-hide after 5 seconds
+    clearTimeout(window.volumeIndicatorTimeout);
+    window.volumeIndicatorTimeout = setTimeout(() => {
+        hideLinearVolumeIndicator();
+    }, 5000);
+}
+
+// Hide linear volume indicator
+function hideLinearVolumeIndicator() {
+    const indicator = document.getElementById('linearVolumeIndicator');
+    if (!indicator) return;
+    
+    indicator.classList.remove('show');
+    clearTimeout(window.volumeIndicatorTimeout);
+}
+
+// Update linear volume (called on slider input)
+function updateLinearVolume(value) {
+    const volume = parseInt(value);
+    
+    // Update display
+    const display = document.getElementById('volumeValueDisplay');
+    if (display) {
+        display.textContent = `${volume}%`;
+    }
+    
+    // Update bars
+    updateVolumeBars(volume);
+    
+    // Update audio volume
+    const audio = document.getElementById('backgroundMusicAudio');
+    if (audio) {
+        audio.volume = volume / 100;
+    }
+    
+    // Update audioConfig
+    audioConfig.backgroundMusic.volume = volume / 100;
+    
+    // Save to localStorage
+    saveVolumeToLocalStorage(volume);
+    
+    // Log for developer
+    console.log(`🎚️ Volume updated to ${volume}% (saved to localStorage)`);
+    
+    // Reset auto-hide timer
+    clearTimeout(window.volumeIndicatorTimeout);
+    window.volumeIndicatorTimeout = setTimeout(() => {
+        hideLinearVolumeIndicator();
+    }, 5000);
+}
+
+// Set linear volume (called from preset buttons)
+function setLinearVolume(value) {
+    const slider = document.getElementById('linearVolumeSlider');
+    if (slider) {
+        slider.value = value;
+        updateLinearVolume(value);
+    }
+}
+
+// Save volume to localStorage
+function saveVolumeToLocalStorage(volume) {
+    try {
+        localStorage.setItem('developerMusicVolume', volume.toString());
+        
+        // Also update smartControlState if it exists
+        if (typeof smartControlState !== 'undefined') {
+            smartControlState.musicVolume = volume;
+            saveSmartControlState();
+        }
+    } catch (e) {
+        console.error('Error saving volume to localStorage:', e);
+    }
+}
+
+// Load volume from localStorage on page load
+function loadVolumeFromLocalStorage() {
+    try {
+        const savedVolume = localStorage.getItem('developerMusicVolume');
+        if (savedVolume !== null) {
+            const volume = parseInt(savedVolume);
+            
+            // Update audio config
+            audioConfig.backgroundMusic.volume = volume / 100;
+            
+            // Update audio element
+            const audio = document.getElementById('backgroundMusicAudio');
+            if (audio) {
+                audio.volume = volume / 100;
+            }
+            
+            console.log(`📂 Loaded saved volume from localStorage: ${volume}%`);
+            return volume;
+        }
+    } catch (e) {
+        console.error('Error loading volume from localStorage:', e);
+    }
+    
+    return null;
+}
+
+// Setup tap to toggle background music (play/pause)
 function setupTapToStopMusic() {
     const audio = document.getElementById('backgroundMusicAudio');
     
     if (!audio) {
-        console.log('⚠️ Background music audio element not found for tap-to-stop');
+        console.log('⚠️ Background music audio element not found for tap-to-toggle');
         return;
     }
     
     // Check if tap-to-stop is enabled in config
     if (!audioConfig.backgroundMusic.tapToStop) {
-        console.log('👆 Tap-to-stop is DISABLED in audio-config.json');
+        console.log('👆 Tap-to-toggle is DISABLED in audio-config.json');
         return;
     }
     
-    console.log('👆 Tap-to-stop feature is ENABLED - tap ANYWHERE on screen to stop background music');
+    console.log('👆 Tap-to-toggle feature is ENABLED - tap ANYWHERE on screen to toggle background music');
     
-    // Add tap-to-stop handler - works on ANY click anywhere on screen
-    const tapToStopHandler = function(event) {
-        // Stop music on ANY click/tap anywhere on the screen
+    // Add tap-to-toggle handler - works on ANY click anywhere on screen
+    const tapToToggleHandler = function(event) {
+        // Ignore clicks on interactive elements (buttons, inputs, links, etc.)
+        const target = event.target;
+        const isInteractive = target.tagName === 'BUTTON' || 
+                             target.tagName === 'INPUT' || 
+                             target.tagName === 'SELECT' || 
+                             target.tagName === 'TEXTAREA' ||
+                             target.tagName === 'A' ||
+                             target.closest('button') ||
+                             target.closest('input') ||
+                             target.closest('select') ||
+                             target.closest('a') ||
+                             target.closest('#smartControlPanel') ||
+                             target.closest('#linearVolumeIndicator');
+        
+        if (isInteractive) {
+            return; // Don't toggle music if clicking on interactive elements
+        }
+        
+        // Check if developer
+        const isDeveloper = isDev || window.isDev;
+        
+        // Toggle music on ANY click/tap anywhere on the screen
         if (!audio.paused) {
+            // Music is playing - pause it
             audio.pause();
-            audio.currentTime = 0;
             backgroundMusicPlaying = false;
-            console.log('🎵 Background music stopped by user tap/click anywhere on screen');
+            console.log('🎵 Background music paused by user tap/click');
             
-            // Show a brief notification
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: rgba(0, 0, 0, 0.8);
-                color: white;
-                padding: 20px 40px;
-                border-radius: 10px;
-                font-size: 1.2em;
-                font-weight: bold;
-                z-index: 999999;
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            `;
-            notification.textContent = '🔇 تم إيقاف الموسيقى';
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 2000);
-            
-            // Remove the tap-to-stop handler after first use
-            document.removeEventListener('click', tapToStopHandler);
-            document.removeEventListener('touchstart', tapToStopHandler);
+            // For developers: show volume control
+            if (isDeveloper) {
+                showLinearVolumeIndicator();
+            }
+            // No notification message for regular users
+        } else {
+            // Music is paused - play it
+            audio.play().then(() => {
+                backgroundMusicPlaying = true;
+                console.log('🎵 Background music resumed by user tap/click');
+                
+                // For developers: show volume control
+                if (isDeveloper) {
+                    showLinearVolumeIndicator();
+                }
+                // No notification message for regular users
+            }).catch(err => {
+                console.log('⚠️ Could not play background music:', err);
+            });
         }
     };
     
     // Add listeners
-    document.addEventListener('click', tapToStopHandler);
-    document.addEventListener('touchstart', tapToStopHandler);
+    document.addEventListener('click', tapToToggleHandler);
+    document.addEventListener('touchstart', tapToToggleHandler);
 }
 
 window.addEventListener('load', function() {
@@ -25205,12 +25587,17 @@ window.addEventListener('load', function() {
     loadAudioConfig().then(() => {
         console.log('🎵 Audio configuration loaded successfully');
         
+        // Load saved volume from localStorage (for developers)
+        if (isDev || window.isDev) {
+            loadVolumeFromLocalStorage();
+        }
+        
         // Auto-start background music after config is loaded
         // Small delay to ensure audio element is fully initialized
         const AUDIO_INIT_DELAY = 500; // milliseconds
         setTimeout(() => {
             autoStartBackgroundMusic();
-            // Setup tap-to-stop after music starts
+            // Setup tap-to-toggle after music starts
             setupTapToStopMusic();
         }, AUDIO_INIT_DELAY);
     });

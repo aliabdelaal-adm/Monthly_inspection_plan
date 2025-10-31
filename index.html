@@ -5571,7 +5571,18 @@
             </div>
         </div>
     </div>
-    <div id="inspectorReportDiv" class="inspector-report-div" style="display:none;"></div>
+    <!-- Inspector Report Modal -->
+    <div id="inspectorReportModal" class="modal-overlay" style="display:none;">
+      <div class="modal-content" style="max-width: 1200px;">
+        <button class="close-btn" onclick="closeInspectorReportModal()">×</button>
+        <div class="stats-title" id="inspectorReportTitle">تقرير المفتش</div>
+        <div class="modal-actions">
+            <button class="pdf-btn" onclick="exportInspectorReportToPDF()">حفظ التقرير كـ PDF</button>
+            <button class="excel-btn" onclick="exportInspectorReportToExcel()">حفظ التقرير كـ Excel</button>
+        </div>
+        <div id="inspectorReportDiv"></div>
+      </div>
+    </div>
     <div id="monthlyReportModal" class="modal-overlay" style="display:none;">
       <div class="modal-content">
         <button class="close-btn" onclick="closeMonthlyReportModal()">×</button>
@@ -13009,7 +13020,7 @@ function checkDeveloperAccess(featureName, successCallback) {
 document.getElementById('inspectorSelect').addEventListener('change', function() {
     selectedInspector = this.value;
     renderPlanTable();
-    document.getElementById('inspectorReportDiv').style.display = "none";
+    document.getElementById('inspectorReportModal').style.display = "none";
     
     // Show/hide inspector details button based on selection
     const detailsBtn = document.getElementById('viewInspectorDetailsBtn');
@@ -15057,7 +15068,11 @@ function showInspectorReport() {
     let inspectorName = selectedInspector || "";
     if (!inspectorName) { alert("يرجى اختيار مفتش أولاً."); return; }
     const div = document.getElementById('inspectorReportDiv');
+    const titleDiv = document.getElementById('inspectorReportTitle');
     const rows = inspectionData.filter(item => item.inspector === inspectorName);
+    
+    // Set modal title
+    titleDiv.textContent = `تقرير المفتش: ${inspectorName}`;
     
     // Calculate comprehensive statistics
     let totalShops = 0;
@@ -15103,12 +15118,6 @@ function showInspectorReport() {
     const uniqueShopsCount = shopsList.size;
     
     let table = `
-    <div class="pdf-title-arabic" id="inspectorReportTitle">تقرير المفتش: ${inspectorName}</div>
-    <div class="save-box" style="margin-bottom:15px;">
-        <button class="pdf-btn" onclick="exportInspectorReportToPDF()">📄 حفظ كـ PDF</button>
-        <button class="excel-btn" onclick="exportInspectorReportToExcel()">📊 حفظ كـ Excel</button>
-    </div>
-    
     <!-- Summary Statistics -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
         <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; text-align: center; border-left: 4px solid #2196f3;">
@@ -15217,7 +15226,10 @@ function showInspectorReport() {
     table += `</div>`;
     
     div.innerHTML = table;
-    div.style.display = "block";
+    document.getElementById('inspectorReportModal').style.display = "flex";
+}
+function closeInspectorReportModal() {
+    document.getElementById('inspectorReportModal').style.display = 'none';
 }
 function exportInspectorReportToPDF() {
     let titleBox = document.getElementById('inspectorReportTitle');
@@ -15231,6 +15243,17 @@ function exportInspectorReportToPDF() {
     wrap.style.width = 'auto';
     wrap.style.minWidth = '800px';
     wrap.style.maxWidth = '1000px';
+    
+    // Add title to the PDF
+    let titleClone = document.createElement('div');
+    titleClone.className = 'pdf-title-arabic';
+    titleClone.textContent = titleBox.textContent;
+    titleClone.style.textAlign = 'center';
+    titleClone.style.fontSize = '18px';
+    titleClone.style.fontWeight = 'bold';
+    titleClone.style.marginBottom = '20px';
+    titleClone.style.color = '#234085';
+    wrap.appendChild(titleClone);
     
     // Clone the entire report content
     let contentClone = reportDiv.cloneNode(true);

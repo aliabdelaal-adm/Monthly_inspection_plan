@@ -3576,6 +3576,9 @@
             // Sort areas alphabetically
             const sortedAreas = Object.keys(shopsByArea).sort();
             
+            // Track high priority shops for statistics
+            let highPriorityCount = 0;
+            
             sortedAreas.forEach(areaName => {
                 const shops = shopsByArea[areaName];
                 
@@ -3584,6 +3587,13 @@
                     const priority = calculateShopPriority(shopName, inspector, todayStr);
                     return { name: shopName, priority: priority.level, score: priority.score, reason: priority.reason };
                 }).sort((a, b) => b.score - a.score);
+                
+                // Count high priority shops
+                shopsWithPriority.forEach(shop => {
+                    if (shop.priority === 'very-high' || shop.priority === 'high') {
+                        highPriorityCount++;
+                    }
+                });
                 
                 html += `
                     <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 15px; border-right: 4px solid #667eea;">
@@ -3606,7 +3616,7 @@
                                         shop.priority === 'medium' ? '🟡 أولوية متوسطة' : '🟢 أولوية عادية';
                     
                     html += `
-                        <div style="background: white; padding: 10px; border-radius: 8px; border-right: 3px solid ${priorityColor}; font-size: 0.9em;">
+                        <div class="shop-card monthly-view-shop" data-shop-name="${escapeHtml(shop.name)}" style="background: white; padding: 10px; border-radius: 8px; border-right: 3px solid ${priorityColor}; font-size: 0.9em;">
                             <div style="font-weight: 600; color: #2d3561; margin-bottom: 4px;">${escapeHtml(shop.name)}</div>
                             <div style="font-size: 0.85em; color: #666;">${priorityText}</div>
                             ${shop.reason ? `<div style="font-size: 0.8em; color: #999; margin-top: 2px;">${escapeHtml(shop.reason)}</div>` : ''}
@@ -3625,7 +3635,7 @@
             // Update statistics
             document.getElementById('totalShopsCount').textContent = totalShops;
             document.getElementById('availableShopsCount').textContent = totalShops;
-            document.getElementById('highPriorityCount').textContent = 0;
+            document.getElementById('highPriorityCount').textContent = highPriorityCount;
             document.getElementById('selectedShopsCount').textContent = selectedShops.length;
         }
         

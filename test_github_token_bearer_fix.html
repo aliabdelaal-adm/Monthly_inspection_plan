@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار إصلاح GitHub Token Authentication - Bearer Fix Test</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.8em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+        
+        .test-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .test-section h2 {
+            color: #444;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .status-box {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        
+        .status-box.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-box.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status-box.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        
+        .status-box.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .test-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .test-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .test-btn:active {
+            transform: translateY(0);
+        }
+        
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px;
+            text-align: right;
+            border: 1px solid #ddd;
+        }
+        
+        .comparison-table th {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .comparison-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .old-code {
+            background: #ffebee;
+            color: #c62828;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        
+        .new-code {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        
+        .log-box {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-top: 10px;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 اختبار إصلاح GitHub Token Authentication</h1>
+        <p class="subtitle">GitHub Token Bearer Fix Test - Verification Tool</p>
+        
+        <!-- Issue Description -->
+        <div class="test-section">
+            <h2>📋 المشكلة - The Issue</h2>
+            <div class="status-box warning">
+                <strong>المشكلة:</strong> المطورون لا يستطيعون تسجيل الدخول باستخدام GitHub Personal Access Tokens الجديدة<br>
+                <strong>Issue:</strong> Developers cannot login to Smart Planner with new GitHub Personal Access Tokens
+            </div>
+            <p style="margin-top: 10px;">
+                <strong>السبب:</strong> الكود كان يستخدم <span class="old-code">'Authorization': `token ${token}`</span> بدلاً من <span class="new-code">'Authorization': `Bearer ${token}`</span>
+            </p>
+        </div>
+        
+        <!-- Fix Applied -->
+        <div class="test-section">
+            <h2>✅ الإصلاح المنفذ - Fix Applied</h2>
+            <div class="status-box success">
+                تم تغيير جميع استخدامات <code>token</code> إلى <code>Bearer</code> في ملف smart-planner.html
+            </div>
+            
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>الموقع - Location</th>
+                        <th>قبل - Before</th>
+                        <th>بعد - After</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>validateGitHubToken()<br>Line 4710</td>
+                        <td><span class="old-code">'Authorization': `token ${token}`</span></td>
+                        <td><span class="new-code">'Authorization': `Bearer ${token}`</span></td>
+                    </tr>
+                    <tr>
+                        <td>shops_details.json GET<br>Line 14704</td>
+                        <td><span class="old-code">'Authorization': `token ${githubToken}`</span></td>
+                        <td><span class="new-code">'Authorization': `Bearer ${githubToken}`</span></td>
+                    </tr>
+                    <tr>
+                        <td>shops_details.json PUT<br>Line 14719</td>
+                        <td><span class="old-code">'Authorization': `token ${githubToken}`</span></td>
+                        <td><span class="new-code">'Authorization': `Bearer ${githubToken}`</span></td>
+                    </tr>
+                    <tr>
+                        <td>plan-data.json GET<br>Line 15535</td>
+                        <td><span class="old-code">'Authorization': `token ${githubToken}`</span></td>
+                        <td><span class="new-code">'Authorization': `Bearer ${githubToken}`</span></td>
+                    </tr>
+                    <tr>
+                        <td>plan-data.json PUT<br>Line 15558</td>
+                        <td><span class="old-code">'Authorization': `token ${githubToken}`</span></td>
+                        <td><span class="new-code">'Authorization': `Bearer ${githubToken}`</span></td>
+                    </tr>
+                    <tr>
+                        <td>audio-config.json GET<br>Line 16415</td>
+                        <td><span class="old-code">'Authorization': `token ${githubToken}`</span></td>
+                        <td><span class="new-code">'Authorization': `Bearer ${githubToken}`</span></td>
+                    </tr>
+                    <tr>
+                        <td>audio-config.json PUT<br>Line 16446</td>
+                        <td><span class="old-code">'Authorization': `token ${githubToken}`</span></td>
+                        <td><span class="new-code">'Authorization': `Bearer ${githubToken}`</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Test Token Validation -->
+        <div class="test-section">
+            <h2>🧪 اختبار صلاحية التوكن - Test Token Validation</h2>
+            <p style="margin-bottom: 10px;">
+                <strong>ملاحظة:</strong> هذا الاختبار سيحاول التحقق من صلاحية التوكن باستخدام طريقة <code>Bearer</code> الجديدة
+            </p>
+            <input type="text" id="testToken" placeholder="أدخل GitHub Personal Access Token للاختبار (اختياري)">
+            <div class="controls">
+                <button class="test-btn" onclick="testTokenValidation()">🔍 اختبار التحقق من التوكن</button>
+                <button class="test-btn" onclick="testWithoutToken()">📝 اختبار بدون توكن (Demo)</button>
+            </div>
+            <div id="validationResult" style="margin-top: 15px;"></div>
+        </div>
+        
+        <!-- Code Examples -->
+        <div class="test-section">
+            <h2>💻 أمثلة الكود - Code Examples</h2>
+            
+            <h3 style="color: #d32f2f; margin: 15px 0 10px 0;">❌ الكود القديم (خاطئ) - Old Code (Wrong):</h3>
+            <div class="code-block">async function validateGitHubToken(token) {
+    try {
+        const res = await fetch('https://api.github.com/user', {
+            headers: {
+                'Authorization': `token ${token}`,  // ❌ خطأ - Wrong!
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+        // ...
+    } catch (error) {
+        // ...
+    }
+}</div>
+            
+            <h3 style="color: #2e7d32; margin: 15px 0 10px 0;">✅ الكود الجديد (صحيح) - New Code (Correct):</h3>
+            <div class="code-block">async function validateGitHubToken(token) {
+    try {
+        const res = await fetch('https://api.github.com/user', {
+            headers: {
+                'Authorization': `Bearer ${token}`,  // ✅ صحيح - Correct!
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+        // ...
+    } catch (error) {
+        // ...
+    }
+}</div>
+        </div>
+        
+        <!-- Why Bearer? -->
+        <div class="test-section">
+            <h2>❓ لماذا Bearer بدلاً من token؟</h2>
+            <div style="line-height: 1.6;">
+                <p><strong>1. المعيار الحديث - Modern Standard:</strong></p>
+                <ul style="margin: 10px 0 10px 25px;">
+                    <li><code>Bearer</code> هو المعيار الحديث لـ OAuth 2.0</li>
+                    <li>GitHub Personal Access Tokens الجديدة تتطلب <code>Bearer</code></li>
+                </ul>
+                
+                <p style="margin-top: 15px;"><strong>2. التوافق - Compatibility:</strong></p>
+                <ul style="margin: 10px 0 10px 25px;">
+                    <li><code>Bearer</code> يعمل مع جميع أنواع التوكنات (القديمة والجديدة)</li>
+                    <li><code>token</code> يعمل فقط مع Classic Tokens القديمة</li>
+                </ul>
+                
+                <p style="margin-top: 15px;"><strong>3. الأمان - Security:</strong></p>
+                <ul style="margin: 10px 0 10px 25px;">
+                    <li><code>Bearer</code> يوفر أمان أفضل حسب معايير RFC 6750</li>
+                    <li>يمنع مشاكل التوافق المستقبلية</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Test Log -->
+        <div class="test-section">
+            <h2>📝 سجل الاختبار - Test Log</h2>
+            <div id="logBox" class="log-box">جاهز للاختبار - Ready for testing...</div>
+            <button class="test-btn" onclick="clearLog()" style="margin-top: 10px;">🗑️ مسح السجل</button>
+        </div>
+        
+        <!-- Summary -->
+        <div class="test-section">
+            <h2>📊 الملخص - Summary</h2>
+            <div class="status-box success">
+                <strong>✅ تم الإصلاح بنجاح - Successfully Fixed!</strong><br><br>
+                تم تغيير 7 مواقع في ملف smart-planner.html من <code>token</code> إلى <code>Bearer</code><br>
+                المطورون الآن يمكنهم تسجيل الدخول باستخدام GitHub Personal Access Tokens الجديدة<br><br>
+                <strong>Developers can now login with new GitHub Personal Access Tokens!</strong>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function log(message, type = 'info') {
+            const logBox = document.getElementById('logBox');
+            const timestamp = new Date().toLocaleTimeString('ar-EG');
+            const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+            logBox.textContent += `[${timestamp}] ${icon} ${message}\n`;
+            logBox.scrollTop = logBox.scrollHeight;
+            console.log(`${icon} ${message}`);
+        }
+        
+        function clearLog() {
+            document.getElementById('logBox').textContent = 'السجل تم مسحه - Log cleared...\n';
+            log('تم مسح السجل', 'info');
+        }
+        
+        async function testTokenValidation() {
+            const token = document.getElementById('testToken').value.trim();
+            const resultDiv = document.getElementById('validationResult');
+            
+            if (!token) {
+                resultDiv.innerHTML = '<div class="status-box error">❌ يرجى إدخال GitHub Token للاختبار</div>';
+                log('فشل الاختبار: لم يتم إدخال توكن', 'error');
+                return;
+            }
+            
+            log('بدء اختبار التحقق من التوكن...', 'info');
+            resultDiv.innerHTML = '<div class="status-box info">⏳ جاري التحقق من صلاحية التوكن...</div>';
+            
+            try {
+                // Test with Bearer prefix (NEW - CORRECT)
+                log('محاولة التحقق باستخدام Bearer (الطريقة الجديدة الصحيحة)...', 'info');
+                const res = await fetch('https://api.github.com/user', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (res.ok) {
+                    const userData = await res.json();
+                    resultDiv.innerHTML = `
+                        <div class="status-box success">
+                            <strong>✅ نجح التحقق من التوكن! - Token Validated Successfully!</strong><br><br>
+                            <strong>اسم المستخدم:</strong> ${userData.login}<br>
+                            <strong>ID:</strong> ${userData.id}<br>
+                            <strong>النوع:</strong> ${userData.type}<br><br>
+                            التوكن يعمل بنجاح مع طريقة Bearer الجديدة!<br>
+                            Token works successfully with the new Bearer method!
+                        </div>
+                    `;
+                    log(`✅ نجح التحقق! المستخدم: ${userData.login}`, 'success');
+                } else if (res.status === 401) {
+                    resultDiv.innerHTML = `
+                        <div class="status-box error">
+                            <strong>❌ التوكن غير صالح أو منتهي الصلاحية</strong><br><br>
+                            الحل:<br>
+                            1. تأكد من صحة التوكن<br>
+                            2. أنشئ Personal Access Token جديد من GitHub<br>
+                            3. تأكد من أن التوكن لديه صلاحية "repo"
+                        </div>
+                    `;
+                    log('فشل التحقق: التوكن غير صالح (401)', 'error');
+                } else if (res.status === 403) {
+                    resultDiv.innerHTML = `
+                        <div class="status-box error">
+                            <strong>❌ التوكن ليس لديه الصلاحيات المطلوبة</strong><br><br>
+                            تأكد من أن التوكن لديه صلاحية "repo" في GitHub
+                        </div>
+                    `;
+                    log('فشل التحقق: صلاحيات غير كافية (403)', 'error');
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="status-box error">
+                            <strong>❌ خطأ في التحقق: ${res.status}</strong><br>
+                            ${res.statusText}
+                        </div>
+                    `;
+                    log(`فشل التحقق: خطأ ${res.status}`, 'error');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="status-box error">
+                        <strong>❌ خطأ في الاتصال بـ GitHub:</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+                log(`خطأ في الاتصال: ${error.message}`, 'error');
+            }
+        }
+        
+        function testWithoutToken() {
+            const resultDiv = document.getElementById('validationResult');
+            log('عرض مثال توضيحي للفرق بين الطريقتين...', 'info');
+            
+            resultDiv.innerHTML = `
+                <div class="status-box info">
+                    <strong>📝 مثال توضيحي - Demo Example</strong><br><br>
+                    
+                    <strong style="color: #d32f2f;">❌ الطريقة القديمة (خاطئة):</strong><br>
+                    <code style="background: #ffebee; padding: 5px; border-radius: 3px;">
+                        'Authorization': \`token \${token}\`
+                    </code><br>
+                    <small>✗ لا تعمل مع GitHub Personal Access Tokens الجديدة</small><br><br>
+                    
+                    <strong style="color: #2e7d32;">✅ الطريقة الجديدة (صحيحة):</strong><br>
+                    <code style="background: #e8f5e9; padding: 5px; border-radius: 3px;">
+                        'Authorization': \`Bearer \${token}\`
+                    </code><br>
+                    <small>✓ تعمل مع جميع أنواع التوكنات (القديمة والجديدة)</small><br><br>
+                    
+                    <strong>💡 ملاحظة:</strong> لاختبار حقيقي، أدخل GitHub Personal Access Token في الحقل أعلاه
+                </div>
+            `;
+            
+            log('تم عرض المثال التوضيحي', 'success');
+        }
+        
+        // Initialize log on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            log('تم تحميل صفحة الاختبار - Test page loaded', 'success');
+            log('جاهز لاختبار إصلاح GitHub Token Authentication', 'info');
+        });
+    </script>
+</body>
+</html>

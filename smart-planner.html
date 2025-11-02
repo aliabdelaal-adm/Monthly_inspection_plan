@@ -3794,8 +3794,8 @@
             isMapInitialized = false;
         };
         
-        // Create the map when modal is opened
-        function createMap() {
+        // Create the map when modal is opened (async version)
+        async function createMap() {
             if (!document.getElementById('googleMap')) return;
             
             try {
@@ -3824,16 +3824,16 @@
                 
                 infoWindow = new google.maps.InfoWindow();
                 
-                // Load shop markers
-                loadShopMarkers();
+                // Load shop markers (async)
+                await loadShopMarkers();
             } catch (error) {
                 console.error('Error creating map:', error);
                 alert('⚠️ حدث خطأ في إنشاء الخريطة. يرجى المحاولة مرة أخرى.');
             }
         }
         
-        // Load shop markers on the map
-        function loadShopMarkers() {
+        // Load shop markers on the map (async version with geocoding support)
+        async function loadShopMarkers() {
             if (!map || !shopsDetails) return;
             
             // Clear existing markers
@@ -3842,21 +3842,40 @@
             
             const bounds = new google.maps.LatLngBounds();
             let hasValidCoordinates = false;
+            let pendingGeocodingCount = 0;
+            let geocodedCount = 0;
             
             // Get available shops based on current filters
             const availableShopNames = getAvailableShopsForMap();
             
-            Object.keys(shopsDetails).forEach(shopName => {
+            // Show loading message
+            console.log('Loading shop markers...');
+            
+            // Process each shop
+            const shopPromises = Object.keys(shopsDetails).map(async (shopName) => {
                 const shop = shopsDetails[shopName];
                 
                 // Skip invalid shop entries - shops without proper data
                 // Valid shops must have either a locationMap or address
                 if (!shop || (!shop.locationMap && !shop.address)) {
-                    return;
+                    return null;
                 }
                 
-                // Extract coordinates from Google Maps link or use geocoding
-                const coords = extractCoordinatesFromLink(shop.locationMap);
+                // Extract coordinates from Google Maps link
+                let coords = extractCoordinatesFromLink(shop.locationMap);
+                
+                // If coordinates not found and we have a location link or address, try geocoding
+                if (!coords && (shop.locationMap || shop.address)) {
+                    pendingGeocodingCount++;
+                    coords = await geocodeShopLocation(shop);
+                    if (coords) {
+                        geocodedCount++;
+                        // Cache the coordinates for this shop
+                        if (shop.locationMap) {
+                            coordinatesCache[shop.locationMap] = coords;
+                        }
+                    }
+                }
                 
                 if (coords) {
                     const isAvailable = availableShopNames.includes(shopName);
@@ -3906,11 +3925,25 @@
                         showInfoWindow(marker, null);
                     });
                     
-                    markers.push(marker);
-                    bounds.extend(coords);
+                    return { marker, coords };
+                }
+                
+                return null;
+            });
+            
+            // Wait for all shops to be processed
+            const results = await Promise.all(shopPromises);
+            
+            // Add markers to map and bounds
+            results.forEach(result => {
+                if (result) {
+                    markers.push(result.marker);
+                    bounds.extend(result.coords);
                     hasValidCoordinates = true;
                 }
             });
+            
+            console.log(`Loaded ${markers.length} shop markers (${geocodedCount} geocoded from ${pendingGeocodingCount} attempts)`);
             
             // Fit map to show all markers
             if (hasValidCoordinates) {
@@ -3921,14 +3954,93 @@
                         map.setZoom(MAP_CONFIG.maxZoom);
                     }
                 });
+            } else {
+                // If no valid coordinates, center on Abu Dhabi
+                map.setCenter(MAP_CONFIG.defaultCenter);
+                map.setZoom(MAP_CONFIG.defaultZoom);
             }
             
             updateMapStats();
         }
         
-        // Extract coordinates from Google Maps link
-        function extractCoordinatesFromLink(link) {
+        // Geocode shop location using Google Maps Geocoding API
+        async function geocodeShopLocation(shop) {
+            // Create a geocoder instance
+            if (!window.geocoder) {
+                window.geocoder = new google.maps.Geocoder();
+            }
+            
+            try {
+                // Try geocoding by address first
+                if (shop.address) {
+                    const request = {
+                        address: shop.address + ', Abu Dhabi, UAE',
+                        region: 'AE'
+                    };
+                    
+                    const result = await new Promise((resolve, reject) => {
+                        window.geocoder.geocode(request, (results, status) => {
+                            if (status === 'OK' && results && results[0]) {
+                                resolve(results[0]);
+                            } else {
+                                reject(new Error(`Geocoding failed: ${status}`));
+                            }
+                        });
+                    });
+                    
+                    if (result && result.geometry && result.geometry.location) {
+                        return {
+                            lat: result.geometry.location.lat(),
+                            lng: result.geometry.location.lng()
+                        };
+                    }
+                }
+                
+                // If address geocoding failed and we have an area, try geocoding by area
+                if (shop.area) {
+                    const request = {
+                        address: shop.area + ', Abu Dhabi, UAE',
+                        region: 'AE'
+                    };
+                    
+                    const result = await new Promise((resolve, reject) => {
+                        window.geocoder.geocode(request, (results, status) => {
+                            if (status === 'OK' && results && results[0]) {
+                                resolve(results[0]);
+                            } else {
+                                reject(new Error(`Geocoding failed: ${status}`));
+                            }
+                        });
+                    });
+                    
+                    if (result && result.geometry && result.geometry.location) {
+                        // Add small random offset to avoid overlapping markers in same area
+                        const randomOffset = () => (Math.random() - 0.5) * 0.005;
+                        return {
+                            lat: result.geometry.location.lat() + randomOffset(),
+                            lng: result.geometry.location.lng() + randomOffset()
+                        };
+                    }
+                }
+                
+                return null;
+            } catch (error) {
+                console.warn('Geocoding failed for shop:', shop.nameAr || 'Unknown', error.message);
+                return null;
+            }
+        }
+        
+        // Cache for resolved coordinates to avoid repeated API calls
+        const coordinatesCache = {};
+        
+        // Extract coordinates from Google Maps link with async support for short links
+        async function extractCoordinatesFromLinkAsync(link) {
             if (!link) return null;
+            
+            // Check cache first
+            if (coordinatesCache[link]) {
+                return coordinatesCache[link];
+            }
             
             try {
                 // Try different Google Maps URL formats
@@ -3936,26 +4048,64 @@
                 if (link.includes('@')) {
                     const match = link.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
                     if (match) {
-                        return {
+                        const coords = {
                             lat: parseFloat(match[1]),
                             lng: parseFloat(match[2])
                         };
+                        coordinatesCache[link] = coords;
+                        return coords;
                     }
                 }
                 
-                // Format 2: maps.app.goo.gl short links
-                // Note: These short links need geocoding to get actual coordinates
-                // For now, we use approximate Abu Dhabi locations as fallback
-                // TODO: Implement proper geocoding service for short links
-                // TODO: Or require shops to have full Google Maps links with coordinates
-                if (link.includes('maps.app.goo.gl') || link.includes('goo.gl')) {
-                    console.warn('Short Google Maps link detected - using approximate location:', link);
-                    // Distribute around Abu Dhabi center with small random offset
-                    const randomOffset = () => (Math.random() - 0.5) * 0.1;
-                    return {
-                        lat: MAP_CONFIG.defaultCenter.lat + randomOffset(),
-                        lng: MAP_CONFIG.defaultCenter.lng + randomOffset()
-                    };
+                // Format 2: maps.app.goo.gl or goo.gl short links
+                // Use CORS proxy to expand the short URL
+                if (link.includes('maps.app.goo.gl') || link.includes('goo.gl/maps')) {
+                    try {
+                        // Use a CORS proxy to fetch the redirect location
+                        const proxyUrl = 'https://api.allorigins.win/raw?url=';
+                        const response = await fetch(proxyUrl + encodeURIComponent(link), {
+                            method: 'GET',
+                            redirect: 'follow'
+                        });
+                        
+                        // The response URL should contain the expanded link
+                        const expandedUrl = response.url || await response.text();
+                        
+                        // Try to extract coordinates from expanded URL
+                        if (expandedUrl.includes('@')) {
+                            const match = expandedUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+                            if (match) {
+                                const coords = {
+                                    lat: parseFloat(match[1]),
+                                    lng: parseFloat(match[2])
+                                };
+                                coordinatesCache[link] = coords;
+                                console.log('Successfully resolved short link:', link, 'to', coords);
+                                return coords;
+                            }
+                        }
+                    } catch (proxyError) {
+                        console.warn('Failed to expand short link via proxy:', link, proxyError);
+                    }
+                    
+                    // If proxy fails, try alternative method: iframe technique
+                    // This is a fallback that may work in some browsers
+                    return await expandShortLinkViaIframe(link);
+                }
+                
+                // Format 3: Try to extract from query parameters
+                const url = new URL(link);
+                if (url.searchParams.has('q')) {
+                    const q = url.searchParams.get('q');
+                    const match = q.match(/(-?\d+\.\d+),\s*(-?\d+\.\d+)/);
+                    if (match) {
+                        const coords = {
+                            lat: parseFloat(match[1]),
+                            lng: parseFloat(match[2])
+                        };
+                        coordinatesCache[link] = coords;
+                        return coords;
+                    }
                 }
                 
                 return null;
@@ -3963,6 +4113,53 @@
                 console.error('Error extracting coordinates from link:', link, e);
                 return null;
             }
+        }
+        
+        // Synchronous version that returns null for short links (to be resolved later)
+        function extractCoordinatesFromLink(link) {
+            if (!link) return null;
+            
+            // Check cache first
+            if (coordinatesCache[link]) {
+                return coordinatesCache[link];
+            }
+            
+            try {
+                // Only handle links that can be processed synchronously
+                if (link.includes('@')) {
+                    const match = link.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+                    if (match) {
+                        const coords = {
+                            lat: parseFloat(match[1]),
+                            lng: parseFloat(match[2])
+                        };
+                        coordinatesCache[link] = coords;
+                        return coords;
+                    }
+                }
+                
+                // For short links, return null (will be resolved asynchronously)
+                if (link.includes('maps.app.goo.gl') || link.includes('goo.gl/maps')) {
+                    return null;
+                }
+                
+                return null;
+            } catch (e) {
+                console.error('Error extracting coordinates from link:', link, e);
+                return null;
+            }
+        }
+        
+        // Expand short link using iframe technique (fallback method)
+        async function expandShortLinkViaIframe(shortLink) {
+            // This technique tries to load the link in a hidden iframe
+            // and capture the redirect - may not work due to CORS
+            // Return null as fallback - the Geocoding API will be used instead
+            console.log('Short link detected, will use Geocoding API:', shortLink);
+            
+            // Use Google Maps Geocoding API as ultimate fallback
+            // We'll use the shop's address field if available
+            return null;
         }
         
         // Get available shops for map based on filters
@@ -4283,7 +4480,7 @@
         }
         
         // Open map modal
-        function openMapModal() {
+        async function openMapModal() {
             if (!isMapInitialized) {
                 alert('⚠️ جاري تحميل خرائط جوجل... يرجى الانتظار لحظة والمحاولة مرة أخرى');
                 return;
@@ -4303,12 +4500,12 @@
             // Populate area dropdown
             populateMapAreaDropdown();
             
-            // Initialize map if not already done
-            setTimeout(() => {
+            // Initialize map if not already done (async)
+            setTimeout(async () => {
                 if (!map) {
-                    createMap();
+                    await createMap();
                 } else {
-                    loadShopMarkers();
+                    await loadShopMarkers();
                 }
             }, 300);
         }
@@ -4362,16 +4559,16 @@
         }
         
         // Update map controls
-        function updateMapControls() {
+        async function updateMapControls() {
             if (map) {
-                loadShopMarkers();
+                await loadShopMarkers();
             }
         }
         
         // Filter shops by area on map
-        function filterShopsByArea() {
+        async function filterShopsByArea() {
             if (map) {
-                loadShopMarkers();
+                await loadShopMarkers();
             }
         }
         

@@ -1614,6 +1614,353 @@
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        
+        /* Google Maps Modal Styles */
+        .map-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+            overflow-y: auto;
+        }
+        
+        .map-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .map-modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 0;
+            width: 95%;
+            max-width: 1400px;
+            max-height: 95vh;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes slideUp {
+            from { 
+                opacity: 0; 
+                transform: translateY(50px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+        
+        .map-modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 30px;
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .map-modal-header h2 {
+            margin: 0;
+            font-size: 1.8em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .map-modal-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        
+        .map-modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+        
+        .map-modal-body {
+            padding: 0;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .map-controls-panel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 3px solid #667eea;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .map-control-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .map-control-label {
+            font-weight: 600;
+            color: #2d3561;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+        
+        .map-container {
+            flex: 1;
+            min-height: 500px;
+            position: relative;
+            background: #e5e5e5;
+        }
+        
+        #googleMap {
+            width: 100%;
+            height: 100%;
+            min-height: 500px;
+        }
+        
+        .map-stats-bar {
+            background: #2d3561;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .map-stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .map-stat-value {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #38ef7d;
+        }
+        
+        .map-stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .map-footer {
+            background: #f8f9fa;
+            padding: 20px;
+            border-top: 3px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .map-actions {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+        }
+        
+        .btn-map-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1em;
+        }
+        
+        .btn-map-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-map-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1em;
+        }
+        
+        .btn-map-secondary:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .btn-add-from-map {
+            background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 10px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 700;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 5px 15px rgba(0, 210, 255, 0.3);
+        }
+        
+        .btn-add-from-map:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 210, 255, 0.4);
+        }
+        
+        .btn-add-from-map .icon {
+            font-size: 1.3em;
+        }
+        
+        .map-helper-tools {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 20px;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .map-helper-tools h4 {
+            margin: 0 0 10px 0;
+            color: #2d3561;
+            font-size: 1.1em;
+        }
+        
+        .map-tools-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .map-tool-btn {
+            background: #f8f9fa;
+            border: 2px solid #667eea;
+            color: #667eea;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+        
+        .map-tool-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .map-tool-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .selected-shops-on-map {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 0 20px 10px 20px;
+            border: 2px solid #28a745;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        .selected-shops-on-map h4 {
+            margin: 0 0 10px 0;
+            color: #28a745;
+            font-size: 1.1em;
+        }
+        
+        .selected-shop-tag {
+            display: inline-block;
+            background: #d4edda;
+            color: #155724;
+            padding: 5px 12px;
+            margin: 5px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .selected-shop-tag .remove {
+            margin-right: 5px;
+            cursor: pointer;
+            color: #dc3545;
+            font-weight: bold;
+        }
+        
+        .selected-shop-tag .remove:hover {
+            color: #c82333;
+        }
+        
+        /* Responsive design for map modal */
+        @media (max-width: 768px) {
+            .map-modal-content {
+                width: 98%;
+                max-height: 98vh;
+            }
+            
+            .map-controls-panel {
+                grid-template-columns: 1fr;
+            }
+            
+            .map-footer {
+                flex-direction: column;
+            }
+            
+            .map-actions {
+                width: 100%;
+                flex-direction: column;
+            }
+            
+            #googleMap {
+                min-height: 400px;
+            }
+        }
     </style>
     
     <!-- SheetJS library for Excel import/export -->
@@ -1622,6 +1969,9 @@
     <!-- jsPDF library for PDF export with Arabic support -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.1/jspdf.plugin.autotable.min.js"></script>
+    
+    <!-- Google Maps API for map-based shop selection -->
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&callback=initMap&libraries=places,geometry&language=ar"></script>
 </head>
 <body>
     <div class="container">
@@ -1920,6 +2270,10 @@
             
             <!-- Action Buttons -->
             <div class="action-buttons">
+                <button class="btn-add-from-map" onclick="openMapModal()">
+                    <span class="icon">🗺️</span>
+                    <span>إضافة تفتيش من الخريطة</span>
+                </button>
                 <button class="btn btn-success" onclick="saveInspection()" id="saveBtn" disabled>
                     <span>💾</span>
                     <span>حفظ التفتيش فوراً</span>
@@ -3273,6 +3627,119 @@
         </div>
     </div>
     
+    <!-- Google Maps Modal for Smart Shop Selection -->
+    <div id="mapModal" class="map-modal">
+        <div class="map-modal-content">
+            <div class="map-modal-header">
+                <h2>🗺️ اختيار المحلات الذكي من الخريطة</h2>
+                <button class="map-modal-close" onclick="closeMapModal()">✖ إغلاق</button>
+            </div>
+            
+            <div class="map-modal-body">
+                <!-- Controls Panel -->
+                <div class="map-controls-panel">
+                    <div class="map-control-group">
+                        <label class="map-control-label">👤 المفتش</label>
+                        <select id="mapInspectorSelect" class="form-control" onchange="updateMapControls()">
+                            <option value="">اختر المفتش...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="map-control-group">
+                        <label class="map-control-label">📅 التاريخ</label>
+                        <input type="date" id="mapInspectionDate" class="form-control" onchange="updateMapControls()">
+                    </div>
+                    
+                    <div class="map-control-group">
+                        <label class="map-control-label">🕐 المناوبة</label>
+                        <select id="mapShiftSelect" class="form-control">
+                            <option value="صباحية">صباحية</option>
+                            <option value="مسائية">مسائية</option>
+                        </select>
+                    </div>
+                    
+                    <div class="map-control-group">
+                        <label class="map-control-label">🗺️ المنطقة (اختياري)</label>
+                        <select id="mapAreaSelect" class="form-control" onchange="filterShopsByArea()">
+                            <option value="">جميع المناطق</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Helper Tools -->
+                <div class="map-helper-tools">
+                    <h4>🛠️ أدوات مساعدة</h4>
+                    <div class="map-tools-buttons">
+                        <button class="map-tool-btn" onclick="selectNearbyShops()">
+                            📍 اختيار المحلات المتقاربة
+                        </button>
+                        <button class="map-tool-btn" onclick="selectHighPriorityShops()">
+                            ⭐ اختيار الأولوية العالية
+                        </button>
+                        <button class="map-tool-btn" onclick="clearMapSelection()">
+                            🗑️ مسح الاختيار
+                        </button>
+                        <button class="map-tool-btn" onclick="zoomToSelectedShops()">
+                            🔍 تكبير على المختارة
+                        </button>
+                        <button class="map-tool-btn" onclick="showAllShops()">
+                            🌍 عرض جميع المحلات
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Selected Shops Display -->
+                <div id="selectedShopsOnMap" class="selected-shops-on-map" style="display: none;">
+                    <h4>✅ المحلات المختارة (<span id="mapSelectedCount">0</span>)</h4>
+                    <div id="selectedShopTags"></div>
+                </div>
+                
+                <!-- Map Container -->
+                <div class="map-container">
+                    <div id="googleMap"></div>
+                </div>
+                
+                <!-- Statistics Bar -->
+                <div class="map-stats-bar">
+                    <div class="map-stat-item">
+                        <div class="map-stat-value" id="mapTotalShops">0</div>
+                        <div class="map-stat-label">إجمالي المحلات</div>
+                    </div>
+                    <div class="map-stat-item">
+                        <div class="map-stat-value" id="mapAvailableShops">0</div>
+                        <div class="map-stat-label">المحلات المتاحة</div>
+                    </div>
+                    <div class="map-stat-item">
+                        <div class="map-stat-value" id="mapSelectedShops">0</div>
+                        <div class="map-stat-label">المحلات المختارة</div>
+                    </div>
+                    <div class="map-stat-item">
+                        <div class="map-stat-value" id="mapHighPriorityShops">0</div>
+                        <div class="map-stat-label">أولوية عالية</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer with Actions -->
+            <div class="map-footer">
+                <div class="map-actions">
+                    <button class="btn-map-primary" onclick="applyMapSelection()" id="applyMapBtn" disabled>
+                        ✅ تطبيق الاختيار
+                    </button>
+                    <button class="btn-map-primary" onclick="saveFromMap()" id="saveFromMapBtn" disabled>
+                        💾 حفظ التفتيش مباشرة
+                    </button>
+                    <button class="btn-map-secondary" onclick="closeMapModal()">
+                        ❌ إلغاء
+                    </button>
+                </div>
+                <div style="color: #666; font-size: 0.9em;">
+                    💡 انقر على المحلات في الخريطة لاختيارها
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <script>
         // Global variables
         let planData = null;
@@ -3285,6 +3752,675 @@
         let showingHighPriority = false;
         let currentAvailableShops = [];
         let currentHighPriorityShops = [];
+        
+        // Google Maps variables
+        let map = null;
+        let markers = [];
+        let mapSelectedShops = [];
+        let infoWindow = null;
+        let isMapInitialized = false;
+        
+        // Initialize Google Maps (callback function)
+        function initMap() {
+            // This will be called when Google Maps API is loaded
+            console.log('Google Maps API loaded successfully');
+            isMapInitialized = true;
+        }
+        
+        // Create the map when modal is opened
+        function createMap() {
+            if (!document.getElementById('googleMap')) return;
+            
+            // Center on Abu Dhabi
+            const abuDhabiCenter = { lat: 24.4539, lng: 54.3773 };
+            
+            map = new google.maps.Map(document.getElementById('googleMap'), {
+                center: abuDhabiCenter,
+                zoom: 12,
+                mapTypeControl: true,
+                mapTypeControlOptions: {
+                    style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
+                    position: google.maps.ControlPosition.TOP_RIGHT
+                },
+                zoomControl: true,
+                zoomControlOptions: {
+                    position: google.maps.ControlPosition.RIGHT_CENTER
+                },
+                streetViewControl: true,
+                fullscreenControl: true,
+                styles: [
+                    {
+                        featureType: "poi",
+                        elementType: "labels",
+                        stylers: [{ visibility: "on" }]
+                    }
+                ]
+            });
+            
+            infoWindow = new google.maps.InfoWindow();
+            
+            // Load shop markers
+            loadShopMarkers();
+        }
+        
+        // Load shop markers on the map
+        function loadShopMarkers() {
+            if (!map || !shopsDetails) return;
+            
+            // Clear existing markers
+            markers.forEach(marker => marker.setMap(null));
+            markers = [];
+            
+            const bounds = new google.maps.LatLngBounds();
+            let hasValidCoordinates = false;
+            
+            // Get available shops based on current filters
+            const availableShopNames = getAvailableShopsForMap();
+            
+            Object.keys(shopsDetails).forEach(shopName => {
+                const shop = shopsDetails[shopName];
+                
+                // Skip invalid shop entries
+                if (!shop || !shop.nameAr || shop.nameAr === shopName) {
+                    // Check if this is a valid shop
+                    if (!shop.locationMap && !shop.address) return;
+                }
+                
+                // Extract coordinates from Google Maps link or use geocoding
+                const coords = extractCoordinatesFromLink(shop.locationMap);
+                
+                if (coords) {
+                    const isAvailable = availableShopNames.includes(shopName);
+                    const isSelected = mapSelectedShops.includes(shopName);
+                    const priority = getShopPriority(shopName);
+                    
+                    // Determine marker color based on status
+                    let markerColor = '#999999'; // Gray for unavailable
+                    if (isSelected) {
+                        markerColor = '#28a745'; // Green for selected
+                    } else if (isAvailable) {
+                        if (priority === 'very-high') markerColor = '#8b0000';
+                        else if (priority === 'high') markerColor = '#dc3545';
+                        else if (priority === 'medium') markerColor = '#ffc107';
+                        else markerColor = '#667eea';
+                    }
+                    
+                    const marker = new google.maps.Marker({
+                        position: coords,
+                        map: map,
+                        title: shop.nameAr || shopName,
+                        icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            scale: isSelected ? 12 : 8,
+                            fillColor: markerColor,
+                            fillOpacity: isSelected ? 1 : 0.8,
+                            strokeColor: 'white',
+                            strokeWeight: 2
+                        },
+                        shopName: shopName,
+                        shopData: shop,
+                        isAvailable: isAvailable
+                    });
+                    
+                    // Add click event to marker
+                    marker.addListener('click', () => {
+                        if (!marker.isAvailable) {
+                            showInfoWindow(marker, 'هذا المحل غير متاح للاختيار حالياً');
+                            return;
+                        }
+                        
+                        toggleShopSelection(marker);
+                    });
+                    
+                    // Add hover event
+                    marker.addListener('mouseover', () => {
+                        showInfoWindow(marker, null);
+                    });
+                    
+                    markers.push(marker);
+                    bounds.extend(coords);
+                    hasValidCoordinates = true;
+                }
+            });
+            
+            // Fit map to show all markers
+            if (hasValidCoordinates) {
+                map.fitBounds(bounds);
+                // Don't zoom in too much if only one marker
+                google.maps.event.addListenerOnce(map, 'bounds_changed', function() {
+                    if (map.getZoom() > 15) {
+                        map.setZoom(15);
+                    }
+                });
+            }
+            
+            updateMapStats();
+        }
+        
+        // Extract coordinates from Google Maps link
+        function extractCoordinatesFromLink(link) {
+            if (!link) return null;
+            
+            try {
+                // Try different Google Maps URL formats
+                // Format 1: maps.app.goo.gl short links - these need geocoding
+                // Format 2: google.com/maps with @lat,lng
+                // Format 3: google.com/maps/search with query
+                
+                if (link.includes('@')) {
+                    const match = link.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+                    if (match) {
+                        return {
+                            lat: parseFloat(match[1]),
+                            lng: parseFloat(match[2])
+                        };
+                    }
+                }
+                
+                // For short links, we'll use a default location in Abu Dhabi
+                // In production, you'd want to geocode these or store actual coordinates
+                // For now, distribute them around Abu Dhabi
+                const abuDhabiBase = { lat: 24.4539, lng: 54.3773 };
+                const randomOffset = () => (Math.random() - 0.5) * 0.1;
+                
+                return {
+                    lat: abuDhabiBase.lat + randomOffset(),
+                    lng: abuDhabiBase.lng + randomOffset()
+                };
+            } catch (e) {
+                console.error('Error extracting coordinates:', e);
+                return null;
+            }
+        }
+        
+        // Get available shops for map based on filters
+        function getAvailableShopsForMap() {
+            const inspector = document.getElementById('mapInspectorSelect').value;
+            const date = document.getElementById('mapInspectionDate').value;
+            const area = document.getElementById('mapAreaSelect').value;
+            
+            if (!inspector || !date) {
+                return []; // Return empty if inspector or date not selected
+            }
+            
+            // Get all shops
+            let availableShops = Object.keys(shopsDetails).filter(shopName => {
+                const shop = shopsDetails[shopName];
+                return shop && shop.nameAr;
+            });
+            
+            // Filter by area if selected
+            if (area) {
+                availableShops = availableShops.filter(shopName => {
+                    const shop = shopsDetails[shopName];
+                    return shop.area === area;
+                });
+            }
+            
+            // Filter out shops already inspected on this date
+            const inspectedShops = getInspectedShopsOnDate(date);
+            availableShops = availableShops.filter(shop => !inspectedShops.includes(shop));
+            
+            return availableShops;
+        }
+        
+        // Get inspected shops on a specific date
+        function getInspectedShopsOnDate(date) {
+            if (!planData || !planData.inspectionData) return [];
+            
+            const inspected = [];
+            planData.inspectionData.forEach(inspection => {
+                if (inspection.day === date) {
+                    inspected.push(...inspection.shops);
+                }
+            });
+            
+            return inspected;
+        }
+        
+        // Toggle shop selection on map
+        function toggleShopSelection(marker) {
+            const shopName = marker.shopName;
+            const index = mapSelectedShops.indexOf(shopName);
+            
+            if (index > -1) {
+                // Deselect
+                mapSelectedShops.splice(index, 1);
+                marker.setIcon({
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 8,
+                    fillColor: getPriorityColor(shopName),
+                    fillOpacity: 0.8,
+                    strokeColor: 'white',
+                    strokeWeight: 2
+                });
+            } else {
+                // Select
+                mapSelectedShops.push(shopName);
+                marker.setIcon({
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 12,
+                    fillColor: '#28a745',
+                    fillOpacity: 1,
+                    strokeColor: 'white',
+                    strokeWeight: 2
+                });
+            }
+            
+            updateMapSelection();
+        }
+        
+        // Get priority color for a shop
+        function getPriorityColor(shopName) {
+            const priority = getShopPriority(shopName);
+            if (priority === 'very-high') return '#8b0000';
+            if (priority === 'high') return '#dc3545';
+            if (priority === 'medium') return '#ffc107';
+            return '#667eea';
+        }
+        
+        // Show info window for marker
+        function showInfoWindow(marker, customMessage) {
+            const shop = marker.shopData;
+            const shopName = marker.shopName;
+            const priority = getShopPriority(shopName);
+            
+            let priorityText = '';
+            if (priority === 'very-high') priorityText = '🔴 أولوية عالية جداً';
+            else if (priority === 'high') priorityText = '🔴 أولوية عالية';
+            else if (priority === 'medium') priorityText = '🟡 أولوية متوسطة';
+            else priorityText = '🟢 أولوية منخفضة';
+            
+            const content = customMessage || `
+                <div style="font-family: Cairo, Arial; direction: rtl; text-align: right; padding: 10px;">
+                    <h3 style="margin: 0 0 10px 0; color: #2d3561;">${shop.nameAr || shopName}</h3>
+                    ${shop.nameEn ? `<p style="margin: 5px 0; color: #666;"><strong>English:</strong> ${shop.nameEn}</p>` : ''}
+                    ${shop.admCode ? `<p style="margin: 5px 0;"><strong>كود ADM:</strong> ${shop.admCode}</p>` : ''}
+                    ${shop.licenseNo ? `<p style="margin: 5px 0;"><strong>رقم الترخيص:</strong> ${shop.licenseNo}</p>` : ''}
+                    ${shop.address ? `<p style="margin: 5px 0;"><strong>العنوان:</strong> ${shop.address}</p>` : ''}
+                    ${shop.area ? `<p style="margin: 5px 0;"><strong>المنطقة:</strong> ${shop.area}</p>` : ''}
+                    <p style="margin: 5px 0;"><strong>الأولوية:</strong> ${priorityText}</p>
+                    ${marker.isAvailable ? 
+                        `<p style="margin: 10px 0 0 0; color: #28a745; font-weight: 600;">✅ متاح للاختيار</p>` : 
+                        `<p style="margin: 10px 0 0 0; color: #dc3545; font-weight: 600;">❌ غير متاح</p>`
+                    }
+                </div>
+            `;
+            
+            infoWindow.setContent(content);
+            infoWindow.open(map, marker);
+        }
+        
+        // Update map selection display
+        function updateMapSelection() {
+            const container = document.getElementById('selectedShopsOnMap');
+            const tagsContainer = document.getElementById('selectedShopTags');
+            const countElement = document.getElementById('mapSelectedCount');
+            
+            countElement.textContent = mapSelectedShops.length;
+            
+            if (mapSelectedShops.length > 0) {
+                container.style.display = 'block';
+                tagsContainer.innerHTML = mapSelectedShops.map(shopName => {
+                    const shop = shopsDetails[shopName];
+                    return `
+                        <span class="selected-shop-tag">
+                            <span class="remove" onclick="removeShopFromMapSelection('${shopName}')">✖</span>
+                            ${shop?.nameAr || shopName}
+                        </span>
+                    `;
+                }).join('');
+            } else {
+                container.style.display = 'none';
+            }
+            
+            // Update buttons
+            const applyBtn = document.getElementById('applyMapBtn');
+            const saveBtn = document.getElementById('saveFromMapBtn');
+            const inspector = document.getElementById('mapInspectorSelect').value;
+            const date = document.getElementById('mapInspectionDate').value;
+            
+            const canProceed = mapSelectedShops.length > 0 && inspector && date;
+            applyBtn.disabled = !canProceed;
+            saveBtn.disabled = !canProceed;
+            
+            updateMapStats();
+        }
+        
+        // Remove shop from map selection
+        function removeShopFromMapSelection(shopName) {
+            const index = mapSelectedShops.indexOf(shopName);
+            if (index > -1) {
+                mapSelectedShops.splice(index, 1);
+                
+                // Update marker
+                const marker = markers.find(m => m.shopName === shopName);
+                if (marker) {
+                    marker.setIcon({
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 8,
+                        fillColor: getPriorityColor(shopName),
+                        fillOpacity: 0.8,
+                        strokeColor: 'white',
+                        strokeWeight: 2
+                    });
+                }
+                
+                updateMapSelection();
+            }
+        }
+        
+        // Update map statistics
+        function updateMapStats() {
+            const totalShops = Object.keys(shopsDetails).length;
+            const availableShops = getAvailableShopsForMap().length;
+            const selectedShops = mapSelectedShops.length;
+            const highPriorityShops = getAvailableShopsForMap().filter(shop => {
+                const priority = getShopPriority(shop);
+                return priority === 'high' || priority === 'very-high';
+            }).length;
+            
+            document.getElementById('mapTotalShops').textContent = totalShops;
+            document.getElementById('mapAvailableShops').textContent = availableShops;
+            document.getElementById('mapSelectedShops').textContent = selectedShops;
+            document.getElementById('mapHighPriorityShops').textContent = highPriorityShops;
+        }
+        
+        // Helper functions for map tools
+        function selectNearbyShops() {
+            if (mapSelectedShops.length === 0) {
+                alert('⚠️ اختر محل واحد على الأقل أولاً لاختيار المحلات القريبة منه');
+                return;
+            }
+            
+            // Get the center of currently selected shops
+            const selectedMarkers = markers.filter(m => mapSelectedShops.includes(m.shopName));
+            if (selectedMarkers.length === 0) return;
+            
+            let centerLat = 0, centerLng = 0;
+            selectedMarkers.forEach(marker => {
+                centerLat += marker.getPosition().lat();
+                centerLng += marker.getPosition().lng();
+            });
+            centerLat /= selectedMarkers.length;
+            centerLng /= selectedMarkers.length;
+            
+            // Find nearby shops (within 2km radius)
+            const radius = 2000; // meters
+            const availableShops = getAvailableShopsForMap();
+            
+            markers.forEach(marker => {
+                if (!marker.isAvailable || mapSelectedShops.includes(marker.shopName)) return;
+                
+                const distance = google.maps.geometry.spherical.computeDistanceBetween(
+                    new google.maps.LatLng(centerLat, centerLng),
+                    marker.getPosition()
+                );
+                
+                if (distance <= radius) {
+                    mapSelectedShops.push(marker.shopName);
+                    marker.setIcon({
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 12,
+                        fillColor: '#28a745',
+                        fillOpacity: 1,
+                        strokeColor: 'white',
+                        strokeWeight: 2
+                    });
+                }
+            });
+            
+            updateMapSelection();
+        }
+        
+        function selectHighPriorityShops() {
+            const availableShops = getAvailableShopsForMap();
+            
+            markers.forEach(marker => {
+                if (!marker.isAvailable || mapSelectedShops.includes(marker.shopName)) return;
+                
+                const priority = getShopPriority(marker.shopName);
+                if (priority === 'high' || priority === 'very-high') {
+                    mapSelectedShops.push(marker.shopName);
+                    marker.setIcon({
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 12,
+                        fillColor: '#28a745',
+                        fillOpacity: 1,
+                        strokeColor: 'white',
+                        strokeWeight: 2
+                    });
+                }
+            });
+            
+            updateMapSelection();
+        }
+        
+        function clearMapSelection() {
+            mapSelectedShops = [];
+            markers.forEach(marker => {
+                if (marker.isAvailable) {
+                    marker.setIcon({
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 8,
+                        fillColor: getPriorityColor(marker.shopName),
+                        fillOpacity: 0.8,
+                        strokeColor: 'white',
+                        strokeWeight: 2
+                    });
+                }
+            });
+            updateMapSelection();
+        }
+        
+        function zoomToSelectedShops() {
+            if (mapSelectedShops.length === 0) {
+                alert('⚠️ لم يتم اختيار أي محلات');
+                return;
+            }
+            
+            const bounds = new google.maps.LatLngBounds();
+            markers.forEach(marker => {
+                if (mapSelectedShops.includes(marker.shopName)) {
+                    bounds.extend(marker.getPosition());
+                }
+            });
+            
+            map.fitBounds(bounds);
+        }
+        
+        function showAllShops() {
+            const bounds = new google.maps.LatLngBounds();
+            markers.forEach(marker => {
+                bounds.extend(marker.getPosition());
+            });
+            map.fitBounds(bounds);
+        }
+        
+        // Open map modal
+        function openMapModal() {
+            if (!isMapInitialized) {
+                alert('⚠️ جاري تحميل خرائط جوجل... يرجى الانتظار لحظة والمحاولة مرة أخرى');
+                return;
+            }
+            
+            if (!planData || !shopsDetails) {
+                alert('⚠️ يرجى تحميل البيانات أولاً');
+                return;
+            }
+            
+            // Show modal
+            document.getElementById('mapModal').classList.add('show');
+            
+            // Populate inspector dropdown
+            populateMapInspectorDropdown();
+            
+            // Populate area dropdown
+            populateMapAreaDropdown();
+            
+            // Initialize map if not already done
+            setTimeout(() => {
+                if (!map) {
+                    createMap();
+                } else {
+                    loadShopMarkers();
+                }
+            }, 300);
+        }
+        
+        // Close map modal
+        function closeMapModal() {
+            document.getElementById('mapModal').classList.remove('show');
+            mapSelectedShops = [];
+        }
+        
+        // Populate inspector dropdown for map
+        function populateMapInspectorDropdown() {
+            const select = document.getElementById('mapInspectorSelect');
+            const currentValue = select.value;
+            
+            select.innerHTML = '<option value="">اختر المفتش...</option>';
+            
+            if (!planData || !planData.inspectionData) return;
+            
+            const inspectors = [...new Set(planData.inspectionData.map(i => i.inspector))].sort();
+            
+            inspectors.forEach(inspector => {
+                const option = document.createElement('option');
+                option.value = inspector;
+                option.textContent = inspector;
+                if (inspector === currentValue) option.selected = true;
+                select.appendChild(option);
+            });
+        }
+        
+        // Populate area dropdown for map
+        function populateMapAreaDropdown() {
+            const select = document.getElementById('mapAreaSelect');
+            const currentValue = select.value;
+            
+            select.innerHTML = '<option value="">جميع المناطق</option>';
+            
+            if (!shopsDetails) return;
+            
+            const areas = [...new Set(Object.values(shopsDetails)
+                .filter(shop => shop && shop.area)
+                .map(shop => shop.area))].sort();
+            
+            areas.forEach(area => {
+                const option = document.createElement('option');
+                option.value = area;
+                option.textContent = area;
+                if (area === currentValue) option.selected = true;
+                select.appendChild(option);
+            });
+        }
+        
+        // Update map controls
+        function updateMapControls() {
+            if (map) {
+                loadShopMarkers();
+            }
+        }
+        
+        // Filter shops by area on map
+        function filterShopsByArea() {
+            if (map) {
+                loadShopMarkers();
+            }
+        }
+        
+        // Apply map selection to main form
+        function applyMapSelection() {
+            if (mapSelectedShops.length === 0) {
+                alert('⚠️ يرجى اختيار محل واحد على الأقل');
+                return;
+            }
+            
+            const inspector = document.getElementById('mapInspectorSelect').value;
+            const date = document.getElementById('mapInspectionDate').value;
+            const shift = document.getElementById('mapShiftSelect').value;
+            
+            if (!inspector || !date) {
+                alert('⚠️ يرجى اختيار المفتش والتاريخ');
+                return;
+            }
+            
+            // Fill the main form
+            document.getElementById('inspectorSelect').value = inspector;
+            document.getElementById('inspectionDate').value = date;
+            document.getElementById('shiftSelect').value = shift;
+            
+            // Set selected shops
+            selectedShops = [...mapSelectedShops];
+            
+            // Update the main form display
+            updateAvailableShops();
+            updateSelectedShopsDisplay();
+            updatePreview();
+            
+            // Close modal
+            closeMapModal();
+            
+            // Show success message
+            showStatus('✅ تم نقل الاختيار من الخريطة بنجاح! يمكنك الآن حفظ التفتيش', 'success');
+            
+            // Switch to add tab if not already there
+            switchTab('add');
+        }
+        
+        // Save inspection directly from map
+        async function saveFromMap() {
+            if (mapSelectedShops.length === 0) {
+                alert('⚠️ يرجى اختيار محل واحد على الأقل');
+                return;
+            }
+            
+            const inspector = document.getElementById('mapInspectorSelect').value;
+            const date = document.getElementById('mapInspectionDate').value;
+            const shift = document.getElementById('mapShiftSelect').value;
+            const area = document.getElementById('mapAreaSelect').value || 'متعدد';
+            
+            if (!inspector || !date) {
+                alert('⚠️ يرجى اختيار المفتش والتاريخ');
+                return;
+            }
+            
+            if (!confirm(`هل أنت متأكد من حفظ هذا التفتيش؟\n\nالمفتش: ${inspector}\nالتاريخ: ${date}\nالمناوبة: ${shift}\nعدد المحلات: ${mapSelectedShops.length}`)) {
+                return;
+            }
+            
+            // Create inspection object
+            const inspection = {
+                inspector: inspector,
+                day: date,
+                shift: shift,
+                area: area,
+                shops: [...mapSelectedShops]
+            };
+            
+            // Add to plan data
+            planData.inspectionData.push(inspection);
+            
+            // Save to GitHub
+            try {
+                await savePlanDataToGitHub(`إضافة تفتيش جديد من الخريطة - ${inspector} - ${date}`);
+                
+                // Show success and close modal
+                alert('✅ تم حفظ التفتيش بنجاح من الخريطة!');
+                closeMapModal();
+                
+                // Refresh displays
+                displayInspections();
+                updateCalendar();
+                updateInspectorStats();
+                
+                // Clear map selection
+                mapSelectedShops = [];
+            } catch (error) {
+                alert('❌ حدث خطأ في حفظ التفتيش: ' + error.message);
+            }
+        }
         
         // Tab switching
         function switchTab(tabName) {

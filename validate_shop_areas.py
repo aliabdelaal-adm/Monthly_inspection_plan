@@ -8,8 +8,15 @@ from collections import defaultdict
 
 def load_plan_data():
     """Load the plan-data.json file."""
-    with open('plan-data.json', 'r', encoding='utf-8') as f:
-        return json.load(f)
+    try:
+        with open('plan-data.json', 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print("Error: plan-data.json not found!")
+        exit(1)
+    except json.JSONDecodeError as e:
+        print(f"Error: Invalid JSON in plan-data.json: {e}")
+        exit(1)
 
 def main():
     print("="*80)
@@ -108,7 +115,8 @@ def main():
     
     print("\n" + "="*80)
     
-    return 0 if all_valid else 1
+    import sys
+    sys.exit(0 if all_valid else 1)
 
 if __name__ == '__main__':
-    exit(main())
+    main()

@@ -8,21 +8,32 @@ from datetime import datetime
 
 def load_plan_data():
     """Load the plan-data.json file."""
-    with open('plan-data.json', 'r', encoding='utf-8') as f:
-        return json.load(f)
+    try:
+        with open('plan-data.json', 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print("Error: plan-data.json not found!")
+        exit(1)
+    except json.JSONDecodeError as e:
+        print(f"Error: Invalid JSON in plan-data.json: {e}")
+        exit(1)
 
 def save_plan_data(data):
     """Save the plan-data.json file with backup."""
-    # Create backup
-    backup_name = f'plan-data.json.backup_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
-    with open(backup_name, 'w', encoding='utf-8') as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-    print(f"Backup created: {backup_name}")
-    
-    # Save updated data
-    with open('plan-data.json', 'w', encoding='utf-8') as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-    print("Updated plan-data.json saved")
+    try:
+        # Create backup
+        backup_name = f'plan-data.json.backup_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
+        with open(backup_name, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        print(f"Backup created: {backup_name}")
+        
+        # Save updated data
+        with open('plan-data.json', 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        print("Updated plan-data.json saved")
+    except IOError as e:
+        print(f"Error: Failed to save files: {e}")
+        exit(1)
 
 def main():
     print("="*80)

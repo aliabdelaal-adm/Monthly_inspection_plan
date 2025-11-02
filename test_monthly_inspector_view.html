@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار عرض المحلات الشهري للمفتش</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Cairo', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            color: white;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2d3561;
+        }
+        
+        select, input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'Cairo', Arial, sans-serif;
+            font-size: 1em;
+        }
+        
+        #shopsDisplay {
+            margin-top: 30px;
+        }
+        
+        .stats-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 اختبار ميزة العرض الشهري للمحلات</h1>
+            <p>عند اختيار المفتش، تظهر جميع المحلات الشهرية المخصصة له</p>
+        </div>
+        
+        <div class="form-group">
+            <label>اختر المفتش:</label>
+            <select id="inspectorSelect" onchange="updateShopsDisplay()">
+                <option value="">-- اختر المفتش --</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>التاريخ (اختياري):</label>
+            <input type="date" id="dateInput" onchange="updateShopsDisplay()">
+        </div>
+        
+        <div class="form-group">
+            <label>المنطقة (اختياري):</label>
+            <select id="areaSelect" onchange="updateShopsDisplay()">
+                <option value="">-- اختر المنطقة --</option>
+            </select>
+        </div>
+        
+        <div id="shopsDisplay"></div>
+    </div>
+    
+    <script>
+        // Mock data
+        const mockPlanData = {
+            inspectors: [
+                { id: "1", name: "د. آمنه بن صرم" },
+                { id: "2", name: "د. آيه سلامة" },
+                { id: "3", name: "د. حسينة العامري" },
+                { id: "4", name: "د. حصة العلي" },
+                { id: "5", name: "د. علي عبدالعال" }
+            ],
+            areas: [
+                { id: "a1", name: "سوق الميناء" },
+                { id: "a2", name: "الحصن" },
+                { id: "a3", name: "الخالدية" },
+                { id: "a4", name: "البطين" },
+                { id: "a5", name: "المشرف" }
+            ],
+            shops: [
+                { id: "s1", name: "محل بيت الطيور", areaId: "a1", area: "سوق الميناء" },
+                { id: "s2", name: "محل الميناء للطيور", areaId: "a1", area: "سوق الميناء" },
+                { id: "s3", name: "محل السحر للطيور", areaId: "a1", area: "سوق الميناء" },
+                { id: "s4", name: "العيادة الكندية", areaId: "a1", area: "سوق الميناء" },
+                { id: "s5", name: "محل بيتس استيشن", areaId: "a1", area: "سوق الميناء" },
+                { id: "s6", name: "محل فورس أند فيذرس", areaId: "a2", area: "الحصن" },
+                { id: "s7", name: "محل أكوا ريست هب", areaId: "a2", area: "الحصن" },
+                { id: "s8", name: "محل مركز الأحياء المائية", areaId: "a2", area: "الحصن" },
+                { id: "s9", name: "صالون هيمالايا للحيوانات", areaId: "a2", area: "الحصن" },
+                { id: "s10", name: "دريم وورلد للزهور وأسماك الزينة", areaId: "a2", area: "الحصن" },
+                { id: "s11", name: "محل جرين لندز", areaId: "a3", area: "الخالدية" },
+                { id: "s12", name: "محل عصافير الخليج", areaId: "a3", area: "الخالدية" },
+                { id: "s13", name: "محل جراح للطيور", areaId: "a3", area: "الخالدية" },
+                { id: "s14", name: "محل نجمة الشرق لأسماك الزينة", areaId: "a3", area: "الخالدية" },
+                { id: "s15", name: "عيادة لايف لاين", areaId: "a3", area: "الخالدية" }
+            ],
+            inspectionData: [
+                {
+                    inspector: "د. آمنه بن صرم",
+                    day: "2025-09-26",
+                    area: "سوق الميناء",
+                    shops: ["محل بيت الطيور", "محل الميناء للطيور"]
+                }
+            ]
+        };
+        
+        // Initialize
+        window.planData = mockPlanData;
+        
+        // Populate dropdowns
+        const inspectorSelect = document.getElementById('inspectorSelect');
+        const areaSelect = document.getElementById('areaSelect');
+        
+        mockPlanData.inspectors.forEach(inspector => {
+            const option = document.createElement('option');
+            option.value = inspector.name;
+            option.textContent = inspector.name;
+            inspectorSelect.appendChild(option);
+        });
+        
+        mockPlanData.areas.forEach(area => {
+            const option = document.createElement('option');
+            option.value = area.name;
+            option.textContent = area.name;
+            areaSelect.appendChild(option);
+        });
+        
+        // HTML escape function to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Update shops display function
+        function updateShopsDisplay() {
+            const inspector = document.getElementById('inspectorSelect').value;
+            const date = document.getElementById('dateInput').value;
+            const area = document.getElementById('areaSelect').value;
+            const container = document.getElementById('shopsDisplay');
+            
+            if (!inspector) {
+                container.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">اختر المفتش لعرض المحلات</p>';
+                return;
+            }
+            
+            // NEW FEATURE: Show monthly view when only inspector is selected
+            if (inspector && !date && !area) {
+                displayMonthlyShopsForInspector(inspector);
+                return;
+            }
+            
+            // Otherwise show filtered view
+            container.innerHTML = '<p style="text-align: center; color: #4CAF50; padding: 20px;">✅ تم اختيار المفتش مع التاريخ/المنطقة - عرض المحلات المفلترة</p>';
+        }
+        
+        // Display monthly shops for inspector
+        function displayMonthlyShopsForInspector(inspector) {
+            const container = document.getElementById('shopsDisplay');
+            
+            // Group shops by area
+            const shopsByArea = {};
+            let totalShops = 0;
+            
+            planData.areas.forEach(area => {
+                const areaShops = planData.shops
+                    .filter(shop => shop.areaId === area.id)
+                    .map(shop => shop.name);
+                
+                if (areaShops.length > 0) {
+                    shopsByArea[area.name] = areaShops;
+                    totalShops += areaShops.length;
+                }
+            });
+            
+            // Build HTML
+            let html = `
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                    <h3 style="margin: 0 0 10px 0; font-size: 1.3em;">📋 عرض شهري لجميع المحلات - ${escapeHtml(inspector)}</h3>
+                    <p style="margin: 0; opacity: 0.9;">إجمالي المحلات: ${totalShops} محل موزعة على ${Object.keys(shopsByArea).length} منطقة</p>
+                    <p style="margin: 5px 0 0 0; opacity: 0.85; font-size: 0.9em;">💡 اختر التاريخ والمنطقة للحصول على قائمة محلات دقيقة حسب الأولوية والتوفر</p>
+                </div>
+            `;
+            
+            // Sort areas alphabetically
+            const sortedAreas = Object.keys(shopsByArea).sort();
+            
+            sortedAreas.forEach(areaName => {
+                const shops = shopsByArea[areaName];
+                
+                html += `
+                    <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 15px; border-right: 4px solid #667eea;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <h4 style="margin: 0; color: #2d3561; font-size: 1.1em;">📍 ${escapeHtml(areaName)}</h4>
+                            <span style="background: #667eea; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.9em;">
+                                ${shops.length} محل
+                            </span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px;">
+                `;
+                
+                shops.forEach(shopName => {
+                    html += `
+                        <div style="background: white; padding: 10px; border-radius: 8px; border-right: 3px solid #4CAF50; font-size: 0.9em;">
+                            <div style="font-weight: 600; color: #2d3561;">${escapeHtml(shopName)}</div>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

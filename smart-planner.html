@@ -3469,6 +3469,12 @@
                 searchInput.value = '';
             }
             
+            // NEW FEATURE: Show monthly shops when only inspector is selected
+            if (inspector && !date && !area) {
+                displayMonthlyShopsForInspector(inspector);
+                return;
+            }
+            
             if (!inspector || !date || !area) {
                 document.getElementById('shopsListContainer').innerHTML = 
                     '<p style="text-align: center; color: #999; padding: 20px;">اختر المفتش والتاريخ والمنطقة لعرض المحلات المتاحة</p>';
@@ -3515,6 +3521,122 @@
             
             // Display shops
             displayShops(sortedShops);
+        }
+        
+        // NEW FEATURE: Display monthly shops for selected inspector
+        function displayMonthlyShopsForInspector(inspector) {
+            const container = document.getElementById('shopsListContainer');
+            const searchBox = document.getElementById('inspectionShopSearchBox');
+            const highPriorityBtn = document.getElementById('showHighPriorityBtn');
+            
+            // Hide high priority button in monthly view
+            highPriorityBtn.style.display = 'none';
+            
+            if (!planData || !planData.shops || !planData.areas) {
+                container.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">لا توجد بيانات متاحة</p>';
+                searchBox.style.display = 'none';
+                return;
+            }
+            
+            // Get all shops grouped by area
+            const shopsByArea = {};
+            let totalShops = 0;
+            
+            planData.areas.forEach(area => {
+                const areaShops = planData.shops
+                    .filter(shop => shop.areaId === area.id)
+                    .map(shop => shop.name);
+                
+                if (areaShops.length > 0) {
+                    shopsByArea[area.name] = areaShops;
+                    totalShops += areaShops.length;
+                }
+            });
+            
+            // Get current month for date filtering context
+            const currentDate = new Date();
+            const currentMonth = currentDate.getMonth();
+            const currentYear = currentDate.getFullYear();
+            
+            // Calculate priority for each shop for the inspector (using current date as reference)
+            const todayStr = currentDate.toISOString().split('T')[0];
+            
+            // Build HTML for monthly view
+            let html = `
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                    <h3 style="margin: 0 0 10px 0; font-size: 1.3em;">📋 عرض شهري لجميع المحلات - ${escapeHtml(inspector)}</h3>
+                    <p style="margin: 0; opacity: 0.9;">إجمالي المحلات: ${totalShops} محل موزعة على ${Object.keys(shopsByArea).length} منطقة</p>
+                    <p style="margin: 5px 0 0 0; opacity: 0.85; font-size: 0.9em;">💡 اختر التاريخ والمنطقة للحصول على قائمة محلات دقيقة حسب الأولوية والتوفر</p>
+                </div>
+            `;
+            
+            // Show search box
+            searchBox.style.display = 'block';
+            
+            // Sort areas alphabetically
+            const sortedAreas = Object.keys(shopsByArea).sort();
+            
+            // Track high priority shops for statistics
+            let highPriorityCount = 0;
+            
+            sortedAreas.forEach(areaName => {
+                const shops = shopsByArea[areaName];
+                
+                // Calculate priorities for shops in this area (for display purposes)
+                const shopsWithPriority = shops.map(shopName => {
+                    const priority = calculateShopPriority(shopName, inspector, todayStr);
+                    return { name: shopName, priority: priority.level, score: priority.score, reason: priority.reason };
+                }).sort((a, b) => b.score - a.score);
+                
+                // Count high priority shops
+                shopsWithPriority.forEach(shop => {
+                    if (shop.priority === 'very-high' || shop.priority === 'high') {
+                        highPriorityCount++;
+                    }
+                });
+                
+                html += `
+                    <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 15px; border-right: 4px solid #667eea;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <h4 style="margin: 0; color: #2d3561; font-size: 1.1em;">📍 ${escapeHtml(areaName)}</h4>
+                            <span style="background: #667eea; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.9em;">
+                                ${shops.length} محل
+                            </span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px;">
+                `;
+                
+                shopsWithPriority.forEach(shop => {
+                    const priorityColor = shop.priority === 'very-high' ? '#ff6b6b' : 
+                                         shop.priority === 'high' ? '#ffa500' : 
+                                         shop.priority === 'medium' ? '#4ecdc4' : '#95e1d3';
+                    
+                    const priorityText = shop.priority === 'very-high' ? '🔴 أولوية قصوى' : 
+                                        shop.priority === 'high' ? '🟠 أولوية عالية' : 
+                                        shop.priority === 'medium' ? '🟡 أولوية متوسطة' : '🟢 أولوية عادية';
+                    
+                    html += `
+                        <div class="shop-card monthly-view-shop" data-shop-name="${escapeHtml(shop.name)}" style="background: white; padding: 10px; border-radius: 8px; border-right: 3px solid ${priorityColor}; font-size: 0.9em;">
+                            <div style="font-weight: 600; color: #2d3561; margin-bottom: 4px;">${escapeHtml(shop.name)}</div>
+                            <div style="font-size: 0.85em; color: #666;">${priorityText}</div>
+                            ${shop.reason ? `<div style="font-size: 0.8em; color: #999; margin-top: 2px;">${escapeHtml(shop.reason)}</div>` : ''}
+                        </div>
+                    `;
+                });
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            
+            // Update statistics
+            document.getElementById('totalShopsCount').textContent = totalShops;
+            document.getElementById('availableShopsCount').textContent = totalShops;
+            document.getElementById('highPriorityCount').textContent = highPriorityCount;
+            document.getElementById('selectedShopsCount').textContent = selectedShops.length;
         }
         
         // Get all shops in an area

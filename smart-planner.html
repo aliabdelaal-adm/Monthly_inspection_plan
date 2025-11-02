@@ -9347,6 +9347,9 @@
         
         // Analyze shops for duplicates
         function analyzeDuplicateShops() {
+            // Configuration constants
+            const SIMILARITY_THRESHOLD = 0.7; // Threshold for detecting similar shop names (0-1)
+            
             const exactDuplicates = [];
             const similarShops = [];
             const sameAreaDuplicates = [];
@@ -9389,7 +9392,7 @@
                     const shop2 = allShops[j];
                     const similarity = calculateSimilarity(shop1.name, shop2.name);
                     
-                    if (similarity > 0.7 && similarity < 1.0) {
+                    if (similarity > SIMILARITY_THRESHOLD && similarity < 1.0) {
                         similarShops.push({
                             shop1: shop1,
                             shop2: shop2,
@@ -9666,7 +9669,9 @@
                 return;
             }
             
-            const newName = prompt('✏️ تعديل اسم المحل:', shop.name);
+            // Store old name before updating
+            const oldName = shop.name;
+            const newName = prompt('✏️ تعديل اسم المحل:', oldName);
             if (!newName || newName.trim() === '') return;
             
             // Update shop name
@@ -9676,7 +9681,6 @@
             if (planData.inspectionData) {
                 planData.inspectionData.forEach(inspection => {
                     if (inspection.shops) {
-                        const oldName = planData.shops.find(s => s.id === shopId)?.name;
                         const index = inspection.shops.indexOf(oldName);
                         if (index > -1) {
                             inspection.shops[index] = newName.trim();

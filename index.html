@@ -6034,7 +6034,7 @@
             </h4>
             
             <!-- تقويم ذكي بأيقونات احترافية -->
-            <div id="scheduleCalendarGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; margin-bottom: 20px;">
+            <div id="scheduleCalendarGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; margin-bottom: 20px; justify-items: center;">
                 <!-- سيتم ملء التقويم هنا بواسطة JavaScript -->
             </div>
             
@@ -18291,73 +18291,58 @@ function renderScheduleCalendar(schedules) {
         const gradient = monthGradients[schedule.monthNum - 1] || schedule.gradient;
         
         html += `
-            <div class="schedule-card" data-month="${schedule.monthNum}" data-year="${schedule.year}" 
+            <div class="schedule-card schedule-card-compact" data-month="${schedule.monthNum}" data-year="${schedule.year}" 
                  data-tags="${schedule.tags.join(' ')}"
                  style="background: ${gradient}; 
-                        padding: 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-                        color: white; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                        position: relative; overflow: hidden; cursor: pointer;
-                        animation: slideIn 0.5s ease ${index * 0.1}s both;"
-                 onmouseover="this.style.transform='translateY(-10px) scale(1.02)'; this.style.boxShadow='0 20px 40px rgba(0,0,0,0.25)';"
-                 onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.15)';">
+                        padding: 12px 8px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                        color: white; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                        position: relative; overflow: hidden; cursor: pointer; width: 120px;
+                        animation: slideIn 0.5s ease ${index * 0.1}s both; text-align: center;"
+                 onclick="viewScheduleFile('${schedule.file}')"
+                 onmouseover="this.style.transform='translateY(-5px) scale(1.05)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.25)';"
+                 onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)';">
                 
-                <!-- خلفية زخرفية -->
-                <div style="position: absolute; top: -30px; right: -30px; font-size: 140px; opacity: 0.15; 
-                            transform: rotate(-15deg); pointer-events: none;">
-                    ${monthIcon}
+                <!-- الشارة الصغيرة -->
+                <div style="position: absolute; top: 5px; left: 5px; background: rgba(255,255,255,0.35); 
+                            padding: 2px 6px; border-radius: 10px; font-size: 0.5em; font-weight: bold;
+                            backdrop-filter: blur(5px);">
+                    📋
                 </div>
                 
-                <!-- الشارة الذكية -->
-                <div style="position: absolute; top: 15px; left: 15px; background: rgba(255,255,255,0.3); 
-                            padding: 5px 12px; border-radius: 20px; font-size: 0.75em; font-weight: bold;
-                            backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.4);">
-                    📋 جدول مناوبات
-                </div>
-                
-                <div style="position: relative; z-index: 1; margin-top: 30px;">
-                    <!-- أيقونة الشهر الكبيرة -->
-                    <div style="font-size: 4em; margin-bottom: 15px; text-align: center; 
-                                text-shadow: 0 4px 8px rgba(0,0,0,0.2); animation: pulse 2s infinite;">
+                <div style="position: relative; z-index: 1;">
+                    <!-- أيقونة الشهر -->
+                    <div style="font-size: 2.5em; margin-bottom: 8px; text-align: center; 
+                                text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
                         ${monthIcon}
                     </div>
                     
-                    <!-- اسم الشهر والسنة -->
-                    <h3 style="margin: 0 0 8px 0; text-align: center; font-size: 1.5em; font-weight: bold;
-                               text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                    <!-- اسم الشهر -->
+                    <div style="margin: 0 0 4px 0; text-align: center; font-size: 0.9em; font-weight: bold;
+                               text-shadow: 0 1px 2px rgba(0,0,0,0.2);">
                         ${schedule.month}
-                    </h3>
-                    <div style="text-align: center; font-size: 1.1em; opacity: 0.95; margin-bottom: 15px;
-                                font-weight: 600;">
+                    </div>
+                    
+                    <!-- السنة -->
+                    <div style="text-align: center; font-size: 0.75em; opacity: 0.9; margin-bottom: 8px;">
                         ${schedule.year}
                     </div>
                     
-                    <!-- الوصف -->
-                    <p style="margin: 0 0 20px 0; text-align: center; font-size: 0.9em; opacity: 0.9;
-                              line-height: 1.5;">
-                        ${schedule.description}
-                    </p>
-                    
-                    <!-- خط فاصل -->
-                    <div style="height: 2px; background: rgba(255,255,255,0.3); margin: 15px 0;"></div>
-                    
-                    <!-- الأزرار الذكية -->
-                    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                    <!-- الأزرار المصغرة -->
+                    <div style="display: flex; gap: 4px; justify-content: center; flex-direction: column;">
                         <button onclick="event.stopPropagation(); viewScheduleFile('${schedule.file}')" 
-                                style="background: white; color: #2336a0; border: none; padding: 10px 20px;
-                                       border-radius: 25px; font-weight: bold; cursor: pointer; font-size: 0.95em;
-                                       transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-                                       flex: 1; min-width: 100px;"
-                                onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 6px 15px rgba(0,0,0,0.3)';"
-                                onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 10px rgba(0,0,0,0.2)';">
-                            👁️ عرض الجدول
+                                style="background: white; color: #2336a0; border: none; padding: 6px 10px;
+                                       border-radius: 15px; font-weight: bold; cursor: pointer; font-size: 0.7em;
+                                       transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.15);"
+                                onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 3px 8px rgba(0,0,0,0.25)';"
+                                onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 5px rgba(0,0,0,0.15)';">
+                            👁️ عرض
                         </button>
                         <button onclick="event.stopPropagation(); downloadScheduleFile('${schedule.file}')" 
-                                style="background: rgba(255,255,255,0.25); color: white; border: 2px solid white; 
-                                       padding: 10px 20px; border-radius: 25px; font-weight: bold; cursor: pointer;
-                                       font-size: 0.95em; transition: all 0.3s ease; backdrop-filter: blur(5px);
-                                       flex: 1; min-width: 100px;"
-                                onmouseover="this.style.background='rgba(255,255,255,0.4)'; this.style.transform='scale(1.08)';"
-                                onmouseout="this.style.background='rgba(255,255,255,0.25)'; this.style.transform='scale(1)';">
+                                style="background: rgba(255,255,255,0.3); color: white; border: 1px solid rgba(255,255,255,0.6); 
+                                       padding: 6px 10px; border-radius: 15px; font-weight: bold; cursor: pointer;
+                                       font-size: 0.7em; transition: all 0.3s ease; backdrop-filter: blur(3px);"
+                                onmouseover="this.style.background='rgba(255,255,255,0.5)'; this.style.transform='scale(1.05)';"
+                                onmouseout="this.style.background='rgba(255,255,255,0.3)'; this.style.transform='scale(1)';">
                             ⬇️ تحميل
                         </button>
                     </div>

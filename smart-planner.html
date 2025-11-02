@@ -1738,6 +1738,10 @@
                     <span>⚙️</span>
                     <span>عمليات جماعية</span>
                 </button>
+                <button class="btn btn-danger" onclick="openDuplicateShopsManager()" style="background: white; color: #e74c3c;">
+                    <span>🔄</span>
+                    <span>المحلات المكررة والمتشابهة</span>
+                </button>
             </div>
             
             <!-- Bell Notifications Control Button -->
@@ -3475,9 +3479,15 @@
                 return;
             }
             
-            if (!inspector || !date || !area) {
+            // NEW FEATURE: Show all shops in area when inspector and area are selected (without date)
+            if (inspector && area && !date) {
+                displayAllShopsInArea(inspector, area);
+                return;
+            }
+            
+            if (!inspector || !area) {
                 document.getElementById('shopsListContainer').innerHTML = 
-                    '<p style="text-align: center; color: #999; padding: 20px;">اختر المفتش والتاريخ والمنطقة لعرض المحلات المتاحة</p>';
+                    '<p style="text-align: center; color: #999; padding: 20px;">اختر المفتش والمنطقة لعرض جميع المحلات</p>';
                 document.getElementById('showHighPriorityBtn').style.display = 'none';
                 if (searchBox) {
                     searchBox.style.display = 'none';
@@ -3488,15 +3498,15 @@
             // Get all shops for the selected area
             const allShops = getAllShopsInArea(area);
             
-            // Filter shops based on smart rules
-            const availableShops = filterSmartShops(allShops, inspector, date);
+            // Filter shops based on smart rules (only if date is selected)
+            const availableShops = date ? filterSmartShops(allShops, inspector, date) : allShops;
             
             // Sort shops by priority
-            const sortedShops = sortShopsByPriority(availableShops, inspector, date);
+            const sortedShops = sortShopsByPriority(availableShops, inspector, date || new Date().toISOString().split('T')[0]);
             
             // Get high-priority shops that were filtered out
             const unavailableShops = allShops.filter(shop => !availableShops.includes(shop));
-            const highPriorityUnavailable = sortShopsByPriority(unavailableShops, inspector, date)
+            const highPriorityUnavailable = sortShopsByPriority(unavailableShops, inspector, date || new Date().toISOString().split('T')[0])
                 .filter(shop => shop.priority === 'very-high' || shop.priority === 'high');
             
             // Store for later use
@@ -3505,7 +3515,7 @@
             
             // Show/hide the high priority button based on availability
             const highPriorityBtn = document.getElementById('showHighPriorityBtn');
-            if (currentHighPriorityShops.length > 0) {
+            if (currentHighPriorityShops.length > 0 && date) {
                 highPriorityBtn.style.display = 'inline-flex';
             } else {
                 highPriorityBtn.style.display = 'none';
@@ -3635,6 +3645,118 @@
             // Update statistics
             document.getElementById('totalShopsCount').textContent = totalShops;
             document.getElementById('availableShopsCount').textContent = totalShops;
+            document.getElementById('highPriorityCount').textContent = highPriorityCount;
+            document.getElementById('selectedShopsCount').textContent = selectedShops.length;
+        }
+        
+        // NEW FEATURE: Display all shops in area when inspector and area selected (without date)
+        function displayAllShopsInArea(inspector, area) {
+            const container = document.getElementById('shopsListContainer');
+            const searchBox = document.getElementById('inspectionShopSearchBox');
+            const highPriorityBtn = document.getElementById('showHighPriorityBtn');
+            
+            // Hide high priority button in this view
+            highPriorityBtn.style.display = 'none';
+            
+            if (!planData || !planData.shops || !planData.areas) {
+                container.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">لا توجد بيانات متاحة</p>';
+                searchBox.style.display = 'none';
+                return;
+            }
+            
+            // Get all shops for the selected area
+            const allShops = getAllShopsInArea(area);
+            
+            if (allShops.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">لا توجد محلات في هذه المنطقة</p>';
+                searchBox.style.display = 'none';
+                return;
+            }
+            
+            // Show search box
+            searchBox.style.display = 'block';
+            
+            // Use current date for priority calculation
+            const todayStr = new Date().toISOString().split('T')[0];
+            
+            // Calculate priority for each shop
+            const shopsWithPriority = allShops.map(shopName => {
+                const priority = calculateShopPriority(shopName, inspector, todayStr);
+                return { name: shopName, priority: priority.level, score: priority.score, reason: priority.reason };
+            }).sort((a, b) => b.score - a.score);
+            
+            // Store for later use
+            currentAvailableShops = shopsWithPriority;
+            currentHighPriorityShops = [];
+            
+            // Build HTML for area view
+            let html = `
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                    <h3 style="margin: 0 0 10px 0; font-size: 1.3em;">📍 جميع محلات منطقة ${escapeHtml(area)}</h3>
+                    <p style="margin: 0; opacity: 0.9;">المفتش: ${escapeHtml(inspector)} | إجمالي المحلات: ${allShops.length}</p>
+                    <p style="margin: 5px 0 0 0; opacity: 0.85; font-size: 0.9em;">💡 اختر التاريخ للحصول على القائمة المفلترة حسب قواعد التوزيع الذكي</p>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+            
+            // Create shops list container
+            const shopsListDiv = document.createElement('div');
+            shopsListDiv.className = 'shops-list';
+            
+            // Display each shop
+            shopsWithPriority.forEach(shop => {
+                const isSelected = selectedShops.includes(shop.name);
+                const lastInspection = getLastInspectionDate(shop.name);
+                
+                // Create shop card element
+                const shopCard = document.createElement('div');
+                shopCard.className = `shop-card ${shop.priority}-priority ${isSelected ? 'selected' : ''}`;
+                shopCard.onclick = function() { toggleShop(shop.name); };
+                
+                // Priority badge
+                const priorityBadge = document.createElement('div');
+                priorityBadge.className = `priority-badge ${shop.priority}`;
+                priorityBadge.textContent = shop.priority === 'very-high' ? 'أولوية عالية جداً' :
+                                            shop.priority === 'high' ? 'أولوية عالية' : 
+                                            shop.priority === 'medium' ? 'أولوية متوسطة' : 'أولوية منخفضة';
+                
+                // Shop name
+                const shopName = document.createElement('div');
+                shopName.className = 'shop-name';
+                shopName.textContent = shop.name;
+                
+                // Shop info - score
+                const shopScore = document.createElement('div');
+                shopScore.className = 'shop-info';
+                shopScore.textContent = '📊 النقاط: ' + shop.score;
+                
+                // Shop info - reason
+                const shopReason = document.createElement('div');
+                shopReason.className = 'shop-info';
+                shopReason.textContent = '📝 ' + shop.reason;
+                
+                // Last inspection
+                const lastInspectionDiv = document.createElement('div');
+                lastInspectionDiv.className = 'last-inspection';
+                lastInspectionDiv.textContent = '📅 آخر تفتيش: ' + (lastInspection || 'لم يتم التفتيش بعد');
+                
+                // Append all elements
+                shopCard.appendChild(priorityBadge);
+                shopCard.appendChild(shopName);
+                shopCard.appendChild(shopScore);
+                shopCard.appendChild(shopReason);
+                shopCard.appendChild(lastInspectionDiv);
+                
+                shopsListDiv.appendChild(shopCard);
+            });
+            
+            container.appendChild(shopsListDiv);
+            
+            // Update statistics
+            const highPriorityCount = shopsWithPriority.filter(s => s.priority === 'very-high' || s.priority === 'high').length;
+            document.getElementById('totalShopsCount').textContent = allShops.length;
+            document.getElementById('availableShopsCount').textContent = allShops.length;
             document.getElementById('highPriorityCount').textContent = highPriorityCount;
             document.getElementById('selectedShopsCount').textContent = selectedShops.length;
         }
@@ -9119,6 +9241,642 @@
             } catch (error) {
                 alert('❌ فشل الحفظ: ' + error.message);
             }
+        };
+        
+        // NEW FEATURE: Duplicate & Similar Shops Manager
+        function openDuplicateShopsManager() {
+            if (!planData || !planData.shops) {
+                alert('⚠️ لا توجد بيانات محلات متاحة');
+                return;
+            }
+            
+            // Analyze shops for duplicates and similar names
+            const duplicateAnalysis = analyzeDuplicateShops();
+            
+            // Create modal
+            const modal = document.createElement('div');
+            modal.id = 'duplicateShopsModal';
+            modal.style.cssText = `
+                display: block;
+                position: fixed;
+                z-index: 10000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                overflow: auto;
+                animation: fadeIn 0.3s ease;
+            `;
+            
+            let modalContent = `
+                <div style="background: white; margin: 2% auto; padding: 30px; border-radius: 20px; max-width: 1200px; box-shadow: 0 20px 60px rgba(0,0,0,0.4);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 3px solid #e74c3c;">
+                        <h2 style="color: #2d3561; margin: 0;">🔄 إدارة المحلات المكررة والمتشابهة</h2>
+                        <button onclick="document.getElementById('duplicateShopsModal').remove()" style="font-size: 2em; border: none; background: none; cursor: pointer; color: #999;">×</button>
+                    </div>
+                    
+                    <!-- Summary Statistics -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 2.5em; font-weight: 700;">${planData.shops.length}</div>
+                            <div style="opacity: 0.9;">إجمالي المحلات</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; padding: 20px; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 2.5em; font-weight: 700;">${duplicateAnalysis.exactDuplicates.length}</div>
+                            <div style="opacity: 0.9;">محلات مكررة تماماً</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; padding: 20px; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 2.5em; font-weight: 700;">${duplicateAnalysis.similarShops.length}</div>
+                            <div style="opacity: 0.9;">محلات متشابهة</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; padding: 20px; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 2.5em; font-weight: 700;">${duplicateAnalysis.sameAreaDuplicates.length}</div>
+                            <div style="opacity: 0.9;">مكررات في نفس المنطقة</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Search & Filter -->
+                    <div style="margin-bottom: 20px;">
+                        <input type="text" id="duplicateShopsSearch" placeholder="🔍 ابحث عن محل معين..." style="width: 100%; padding: 12px 20px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1em; font-family: 'Cairo', Arial, sans-serif;" oninput="filterDuplicateShops()">
+                    </div>
+                    
+                    <!-- Tabs for different views -->
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                        <button onclick="showDuplicateTab('exact')" id="exactDupTab" class="dup-tab-btn active" style="flex: 1; padding: 12px 20px; border: none; border-radius: 10px; background: #e74c3c; color: white; cursor: pointer; font-family: 'Cairo', Arial, sans-serif; font-weight: 600;">
+                            🔴 مكررة تماماً (${duplicateAnalysis.exactDuplicates.length})
+                        </button>
+                        <button onclick="showDuplicateTab('similar')" id="similarTab" class="dup-tab-btn" style="flex: 1; padding: 12px 20px; border: none; border-radius: 10px; background: #95a5a6; color: white; cursor: pointer; font-family: 'Cairo', Arial, sans-serif; font-weight: 600;">
+                            🟠 متشابهة (${duplicateAnalysis.similarShops.length})
+                        </button>
+                        <button onclick="showDuplicateTab('sameArea')" id="sameAreaTab" class="dup-tab-btn" style="flex: 1; padding: 12px 20px; border: none; border-radius: 10px; background: #95a5a6; color: white; cursor: pointer; font-family: 'Cairo', Arial, sans-serif; font-weight: 600;">
+                            🗺️ نفس المنطقة (${duplicateAnalysis.sameAreaDuplicates.length})
+                        </button>
+                        <button onclick="showDuplicateTab('all')" id="allShopsTab" class="dup-tab-btn" style="flex: 1; padding: 12px 20px; border: none; border-radius: 10px; background: #95a5a6; color: white; cursor: pointer; font-family: 'Cairo', Arial, sans-serif; font-weight: 600;">
+                            📋 جميع المحلات (${planData.shops.length})
+                        </button>
+                    </div>
+                    
+                    <!-- Content Area -->
+                    <div id="duplicateShopsContent" style="max-height: 500px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                        ${renderDuplicateShops(duplicateAnalysis.exactDuplicates, 'exact')}
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e0e0e0; display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button onclick="mergeSelectedDuplicates()" class="btn btn-success" style="flex: 1;">
+                            <span>🔗</span> دمج المحلات المحددة
+                        </button>
+                        <button onclick="deleteSelectedDuplicates()" class="btn btn-danger" style="flex: 1;">
+                            <span>🗑️</span> حذف المحلات المحددة
+                        </button>
+                        <button onclick="exportDuplicateReport()" class="btn btn-info" style="flex: 1;">
+                            <span>📊</span> تصدير التقرير
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            modal.innerHTML = modalContent;
+            document.body.appendChild(modal);
+            
+            // Store analysis data globally for use in other functions
+            window.currentDuplicateAnalysis = duplicateAnalysis;
+            window.selectedDuplicateShops = new Set();
+        }
+        
+        // Analyze shops for duplicates
+        function analyzeDuplicateShops() {
+            // Configuration constants
+            const SIMILARITY_THRESHOLD = 0.7; // Threshold for detecting similar shop names (0-1)
+            
+            const exactDuplicates = [];
+            const similarShops = [];
+            const sameAreaDuplicates = [];
+            const shopNames = new Map();
+            const shopsByArea = new Map();
+            
+            // Group shops by name and area
+            planData.shops.forEach((shop, index) => {
+                const normalizedName = shop.name.trim().toLowerCase();
+                
+                // Track exact duplicates
+                if (!shopNames.has(normalizedName)) {
+                    shopNames.set(normalizedName, []);
+                }
+                shopNames.get(normalizedName).push({...shop, index});
+                
+                // Track shops by area
+                if (!shopsByArea.has(shop.areaId)) {
+                    shopsByArea.set(shop.areaId, []);
+                }
+                shopsByArea.get(shop.areaId).push({...shop, index});
+            });
+            
+            // Find exact duplicates
+            shopNames.forEach((shops, name) => {
+                if (shops.length > 1) {
+                    exactDuplicates.push({
+                        name: shops[0].name,
+                        count: shops.length,
+                        shops: shops
+                    });
+                }
+            });
+            
+            // Find similar shops (using basic similarity)
+            const allShops = planData.shops.map((shop, index) => ({...shop, index}));
+            for (let i = 0; i < allShops.length; i++) {
+                for (let j = i + 1; j < allShops.length; j++) {
+                    const shop1 = allShops[i];
+                    const shop2 = allShops[j];
+                    const similarity = calculateSimilarity(shop1.name, shop2.name);
+                    
+                    if (similarity > SIMILARITY_THRESHOLD && similarity < 1.0) {
+                        similarShops.push({
+                            shop1: shop1,
+                            shop2: shop2,
+                            similarity: (similarity * 100).toFixed(0)
+                        });
+                    }
+                }
+            }
+            
+            // Find duplicates in same area
+            shopsByArea.forEach((shops, areaId) => {
+                const nameCount = new Map();
+                shops.forEach(shop => {
+                    const normalizedName = shop.name.trim().toLowerCase();
+                    if (!nameCount.has(normalizedName)) {
+                        nameCount.set(normalizedName, []);
+                    }
+                    nameCount.get(normalizedName).push(shop);
+                });
+                
+                nameCount.forEach((duplicates, name) => {
+                    if (duplicates.length > 1) {
+                        sameAreaDuplicates.push({
+                            area: duplicates[0].area,
+                            areaId: areaId,
+                            name: duplicates[0].name,
+                            count: duplicates.length,
+                            shops: duplicates
+                        });
+                    }
+                });
+            });
+            
+            return { exactDuplicates, similarShops, sameAreaDuplicates };
+        }
+        
+        // Calculate string similarity (Levenshtein distance based)
+        function calculateSimilarity(str1, str2) {
+            const s1 = str1.toLowerCase().trim();
+            const s2 = str2.toLowerCase().trim();
+            
+            const longer = s1.length > s2.length ? s1 : s2;
+            const shorter = s1.length > s2.length ? s2 : s1;
+            
+            if (longer.length === 0) return 1.0;
+            
+            const editDistance = levenshteinDistance(longer, shorter);
+            return (longer.length - editDistance) / longer.length;
+        }
+        
+        // Levenshtein distance algorithm
+        function levenshteinDistance(str1, str2) {
+            const matrix = [];
+            
+            for (let i = 0; i <= str2.length; i++) {
+                matrix[i] = [i];
+            }
+            
+            for (let j = 0; j <= str1.length; j++) {
+                matrix[0][j] = j;
+            }
+            
+            for (let i = 1; i <= str2.length; i++) {
+                for (let j = 1; j <= str1.length; j++) {
+                    if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(
+                            matrix[i - 1][j - 1] + 1,
+                            matrix[i][j - 1] + 1,
+                            matrix[i - 1][j] + 1
+                        );
+                    }
+                }
+            }
+            
+            return matrix[str2.length][str1.length];
+        }
+        
+        // Render duplicate shops list
+        function renderDuplicateShops(data, type) {
+            if (!data || data.length === 0) {
+                return '<p style="text-align: center; color: #999; padding: 40px;">لا توجد محلات مكررة أو متشابهة</p>';
+            }
+            
+            let html = '';
+            
+            if (type === 'exact') {
+                data.forEach((group, groupIndex) => {
+                    html += `
+                        <div class="duplicate-group" data-group-index="${groupIndex}" style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-right: 4px solid #e74c3c;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <h4 style="margin: 0; color: #2d3561;">🔴 ${escapeHtml(group.name)}</h4>
+                                <span style="background: #e74c3c; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.9em;">${group.count} مكررات</span>
+                            </div>
+                            <div style="display: grid; gap: 10px;">
+                    `;
+                    
+                    group.shops.forEach((shop, shopIndex) => {
+                        const areaName = planData.areas.find(a => a.id === shop.areaId)?.name || 'غير محدد';
+                        html += `
+                            <div class="duplicate-shop-item" data-shop-id="${shop.id}" style="background: #f8f9fa; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                                <div style="flex: 1;">
+                                    <input type="checkbox" class="duplicate-shop-checkbox" data-shop-id="${shop.id}" onchange="toggleDuplicateShopSelection('${shop.id}')" style="margin-left: 10px;">
+                                    <strong>${escapeHtml(shop.name)}</strong>
+                                    <div style="color: #666; font-size: 0.9em; margin-top: 4px;">
+                                        📍 ${escapeHtml(areaName)} | 🆔 ${escapeHtml(shop.id)}
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button onclick="editDuplicateShop('${shop.id}')" class="btn btn-sm btn-primary" style="padding: 6px 12px;">
+                                        ✏️ تعديل
+                                    </button>
+                                    <button onclick="deleteDuplicateShop('${shop.id}')" class="btn btn-sm btn-danger" style="padding: 6px 12px;">
+                                        🗑️ حذف
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                });
+            } else if (type === 'similar') {
+                data.forEach((pair, index) => {
+                    const area1 = planData.areas.find(a => a.id === pair.shop1.areaId)?.name || 'غير محدد';
+                    const area2 = planData.areas.find(a => a.id === pair.shop2.areaId)?.name || 'غير محدد';
+                    
+                    html += `
+                        <div class="similar-pair" data-pair-index="${index}" style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-right: 4px solid #f39c12;">
+                            <div style="margin-bottom: 10px;">
+                                <span style="background: #f39c12; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.9em;">تشابه ${pair.similarity}%</span>
+                            </div>
+                            <div style="display: grid; gap: 10px;">
+                                <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="flex: 1;">
+                                        <input type="checkbox" class="duplicate-shop-checkbox" data-shop-id="${pair.shop1.id}" onchange="toggleDuplicateShopSelection('${pair.shop1.id}')" style="margin-left: 10px;">
+                                        <strong>${escapeHtml(pair.shop1.name)}</strong>
+                                        <div style="color: #666; font-size: 0.9em; margin-top: 4px;">📍 ${escapeHtml(area1)}</div>
+                                    </div>
+                                    <div style="display: flex; gap: 8px;">
+                                        <button onclick="editDuplicateShop('${pair.shop1.id}')" class="btn btn-sm btn-primary" style="padding: 6px 12px;">✏️ تعديل</button>
+                                        <button onclick="deleteDuplicateShop('${pair.shop1.id}')" class="btn btn-sm btn-danger" style="padding: 6px 12px;">🗑️ حذف</button>
+                                    </div>
+                                </div>
+                                <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="flex: 1;">
+                                        <input type="checkbox" class="duplicate-shop-checkbox" data-shop-id="${pair.shop2.id}" onchange="toggleDuplicateShopSelection('${pair.shop2.id}')" style="margin-left: 10px;">
+                                        <strong>${escapeHtml(pair.shop2.name)}</strong>
+                                        <div style="color: #666; font-size: 0.9em; margin-top: 4px;">📍 ${escapeHtml(area2)}</div>
+                                    </div>
+                                    <div style="display: flex; gap: 8px;">
+                                        <button onclick="editDuplicateShop('${pair.shop2.id}')" class="btn btn-sm btn-primary" style="padding: 6px 12px;">✏️ تعديل</button>
+                                        <button onclick="deleteDuplicateShop('${pair.shop2.id}')" class="btn btn-sm btn-danger" style="padding: 6px 12px;">🗑️ حذف</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else if (type === 'sameArea') {
+                data.forEach((group, groupIndex) => {
+                    html += `
+                        <div class="duplicate-group" data-group-index="${groupIndex}" style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-right: 4px solid #3498db;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <h4 style="margin: 0; color: #2d3561;">🗺️ ${escapeHtml(group.name)} - ${escapeHtml(group.area)}</h4>
+                                <span style="background: #3498db; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.9em;">${group.count} مكررات</span>
+                            </div>
+                            <div style="display: grid; gap: 10px;">
+                    `;
+                    
+                    group.shops.forEach((shop) => {
+                        html += `
+                            <div class="duplicate-shop-item" data-shop-id="${shop.id}" style="background: #f8f9fa; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                                <div style="flex: 1;">
+                                    <input type="checkbox" class="duplicate-shop-checkbox" data-shop-id="${shop.id}" onchange="toggleDuplicateShopSelection('${shop.id}')" style="margin-left: 10px;">
+                                    <strong>${escapeHtml(shop.name)}</strong>
+                                    <div style="color: #666; font-size: 0.9em; margin-top: 4px;">🆔 ${escapeHtml(shop.id)}</div>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button onclick="editDuplicateShop('${shop.id}')" class="btn btn-sm btn-primary" style="padding: 6px 12px;">✏️ تعديل</button>
+                                    <button onclick="deleteDuplicateShop('${shop.id}')" class="btn btn-sm btn-danger" style="padding: 6px 12px;">🗑️ حذف</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                });
+            } else if (type === 'all') {
+                planData.shops.forEach((shop) => {
+                    const areaName = planData.areas.find(a => a.id === shop.areaId)?.name || 'غير محدد';
+                    html += `
+                        <div class="shop-item" data-shop-id="${shop.id}" style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                            <div style="flex: 1;">
+                                <input type="checkbox" class="duplicate-shop-checkbox" data-shop-id="${shop.id}" onchange="toggleDuplicateShopSelection('${shop.id}')" style="margin-left: 10px;">
+                                <strong>${escapeHtml(shop.name)}</strong>
+                                <div style="color: #666; font-size: 0.9em; margin-top: 4px;">
+                                    📍 ${escapeHtml(areaName)} | 🆔 ${escapeHtml(shop.id)}
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button onclick="editDuplicateShop('${shop.id}')" class="btn btn-sm btn-primary" style="padding: 6px 12px;">✏️ تعديل</button>
+                                <button onclick="deleteDuplicateShop('${shop.id}')" class="btn btn-sm btn-danger" style="padding: 6px 12px;">🗑️ حذف</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            
+            return html;
+        }
+        
+        // Show duplicate tab
+        window.showDuplicateTab = function(tab) {
+            const content = document.getElementById('duplicateShopsContent');
+            const analysis = window.currentDuplicateAnalysis;
+            
+            // Update tab button styles
+            document.querySelectorAll('.dup-tab-btn').forEach(btn => {
+                btn.style.background = '#95a5a6';
+            });
+            
+            if (tab === 'exact') {
+                document.getElementById('exactDupTab').style.background = '#e74c3c';
+                content.innerHTML = renderDuplicateShops(analysis.exactDuplicates, 'exact');
+            } else if (tab === 'similar') {
+                document.getElementById('similarTab').style.background = '#f39c12';
+                content.innerHTML = renderDuplicateShops(analysis.similarShops, 'similar');
+            } else if (tab === 'sameArea') {
+                document.getElementById('sameAreaTab').style.background = '#3498db';
+                content.innerHTML = renderDuplicateShops(analysis.sameAreaDuplicates, 'sameArea');
+            } else if (tab === 'all') {
+                document.getElementById('allShopsTab').style.background = '#667eea';
+                content.innerHTML = renderDuplicateShops(null, 'all');
+            }
+        };
+        
+        // Toggle duplicate shop selection
+        window.toggleDuplicateShopSelection = function(shopId) {
+            if (window.selectedDuplicateShops.has(shopId)) {
+                window.selectedDuplicateShops.delete(shopId);
+            } else {
+                window.selectedDuplicateShops.add(shopId);
+            }
+        };
+        
+        // Filter duplicate shops
+        window.filterDuplicateShops = function() {
+            const searchTerm = document.getElementById('duplicateShopsSearch').value.toLowerCase().trim();
+            const items = document.querySelectorAll('.duplicate-shop-item, .shop-item');
+            
+            items.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        };
+        
+        // Edit duplicate shop
+        window.editDuplicateShop = function(shopId) {
+            const shop = planData.shops.find(s => s.id === shopId);
+            if (!shop) {
+                alert('❌ لم يتم العثور على المحل');
+                return;
+            }
+            
+            // Store old name before updating
+            const oldName = shop.name;
+            const newName = prompt('✏️ تعديل اسم المحل:', oldName);
+            if (!newName || newName.trim() === '') return;
+            
+            // Update shop name
+            shop.name = newName.trim();
+            
+            // Update in inspections
+            if (planData.inspectionData) {
+                planData.inspectionData.forEach(inspection => {
+                    if (inspection.shops) {
+                        const index = inspection.shops.indexOf(oldName);
+                        if (index > -1) {
+                            inspection.shops[index] = newName.trim();
+                        }
+                    }
+                });
+            }
+            
+            alert('✅ تم تحديث اسم المحل. لا تنسَ حفظ التغييرات!');
+            
+            // Refresh the modal
+            document.getElementById('duplicateShopsModal').remove();
+            openDuplicateShopsManager();
+        };
+        
+        // Delete duplicate shop
+        window.deleteDuplicateShop = async function(shopId) {
+            const shop = planData.shops.find(s => s.id === shopId);
+            if (!shop) {
+                alert('❌ لم يتم العثور على المحل');
+                return;
+            }
+            
+            if (!confirm(`⚠️ هل أنت متأكد من حذف المحل؟\n\n${shop.name}\n\n⚠️ تحذير: سيتم حذفه من جميع التفتيشات أيضاً`)) {
+                return;
+            }
+            
+            // Remove from shops array
+            planData.shops = planData.shops.filter(s => s.id !== shopId);
+            
+            // Remove from inspections
+            if (planData.inspectionData) {
+                planData.inspectionData.forEach(inspection => {
+                    if (inspection.shops) {
+                        inspection.shops = inspection.shops.filter(s => s !== shop.name);
+                    }
+                });
+            }
+            
+            try {
+                await savePlanDataToGitHub(`حذف محل مكرر: ${shop.name}`);
+                alert('✅ تم حذف المحل بنجاح!');
+                
+                // Refresh the modal
+                document.getElementById('duplicateShopsModal').remove();
+                openDuplicateShopsManager();
+            } catch (error) {
+                alert('❌ فشل الحفظ: ' + error.message);
+            }
+        };
+        
+        // Merge selected duplicates
+        window.mergeSelectedDuplicates = async function() {
+            if (window.selectedDuplicateShops.size < 2) {
+                alert('⚠️ يرجى اختيار محلين على الأقل للدمج');
+                return;
+            }
+            
+            const selectedIds = Array.from(window.selectedDuplicateShops);
+            const shops = selectedIds.map(id => planData.shops.find(s => s.id === id)).filter(s => s);
+            
+            if (shops.length < 2) {
+                alert('❌ خطأ في البيانات المحددة');
+                return;
+            }
+            
+            // Ask for the final name
+            const finalName = prompt(`🔗 دمج ${shops.length} محلات\n\nأدخل الاسم النهائي للمحل المدمج:`, shops[0].name);
+            if (!finalName || finalName.trim() === '') return;
+            
+            // Keep the first shop and update its name
+            const primaryShop = shops[0];
+            primaryShop.name = finalName.trim();
+            
+            // Get all shop names before deletion
+            const shopNamesToMerge = shops.map(s => s.name);
+            
+            // Remove other shops
+            const idsToRemove = new Set(selectedIds.slice(1));
+            planData.shops = planData.shops.filter(s => !idsToRemove.has(s.id));
+            
+            // Update inspections - replace all old names with the new merged name
+            if (planData.inspectionData) {
+                planData.inspectionData.forEach(inspection => {
+                    if (inspection.shops) {
+                        inspection.shops = inspection.shops.map(shopName => {
+                            return shopNamesToMerge.includes(shopName) ? finalName.trim() : shopName;
+                        });
+                        // Remove duplicates in the same inspection
+                        inspection.shops = [...new Set(inspection.shops)];
+                    }
+                });
+            }
+            
+            try {
+                await savePlanDataToGitHub(`دمج ${shops.length} محلات مكررة في: ${finalName.trim()}`);
+                alert(`✅ تم دمج ${shops.length} محلات بنجاح!`);
+                
+                // Clear selection and refresh
+                window.selectedDuplicateShops.clear();
+                document.getElementById('duplicateShopsModal').remove();
+                openDuplicateShopsManager();
+            } catch (error) {
+                alert('❌ فشل الحفظ: ' + error.message);
+            }
+        };
+        
+        // Delete selected duplicates
+        window.deleteSelectedDuplicates = async function() {
+            if (window.selectedDuplicateShops.size === 0) {
+                alert('⚠️ يرجى اختيار محل واحد على الأقل للحذف');
+                return;
+            }
+            
+            const selectedIds = Array.from(window.selectedDuplicateShops);
+            const shops = selectedIds.map(id => planData.shops.find(s => s.id === id)).filter(s => s);
+            
+            if (!confirm(`⚠️ هل أنت متأكد من حذف ${shops.length} محل؟\n\n⚠️ تحذير: سيتم حذفها من جميع التفتيشات أيضاً`)) {
+                return;
+            }
+            
+            // Get shop names for removal from inspections
+            const shopNamesToRemove = shops.map(s => s.name);
+            
+            // Remove from shops array
+            planData.shops = planData.shops.filter(s => !selectedIds.includes(s.id));
+            
+            // Remove from inspections
+            if (planData.inspectionData) {
+                planData.inspectionData.forEach(inspection => {
+                    if (inspection.shops) {
+                        inspection.shops = inspection.shops.filter(s => !shopNamesToRemove.includes(s));
+                    }
+                });
+            }
+            
+            try {
+                await savePlanDataToGitHub(`حذف ${shops.length} محلات مكررة`);
+                alert(`✅ تم حذف ${shops.length} محلات بنجاح!`);
+                
+                // Clear selection and refresh
+                window.selectedDuplicateShops.clear();
+                document.getElementById('duplicateShopsModal').remove();
+                openDuplicateShopsManager();
+            } catch (error) {
+                alert('❌ فشل الحفظ: ' + error.message);
+            }
+        };
+        
+        // Export duplicate report
+        window.exportDuplicateReport = function() {
+            const analysis = window.currentDuplicateAnalysis;
+            
+            let report = '# تقرير المحلات المكررة والمتشابهة\n\n';
+            report += `تاريخ التقرير: ${new Date().toLocaleString('ar-EG')}\n\n`;
+            report += `## ملخص الإحصائيات\n`;
+            report += `- إجمالي المحلات: ${planData.shops.length}\n`;
+            report += `- محلات مكررة تماماً: ${analysis.exactDuplicates.length}\n`;
+            report += `- محلات متشابهة: ${analysis.similarShops.length}\n`;
+            report += `- مكررات في نفس المنطقة: ${analysis.sameAreaDuplicates.length}\n\n`;
+            
+            if (analysis.exactDuplicates.length > 0) {
+                report += `## المحلات المكررة تماماً\n\n`;
+                analysis.exactDuplicates.forEach((group, index) => {
+                    report += `### ${index + 1}. ${group.name} (${group.count} مكررات)\n`;
+                    group.shops.forEach(shop => {
+                        const area = planData.areas.find(a => a.id === shop.areaId)?.name || 'غير محدد';
+                        report += `- ${shop.name} | المنطقة: ${area} | ID: ${shop.id}\n`;
+                    });
+                    report += '\n';
+                });
+            }
+            
+            if (analysis.similarShops.length > 0) {
+                report += `## المحلات المتشابهة\n\n`;
+                analysis.similarShops.forEach((pair, index) => {
+                    const area1 = planData.areas.find(a => a.id === pair.shop1.areaId)?.name || 'غير محدد';
+                    const area2 = planData.areas.find(a => a.id === pair.shop2.areaId)?.name || 'غير محدد';
+                    report += `### ${index + 1}. تشابه ${pair.similarity}%\n`;
+                    report += `- ${pair.shop1.name} | ${area1}\n`;
+                    report += `- ${pair.shop2.name} | ${area2}\n\n`;
+                });
+            }
+            
+            // Download report
+            const blob = new Blob([report], { type: 'text/markdown;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `duplicate-shops-report-${new Date().toISOString().split('T')[0]}.md`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('✅ تم تصدير التقرير بنجاح!');
         };
         
         // Reload Shops from Excel - REAL IMPLEMENTATION

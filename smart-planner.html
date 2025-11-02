@@ -2137,11 +2137,20 @@
                 <small style="color: #666; display: block; margin-top: 5px;">
                     احصل على التوكن من: GitHub Settings → Developer Settings → Personal Access Tokens
                 </small>
+                <small id="oldTokenWarning" style="color: #ff6b6b; display: none; margin-top: 5px; font-weight: bold;">
+                    ⚠️ يوجد توكن قديم محفوظ. إذا قمت بإنشاء توكن جديد، يرجى تحديث الحقل أعلاه ثم الضغط على "تسجيل الدخول"
+                </small>
             </div>
-            <button class="btn btn-primary" onclick="loginDeveloper()">
-                <span>✓</span>
-                <span>تسجيل الدخول</span>
-            </button>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-primary" onclick="loginDeveloper()" style="flex: 1; min-width: 150px;">
+                    <span>✓</span>
+                    <span>تسجيل الدخول</span>
+                </button>
+                <button class="btn" onclick="clearOldToken()" style="flex: 1; min-width: 150px; background: #ff6b6b; color: white;">
+                    <span>🗑️</span>
+                    <span>مسح التوكن القديم</span>
+                </button>
+            </div>
             <div class="status-message" id="loginStatus"></div>
         </div>
         
@@ -4679,6 +4688,41 @@
             }
         }
         
+        // Validate GitHub Token
+        async function validateGitHubToken(token) {
+            try {
+                const res = await fetch('https://api.github.com/user', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (!res.ok) {
+                    if (res.status === 401) {
+                        return { valid: false, error: 'التوكن غير صالح أو منتهي الصلاحية' };
+                    } else if (res.status === 403) {
+                        return { valid: false, error: 'التوكن ليس لديه الصلاحيات المطلوبة' };
+                    } else {
+                        return { valid: false, error: `خطأ في التحقق: ${res.status}` };
+                    }
+                }
+                
+                return { valid: true };
+            } catch (error) {
+                return { valid: false, error: 'خطأ في الاتصال بـ GitHub: ' + error.message };
+            }
+        }
+        
+        // Clear old token
+        function clearOldToken() {
+            localStorage.removeItem('devToken');
+            document.getElementById('githubToken').value = '';
+            document.getElementById('oldTokenWarning').style.display = 'none';
+            githubToken = null;
+            showMessage('loginStatus', 'success', '✅ تم مسح التوكن القديم. يمكنك الآن إدخال التوكن الجديد.');
+        }
+        
         // Login developer
         async function loginDeveloper() {
             const token = document.getElementById('githubToken').value.trim();
@@ -4688,10 +4732,19 @@
                 return;
             }
             
+            showMessage('loginStatus', 'info', '⏳ جاري التحقق من صلاحية التوكن...');
+            
+            // First, validate the token
+            const validation = await validateGitHubToken(token);
+            if (!validation.valid) {
+                showMessage('loginStatus', 'error', `❌ ${validation.error}\n\nالحل:\n1. تأكد من أن التوكن صحيح ولم تنته صلاحيته\n2. إذا قمت بإنشاء توكن جديد، انقر "مسح التوكن القديم" ثم أدخل التوكن الجديد\n3. تأكد من أن التوكن لديه صلاحية "repo" في GitHub`);
+                return;
+            }
+            
             githubToken = token;
             localStorage.setItem('devToken', token);
             
-            showMessage('loginStatus', 'info', '⏳ جاري التحقق من الصلاحيات...');
+            showMessage('loginStatus', 'info', '✅ التوكن صالح! جاري تحميل البيانات...');
             
             try {
                 // Load data from GitHub
@@ -4713,8 +4766,9 @@
                 showMessage('loginStatus', 'success', '✅ تم تسجيل الدخول بنجاح!');
                 
             } catch (error) {
-                showMessage('loginStatus', 'error', '❌ فشل تحميل البيانات: ' + error.message);
+                showMessage('loginStatus', 'error', `❌ فشل تحميل البيانات: ${error.message}\n\nقد يكون السبب:\n1. التوكن ليس لديه صلاحية "repo"\n2. مشكلة في الاتصال بـ GitHub\n3. الملفات المطلوبة غير موجودة في المستودع`);
                 githubToken = null;
+                localStorage.removeItem('devToken');
             }
         }
         
@@ -6319,6 +6373,11 @@
             const savedToken = localStorage.getItem('devToken');
             if (savedToken) {
                 document.getElementById('githubToken').value = savedToken;
+                // Show warning about old token
+                const warning = document.getElementById('oldTokenWarning');
+                if (warning) {
+                    warning.style.display = 'block';
+                }
                 // Auto-set the token in the global variable
                 githubToken = savedToken;
                 // Load maintenance config immediately if we have a token

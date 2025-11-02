@@ -5111,6 +5111,11 @@
                         document.getElementById('shopModalGoogleMaps').value = details.locationMap || '';
                         document.getElementById('shopModalActivity').value = details.activity || '';
                         document.getElementById('shopModalAdmCode').value = details.admCode || '';
+                        
+                        // If shop was not in planData.shops, update the area from shops_details
+                        if (!shop.areaId && details.areaId) {
+                            select.value = details.areaId;
+                        }
                     } else {
                         // Clear optional fields if no details found
                         document.getElementById('shopModalNameEn').value = '';
@@ -6360,7 +6365,7 @@
                         <td>${shop.contact || '-'}</td>
                         <td>
                             <span class="action-icon" onclick="viewShopDetails('${escapeJs(shop.name)}')" title="عرض التفاصيل" style="color: #3498db;">👁️</span>
-                            <span class="action-icon edit-icon" onclick="openEditShopModal('${shop.id || idx}')" title="تعديل">✏️</span>
+                            <span class="action-icon edit-icon" onclick="openEditShopModal('${escapeJs(shop.name)}')" title="تعديل">✏️</span>
                             <span class="action-icon delete-icon" onclick="deleteShop('${escapeJs(shop.name)}')" title="حذف">🗑️</span>
                             ${shop.locationMap ? `<span class="action-icon" onclick="window.open('${shop.locationMap}', '_blank')" title="موقع على الخريطة" style="color: #27ae60;">🗺️</span>` : ''}
                         </td>

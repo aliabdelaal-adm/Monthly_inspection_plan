@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار إصلاح صفحة تعديل المحل</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Cairo', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .test-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .test-section h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+        
+        .test-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .test-item.success {
+            border-left-color: #27ae60;
+        }
+        
+        .test-item.info {
+            border-left-color: #f39c12;
+        }
+        
+        .test-item h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        .test-item p {
+            color: #666;
+            line-height: 1.8;
+            margin-bottom: 8px;
+        }
+        
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            direction: ltr;
+            text-align: left;
+        }
+        
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 15px 0;
+        }
+        
+        .before, .after {
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .before {
+            background: #ffebee;
+            border: 2px solid #e74c3c;
+        }
+        
+        .after {
+            background: #e8f5e9;
+            border: 2px solid #27ae60;
+        }
+        
+        .before h4, .after h4 {
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+        
+        .before h4 {
+            color: #c0392b;
+        }
+        
+        .after h4 {
+            color: #27ae60;
+        }
+        
+        .steps {
+            background: #fff3cd;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 2px solid #ffc107;
+        }
+        
+        .steps h3 {
+            color: #856404;
+            margin-bottom: 15px;
+        }
+        
+        .steps ol {
+            padding-right: 20px;
+        }
+        
+        .steps li {
+            color: #856404;
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.2s;
+            border: none;
+            cursor: pointer;
+            font-family: 'Cairo', Arial, sans-serif;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .icon {
+            font-size: 1.5em;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✅ اختبار إصلاح صفحة تعديل المحل</h1>
+            <p>التحقق من إصلاح مشكلة عرض بيانات المحل عند التعديل</p>
+        </div>
+        
+        <div class="test-section">
+            <h2>📋 وصف المشكلة</h2>
+            <div class="test-item">
+                <h3>المشكلة الأصلية</h3>
+                <p>في Smart Planner، عند فتح زر "عرض محلات منطقة معينة" ثم اختيار زر "تعديل" لتعديل بيانات محل، كانت صفحة التعديل تظهر فارغة بدون أي بيانات للمحل.</p>
+                <p>كانت الصفحة تظهر وكأنك تقوم بإدخال بيانات محل جديد من البداية بدلاً من تعديل البيانات الموجودة.</p>
+            </div>
+            
+            <div class="test-item info">
+                <h3>السبب الجذري</h3>
+                <p>عند عرض المحلات في منطقة معينة، كانت المحلات المحملة من ملف <code>shops_details.json</code> لا تحتوي على حقل <code>id</code>.</p>
+                <p>عند النقر على زر التعديل، كان يتم تمرير <code>shop.id || idx</code> (رقم الفهرس في المصفوفة) بدلاً من اسم المحل.</p>
+                <p>دالة <code>openEditShopModal</code> لم تتمكن من إيجاد المحل بهذا الفهرس، فكانت تقوم بإنشاء محل جديد فارغ.</p>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🔧 التغييرات المنفذة</h2>
+            
+            <div class="test-item success">
+                <h3>التغيير الأول: تمرير اسم المحل</h3>
+                <p>تم تعديل زر التعديل ليمرر اسم المحل بدلاً من <code>shop.id || idx</code></p>
+                
+                <div class="comparison">
+                    <div class="before">
+                        <h4>❌ قبل الإصلاح</h4>
+                        <div class="code-block">onclick="openEditShopModal('${shop.id || idx}')"</div>
+                        <p style="font-size: 0.9em; margin-top: 10px;">كان يمرر الفهرس عندما لا يكون هناك id</p>
+                    </div>
+                    <div class="after">
+                        <h4>✅ بعد الإصلاح</h4>
+                        <div class="code-block">onclick="openEditShopModal('${escapeJs(shop.name)}')"</div>
+                        <p style="font-size: 0.9em; margin-top: 10px;">يمرر اسم المحل دائماً</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="test-item success">
+                <h3>التغيير الثاني: تحميل منطقة المحل</h3>
+                <p>تم إضافة كود لتحديد المنطقة من <code>shops_details.json</code> عندما لا يكون المحل موجوداً في <code>planData.shops</code></p>
+                
+                <div class="code-block">
+// If shop was not in planData.shops, update the area from shops_details
+if (!shop.areaId && details.areaId) {
+    select.value = details.areaId;
+}
+                </div>
+                
+                <p style="margin-top: 10px;">هذا يضمن أن قائمة المنطقة المنسدلة يتم تحديدها بشكل صحيح.</p>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🧪 خطوات الاختبار</h2>
+            
+            <div class="steps">
+                <h3>كيفية التحقق من الإصلاح:</h3>
+                <ol>
+                    <li>افتح ملف <code>smart-planner.html</code> في المتصفح</li>
+                    <li>انتقل إلى تبويب "إدارة المناطق"</li>
+                    <li>اضغط على زر "🏪 عرض محلات منطقة معينة"</li>
+                    <li>اختر أي منطقة من القائمة المنسدلة (مثل "سوق الميناء")</li>
+                    <li>انتظر حتى يتم تحميل قائمة المحلات</li>
+                    <li>اضغط على أيقونة "✏️ تعديل" لأي محل</li>
+                    <li><strong>النتيجة المتوقعة:</strong> يجب أن تفتح نافذة التعديل وتعرض جميع بيانات المحل:
+                        <ul style="margin-top: 10px; padding-right: 25px;">
+                            <li>اسم المحل (بالعربية)</li>
+                            <li>اسم المحل (بالإنجليزية)</li>
+                            <li>رقم الرخصة</li>
+                            <li>العنوان</li>
+                            <li>رقم الهاتف</li>
+                            <li>البريد الإلكتروني</li>
+                            <li>رابط خرائط جوجل</li>
+                            <li>النشاط</li>
+                            <li>كود ADM</li>
+                            <li>المنطقة (محددة في القائمة المنسدلة)</li>
+                        </ul>
+                    </li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>✨ البيانات التي يجب أن تظهر</h2>
+            
+            <div class="test-item">
+                <h3>مثال: محل "جرين لندز"</h3>
+                <p>عند تعديل هذا المحل، يجب أن تظهر البيانات التالية:</p>
+                
+                <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                    <tr style="background: #f8f9fa;">
+                        <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">الحقل</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">القيمة المتوقعة</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd;">اسم المحل</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">جرين لندز</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd;">الاسم الإنجليزي</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">Green Lands Store</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd;">رقم الرخصة</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">CN-4777884</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd;">كود ADM</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">ADM0001</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd;">العنوان</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">سوق الميناء - شارع الميناء - الزاهية</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd;">الهاتف</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">525182727</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd;">النشاط</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">بيع الحيوانات يجب تسجيلها</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd;">المنطقة</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">سوق الميناء (محددة)</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📊 ملخص الإصلاح</h2>
+            
+            <div class="test-item success">
+                <h3>✅ ما تم إصلاحه</h3>
+                <p>✓ تظهر الآن جميع بيانات المحل في نافذة التعديل</p>
+                <p>✓ يتم تحميل البيانات من <code>shops_details.json</code> بشكل صحيح</p>
+                <p>✓ يتم تحديد المنطقة الصحيحة في القائمة المنسدلة</p>
+                <p>✓ لم تعد نافذة التعديل تظهر فارغة</p>
+            </div>
+            
+            <div class="test-item">
+                <h3>🎯 التغييرات الدقيقة</h3>
+                <p><strong>سطر 6365:</strong> تغيير معامل دالة التعديل من <code>shop.id || idx</code> إلى <code>escapeJs(shop.name)</code></p>
+                <p><strong>الأسطر 5115-5118:</strong> إضافة منطق لتحديد المنطقة من <code>shops_details.json</code></p>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="smart-planner.html" class="btn">
+                <span class="icon">🚀</span>
+                فتح Smart Planner للاختبار
+            </a>
+        </div>
+    </div>
+</body>
+</html>

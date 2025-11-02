@@ -1970,7 +1970,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.1/jspdf.plugin.autotable.min.js"></script>
     
-    <!-- Google Maps API for map-based shop selection -->
+    <!-- Google Maps API for map-based shop selection 
+         Note: API key is currently embedded in client-side code for development
+         TODO: For production, consider implementing:
+         1. Server-side proxy to hide the API key
+         2. API key restrictions in Google Cloud Console (HTTP referrer restrictions)
+         3. Usage quotas and monitoring to prevent abuse
+         Current key appears to be shared across the application -->
     <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&callback=initMap&libraries=places,geometry&language=ar"></script>
 </head>
 <body>
@@ -3760,47 +3766,70 @@
         let infoWindow = null;
         let isMapInitialized = false;
         
+        // Configuration for map features
+        const MAP_CONFIG = {
+            nearbyRadius: 2000, // meters - configurable radius for nearby shop selection
+            defaultCenter: { lat: 24.4539, lng: 54.3773 }, // Abu Dhabi center
+            defaultZoom: 12,
+            maxZoom: 15
+        };
+        
         // Initialize Google Maps (callback function)
         function initMap() {
             // This will be called when Google Maps API is loaded
-            console.log('Google Maps API loaded successfully');
-            isMapInitialized = true;
+            try {
+                console.log('Google Maps API loaded successfully');
+                isMapInitialized = true;
+            } catch (error) {
+                console.error('Error initializing Google Maps:', error);
+                alert('⚠️ حدث خطأ في تحميل خرائط جوجل. يرجى إعادة تحميل الصفحة.');
+                isMapInitialized = false;
+            }
         }
+        
+        // Handle Google Maps API loading errors
+        window.gm_authFailure = function() {
+            console.error('Google Maps API authentication failed');
+            alert('❌ فشل التحقق من مفتاح Google Maps API. يرجى التواصل مع المطور.');
+            isMapInitialized = false;
+        };
         
         // Create the map when modal is opened
         function createMap() {
             if (!document.getElementById('googleMap')) return;
             
-            // Center on Abu Dhabi
-            const abuDhabiCenter = { lat: 24.4539, lng: 54.3773 };
-            
-            map = new google.maps.Map(document.getElementById('googleMap'), {
-                center: abuDhabiCenter,
-                zoom: 12,
-                mapTypeControl: true,
-                mapTypeControlOptions: {
-                    style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
-                    position: google.maps.ControlPosition.TOP_RIGHT
-                },
-                zoomControl: true,
-                zoomControlOptions: {
-                    position: google.maps.ControlPosition.RIGHT_CENTER
-                },
-                streetViewControl: true,
-                fullscreenControl: true,
-                styles: [
-                    {
-                        featureType: "poi",
-                        elementType: "labels",
-                        stylers: [{ visibility: "on" }]
-                    }
-                ]
-            });
-            
-            infoWindow = new google.maps.InfoWindow();
-            
-            // Load shop markers
-            loadShopMarkers();
+            try {
+                map = new google.maps.Map(document.getElementById('googleMap'), {
+                    center: MAP_CONFIG.defaultCenter,
+                    zoom: MAP_CONFIG.defaultZoom,
+                    mapTypeControl: true,
+                    mapTypeControlOptions: {
+                        style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
+                        position: google.maps.ControlPosition.TOP_RIGHT
+                    },
+                    zoomControl: true,
+                    zoomControlOptions: {
+                        position: google.maps.ControlPosition.RIGHT_CENTER
+                    },
+                    streetViewControl: true,
+                    fullscreenControl: true,
+                    styles: [
+                        {
+                            featureType: "poi",
+                            elementType: "labels",
+                            stylers: [{ visibility: "on" }]
+                        }
+                    ]
+                });
+                
+                infoWindow = new google.maps.InfoWindow();
+                
+                // Load shop markers
+                loadShopMarkers();
+            } catch (error) {
+                console.error('Error creating map:', error);
+                alert('⚠️ حدث خطأ في إنشاء الخريطة. يرجى المحاولة مرة أخرى.');
+            }
         }
         
         // Load shop markers on the map
@@ -3820,10 +3849,10 @@
             Object.keys(shopsDetails).forEach(shopName => {
                 const shop = shopsDetails[shopName];
                 
-                // Skip invalid shop entries
-                if (!shop || !shop.nameAr || shop.nameAr === shopName) {
-                    // Check if this is a valid shop
-                    if (!shop.locationMap && !shop.address) return;
+                // Skip invalid shop entries - shops without proper data
+                // Valid shops must have either a locationMap or address
+                if (!shop || (!shop.locationMap && !shop.address)) {
+                    return;
                 }
                 
                 // Extract coordinates from Google Maps link or use geocoding
@@ -3888,8 +3917,8 @@
                 map.fitBounds(bounds);
                 // Don't zoom in too much if only one marker
                 google.maps.event.addListenerOnce(map, 'bounds_changed', function() {
-                    if (map.getZoom() > 15) {
-                        map.setZoom(15);
+                    if (map.getZoom() > MAP_CONFIG.maxZoom) {
+                        map.setZoom(MAP_CONFIG.maxZoom);
                     }
                 });
             }
@@ -3903,10 +3932,7 @@
             
             try {
                 // Try different Google Maps URL formats
-                // Format 1: maps.app.goo.gl short links - these need geocoding
-                // Format 2: google.com/maps with @lat,lng
-                // Format 3: google.com/maps/search with query
-                
+                // Format 1: google.com/maps with @lat,lng
                 if (link.includes('@')) {
                     const match = link.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
                     if (match) {
@@ -3917,18 +3943,24 @@
                     }
                 }
                 
-                // For short links, we'll use a default location in Abu Dhabi
-                // In production, you'd want to geocode these or store actual coordinates
-                // For now, distribute them around Abu Dhabi
-                const abuDhabiBase = { lat: 24.4539, lng: 54.3773 };
-                const randomOffset = () => (Math.random() - 0.5) * 0.1;
+                // Format 2: maps.app.goo.gl short links
+                // Note: These short links need geocoding to get actual coordinates
+                // For now, we use approximate Abu Dhabi locations as fallback
+                // TODO: Implement proper geocoding service for short links
+                // TODO: Or require shops to have full Google Maps links with coordinates
+                if (link.includes('maps.app.goo.gl') || link.includes('goo.gl')) {
+                    console.warn('Short Google Maps link detected - using approximate location:', link);
+                    // Distribute around Abu Dhabi center with small random offset
+                    const randomOffset = () => (Math.random() - 0.5) * 0.1;
+                    return {
+                        lat: MAP_CONFIG.defaultCenter.lat + randomOffset(),
+                        lng: MAP_CONFIG.defaultCenter.lng + randomOffset()
+                    };
+                }
                 
-                return {
-                    lat: abuDhabiBase.lat + randomOffset(),
-                    lng: abuDhabiBase.lng + randomOffset()
-                };
+                return null;
             } catch (e) {
-                console.error('Error extracting coordinates:', e);
+                console.error('Error extracting coordinates from link:', link, e);
                 return null;
             }
         }
@@ -4129,7 +4161,7 @@
         // Helper functions for map tools
         function selectNearbyShops() {
             if (mapSelectedShops.length === 0) {
-                alert('⚠️ اختر محل واحد على الأقل أولاً لاختيار المحلات القريبة منه');
+                showMapNotification('⚠️ اختر محل واحد على الأقل أولاً لاختيار المحلات القريبة منه', 'warning');
                 return;
             }
             
@@ -4145,10 +4177,11 @@
             centerLat /= selectedMarkers.length;
             centerLng /= selectedMarkers.length;
             
-            // Find nearby shops (within 2km radius)
-            const radius = 2000; // meters
+            // Find nearby shops using configurable radius
+            const radius = MAP_CONFIG.nearbyRadius;
             const availableShops = getAvailableShopsForMap();
             
+            let addedCount = 0;
             markers.forEach(marker => {
                 if (!marker.isAvailable || mapSelectedShops.includes(marker.shopName)) return;
                 
@@ -4167,10 +4200,22 @@
                         strokeColor: 'white',
                         strokeWeight: 2
                     });
+                    addedCount++;
                 }
             });
             
             updateMapSelection();
+            showMapNotification(`✅ تم إضافة ${addedCount} محل قريب`, 'success');
+        }
+        
+        // Show notification in map modal
+        function showMapNotification(message, type) {
+            // For now, use console and simple UI feedback
+            console.log(`[${type}] ${message}`);
+            // Could be enhanced with a custom notification system later
+            if (type === 'error' || type === 'warning') {
+                alert(message);
+            }
         }
         
         function selectHighPriorityShops() {
@@ -4215,7 +4260,7 @@
         
         function zoomToSelectedShops() {
             if (mapSelectedShops.length === 0) {
-                alert('⚠️ لم يتم اختيار أي محلات');
+                showMapNotification('⚠️ لم يتم اختيار أي محلات', 'warning');
                 return;
             }
             

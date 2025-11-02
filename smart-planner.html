@@ -3768,6 +3768,20 @@
         let currentAvailableShops = [];
         let currentHighPriorityShops = [];
         
+        // Error message constants for token validation
+        const TOKEN_ERROR_MESSAGES = {
+            invalidToken: 'التوكن غير صالح أو منتهي الصلاحية',
+            invalidTokenHelp: `الحل:
+1. تأكد من أن التوكن صحيح ولم تنته صلاحيته
+2. إذا قمت بإنشاء توكن جديد، انقر "مسح التوكن القديم" ثم أدخل التوكن الجديد
+3. تأكد من أن التوكن لديه صلاحية "repo" في GitHub`,
+            dataLoadFailed: 'فشل تحميل البيانات',
+            dataLoadFailedHelp: `قد يكون السبب:
+1. التوكن ليس لديه صلاحية "repo"
+2. مشكلة في الاتصال بـ GitHub
+3. الملفات المطلوبة غير موجودة في المستودع`
+        };
+        
         // Google Maps variables
         let map = null;
         let markers = [];
@@ -4693,7 +4707,7 @@
             try {
                 const res = await fetch('https://api.github.com/user', {
                     headers: {
-                        'Authorization': `Bearer ${token}`,
+                        'Authorization': `token ${token}`,
                         'Accept': 'application/vnd.github.v3+json'
                     }
                 });
@@ -4702,7 +4716,7 @@
                     if (res.status === 401) {
                         return { valid: false, error: 'التوكن غير صالح أو منتهي الصلاحية' };
                     } else if (res.status === 403) {
-                        return { valid: false, error: 'التوكن ليس لديه الصلاحيات المطلوبة' };
+                        return { valid: false, error: 'التوكن صالح ولكن لا يمكن الوصول لمعلومات المستخدم' };
                     } else {
                         return { valid: false, error: `خطأ في التحقق: ${res.status}` };
                     }
@@ -4737,7 +4751,7 @@
             // First, validate the token
             const validation = await validateGitHubToken(token);
             if (!validation.valid) {
-                showMessage('loginStatus', 'error', `❌ ${validation.error}\n\nالحل:\n1. تأكد من أن التوكن صحيح ولم تنته صلاحيته\n2. إذا قمت بإنشاء توكن جديد، انقر "مسح التوكن القديم" ثم أدخل التوكن الجديد\n3. تأكد من أن التوكن لديه صلاحية "repo" في GitHub`);
+                showMessage('loginStatus', 'error', `❌ ${validation.error}\n\n${TOKEN_ERROR_MESSAGES.invalidTokenHelp}`);
                 return;
             }
             
@@ -4766,7 +4780,7 @@
                 showMessage('loginStatus', 'success', '✅ تم تسجيل الدخول بنجاح!');
                 
             } catch (error) {
-                showMessage('loginStatus', 'error', `❌ فشل تحميل البيانات: ${error.message}\n\nقد يكون السبب:\n1. التوكن ليس لديه صلاحية "repo"\n2. مشكلة في الاتصال بـ GitHub\n3. الملفات المطلوبة غير موجودة في المستودع`);
+                showMessage('loginStatus', 'error', `❌ ${TOKEN_ERROR_MESSAGES.dataLoadFailed}: ${error.message}\n\n${TOKEN_ERROR_MESSAGES.dataLoadFailedHelp}`);
                 githubToken = null;
                 localStorage.removeItem('devToken');
             }

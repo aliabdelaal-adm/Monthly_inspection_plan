@@ -163,6 +163,13 @@
             areaSelect.appendChild(option);
         });
         
+        // HTML escape function to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
         // Update shops display function
         function updateShopsDisplay() {
             const inspector = document.getElementById('inspectorSelect').value;
@@ -207,7 +214,7 @@
             // Build HTML
             let html = `
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
-                    <h3 style="margin: 0 0 10px 0; font-size: 1.3em;">📋 عرض شهري لجميع المحلات - ${inspector}</h3>
+                    <h3 style="margin: 0 0 10px 0; font-size: 1.3em;">📋 عرض شهري لجميع المحلات - ${escapeHtml(inspector)}</h3>
                     <p style="margin: 0; opacity: 0.9;">إجمالي المحلات: ${totalShops} محل موزعة على ${Object.keys(shopsByArea).length} منطقة</p>
                     <p style="margin: 5px 0 0 0; opacity: 0.85; font-size: 0.9em;">💡 اختر التاريخ والمنطقة للحصول على قائمة محلات دقيقة حسب الأولوية والتوفر</p>
                 </div>
@@ -222,7 +229,7 @@
                 html += `
                     <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 15px; border-right: 4px solid #667eea;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <h4 style="margin: 0; color: #2d3561; font-size: 1.1em;">📍 ${areaName}</h4>
+                            <h4 style="margin: 0; color: #2d3561; font-size: 1.1em;">📍 ${escapeHtml(areaName)}</h4>
                             <span style="background: #667eea; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.9em;">
                                 ${shops.length} محل
                             </span>
@@ -233,7 +240,7 @@
                 shops.forEach(shopName => {
                     html += `
                         <div style="background: white; padding: 10px; border-radius: 8px; border-right: 3px solid #4CAF50; font-size: 0.9em;">
-                            <div style="font-weight: 600; color: #2d3561;">${shopName}</div>
+                            <div style="font-weight: 600; color: #2d3561;">${escapeHtml(shopName)}</div>
                         </div>
                     `;
                 });

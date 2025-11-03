@@ -223,8 +223,17 @@ function buildGoogleMapsApiUrl() {
     return `https://maps.googleapis.com/maps/api/js?${params.toString()}`;
 }
 
-// Export configuration
-// تصدير الإعدادات
+// Export configuration for browser
+// تصدير الإعدادات للمتصفح
+if (typeof window !== 'undefined') {
+    window.GOOGLE_MAPS_CONFIG = GOOGLE_MAPS_CONFIG;
+    window.API_KEY_PLACEHOLDER = API_KEY_PLACEHOLDER;
+    window.validateGoogleMapsApiKey = validateGoogleMapsApiKey;
+    window.buildGoogleMapsApiUrl = buildGoogleMapsApiUrl;
+}
+
+// Export configuration for Node.js
+// تصدير الإعدادات لـ Node.js
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         GOOGLE_MAPS_CONFIG,

@@ -27,10 +27,19 @@
 // قيمة نائبة للتحقق من صحة مفتاح API
 const API_KEY_PLACEHOLDER = 'REPLACE_WITH_YOUR_GOOGLE_MAPS_API_KEY';
 
+// Try to load API key from local configuration (gitignored for security)
+// محاولة تحميل مفتاح API من الإعدادات المحلية (مضاف لـ gitignore للأمان)
+let API_KEY = API_KEY_PLACEHOLDER;
+if (typeof window !== 'undefined' && window.GOOGLE_MAPS_API_KEY) {
+    API_KEY = window.GOOGLE_MAPS_API_KEY;
+    console.log('✅ Google Maps API key loaded from local configuration');
+    console.log('✅ تم تحميل مفتاح Google Maps API من الإعدادات المحلية');
+}
+
 const GOOGLE_MAPS_CONFIG = {
     // API Key - Replace with your valid Google Maps API key
     // مفتاح API - استبدله بمفتاح Google Maps API الصالح الخاص بك
-    apiKey: API_KEY_PLACEHOLDER,
+    apiKey: API_KEY,
     
     // API Libraries to load
     // مكتبات API المطلوب تحميلها

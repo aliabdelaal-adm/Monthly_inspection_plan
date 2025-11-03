@@ -1844,6 +1844,7 @@
             align-items: center;
             gap: 10px;
             box-shadow: 0 5px 15px rgba(0, 210, 255, 0.3);
+            position: relative;
         }
         
         .btn-add-from-map:hover {
@@ -1851,8 +1852,49 @@
             box-shadow: 0 8px 25px rgba(0, 210, 255, 0.4);
         }
         
+        .btn-add-from-map.loading {
+            opacity: 0.7;
+            cursor: wait;
+            animation: pulse-loading 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse-loading {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+        
         .btn-add-from-map .icon {
             font-size: 1.3em;
+        }
+        
+        .maps-status-indicator {
+            display: inline-block;
+            margin-right: 10px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 2px solid #4caf50;
+        }
+        
+        .maps-status-indicator.loading {
+            background: #fff3e0;
+            color: #e65100;
+            border-color: #ff9800;
+            animation: pulse-status 1.5s ease-in-out infinite;
+        }
+        
+        .maps-status-indicator.error {
+            background: #ffebee;
+            color: #c62828;
+            border-color: #f44336;
+        }
+        
+        @keyframes pulse-status {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
         }
         
         .map-helper-tools {
@@ -2285,10 +2327,15 @@
             
             <!-- Action Buttons -->
             <div class="action-buttons">
-                <button class="btn-add-from-map" onclick="openMapModal()">
-                    <span class="icon">🗺️</span>
-                    <span>إضافة تفتيش من الخريطة</span>
-                </button>
+                <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <span id="mapsStatusIndicator" class="maps-status-indicator loading">
+                        ⏳ جاري تحميل خرائط جوجل...
+                    </span>
+                    <button class="btn-add-from-map" onclick="openMapModal()" id="mapButton">
+                        <span class="icon">🗺️</span>
+                        <span>إضافة تفتيش من الخريطة</span>
+                    </button>
+                </div>
                 <button class="btn btn-success" onclick="saveInspection()" id="saveBtn" disabled>
                     <span>💾</span>
                     <span>حفظ التفتيش فوراً</span>
@@ -3788,6 +3835,8 @@
         let mapSelectedShops = [];
         let infoWindow = null;
         let isMapInitialized = false;
+        let mapLoadAttempts = 0;
+        const MAX_MAP_LOAD_ATTEMPTS = 3;
         
         // Configuration for map features
         const MAP_CONFIG = {
@@ -3801,25 +3850,157 @@
             areaOverlapOffset: 0.005 // ~500m offset to prevent overlapping markers in same area
         };
         
+        // Update Maps Status Indicator
+        function updateMapsStatusIndicator(status, message) {
+            const indicator = document.getElementById('mapsStatusIndicator');
+            const button = document.getElementById('mapButton');
+            
+            if (!indicator) return;
+            
+            // Remove all classes
+            indicator.className = 'maps-status-indicator';
+            
+            switch(status) {
+                case 'loading':
+                    indicator.classList.add('loading');
+                    indicator.innerHTML = '⏳ ' + message;
+                    if (button) button.classList.add('loading');
+                    break;
+                case 'ready':
+                    indicator.innerHTML = '✅ ' + message;
+                    if (button) button.classList.remove('loading');
+                    break;
+                case 'error':
+                    indicator.classList.add('error');
+                    indicator.innerHTML = '❌ ' + message;
+                    if (button) button.classList.remove('loading');
+                    break;
+            }
+        }
+        
         // Initialize Google Maps (callback function)
         function initMap() {
             // This will be called when Google Maps API is loaded
             try {
-                console.log('Google Maps API loaded successfully');
+                console.log('✅ Google Maps API loaded successfully');
                 isMapInitialized = true;
+                mapLoadAttempts = 0;
+                
+                // Verify that google.maps is available
+                if (typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
+                    console.log('✅ Google Maps objects are available');
+                    updateMapsStatusIndicator('ready', 'خرائط جوجل جاهزة');
+                } else {
+                    throw new Error('Google Maps API loaded but objects are not available');
+                }
             } catch (error) {
-                console.error('Error initializing Google Maps:', error);
-                alert('⚠️ حدث خطأ في تحميل خرائط جوجل. يرجى إعادة تحميل الصفحة.');
+                console.error('❌ Error initializing Google Maps:', error);
                 isMapInitialized = false;
+                updateMapsStatusIndicator('loading', 'إعادة المحاولة...');
+                
+                // Retry loading if failed
+                if (mapLoadAttempts < MAX_MAP_LOAD_ATTEMPTS) {
+                    mapLoadAttempts++;
+                    console.log(`⏳ Retrying to initialize Google Maps (attempt ${mapLoadAttempts}/${MAX_MAP_LOAD_ATTEMPTS})...`);
+                    setTimeout(() => {
+                        retryLoadGoogleMaps();
+                    }, 2000);
+                } else {
+                    updateMapsStatusIndicator('error', 'فشل تحميل الخرائط');
+                }
+            }
+        }
+        
+        // Retry loading Google Maps
+        function retryLoadGoogleMaps() {
+            console.log('🔄 Attempting to reload Google Maps...');
+            updateMapsStatusIndicator('loading', `محاولة ${mapLoadAttempts}/${MAX_MAP_LOAD_ATTEMPTS}...`);
+            
+            // Check if google is already available
+            if (typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
+                console.log('✅ Google Maps is now available!');
+                isMapInitialized = true;
+                mapLoadAttempts = 0;
+                updateMapsStatusIndicator('ready', 'خرائط جوجل جاهزة');
+                return;
+            }
+            
+            // Try to reinitialize
+            if (mapLoadAttempts < MAX_MAP_LOAD_ATTEMPTS) {
+                mapLoadAttempts++;
+                setTimeout(() => {
+                    if (typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
+                        initMap();
+                    } else {
+                        retryLoadGoogleMaps();
+                    }
+                }, 2000);
+            } else {
+                console.error('❌ Failed to load Google Maps after multiple attempts');
+                updateMapsStatusIndicator('error', 'فشل تحميل الخرائط - يرجى إعادة التحميل');
             }
         }
         
         // Handle Google Maps API loading errors
         window.gm_authFailure = function() {
-            console.error('Google Maps API authentication failed');
-            alert('❌ فشل التحقق من مفتاح Google Maps API. يرجى التواصل مع المطور.');
+            console.error('❌ Google Maps API authentication failed');
             isMapInitialized = false;
+            updateMapsStatusIndicator('error', 'مشكلة في مفتاح API');
         };
+        
+        // Auto-check Google Maps availability after page load
+        window.addEventListener('load', function() {
+            console.log('🔍 Checking Google Maps availability...');
+            updateMapsStatusIndicator('loading', 'جاري التحقق من خرائط جوجل...');
+            
+            // Wait a bit for the script to load
+            setTimeout(() => {
+                if (typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
+                    console.log('✅ Google Maps API is available');
+                    if (!isMapInitialized) {
+                        initMap();
+                    } else {
+                        updateMapsStatusIndicator('ready', 'خرائط جوجل جاهزة');
+                    }
+                } else {
+                    console.warn('⚠️ Google Maps API not yet loaded, waiting...');
+                    updateMapsStatusIndicator('loading', 'انتظار تحميل الخرائط...');
+                    
+                    // Try again after a delay
+                    setTimeout(() => {
+                        if (typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
+                            console.log('✅ Google Maps API loaded on retry');
+                            initMap();
+                        } else {
+                            console.error('❌ Google Maps API failed to load');
+                            updateMapsStatusIndicator('error', 'فشل التحميل - انقر للمزيد من المعلومات');
+                            
+                            // Make the indicator clickable to show more info
+                            const indicator = document.getElementById('mapsStatusIndicator');
+                            if (indicator) {
+                                indicator.style.cursor = 'pointer';
+                                indicator.onclick = function() {
+                                    alert(
+                                        '❌ فشل تحميل خرائط جوجل\n\n' +
+                                        'الأسباب المحتملة:\n' +
+                                        '• انقطاع الاتصال بالإنترنت\n' +
+                                        '• مشكلة في مفتاح Google Maps API\n' +
+                                        '• حظر الوصول إلى خدمات جوجل\n' +
+                                        '• مشكلة في المتصفح\n\n' +
+                                        'الحلول المقترحة:\n' +
+                                        '1. تحقق من اتصالك بالإنترنت\n' +
+                                        '2. أعد تحميل الصفحة (F5)\n' +
+                                        '3. امسح ذاكرة التخزين المؤقت\n' +
+                                        '4. جرّب متصفحاً آخر\n' +
+                                        '5. تواصل مع المطور إذا استمرت المشكلة'
+                                    );
+                                };
+                            }
+                        }
+                    }, 3000);
+                }
+            }, 1000);
+        });
         
         // Create the map when modal is opened (async version)
         async function createMap() {
@@ -4449,9 +4630,49 @@
         
         // Open map modal
         async function openMapModal() {
-            if (!isMapInitialized) {
-                alert('⚠️ جاري تحميل خرائط جوجل... يرجى الانتظار لحظة والمحاولة مرة أخرى');
+            // Check if Google Maps API is available
+            if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
+                console.error('❌ Google Maps API not loaded');
+                
+                const retry = confirm(
+                    '⚠️ خرائط جوجل غير محملة حالياً\n\n' +
+                    'هذا قد يحدث بسبب:\n' +
+                    '• بطء في الاتصال بالإنترنت\n' +
+                    '• مشكلة في مفتاح API\n' +
+                    '• حظر الوصول لخرائط جوجل\n\n' +
+                    'هل تريد إعادة تحميل الصفحة والمحاولة مرة أخرى؟'
+                );
+                
+                if (retry) {
+                    window.location.reload();
+                }
                 return;
+            }
+            
+            // Force initialization if not done yet
+            if (!isMapInitialized) {
+                console.log('🔧 Forcing Google Maps initialization...');
+                try {
+                    initMap();
+                    
+                    // If still not initialized, show error
+                    if (!isMapInitialized) {
+                        throw new Error('Failed to initialize Google Maps');
+                    }
+                } catch (error) {
+                    console.error('❌ Failed to initialize maps:', error);
+                    
+                    const retry = confirm(
+                        '⚠️ فشل تهيئة خرائط جوجل\n\n' +
+                        'الرجاء المحاولة مرة أخرى\n\n' +
+                        'هل تريد إعادة تحميل الصفحة؟'
+                    );
+                    
+                    if (retry) {
+                        window.location.reload();
+                    }
+                    return;
+                }
             }
             
             if (!planData || !shopsDetails) {

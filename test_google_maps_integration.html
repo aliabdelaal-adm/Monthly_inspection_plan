@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار تكامل خرائط جوجل - Google Maps Integration Test</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Cairo', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2d3561;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .status-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .status-card h2 {
+            color: #2d3561;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .status-label {
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .status-value {
+            font-family: 'Courier New', monospace;
+            padding: 2px 8px;
+            border-radius: 5px;
+        }
+        
+        .status-value.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            font-weight: 700;
+        }
+        
+        .status-value.error {
+            background: #ffebee;
+            color: #c62828;
+            font-weight: 700;
+        }
+        
+        .status-value.warning {
+            background: #fff3e0;
+            color: #e65100;
+            font-weight: 700;
+        }
+        
+        .map-container {
+            width: 100%;
+            height: 500px;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 3px solid #667eea;
+            margin: 20px 0;
+        }
+        
+        #testMap {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .test-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+            font-family: 'Cairo', sans-serif;
+        }
+        
+        .test-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .test-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .log-container {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 20px;
+            border-radius: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            margin-top: 20px;
+        }
+        
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+        }
+        
+        .log-entry.error {
+            color: #ff6b6b;
+        }
+        
+        .log-entry.success {
+            color: #51cf66;
+        }
+        
+        .log-entry.info {
+            color: #74c0fc;
+        }
+        
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .instructions {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #90caf9;
+            margin: 20px 0;
+        }
+        
+        .instructions h3 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+        
+        .instructions ol {
+            margin-right: 20px;
+            color: #555;
+        }
+        
+        .instructions li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+    </style>
+    
+    <!-- Load Google Maps configuration -->
+    <script src="google-maps-config.local.js" onerror="console.log('⚠️ No local API key config found.')"></script>
+    <script src="google-maps-config.js"></script>
+    <script src="google-maps-loader.js"></script>
+    
+    <!-- Preconnect to Google Maps -->
+    <link rel="preconnect" href="https://maps.googleapis.com">
+    <link rel="preconnect" href="https://maps.gstatic.com" crossorigin>
+</head>
+<body>
+    <div class="container">
+        <h1>🗺️ اختبار تكامل خرائط جوجل</h1>
+        <p class="subtitle">Google Maps Integration Test - Smart Planner</p>
+        
+        <div class="instructions">
+            <h3>📋 تعليمات الاختبار / Test Instructions</h3>
+            <ol>
+                <li>تحقق من حالة التحميل في القسم الأول (Initialization Status)</li>
+                <li>إذا ظهرت أخطاء، راجع القسم الثاني (Configuration Check)</li>
+                <li>انقر على "تحميل الخريطة" لاختبار عرض الخريطة</li>
+                <li>راجع السجل (Console Log) في الأسفل للتفاصيل</li>
+            </ol>
+        </div>
+        
+        <div class="status-card">
+            <h2>🚀 حالة التحميل - Initialization Status</h2>
+            <div class="status-item">
+                <span class="status-label">Google Maps Config Loaded:</span>
+                <span class="status-value" id="configStatus">Checking...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Google Maps Loader Loaded:</span>
+                <span class="status-value" id="loaderStatus">Checking...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Google Maps API Status:</span>
+                <span class="status-value" id="apiStatus">Checking...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Maps JavaScript Available:</span>
+                <span class="status-value" id="mapsJsStatus">Checking...</span>
+            </div>
+        </div>
+        
+        <div class="status-card">
+            <h2>🔑 فحص التكوين - Configuration Check</h2>
+            <div class="status-item">
+                <span class="status-label">API Key Set:</span>
+                <span class="status-value" id="apiKeyStatus">Checking...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">API Key Preview:</span>
+                <span class="status-value" id="apiKeyPreview" style="font-size: 0.85em;">---</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Libraries Configuration:</span>
+                <span class="status-value" id="librariesStatus">Checking...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Current Domain:</span>
+                <span class="status-value" id="domainStatus">---</span>
+            </div>
+        </div>
+        
+        <div class="button-group">
+            <button class="test-btn" onclick="initializeGoogleMaps()" id="initBtn">
+                🚀 تهيئة خرائط جوجل - Initialize Google Maps
+            </button>
+            <button class="test-btn" onclick="loadTestMap()" id="loadMapBtn" disabled>
+                🗺️ تحميل الخريطة - Load Map
+            </button>
+            <button class="test-btn" onclick="addTestMarker()" id="addMarkerBtn" disabled>
+                📍 إضافة علامة - Add Marker
+            </button>
+            <button class="test-btn" onclick="clearLog()">
+                🗑️ مسح السجل - Clear Log
+            </button>
+        </div>
+        
+        <div class="map-container" id="mapContainer" style="display: none;">
+            <div id="testMap"></div>
+        </div>
+        
+        <div class="status-card">
+            <h2>📋 سجل الأحداث - Console Log</h2>
+            <div class="log-container" id="logContainer">
+                <div class="log-entry info">جاري التحقق من التكوين...</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Global variables
+        let testMap = null;
+        let testMarkers = [];
+        
+        // Logging function
+        function addLog(message, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString('ar-SA');
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            
+            // Also log to console
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+        
+        function clearLog() {
+            document.getElementById('logContainer').innerHTML = '';
+            addLog('تم مسح السجل', 'info');
+        }
+        
+        // Check configuration on page load
+        window.addEventListener('load', function() {
+            addLog('بدء فحص التكوين...', 'info');
+            checkConfiguration();
+        });
+        
+        function checkConfiguration() {
+            // Check if config is loaded
+            const configLoaded = typeof window.GOOGLE_MAPS_CONFIG !== 'undefined';
+            updateStatus('configStatus', configLoaded, configLoaded ? 'Loaded ✓' : 'Not Loaded ✗');
+            addLog(`Google Maps Config: ${configLoaded ? 'محمّل' : 'غير محمّل'}`, configLoaded ? 'success' : 'error');
+            
+            // Check if loader is loaded
+            const loaderLoaded = typeof window.googleMapsLoader !== 'undefined';
+            updateStatus('loaderStatus', loaderLoaded, loaderLoaded ? 'Loaded ✓' : 'Not Loaded ✗');
+            addLog(`Google Maps Loader: ${loaderLoaded ? 'محمّل' : 'غير محمّل'}`, loaderLoaded ? 'success' : 'error');
+            
+            // Check if Google Maps API is already loaded
+            const apiLoaded = typeof google !== 'undefined' && typeof google.maps !== 'undefined';
+            updateStatus('apiStatus', apiLoaded, apiLoaded ? 'Loaded ✓' : 'Not Loaded Yet');
+            addLog(`Google Maps API: ${apiLoaded ? 'محمّل' : 'لم يتم التحميل بعد'}`, apiLoaded ? 'success' : 'warning');
+            
+            // Check Maps JavaScript
+            const mapsJsAvailable = apiLoaded && typeof google.maps.Map !== 'undefined';
+            updateStatus('mapsJsStatus', mapsJsAvailable, mapsJsAvailable ? 'Available ✓' : 'Not Available');
+            addLog(`Maps JavaScript: ${mapsJsAvailable ? 'متاح' : 'غير متاح'}`, mapsJsAvailable ? 'success' : 'warning');
+            
+            if (configLoaded) {
+                // Check API key
+                const apiKey = window.GOOGLE_MAPS_CONFIG.apiKey;
+                const placeholder = window.API_KEY_PLACEHOLDER || 'REPLACE_WITH_YOUR_GOOGLE_MAPS_API_KEY';
+                const apiKeySet = apiKey && apiKey !== placeholder;
+                
+                updateStatus('apiKeyStatus', apiKeySet, apiKeySet ? 'Set ✓' : 'Not Set ✗');
+                addLog(`API Key: ${apiKeySet ? 'مُعيَّن' : 'غير مُعيَّن'}`, apiKeySet ? 'success' : 'error');
+                
+                if (apiKeySet) {
+                    const preview = apiKey.substring(0, 20) + '...' + apiKey.substring(apiKey.length - 5);
+                    document.getElementById('apiKeyPreview').textContent = preview;
+                    addLog(`API Key Preview: ${preview}`, 'info');
+                } else {
+                    document.getElementById('apiKeyPreview').textContent = 'NOT SET - يجب تعيين مفتاح API';
+                    document.getElementById('apiKeyPreview').className = 'status-value error';
+                }
+                
+                // Check libraries
+                const libraries = window.GOOGLE_MAPS_CONFIG.libraries || [];
+                updateStatus('librariesStatus', libraries.length > 0, libraries.join(', '));
+                addLog(`Libraries: ${libraries.join(', ')}`, 'info');
+            }
+            
+            // Show current domain
+            const domain = window.location.hostname || 'localhost';
+            document.getElementById('domainStatus').textContent = domain;
+            document.getElementById('domainStatus').className = 'status-value success';
+            addLog(`Domain: ${domain}`, 'info');
+            
+            // Enable init button if config is loaded
+            if (configLoaded && loaderLoaded) {
+                document.getElementById('initBtn').disabled = false;
+                addLog('يمكنك الآن تهيئة خرائط جوجل', 'success');
+            } else {
+                addLog('لا يمكن تهيئة خرائط جوجل - الملفات غير محملة', 'error');
+            }
+            
+            // If API is already loaded, enable map buttons
+            if (apiLoaded) {
+                document.getElementById('loadMapBtn').disabled = false;
+                addLog('خرائط جوجل جاهزة للاستخدام!', 'success');
+            }
+        }
+        
+        function updateStatus(elementId, isSuccess, text) {
+            const element = document.getElementById(elementId);
+            element.textContent = text;
+            element.className = 'status-value ' + (isSuccess ? 'success' : 'error');
+        }
+        
+        function initializeGoogleMaps() {
+            addLog('بدء تهيئة خرائط جوجل...', 'info');
+            document.getElementById('initBtn').disabled = true;
+            document.getElementById('initBtn').textContent = '⏳ جاري التهيئة...';
+            
+            if (!window.googleMapsLoader) {
+                addLog('خطأ: Google Maps Loader غير متاح', 'error');
+                return;
+            }
+            
+            // Set up event listeners
+            window.googleMapsLoader.on('onLoad', () => {
+                addLog('✅ تم تحميل Google Maps بنجاح!', 'success');
+                updateStatus('apiStatus', true, 'Loaded ✓');
+                updateStatus('mapsJsStatus', true, 'Available ✓');
+                document.getElementById('loadMapBtn').disabled = false;
+                document.getElementById('initBtn').textContent = '✅ تم التحميل';
+            });
+            
+            window.googleMapsLoader.on('onError', (error) => {
+                addLog(`❌ فشل تحميل Google Maps: ${error.message}`, 'error');
+                updateStatus('apiStatus', false, 'Failed ✗');
+                document.getElementById('initBtn').textContent = '❌ فشل التحميل';
+                document.getElementById('initBtn').disabled = false;
+            });
+            
+            window.googleMapsLoader.on('onRetry', (data) => {
+                addLog(`🔄 إعادة المحاولة ${data.attempt}...`, 'info');
+            });
+            
+            // Initialize
+            window.googleMapsLoader.init().catch(error => {
+                addLog(`خطأ حرج: ${error.message}`, 'error');
+            });
+        }
+        
+        function loadTestMap() {
+            addLog('جاري تحميل الخريطة...', 'info');
+            
+            if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
+                addLog('خطأ: Google Maps API غير محمّل', 'error');
+                return;
+            }
+            
+            try {
+                document.getElementById('mapContainer').style.display = 'block';
+                
+                // Abu Dhabi center
+                const center = { lat: 24.4539, lng: 54.3773 };
+                
+                testMap = new google.maps.Map(document.getElementById('testMap'), {
+                    center: center,
+                    zoom: 12,
+                    mapTypeControl: true,
+                    streetViewControl: true,
+                    fullscreenControl: true
+                });
+                
+                addLog('✅ تم تحميل الخريطة بنجاح!', 'success');
+                addLog(`المركز: Abu Dhabi (${center.lat}, ${center.lng})`, 'info');
+                
+                document.getElementById('addMarkerBtn').disabled = false;
+                document.getElementById('loadMapBtn').textContent = '✅ تم التحميل';
+                
+                // Add a default marker
+                const marker = new google.maps.Marker({
+                    position: center,
+                    map: testMap,
+                    title: 'أبو ظبي - Abu Dhabi',
+                    animation: google.maps.Animation.DROP
+                });
+                
+                testMarkers.push(marker);
+                addLog('✅ تمت إضافة علامة افتراضية', 'success');
+                
+            } catch (error) {
+                addLog(`❌ خطأ في تحميل الخريطة: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+        
+        function addTestMarker() {
+            if (!testMap) {
+                addLog('خطأ: الخريطة غير محملة', 'error');
+                return;
+            }
+            
+            try {
+                // Random location near center
+                const center = testMap.getCenter();
+                const lat = center.lat() + (Math.random() - 0.5) * 0.1;
+                const lng = center.lng() + (Math.random() - 0.5) * 0.1;
+                
+                const marker = new google.maps.Marker({
+                    position: { lat, lng },
+                    map: testMap,
+                    title: `علامة اختبار ${testMarkers.length}`,
+                    animation: google.maps.Animation.BOUNCE
+                });
+                
+                setTimeout(() => marker.setAnimation(null), 1500);
+                
+                testMarkers.push(marker);
+                addLog(`✅ تمت إضافة علامة في (${lat.toFixed(4)}, ${lng.toFixed(4)})`, 'success');
+                
+            } catch (error) {
+                addLog(`❌ خطأ في إضافة العلامة: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+        
+        // Legacy initMap for callback
+        window.initMap = function() {
+            addLog('✅ Google Maps callback triggered', 'success');
+        };
+    </script>
+</body>
+</html>

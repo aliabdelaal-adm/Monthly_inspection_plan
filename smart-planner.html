@@ -1870,13 +1870,15 @@
         .maps-status-indicator {
             display: inline-block;
             margin-right: 10px;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.9em;
+            font-weight: 700;
             background: #e8f5e9;
             color: #2e7d32;
             border: 2px solid #4caf50;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         
         .maps-status-indicator.loading {
@@ -1890,11 +1892,25 @@
             background: #ffebee;
             color: #c62828;
             border-color: #f44336;
+            cursor: pointer;
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        .maps-status-indicator.error:hover {
+            background: #f44336;
+            color: white;
+            transform: scale(1.05);
         }
         
         @keyframes pulse-status {
-            0%, 100% { opacity: 0.8; }
-            50% { opacity: 1; }
+            0%, 100% { opacity: 0.8; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.02); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
         }
         
         .map-helper-tools {
@@ -2036,6 +2052,10 @@
     <script src="google-maps-config.local.js" onerror="console.log('⚠️ No local API key config found. Using default config.')"></script>
     <script src="google-maps-config.js"></script>
     <script src="google-maps-loader.js"></script>
+    
+    <!-- Preconnect to Google Maps for faster loading -->
+    <link rel="preconnect" href="https://maps.googleapis.com">
+    <link rel="preconnect" href="https://maps.gstatic.com" crossorigin>
 </head>
 <body>
     <div class="container">
@@ -3898,10 +3918,25 @@
         
         // Initialize Google Maps using the new loader
         function initGoogleMaps() {
+            console.log('🔍 Checking Google Maps initialization prerequisites...');
+            
+            // Debug: Log config availability
+            console.log('GOOGLE_MAPS_CONFIG available:', !!window.GOOGLE_MAPS_CONFIG);
+            console.log('googleMapsLoader available:', !!window.googleMapsLoader);
+            
+            if (window.GOOGLE_MAPS_CONFIG) {
+                console.log('API Key configured:', window.GOOGLE_MAPS_CONFIG.apiKey ? 
+                    window.GOOGLE_MAPS_CONFIG.apiKey.substring(0, 10) + '...' : 'NOT SET');
+            }
+            
             // Check if loader is available
             if (!window.googleMapsLoader) {
                 console.error('❌ Google Maps Loader not available');
-                updateMapsStatusIndicator('error', 'خطأ في تحميل النظام');
+                console.error('This may happen if:');
+                console.error('1. google-maps-config.js failed to load');
+                console.error('2. google-maps-loader.js failed to load');
+                console.error('3. Scripts loaded in wrong order');
+                updateMapsStatusIndicator('error', 'خطأ في تحميل النظام - تحقق من Console');
                 return;
             }
             
@@ -3911,12 +3946,17 @@
             // Set up event listeners
             window.googleMapsLoader.on('onLoad', () => {
                 console.log('✅ Google Maps loaded successfully!');
+                console.log('✅ google.maps available:', typeof google !== 'undefined' && typeof google.maps !== 'undefined');
                 isMapInitialized = true;
-                updateMapsStatusIndicator('ready', 'خرائط جوجل جاهزة');
+                updateMapsStatusIndicator('ready', 'خرائط جوجل جاهزة ✓');
             });
             
             window.googleMapsLoader.on('onError', (error) => {
                 console.error('❌ Google Maps failed to load:', error);
+                console.error('Error details:', {
+                    message: error.message,
+                    stack: error.stack
+                });
                 isMapInitialized = false;
                 
                 const errorMessage = error.message || 'فشل تحميل الخرائط';
@@ -3933,13 +3973,15 @@
             });
             
             window.googleMapsLoader.on('onRetry', (data) => {
-                console.log(`🔄 Retrying... Attempt ${data.attempt}`);
+                console.log(`🔄 Retrying... Attempt ${data.attempt}/${window.GOOGLE_MAPS_CONFIG.loading.maxRetryAttempts}`);
+                console.log('Previous error:', data.error);
                 updateMapsStatusIndicator('loading', `محاولة ${data.attempt}...`);
             });
             
             // Initialize the loader
+            console.log('📡 Initiating Google Maps API load...');
             window.googleMapsLoader.init().catch(error => {
-                console.error('Failed to initialize Google Maps:', error);
+                console.error('💥 Fatal error during Google Maps initialization:', error);
             });
         }
         
@@ -3948,38 +3990,59 @@
             const errorType = getErrorType(error);
             let message = '❌ فشل تحميل خرائط جوجل\n\n';
             
+            // Add API key info for debugging
+            const apiKey = window.GOOGLE_MAPS_CONFIG ? window.GOOGLE_MAPS_CONFIG.apiKey : 'NOT SET';
+            const apiKeyPreview = apiKey !== 'NOT SET' ? apiKey.substring(0, 15) + '...' : 'NOT SET';
+            message += `🔑 مفتاح API: ${apiKeyPreview}\n\n`;
+            
             switch (errorType) {
                 case 'no-api-key':
-                    message += '🔑 المشكلة: لم يتم تعيين مفتاح API\n\n';
+                    message += '🔑 المشكلة: لم يتم تعيين مفتاح API صالح\n\n';
                     message += 'الحل:\n';
                     message += '1. افتح ملف google-maps-config.js\n';
                     message += '2. احصل على مفتاح API من:\n';
                     message += '   https://console.cloud.google.com/\n';
                     message += '3. فعّل Maps JavaScript API\n';
-                    message += '4. أعد إعداد الفوترة\n';
-                    message += '5. حدّث apiKey في الملف\n';
+                    message += '4. فعّل Places API\n';
+                    message += '5. فعّل Geocoding API\n';
+                    message += '6. أعد إعداد الفوترة (مطلوب)\n';
+                    message += '7. حدّث apiKey في الملف\n';
+                    message += '8. تأكد من عدم وجود قيود على النطاق\n\n';
+                    message += '💡 نصيحة: يمكنك استخدام المفتاح بدون قيود\n';
+                    message += 'في مرحلة التطوير والتجربة\n';
                     break;
                     
                 case 'auth-failure':
                     message += '🔒 المشكلة: خطأ في المصادقة\n\n';
                     message += 'الأسباب المحتملة:\n';
                     message += '• مفتاح API غير صالح أو منتهي\n';
-                    message += '• لم يتم تفعيل الفوترة\n';
-                    message += '• تم تجاوز الحد المسموح\n';
-                    message += '• قيود النطاق غير صحيحة\n\n';
+                    message += '• لم يتم تفعيل الفوترة في Google Cloud\n';
+                    message += '• لم يتم تفعيل الخدمات المطلوبة:\n';
+                    message += '  - Maps JavaScript API\n';
+                    message += '  - Places API\n';
+                    message += '  - Geocoding API\n';
+                    message += '• تم تجاوز الحد المسموح (Quota)\n';
+                    message += '• قيود النطاق (Domain restrictions) غير صحيحة\n';
+                    message += '  النطاق الحالي: ' + window.location.hostname + '\n\n';
                     message += 'الحلول:\n';
-                    message += '1. تحقق من صحة مفتاح API\n';
-                    message += '2. تأكد من تفعيل الفوترة\n';
-                    message += '3. راجع قيود API في Google Console\n';
+                    message += '1. تحقق من صحة مفتاح API في Google Cloud Console\n';
+                    message += '2. تأكد من تفعيل الفوترة (Billing)\n';
+                    message += '3. تأكد من تفعيل جميع الخدمات المطلوبة\n';
+                    message += '4. راجع قيود API:\n';
+                    message += '   - أزل قيود النطاق مؤقتاً للتجربة\n';
+                    message += '   - أو أضف النطاق: ' + window.location.hostname + '\n';
+                    message += '5. راجع حصة الاستخدام (Quotas)\n';
                     break;
                     
                 case 'network-error':
                     message += '🌐 المشكلة: خطأ في الاتصال\n\n';
                     message += 'الحلول:\n';
                     message += '1. تحقق من اتصالك بالإنترنت\n';
-                    message += '2. جرّب إعادة تحميل الصفحة\n';
+                    message += '2. جرّب إعادة تحميل الصفحة (F5)\n';
                     message += '3. تأكد من عدم حظر خرائط جوجل\n';
                     message += '4. جرّب متصفحاً آخر\n';
+                    message += '5. تحقق من جدار الحماية/Firewall\n';
+                    message += '6. جرّب تعطيل مانع الإعلانات (AdBlock)\n';
                     break;
                     
                 default:
@@ -3987,9 +4050,17 @@
                     message += 'الحلول المقترحة:\n';
                     message += '1. أعد تحميل الصفحة (F5)\n';
                     message += '2. امسح ذاكرة التخزين المؤقت (Ctrl+Shift+Delete)\n';
-                    message += '3. تحقق من Console (F12) لمزيد من التفاصيل\n';
-                    message += '4. تواصل مع المطور\n';
+                    message += '3. افتح Console (F12) للمزيد من التفاصيل\n';
+                    message += '4. تحقق من:\n';
+                    message += '   - مفتاح API صالح\n';
+                    message += '   - تفعيل الفوترة\n';
+                    message += '   - تفعيل الخدمات المطلوبة\n';
+                    message += '   - إزالة قيود النطاق\n';
+                    message += '5. تواصل مع المطور\n';
             }
+            
+            message += '\n📚 للمزيد من المساعدة، راجع ملف:\n';
+            message += 'GOOGLE_MAPS_SETUP_COMPLETE_GUIDE.md\n';
             
             alert(message);
         }

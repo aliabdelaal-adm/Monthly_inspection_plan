@@ -37,7 +37,7 @@
 
 // Set your actual Google Maps API key here
 // ضع مفتاح Google Maps API الفعلي هنا
-const GOOGLE_MAPS_API_KEY = 'YOUR_ACTUAL_API_KEY_HERE';
+const GOOGLE_MAPS_API_KEY = 'AIzaSyBIu6hLqc2mW6WYKTf1JCMSjKCkN1E-xVU';
 
 // Export the API key
 // تصدير مفتاح API

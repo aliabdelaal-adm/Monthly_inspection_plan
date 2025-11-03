@@ -2362,7 +2362,7 @@
             </div>
             
             <!-- Action Buttons -->
-<div class="action-buttons">
+            <div class="action-buttons">
                 <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
                     <span id="mapsStatusIndicator" class="maps-status-indicator loading">
                         ⏳ جاري تحميل خرائط جوجل...
@@ -3929,8 +3929,9 @@
             console.log('googleMapsLoader available:', !!window.googleMapsLoader);
             
             if (window.GOOGLE_MAPS_CONFIG) {
+                // Only show first 5 chars for security
                 console.log('API Key configured:', window.GOOGLE_MAPS_CONFIG.apiKey ? 
-                    window.GOOGLE_MAPS_CONFIG.apiKey.substring(0, 10) + '...' : 'NOT SET');
+                    window.GOOGLE_MAPS_CONFIG.apiKey.substring(0, 5) + '***' : 'NOT SET');
             }
             
             // Check if loader is available
@@ -3994,9 +3995,9 @@
             const errorType = getErrorType(error);
             let message = '❌ فشل تحميل خرائط جوجل\n\n';
             
-            // Add API key info for debugging
+            // Add API key info for debugging (only show first few chars for security)
             const apiKey = window.GOOGLE_MAPS_CONFIG ? window.GOOGLE_MAPS_CONFIG.apiKey : 'NOT SET';
-            const apiKeyPreview = apiKey !== 'NOT SET' ? apiKey.substring(0, 15) + '...' : 'NOT SET';
+            const apiKeyPreview = apiKey !== 'NOT SET' ? apiKey.substring(0, 8) + '***' : 'NOT SET';
             message += `🔑 مفتاح API: ${apiKeyPreview}\n\n`;
             
             switch (errorType) {
@@ -4107,7 +4108,8 @@
                 report += `✓ API Key: ${apiKeySet ? '✅ مُعيَّن' : '❌ غير مُعيَّن'}\n`;
                 
                 if (apiKeySet) {
-                    const preview = apiKey.substring(0, 20) + '...' + apiKey.substring(apiKey.length - 5);
+                    // Only show first 8 chars for security
+                    const preview = apiKey.substring(0, 8) + '***';
                     report += `  المعاينة: ${preview}\n`;
                 }
                 

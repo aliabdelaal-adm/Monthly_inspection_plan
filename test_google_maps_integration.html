@@ -199,13 +199,21 @@
     </style>
     
     <!-- Load Google Maps configuration -->
-    <script src="google-maps-config.local.js" onerror="console.log('⚠️ No local API key config found.')"></script>
+    <script src="google-maps-config.local.js" onerror="handleMissingLocalConfig()"></script>
     <script src="google-maps-config.js"></script>
     <script src="google-maps-loader.js"></script>
     
     <!-- Preconnect to Google Maps -->
     <link rel="preconnect" href="https://maps.googleapis.com">
     <link rel="preconnect" href="https://maps.gstatic.com" crossorigin>
+    
+    <script>
+        // Handle missing local config gracefully
+        function handleMissingLocalConfig() {
+            console.log('⚠️ No local API key config found. Using default config from google-maps-config.js');
+            // This is expected behavior - local config is optional
+        }
+    </script>
 </head>
 <body>
     <div class="container">
@@ -350,7 +358,8 @@
                 addLog(`API Key: ${apiKeySet ? 'مُعيَّن' : 'غير مُعيَّن'}`, apiKeySet ? 'success' : 'error');
                 
                 if (apiKeySet) {
-                    const preview = apiKey.substring(0, 20) + '...' + apiKey.substring(apiKey.length - 5);
+                    // Only show first 8 chars for security
+                    const preview = apiKey.substring(0, 8) + '***';
                     document.getElementById('apiKeyPreview').textContent = preview;
                     addLog(`API Key Preview: ${preview}`, 'info');
                 } else {

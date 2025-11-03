@@ -31,9 +31,17 @@ const API_KEY_PLACEHOLDER = 'REPLACE_WITH_YOUR_GOOGLE_MAPS_API_KEY';
 // محاولة تحميل مفتاح API من الإعدادات المحلية (مضاف لـ gitignore للأمان)
 let API_KEY = API_KEY_PLACEHOLDER;
 if (typeof window !== 'undefined' && window.GOOGLE_MAPS_API_KEY) {
-    API_KEY = window.GOOGLE_MAPS_API_KEY;
-    console.log('✅ Google Maps API key loaded from local configuration');
-    console.log('✅ تم تحميل مفتاح Google Maps API من الإعدادات المحلية');
+    // Validate that the loaded key is not empty or the placeholder
+    if (window.GOOGLE_MAPS_API_KEY && 
+        window.GOOGLE_MAPS_API_KEY !== API_KEY_PLACEHOLDER && 
+        window.GOOGLE_MAPS_API_KEY.trim() !== '') {
+        API_KEY = window.GOOGLE_MAPS_API_KEY;
+        console.log('✅ Google Maps API key loaded from local configuration');
+        console.log('✅ تم تحميل مفتاح Google Maps API من الإعدادات المحلية');
+    } else {
+        console.warn('⚠️ Local config found but API key is invalid or placeholder');
+        console.warn('⚠️ تم العثور على إعدادات محلية لكن مفتاح API غير صالح أو قيمة افتراضية');
+    }
 }
 
 const GOOGLE_MAPS_CONFIG = {

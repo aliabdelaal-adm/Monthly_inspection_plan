@@ -269,11 +269,25 @@
     </div>
 
     <!-- Load local API key configuration first (if exists) -->
-    <script src="google-maps-config.local.js" onerror="console.log('⚠️ No local API key config found.')"></script>
+    <script src="google-maps-config.local.js" onerror="console.log('⚠️ No local API key config found. Using default config.')"></script>
     <script src="google-maps-config.js"></script>
     <script src="google-maps-loader.js"></script>
     
     <script>
+        // Configuration constants
+        const CONFIG = {
+            // Abu Dhabi coordinates (default center for maps)
+            DEFAULT_CENTER: { lat: 24.4539, lng: 54.3773 },
+            DEFAULT_LOCATION_NAME: 'أبو ظبي - Abu Dhabi',
+            
+            // API key validation
+            MIN_API_KEY_LENGTH: 30,  // Google Maps API keys are typically 39 characters
+            API_KEY_PREFIX: 'AIza',  // All Google Maps API keys start with this
+            
+            // Map settings
+            DEFAULT_ZOOM: 12
+        };
+        
         // Validation state
         const validationState = {
             configLoaded: false,
@@ -329,8 +343,8 @@
                     validationState.apiKeyValid = true;
                     validationState.passedChecks++;
                     
-                    // Check format
-                    if (apiKey.startsWith('AIza') && apiKey.length > 30) {
+                    // Check format using constants
+                    if (apiKey.startsWith(CONFIG.API_KEY_PREFIX) && apiKey.length >= CONFIG.MIN_API_KEY_LENGTH) {
                         validationState.apiKeyFormat = true;
                         validationState.passedChecks++;
                         ul.appendChild(createCheckItem('مفتاح API موجود وصالح ✓', 'success'));
@@ -394,8 +408,8 @@
                                 document.body.appendChild(testDiv);
                                 
                                 const map = new google.maps.Map(testDiv, {
-                                    center: { lat: 24.4539, lng: 54.3773 },
-                                    zoom: 12
+                                    center: CONFIG.DEFAULT_CENTER,
+                                    zoom: CONFIG.DEFAULT_ZOOM
                                 });
                                 
                                 validationState.billingEnabled = true;
@@ -480,17 +494,17 @@
                 mapContainer.appendChild(mapDiv);
                 
                 const map = new google.maps.Map(mapDiv, {
-                    center: { lat: 24.4539, lng: 54.3773 },
-                    zoom: 12,
+                    center: CONFIG.DEFAULT_CENTER,
+                    zoom: CONFIG.DEFAULT_ZOOM,
                     mapTypeControl: true,
                     streetViewControl: true,
                     fullscreenControl: true
                 });
                 
                 new google.maps.Marker({
-                    position: { lat: 24.4539, lng: 54.3773 },
+                    position: CONFIG.DEFAULT_CENTER,
                     map: map,
-                    title: 'أبو ظبي - Abu Dhabi'
+                    title: CONFIG.DEFAULT_LOCATION_NAME
                 });
                 
             } else if (percentage >= 50) {

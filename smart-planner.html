@@ -2362,7 +2362,7 @@
             </div>
             
             <!-- Action Buttons -->
-            <div class="action-buttons">
+<div class="action-buttons">
                 <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
                     <span id="mapsStatusIndicator" class="maps-status-indicator loading">
                         ⏳ جاري تحميل خرائط جوجل...
@@ -2370,6 +2370,10 @@
                     <button class="btn-add-from-map" onclick="openMapModal()" id="mapButton">
                         <span class="icon">🗺️</span>
                         <span>إضافة تفتيش من الخريطة</span>
+                    </button>
+                    <button class="btn" onclick="openGoogleMapsDiagnostics()" style="background: #3498db; color: white; padding: 12px 20px;">
+                        <span>🔍</span>
+                        <span>تشخيص الخرائط</span>
                     </button>
                 </div>
                 <button class="btn btn-success" onclick="saveInspection()" id="saveBtn" disabled>
@@ -4078,6 +4082,135 @@
             }
             
             return 'unknown';
+        }
+        
+        // Google Maps Diagnostics Tool
+        function openGoogleMapsDiagnostics() {
+            let report = '🔍 تشخيص خرائط جوجل - Google Maps Diagnostics\n';
+            report += '═══════════════════════════════════════════════════\n\n';
+            
+            // 1. Configuration Check
+            report += '📋 التكوين - Configuration:\n';
+            report += '─────────────────────────────────\n';
+            
+            const configLoaded = typeof window.GOOGLE_MAPS_CONFIG !== 'undefined';
+            report += `✓ GOOGLE_MAPS_CONFIG: ${configLoaded ? '✅ محمّل' : '❌ غير محمّل'}\n`;
+            
+            const loaderLoaded = typeof window.googleMapsLoader !== 'undefined';
+            report += `✓ googleMapsLoader: ${loaderLoaded ? '✅ محمّل' : '❌ غير محمّل'}\n`;
+            
+            if (configLoaded && window.GOOGLE_MAPS_CONFIG) {
+                const apiKey = window.GOOGLE_MAPS_CONFIG.apiKey;
+                const placeholder = window.API_KEY_PLACEHOLDER || 'REPLACE_WITH_YOUR_GOOGLE_MAPS_API_KEY';
+                const apiKeySet = apiKey && apiKey !== placeholder;
+                
+                report += `✓ API Key: ${apiKeySet ? '✅ مُعيَّن' : '❌ غير مُعيَّن'}\n`;
+                
+                if (apiKeySet) {
+                    const preview = apiKey.substring(0, 20) + '...' + apiKey.substring(apiKey.length - 5);
+                    report += `  المعاينة: ${preview}\n`;
+                }
+                
+                report += `✓ Libraries: ${window.GOOGLE_MAPS_CONFIG.libraries.join(', ')}\n`;
+                report += `✓ Language: ${window.GOOGLE_MAPS_CONFIG.language}\n`;
+                report += `✓ Region: ${window.GOOGLE_MAPS_CONFIG.region}\n`;
+            }
+            
+            report += '\n';
+            
+            // 2. API Status
+            report += '🌐 حالة API - API Status:\n';
+            report += '─────────────────────────────────\n';
+            
+            const googleAvailable = typeof google !== 'undefined';
+            report += `✓ google object: ${googleAvailable ? '✅ متاح' : '❌ غير متاح'}\n`;
+            
+            if (googleAvailable) {
+                const mapsAvailable = typeof google.maps !== 'undefined';
+                report += `✓ google.maps: ${mapsAvailable ? '✅ متاح' : '❌ غير متاح'}\n`;
+                
+                if (mapsAvailable) {
+                    report += `✓ google.maps.Map: ${typeof google.maps.Map !== 'undefined' ? '✅ متاح' : '❌ غير متاح'}\n`;
+                    report += `✓ google.maps.Marker: ${typeof google.maps.Marker !== 'undefined' ? '✅ متاح' : '❌ غير متاح'}\n`;
+                    report += `✓ google.maps.InfoWindow: ${typeof google.maps.InfoWindow !== 'undefined' ? '✅ متاح' : '❌ غير متاح'}\n`;
+                }
+            }
+            
+            report += '\n';
+            
+            // 3. Loader Status
+            report += '📦 حالة المحمّل - Loader Status:\n';
+            report += '─────────────────────────────────\n';
+            
+            if (loaderLoaded && window.googleMapsLoader) {
+                const status = window.googleMapsLoader.getStatus();
+                report += `✓ Status: ${status}\n`;
+                report += `✓ isLoaded: ${window.googleMapsLoader.isLoaded ? '✅ نعم' : '❌ لا'}\n`;
+                report += `✓ isLoading: ${window.googleMapsLoader.isLoading ? '⏳ نعم' : '❌ لا'}\n`;
+                report += `✓ loadAttempts: ${window.googleMapsLoader.loadAttempts}\n`;
+            }
+            
+            report += '\n';
+            
+            // 4. Environment
+            report += '🌍 البيئة - Environment:\n';
+            report += '─────────────────────────────────\n';
+            report += `✓ Domain: ${window.location.hostname}\n`;
+            report += `✓ Protocol: ${window.location.protocol}\n`;
+            report += `✓ URL: ${window.location.href}\n`;
+            
+            report += '\n';
+            
+            // 5. Recommendations
+            report += '💡 التوصيات - Recommendations:\n';
+            report += '─────────────────────────────────\n';
+            
+            if (!configLoaded) {
+                report += '❌ تحميل google-maps-config.js فشل\n';
+                report += '   → تحقق من مسار الملف\n\n';
+            }
+            
+            if (!loaderLoaded) {
+                report += '❌ تحميل google-maps-loader.js فشل\n';
+                report += '   → تحقق من مسار الملف\n\n';
+            }
+            
+            if (configLoaded && window.GOOGLE_MAPS_CONFIG) {
+                const apiKey = window.GOOGLE_MAPS_CONFIG.apiKey;
+                const placeholder = window.API_KEY_PLACEHOLDER || 'REPLACE_WITH_YOUR_GOOGLE_MAPS_API_KEY';
+                const apiKeySet = apiKey && apiKey !== placeholder;
+                
+                if (!apiKeySet) {
+                    report += '❌ مفتاح API غير مُعيَّن\n';
+                    report += '   → افتح google-maps-config.js\n';
+                    report += '   → ضع مفتاح API الصحيح في apiKey\n\n';
+                }
+            }
+            
+            if (!googleAvailable) {
+                report += '❌ Google Maps API غير محمّل\n';
+                report += '   → قد يكون مفتاح API غير صالح\n';
+                report += '   → تحقق من تفعيل الفوترة\n';
+                report += '   → تحقق من تفعيل الخدمات:\n';
+                report += '     • Maps JavaScript API\n';
+                report += '     • Places API\n';
+                report += '     • Geocoding API\n';
+                report += '   → راجع قيود النطاق في Google Console\n\n';
+            }
+            
+            report += '\n📄 للمزيد من التفاصيل:\n';
+            report += '   → افتح test_google_maps_integration.html\n';
+            report += '   → راجع GOOGLE_MAPS_RADICAL_FIX_SOLUTION.md\n';
+            report += '   → افتح Console (F12) للتفاصيل التقنية\n';
+            
+            alert(report);
+            
+            // Also log to console
+            console.log('='.repeat(60));
+            console.log('Google Maps Diagnostics Report');
+            console.log('='.repeat(60));
+            console.log(report);
+            console.log('='.repeat(60));
         }
         
         // Legacy initMap function for backward compatibility

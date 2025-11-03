@@ -47,7 +47,7 @@ if (typeof window !== 'undefined' && window.GOOGLE_MAPS_API_KEY) {
 const GOOGLE_MAPS_CONFIG = {
     // API Key - Replace with your valid Google Maps API key
     // مفتاح API - استبدله بمفتاح Google Maps API الصالح الخاص بك
-    apiKey: AIzaSyBIu6hLqc2mW6WYKTf1JCMSjKCkN1E-xVU,
+    apiKey: 'AIzaSyBIu6hLqc2mW6WYKTf1JCMSjKCkN1E-xVU',
     
     // API Libraries to load
     // مكتبات API المطلوب تحميلها

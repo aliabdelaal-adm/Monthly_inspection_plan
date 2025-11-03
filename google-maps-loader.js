@@ -76,7 +76,7 @@ class GoogleMapsLoader {
             // Validate API key first
             if (!this.validateApiKey()) {
                 const error = new Error('Invalid or missing API key');
-                this.handleError(error, reject);
+                this.handleError(error, reject, resolve);
                 return;
             }
             
@@ -90,7 +90,7 @@ class GoogleMapsLoader {
             const timeout = setTimeout(() => {
                 this.isLoading = false;
                 const error = new Error('Script loading timeout');
-                this.handleError(error, reject);
+                this.handleError(error, reject, resolve);
             }, this.config.loading.scriptTimeout);
             
             // Success handler
@@ -107,7 +107,7 @@ class GoogleMapsLoader {
                     resolve();
                 } else {
                     const error = new Error('Google Maps objects not available after loading');
-                    this.handleError(error, reject);
+                    this.handleError(error, reject, resolve);
                 }
             };
             
@@ -116,7 +116,7 @@ class GoogleMapsLoader {
                 clearTimeout(timeout);
                 this.isLoading = false;
                 const error = new Error('Script failed to load');
-                this.handleError(error, reject);
+                this.handleError(error, reject, resolve);
             };
             
             // Authentication error handler
@@ -124,7 +124,7 @@ class GoogleMapsLoader {
                 clearTimeout(timeout);
                 this.isLoading = false;
                 const error = new Error('Google Maps authentication failed - check API key and billing');
-                this.handleError(error, reject);
+                this.handleError(error, reject, resolve);
             };
             
             // Append script to document
@@ -142,8 +142,9 @@ class GoogleMapsLoader {
      */
     validateApiKey() {
         const apiKey = this.config.apiKey;
+        const placeholder = window.API_KEY_PLACEHOLDER || 'REPLACE_WITH_YOUR_GOOGLE_MAPS_API_KEY';
         
-        if (!apiKey || apiKey === 'YOUR_GOOGLE_MAPS_API_KEY_HERE') {
+        if (!apiKey || apiKey === placeholder) {
             console.error('❌ Google Maps API key is not configured!');
             console.error('❌ لم يتم تكوين مفتاح Google Maps API!');
             this.showApiKeyInstructions();
@@ -213,7 +214,7 @@ class GoogleMapsLoader {
             language: this.config.language,
             region: this.config.region,
             callback: 'initMap',
-            v: 'weekly' // Use weekly version for latest features
+            v: '3.55' // Use stable version for production reliability
         });
         
         return `https://maps.googleapis.com/maps/api/js?${params.toString()}`;
@@ -223,7 +224,7 @@ class GoogleMapsLoader {
      * Handle errors
      * معالجة الأخطاء
      */
-    handleError(error, reject) {
+    handleError(error, reject, resolve) {
         console.error('❌ Google Maps loading error:', error);
         console.error('❌ خطأ في تحميل خرائط جوجل:', error.message);
         
@@ -235,7 +236,13 @@ class GoogleMapsLoader {
             this.notifyListeners('onRetry', { attempt: this.loadAttempts, error });
             
             setTimeout(() => {
-                this.retry().then(reject).catch(reject);
+                this.retry()
+                    .then(() => {
+                        if (resolve) resolve();
+                    })
+                    .catch((retryError) => {
+                        if (reject) reject(retryError);
+                    });
             }, this.config.loading.retryDelay);
         } else {
             console.error('❌ Maximum retry attempts reached');

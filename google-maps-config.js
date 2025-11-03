@@ -23,10 +23,14 @@
  * 4. تقييد مفتاح API لنطاقك لضمان الأمان
  */
 
+// Placeholder value for API key validation
+// قيمة نائبة للتحقق من صحة مفتاح API
+const API_KEY_PLACEHOLDER = 'REPLACE_WITH_YOUR_GOOGLE_MAPS_API_KEY';
+
 const GOOGLE_MAPS_CONFIG = {
     // API Key - Replace with your valid Google Maps API key
     // مفتاح API - استبدله بمفتاح Google Maps API الصالح الخاص بك
-    apiKey: 'YOUR_GOOGLE_MAPS_API_KEY_HERE',
+    apiKey: API_KEY_PLACEHOLDER,
     
     // API Libraries to load
     // مكتبات API المطلوب تحميلها
@@ -166,7 +170,7 @@ const GOOGLE_MAPS_CONFIG = {
 function validateGoogleMapsApiKey() {
     const apiKey = GOOGLE_MAPS_CONFIG.apiKey;
     
-    if (!apiKey || apiKey === 'YOUR_GOOGLE_MAPS_API_KEY_HERE') {
+    if (!apiKey || apiKey === API_KEY_PLACEHOLDER) {
         console.error('❌ Google Maps API key is not configured!');
         console.error('❌ لم يتم تكوين مفتاح Google Maps API!');
         console.info('📝 Please follow these steps:');
@@ -207,6 +211,7 @@ function buildGoogleMapsApiUrl() {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         GOOGLE_MAPS_CONFIG,
+        API_KEY_PLACEHOLDER,
         validateGoogleMapsApiKey,
         buildGoogleMapsApiUrl
     };

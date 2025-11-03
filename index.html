@@ -4312,6 +4312,12 @@
 
 
     </style>
+    
+    <!-- Google Maps Configuration -->
+    <!-- Load local API key configuration first (if exists, gitignored for security) -->
+    <script src="google-maps-config.local.js" onerror="console.log('⚠️ No local Google Maps API key config found. Using default config.')"></script>
+    <script src="google-maps-config.js"></script>
+    
 </head>
 <body>
 <!-- ============================================ -->
@@ -13657,8 +13663,14 @@ function showIndividualShopDetails(shopName) {
         
         // Create embedded map URL from coordinates or search query
         let embedMapUrl = '';
+        
+        // Get API key from configuration
+        const apiKey = (typeof GOOGLE_MAPS_CONFIG !== 'undefined' && GOOGLE_MAPS_CONFIG.apiKey) 
+                       ? GOOGLE_MAPS_CONFIG.apiKey 
+                       : (typeof window.GOOGLE_MAPS_API_KEY !== 'undefined' ? window.GOOGLE_MAPS_API_KEY : 'YOUR_API_KEY_HERE');
+        
         if (coords) {
-            embedMapUrl = `https://www.google.com/maps/embed/v1/place?key=AIzaSyDummy&q=${coords.lat},${coords.lng}&zoom=15`;
+            embedMapUrl = `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${coords.lat},${coords.lng}&zoom=15`;
         }
         
         html += `

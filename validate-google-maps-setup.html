@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Maps API Validator | مُتحقق من Google Maps API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            direction: rtl;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .header p {
+            opacity: 0.95;
+            font-size: 1.1em;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .status-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-left: 5px solid #6c757d;
+        }
+        
+        .status-card.success {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+        
+        .status-card.warning {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+        }
+        
+        .status-card.error {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+        }
+        
+        .status-card.info {
+            background: #d1ecf1;
+            border-left-color: #17a2b8;
+        }
+        
+        .status-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-icon {
+            font-size: 1.5em;
+        }
+        
+        .status-message {
+            font-size: 1.05em;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+        
+        .check-list {
+            list-style: none;
+            margin-top: 15px;
+        }
+        
+        .check-list li {
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .check-list li::before {
+            content: '⏳';
+            font-size: 1.2em;
+        }
+        
+        .check-list li.success::before {
+            content: '✅';
+        }
+        
+        .check-list li.error::before {
+            content: '❌';
+        }
+        
+        .check-list li.warning::before {
+            content: '⚠️';
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+            overflow-x: auto;
+            margin: 15px 0;
+            direction: ltr;
+            text-align: left;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(102, 126, 234, 0.3);
+            border-radius: 50%;
+            border-top-color: #667eea;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .map-test {
+            width: 100%;
+            height: 400px;
+            border-radius: 12px;
+            margin-top: 20px;
+            border: 2px solid #dee2e6;
+        }
+        
+        .info-box {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .info-box strong {
+            color: #0056b3;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗺️ Google Maps API Validator</h1>
+            <p>مُتحقق من تكوين Google Maps API</p>
+        </div>
+        
+        <div class="content">
+            <div class="status-card info" id="mainStatus">
+                <div class="status-title">
+                    <span class="status-icon">🔍</span>
+                    جاري فحص تكوين Google Maps API...
+                </div>
+                <div class="status-message">
+                    يرجى الانتظار بينما نتحقق من إعداداتك...
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div id="checksContainer"></div>
+            
+            <div id="actionsContainer"></div>
+            
+            <div id="mapContainer"></div>
+        </div>
+    </div>
+
+    <!-- Load local API key configuration first (if exists) -->
+    <script src="google-maps-config.local.js" onerror="console.log('⚠️ No local API key config found. Using default config.')"></script>
+    <script src="google-maps-config.js"></script>
+    <script src="google-maps-loader.js"></script>
+    
+    <script>
+        // Configuration constants
+        const CONFIG = {
+            // Abu Dhabi coordinates (default center for maps)
+            DEFAULT_CENTER: { lat: 24.4539, lng: 54.3773 },
+            DEFAULT_LOCATION_NAME: 'أبو ظبي - Abu Dhabi',
+            
+            // API key validation
+            MIN_API_KEY_LENGTH: 30,  // Google Maps API keys are typically 39 characters
+            API_KEY_PREFIX: 'AIza',  // All Google Maps API keys start with this
+            
+            // Map settings
+            DEFAULT_ZOOM: 12
+        };
+        
+        // Validation state
+        const validationState = {
+            configLoaded: false,
+            apiKeyValid: false,
+            apiKeyFormat: false,
+            loaderAvailable: false,
+            mapsLoaded: false,
+            placesAvailable: false,
+            geometryAvailable: false,
+            billingEnabled: false,
+            totalChecks: 8,
+            passedChecks: 0
+        };
+        
+        // Update progress
+        function updateProgress() {
+            const percentage = (validationState.passedChecks / validationState.totalChecks) * 100;
+            document.getElementById('progressFill').style.width = percentage + '%';
+        }
+        
+        // Create check item
+        function createCheckItem(text, status) {
+            const li = document.createElement('li');
+            li.className = status;
+            li.textContent = text;
+            return li;
+        }
+        
+        // Run validation checks
+        async function runValidation() {
+            const checksContainer = document.getElementById('checksContainer');
+            const ul = document.createElement('ul');
+            ul.className = 'check-list';
+            
+            // Check 1: Configuration loaded
+            await delay(300);
+            if (typeof GOOGLE_MAPS_CONFIG !== 'undefined') {
+                validationState.configLoaded = true;
+                validationState.passedChecks++;
+                ul.appendChild(createCheckItem('تم تحميل ملف التكوين (google-maps-config.js) ✓', 'success'));
+            } else {
+                ul.appendChild(createCheckItem('فشل تحميل ملف التكوين (google-maps-config.js) ✗', 'error'));
+            }
+            updateProgress();
+            
+            // Check 2: API Key exists and format
+            await delay(300);
+            if (validationState.configLoaded) {
+                const apiKey = GOOGLE_MAPS_CONFIG.apiKey;
+                const placeholder = 'REPLACE_WITH_YOUR_GOOGLE_MAPS_API_KEY';
+                
+                if (apiKey && apiKey !== placeholder) {
+                    validationState.apiKeyValid = true;
+                    validationState.passedChecks++;
+                    
+                    // Check format using constants
+                    if (apiKey.startsWith(CONFIG.API_KEY_PREFIX) && apiKey.length >= CONFIG.MIN_API_KEY_LENGTH) {
+                        validationState.apiKeyFormat = true;
+                        validationState.passedChecks++;
+                        ul.appendChild(createCheckItem('مفتاح API موجود وصالح ✓', 'success'));
+                    } else {
+                        ul.appendChild(createCheckItem('مفتاح API موجود لكن قد يكون تنسيقه غير صحيح ⚠️', 'warning'));
+                    }
+                } else {
+                    ul.appendChild(createCheckItem('مفتاح API غير مكوّن (يحتوي على القيمة الافتراضية) ✗', 'error'));
+                }
+            }
+            updateProgress();
+            
+            // Check 3: Loader available
+            await delay(300);
+            if (typeof GoogleMapsLoader !== 'undefined' || typeof window.googleMapsLoader !== 'undefined') {
+                validationState.loaderAvailable = true;
+                validationState.passedChecks++;
+                ul.appendChild(createCheckItem('محمل Google Maps متاح ✓', 'success'));
+            } else {
+                ul.appendChild(createCheckItem('محمل Google Maps غير متاح ✗', 'error'));
+            }
+            updateProgress();
+            
+            // Check 4: Try to load Google Maps
+            await delay(500);
+            if (validationState.apiKeyValid && validationState.loaderAvailable) {
+                try {
+                    if (window.googleMapsLoader) {
+                        await window.googleMapsLoader.init();
+                        
+                        if (typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
+                            validationState.mapsLoaded = true;
+                            validationState.passedChecks++;
+                            ul.appendChild(createCheckItem('تم تحميل Google Maps API بنجاح ✓', 'success'));
+                            
+                            // Check 5: Places library
+                            if (typeof google.maps.places !== 'undefined') {
+                                validationState.placesAvailable = true;
+                                validationState.passedChecks++;
+                                ul.appendChild(createCheckItem('مكتبة Places متاحة ✓', 'success'));
+                            } else {
+                                ul.appendChild(createCheckItem('مكتبة Places غير متاحة ✗', 'error'));
+                            }
+                            
+                            // Check 6: Geometry library
+                            if (typeof google.maps.geometry !== 'undefined') {
+                                validationState.geometryAvailable = true;
+                                validationState.passedChecks++;
+                                ul.appendChild(createCheckItem('مكتبة Geometry متاحة ✓', 'success'));
+                            } else {
+                                ul.appendChild(createCheckItem('مكتبة Geometry غير متاحة ✗', 'error'));
+                            }
+                            
+                            // Check 7: Test map creation
+                            await delay(500);
+                            try {
+                                const testDiv = document.createElement('div');
+                                testDiv.style.width = '100px';
+                                testDiv.style.height = '100px';
+                                testDiv.style.display = 'none';
+                                document.body.appendChild(testDiv);
+                                
+                                const map = new google.maps.Map(testDiv, {
+                                    center: CONFIG.DEFAULT_CENTER,
+                                    zoom: CONFIG.DEFAULT_ZOOM
+                                });
+                                
+                                validationState.billingEnabled = true;
+                                validationState.passedChecks++;
+                                ul.appendChild(createCheckItem('الفوترة مفعلة وتعمل بشكل صحيح ✓', 'success'));
+                                
+                                document.body.removeChild(testDiv);
+                            } catch (error) {
+                                if (error.message.includes('billing') || error.message.includes('quota')) {
+                                    ul.appendChild(createCheckItem('الفوترة غير مفعلة أو تجاوزت الحد المسموح ✗', 'error'));
+                                } else {
+                                    ul.appendChild(createCheckItem('حدث خطأ عند إنشاء الخريطة: ' + error.message + ' ✗', 'error'));
+                                }
+                            }
+                            
+                        } else {
+                            ul.appendChild(createCheckItem('فشل تحميل Google Maps API ✗', 'error'));
+                        }
+                    }
+                } catch (error) {
+                    ul.appendChild(createCheckItem('خطأ في تحميل Google Maps: ' + error.message + ' ✗', 'error'));
+                }
+            } else {
+                ul.appendChild(createCheckItem('تخطي تحميل Google Maps (مفتاح API غير صالح) ⚠️', 'warning'));
+            }
+            
+            updateProgress();
+            
+            checksContainer.innerHTML = '';
+            const card = document.createElement('div');
+            card.className = 'status-card';
+            card.innerHTML = '<div class="status-title"><span class="status-icon">📋</span>نتائج الفحص</div>';
+            card.appendChild(ul);
+            checksContainer.appendChild(card);
+            
+            // Show final status
+            showFinalStatus();
+        }
+        
+        // Show final status
+        function showFinalStatus() {
+            const mainStatus = document.getElementById('mainStatus');
+            const actionsContainer = document.getElementById('actionsContainer');
+            const mapContainer = document.getElementById('mapContainer');
+            
+            const percentage = (validationState.passedChecks / validationState.totalChecks) * 100;
+            
+            if (percentage === 100) {
+                // All checks passed
+                mainStatus.className = 'status-card success';
+                mainStatus.innerHTML = `
+                    <div class="status-title">
+                        <span class="status-icon">✅</span>
+                        تهانينا! جميع الفحوصات نجحت
+                    </div>
+                    <div class="status-message">
+                        <strong>Google Maps API مكوّن بشكل صحيح وجاهز للاستخدام!</strong><br>
+                        اجتازت إعداداتك جميع الفحوصات (${validationState.passedChecks}/${validationState.totalChecks}).<br>
+                        يمكنك الآن استخدام جميع ميزات الخرائط في التطبيق.
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 100%"></div>
+                    </div>
+                `;
+                
+                // Show test map
+                actionsContainer.innerHTML = `
+                    <div class="status-card success">
+                        <div class="status-title">
+                            <span class="status-icon">🗺️</span>
+                            اختبار الخريطة التفاعلية
+                        </div>
+                        <div class="status-message">
+                            إليك خريطة تفاعلية لاختبار الوظائف:
+                        </div>
+                    </div>
+                `;
+                
+                const mapDiv = document.createElement('div');
+                mapDiv.id = 'testMap';
+                mapDiv.className = 'map-test';
+                mapContainer.appendChild(mapDiv);
+                
+                const map = new google.maps.Map(mapDiv, {
+                    center: CONFIG.DEFAULT_CENTER,
+                    zoom: CONFIG.DEFAULT_ZOOM,
+                    mapTypeControl: true,
+                    streetViewControl: true,
+                    fullscreenControl: true
+                });
+                
+                new google.maps.Marker({
+                    position: CONFIG.DEFAULT_CENTER,
+                    map: map,
+                    title: CONFIG.DEFAULT_LOCATION_NAME
+                });
+                
+            } else if (percentage >= 50) {
+                // Partial success
+                mainStatus.className = 'status-card warning';
+                mainStatus.innerHTML = `
+                    <div class="status-title">
+                        <span class="status-icon">⚠️</span>
+                        بعض الفحوصات فشلت
+                    </div>
+                    <div class="status-message">
+                        <strong>Google Maps API مكوّن جزئياً.</strong><br>
+                        نجح ${validationState.passedChecks} من ${validationState.totalChecks} فحوصات.<br>
+                        يرجى مراجعة النتائج أدناه وإصلاح المشاكل.
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${percentage}%"></div>
+                    </div>
+                `;
+                
+                showActionButtons();
+                
+            } else {
+                // Failed
+                mainStatus.className = 'status-card error';
+                mainStatus.innerHTML = `
+                    <div class="status-title">
+                        <span class="status-icon">❌</span>
+                        معظم الفحوصات فشلت
+                    </div>
+                    <div class="status-message">
+                        <strong>Google Maps API غير مكوّن بشكل صحيح.</strong><br>
+                        نجح ${validationState.passedChecks} فقط من ${validationState.totalChecks} فحوصات.<br>
+                        يرجى اتباع التعليمات أدناه لإصلاح المشكلة.
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${percentage}%"></div>
+                    </div>
+                `;
+                
+                showActionButtons();
+            }
+        }
+        
+        // Show action buttons
+        function showActionButtons() {
+            const actionsContainer = document.getElementById('actionsContainer');
+            
+            let actions = '<div class="status-card info">';
+            actions += '<div class="status-title"><span class="status-icon">🔧</span>الخطوات التالية</div>';
+            
+            if (!validationState.apiKeyValid) {
+                actions += `
+                    <div class="status-message">
+                        <strong>مفتاح API غير مكوّن:</strong><br>
+                        1. احصل على مفتاح API من Google Cloud Console<br>
+                        2. انسخ ملف google-maps-config.local.js.example إلى google-maps-config.local.js<br>
+                        3. أضف مفتاح API الخاص بك في الملف الجديد
+                    </div>
+                    <div class="code-block">
+cp google-maps-config.local.js.example google-maps-config.local.js
+# ثم حرر google-maps-config.local.js وأضف مفتاحك
+                    </div>
+                    <div class="action-buttons">
+                        <a href="https://console.cloud.google.com/" target="_blank" class="btn btn-primary">
+                            افتح Google Cloud Console
+                        </a>
+                        <a href="GOOGLE_MAPS_SETUP_COMPLETE_GUIDE.md" target="_blank" class="btn btn-secondary">
+                            دليل الإعداد الكامل
+                        </a>
+                    </div>
+                `;
+            } else if (!validationState.mapsLoaded) {
+                actions += `
+                    <div class="status-message">
+                        <strong>مفتاح API موجود لكن التحميل فشل:</strong><br>
+                        قد تكون هناك مشكلة في:<br>
+                        • الفوترة غير مفعلة في Google Cloud<br>
+                        • قيود النطاق على مفتاح API<br>
+                        • الخدمات المطلوبة غير مفعلة<br><br>
+                        يرجى التحقق من إعدادات مفتاح API في Google Cloud Console.
+                    </div>
+                    <div class="action-buttons">
+                        <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="btn btn-primary">
+                            إعدادات مفتاح API
+                        </a>
+                        <a href="https://console.cloud.google.com/billing" target="_blank" class="btn btn-primary">
+                            إعدادات الفوترة
+                        </a>
+                        <a href="GOOGLE_MAPS_SETUP_COMPLETE_GUIDE.md" target="_blank" class="btn btn-secondary">
+                            دليل استكشاف الأخطاء
+                        </a>
+                    </div>
+                `;
+            } else {
+                actions += `
+                    <div class="status-message">
+                        <strong>تم التحميل لكن بعض المكتبات غير متاحة:</strong><br>
+                        تحقق من أن جميع الخدمات المطلوبة مفعلة في Google Cloud Console.
+                    </div>
+                    <div class="action-buttons">
+                        <a href="https://console.cloud.google.com/apis/library" target="_blank" class="btn btn-primary">
+                            مكتبة الخدمات
+                        </a>
+                        <button onclick="window.location.reload()" class="btn btn-success">
+                            إعادة الاختبار
+                        </button>
+                    </div>
+                `;
+            }
+            
+            actions += '</div>';
+            actionsContainer.innerHTML = actions;
+        }
+        
+        // Helper delay function
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        // Start validation
+        window.addEventListener('load', () => {
+            setTimeout(runValidation, 1000);
+        });
+    </script>
+</body>
+</html>

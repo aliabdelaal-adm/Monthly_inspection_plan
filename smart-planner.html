@@ -3929,9 +3929,8 @@
             console.log('googleMapsLoader available:', !!window.googleMapsLoader);
             
             if (window.GOOGLE_MAPS_CONFIG) {
-                // Only show first 5 chars for security
-                console.log('API Key configured:', window.GOOGLE_MAPS_CONFIG.apiKey ? 
-                    window.GOOGLE_MAPS_CONFIG.apiKey.substring(0, 5) + '***' : 'NOT SET');
+                // Security: Only log if API key is set, don't show any characters
+                console.log('API Key configured:', window.GOOGLE_MAPS_CONFIG.apiKey ? 'Yes (****)' : 'NOT SET');
             }
             
             // Check if loader is available
@@ -3995,10 +3994,10 @@
             const errorType = getErrorType(error);
             let message = '❌ فشل تحميل خرائط جوجل\n\n';
             
-            // Add API key info for debugging (only show first few chars for security)
+            // Security: Only show if API key exists, not the actual value
             const apiKey = window.GOOGLE_MAPS_CONFIG ? window.GOOGLE_MAPS_CONFIG.apiKey : 'NOT SET';
-            const apiKeyPreview = apiKey !== 'NOT SET' ? apiKey.substring(0, 8) + '***' : 'NOT SET';
-            message += `🔑 مفتاح API: ${apiKeyPreview}\n\n`;
+            const apiKeyStatus = apiKey !== 'NOT SET' ? 'مُعيَّن (****)' : 'NOT SET';
+            message += `🔑 مفتاح API: ${apiKeyStatus}\n\n`;
             
             switch (errorType) {
                 case 'no-api-key':
@@ -4064,8 +4063,10 @@
                     message += '5. تواصل مع المطور\n';
             }
             
-            message += '\n📚 للمزيد من المساعدة، راجع ملف:\n';
-            message += 'GOOGLE_MAPS_SETUP_COMPLETE_GUIDE.md\n';
+            message += '\n📚 للمزيد من المساعدة، راجع الملفات:\n';
+            message += '• GOOGLE_MAPS_RADICAL_FIX_SOLUTION.md\n';
+            message += '• GOOGLE_MAPS_USER_GUIDE_AR.md\n';
+            message += '• test_google_maps_integration.html\n';
             
             alert(message);
         }
@@ -4107,10 +4108,9 @@
                 
                 report += `✓ API Key: ${apiKeySet ? '✅ مُعيَّن' : '❌ غير مُعيَّن'}\n`;
                 
+                // Security: Don't show any part of the actual key
                 if (apiKeySet) {
-                    // Only show first 8 chars for security
-                    const preview = apiKey.substring(0, 8) + '***';
-                    report += `  المعاينة: ${preview}\n`;
+                    report += `  الحالة: مُعيَّن بشكل صحيح (****)\n`;
                 }
                 
                 report += `✓ Libraries: ${window.GOOGLE_MAPS_CONFIG.libraries.join(', ')}\n`;

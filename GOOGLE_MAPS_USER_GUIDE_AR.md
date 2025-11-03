@@ -106,7 +106,7 @@
 4. احفظ الملف وأعد تحميل الصفحة
 
 **كيفية الحصول على مفتاح API:**
-- راجع ملف `GOOGLE_MAPS_SETUP_COMPLETE_GUIDE.md`
+- راجع ملف `GOOGLE_MAPS_RADICAL_FIX_SOLUTION.md` للتفاصيل التقنية
 
 ### المشكلة 2: "خطأ في المصادقة"
 
@@ -225,10 +225,10 @@
    - خطوات حل المشاكل
    - معلومات تقنية
 
-2. **GOOGLE_MAPS_SETUP_COMPLETE_GUIDE.md**
-   - دليل الإعداد خطوة بخطوة
-   - كيفية الحصول على مفتاح API
-   - تفعيل الخدمات والفوترة
+2. **GOOGLE_MAPS_RADICAL_FIX_SOLUTION.md**
+   - شرح مفصّل للحل الجذري
+   - خطوات حل المشاكل
+   - معلومات تقنية شاملة
 
 ### صفحات الاختبار:
 
@@ -255,8 +255,8 @@
    - محتوى Console (F12)
 
 2. **راجع الوثائق:**
-   - GOOGLE_MAPS_RADICAL_FIX_SOLUTION.md
-   - GOOGLE_MAPS_SETUP_COMPLETE_GUIDE.md
+   - GOOGLE_MAPS_RADICAL_FIX_SOLUTION.md (التفاصيل التقنية)
+   - GOOGLE_MAPS_USER_GUIDE_AR.md (هذا الملف)
 
 3. **تحقق من:**
    - مفتاح API صالح

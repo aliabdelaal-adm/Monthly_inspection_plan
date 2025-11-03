@@ -358,10 +358,9 @@
                 addLog(`API Key: ${apiKeySet ? 'مُعيَّن' : 'غير مُعيَّن'}`, apiKeySet ? 'success' : 'error');
                 
                 if (apiKeySet) {
-                    // Only show first 8 chars for security
-                    const preview = apiKey.substring(0, 8) + '***';
-                    document.getElementById('apiKeyPreview').textContent = preview;
-                    addLog(`API Key Preview: ${preview}`, 'info');
+                    // Security: Don't show any actual characters
+                    document.getElementById('apiKeyPreview').textContent = 'Set (****)';
+                    addLog(`API Key Status: Set`, 'info');
                 } else {
                     document.getElementById('apiKeyPreview').textContent = 'NOT SET - يجب تعيين مفتاح API';
                     document.getElementById('apiKeyPreview').className = 'status-value error';
@@ -511,9 +510,12 @@
             }
         }
         
-        // Legacy initMap for callback
+        // Legacy initMap callback function for Google Maps API
+        // This is called by the Google Maps API when it finishes loading
         window.initMap = function() {
-            addLog('✅ Google Maps callback triggered', 'success');
+            addLog('✅ Google Maps API callback triggered', 'success');
+            // Actual map initialization happens in loadTestMap()
+            // This callback just confirms the API loaded successfully
         };
     </script>
 </body>

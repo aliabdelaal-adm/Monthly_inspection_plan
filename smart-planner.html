@@ -3838,6 +3838,11 @@
         let mapLoadAttempts = 0;
         const MAX_MAP_LOAD_ATTEMPTS = 3;
         
+        // Timing constants for Google Maps loading
+        const RETRY_DELAY_MS = 2000;        // Delay between retry attempts
+        const INITIAL_CHECK_DELAY_MS = 1000; // Initial delay before first check
+        const FINAL_CHECK_DELAY_MS = 3000;   // Delay before final check
+        
         // Configuration for map features
         const MAP_CONFIG = {
             nearbyRadius: 2000, // meters - configurable radius for nearby shop selection
@@ -3904,7 +3909,7 @@
                     console.log(`⏳ Retrying to initialize Google Maps (attempt ${mapLoadAttempts}/${MAX_MAP_LOAD_ATTEMPTS})...`);
                     setTimeout(() => {
                         retryLoadGoogleMaps();
-                    }, 2000);
+                    }, RETRY_DELAY_MS);
                 } else {
                     updateMapsStatusIndicator('error', 'فشل تحميل الخرائط');
                 }
@@ -3934,7 +3939,7 @@
                     } else {
                         retryLoadGoogleMaps();
                     }
-                }, 2000);
+                }, RETRY_DELAY_MS);
             } else {
                 console.error('❌ Failed to load Google Maps after multiple attempts');
                 updateMapsStatusIndicator('error', 'فشل تحميل الخرائط - يرجى إعادة التحميل');
@@ -3997,9 +4002,9 @@
                                 };
                             }
                         }
-                    }, 3000);
+                    }, FINAL_CHECK_DELAY_MS);
                 }
-            }, 1000);
+            }, INITIAL_CHECK_DELAY_MS);
         });
         
         // Create the map when modal is opened (async version)

@@ -42,7 +42,7 @@ const GOOGLE_MAPS_API_KEY = 'AIzaSyBIu6hLqc2mW6WYKTf1JCMSjKCkN1E-xVU';
 // Export the API key
 // تصدير مفتاح API
 if (typeof window !== 'undefined') {
-    window.GOOGLE_MAPS_API_KEY = AIzaSyBIu6hLqc2mW6WYKTf1JCMSjKCkN1E-xVU;
+    window.GOOGLE_MAPS_API_KEY = 'AIzaSyBIu6hLqc2mW6WYKTf1JCMSjKCkN1E-xVU';
 }
 
 if (typeof module !== 'undefined' && module.exports) {

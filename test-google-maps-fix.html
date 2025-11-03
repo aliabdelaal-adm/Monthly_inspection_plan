@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار تحميل خرائط جوجل</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        #status {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .loading {
+            background: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffeeba;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+        #map {
+            width: 100%;
+            height: 500px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+        }
+        .info {
+            background: #d1ecf1;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 1px solid #bee5eb;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗺️ اختبار تحميل خرائط جوجل</h1>
+        
+        <div id="status" class="loading">
+            ⏳ جاري التحقق من تكوين خرائط جوجل...
+        </div>
+        
+        <div class="info">
+            <h3>📋 معلومات التكوين:</h3>
+            <div id="configInfo">جاري التحميل...</div>
+        </div>
+        
+        <div id="map"></div>
+        
+        <div class="info">
+            <h3>📝 سجل التحميل:</h3>
+            <pre id="log">جاري التحميل...</pre>
+        </div>
+    </div>
+    
+    <!-- Load Google Maps Configuration -->
+    <script src="google-maps-config.local.js" onerror="logMessage('⚠️ No local config found')"></script>
+    <script src="google-maps-config.js"></script>
+    <script src="google-maps-loader.js"></script>
+    
+    <script>
+        let logMessages = [];
+        
+        function logMessage(msg) {
+            const timestamp = new Date().toLocaleTimeString('ar-EG');
+            logMessages.push(`[${timestamp}] ${msg}`);
+            updateLog();
+        }
+        
+        function updateLog() {
+            document.getElementById('log').textContent = logMessages.join('\n');
+        }
+        
+        function updateStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = type;
+        }
+        
+        function updateConfigInfo() {
+            const configDiv = document.getElementById('configInfo');
+            let html = '';
+            
+            if (window.GOOGLE_MAPS_CONFIG) {
+                const apiKey = window.GOOGLE_MAPS_CONFIG.apiKey;
+                const apiKeyMasked = apiKey ? `${apiKey.substring(0, 8)}...${apiKey.substring(apiKey.length - 4)}` : 'NOT SET';
+                const placeholder = window.API_KEY_PLACEHOLDER || 'REPLACE_WITH_YOUR_GOOGLE_MAPS_API_KEY';
+                
+                html = `
+                    <strong>✅ التكوين موجود</strong><br>
+                    <strong>🔑 مفتاح API:</strong> ${apiKeyMasked}<br>
+                    <strong>📚 المكتبات:</strong> ${window.GOOGLE_MAPS_CONFIG.libraries.join(', ')}<br>
+                    <strong>🌍 اللغة:</strong> ${window.GOOGLE_MAPS_CONFIG.language}<br>
+                    <strong>🎯 المنطقة:</strong> ${window.GOOGLE_MAPS_CONFIG.region}<br>
+                    <strong>✔️ صالح:</strong> ${apiKey !== placeholder ? 'نعم' : 'لا - يستخدم قيمة افتراضية'}
+                `;
+                
+                logMessage('✅ تم تحميل التكوين بنجاح');
+                logMessage(`🔑 مفتاح API: ${apiKeyMasked}`);
+            } else {
+                html = '<strong>❌ لم يتم العثور على التكوين</strong>';
+                logMessage('❌ فشل تحميل التكوين');
+            }
+            
+            configDiv.innerHTML = html;
+        }
+        
+        // Initialize map callback
+        function initMap() {
+            logMessage('✅ تم استدعاء initMap callback من Google Maps');
+            
+            try {
+                const mapDiv = document.getElementById('map');
+                const map = new google.maps.Map(mapDiv, {
+                    center: { lat: 24.4539, lng: 54.3773 }, // Abu Dhabi
+                    zoom: 12,
+                    mapTypeControl: true,
+                    streetViewControl: true,
+                    fullscreenControl: true
+                });
+                
+                // Add a marker
+                new google.maps.Marker({
+                    position: { lat: 24.4539, lng: 54.3773 },
+                    map: map,
+                    title: 'أبو ظبي'
+                });
+                
+                logMessage('✅ تم إنشاء الخريطة بنجاح');
+                logMessage('✅ تم إضافة علامة اختبار');
+                updateStatus('✅ نجح تحميل الخريطة! الخريطة تعمل بشكل صحيح', 'success');
+            } catch (error) {
+                logMessage('❌ خطأ في إنشاء الخريطة: ' + error.message);
+                updateStatus('❌ فشل إنشاء الخريطة: ' + error.message, 'error');
+            }
+        }
+        
+        // Handle authentication errors
+        window.gm_authFailure = function() {
+            logMessage('❌ خطأ في المصادقة من Google Maps');
+            logMessage('   قد يكون السبب:');
+            logMessage('   1. مفتاح API غير صالح');
+            logMessage('   2. لم يتم تفعيل الفوترة');
+            logMessage('   3. تم تجاوز الحد المسموح');
+            logMessage('   4. القيود على النطاق');
+            updateStatus('❌ خطأ في المصادقة - تحقق من مفتاح API والفوترة', 'error');
+        };
+        
+        // Start testing
+        logMessage('🚀 بدء اختبار تحميل خرائط جوجل');
+        logMessage('-----------------------------------');
+        
+        // Update configuration info
+        updateConfigInfo();
+        
+        // Check if loader is available
+        if (window.googleMapsLoader) {
+            logMessage('✅ محمل خرائط جوجل متاح');
+            logMessage('🔄 بدء عملية التحميل...');
+            
+            // Set up listeners
+            window.googleMapsLoader.on('onLoad', () => {
+                logMessage('✅ اكتملت عملية التحميل');
+                if (typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
+                    logMessage('✅ كائنات Google Maps متاحة');
+                } else {
+                    logMessage('❌ كائنات Google Maps غير متاحة بعد التحميل');
+                }
+            });
+            
+            window.googleMapsLoader.on('onError', (error) => {
+                logMessage('❌ خطأ في التحميل: ' + error.message);
+                updateStatus('❌ فشل تحميل خرائط جوجل: ' + error.message, 'error');
+            });
+            
+            window.googleMapsLoader.on('onRetry', (data) => {
+                logMessage(`🔄 إعادة المحاولة ${data.attempt}...`);
+                updateStatus(`🔄 إعادة المحاولة ${data.attempt}...`, 'loading');
+            });
+            
+            // Initialize
+            window.googleMapsLoader.init().then(() => {
+                logMessage('✅ اكتمل التهيئة الأولية');
+            }).catch(error => {
+                logMessage('❌ فشل التهيئة الأولية: ' + error.message);
+            });
+        } else {
+            logMessage('❌ محمل خرائط جوجل غير متاح');
+            logMessage('   تأكد من تحميل google-maps-loader.js قبل هذا السكريبت');
+            updateStatus('❌ محمل خرائط جوجل غير متاح', 'error');
+        }
+    </script>
+</body>
+</html>

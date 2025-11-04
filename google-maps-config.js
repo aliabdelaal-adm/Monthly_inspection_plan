@@ -32,6 +32,7 @@ const API_KEY_PLACEHOLDER = 'REPLACE_WITH_YOUR_GOOGLE_MAPS_API_KEY';
 const INVALID_API_KEYS = [
     'AIzaSyBIu6hLqc2mW6WYKTf1JCMSjKCkN1E-xVU', // Old/invalid key
     'YOUR_ACTUAL_API_KEY_HERE',
+    'YOUR_NEW_API_KEY_FROM_GOOGLE_CLOUD', // Placeholder that needs to be replaced
     'REPLACE_WITH_YOUR_GOOGLE_MAPS_API_KEY'
 ];
 

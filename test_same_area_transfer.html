@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار النقل بين نفس المناطق - Smart Planner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-right: 4px solid #28a745;
+        }
+        .test-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .test-description {
+            color: #555;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        .test-steps {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .test-steps li {
+            margin: 8px 0;
+            padding: 5px;
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 5px;
+            transition: background 0.3s;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .expected-result {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            border-right: 4px solid #28a745;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 اختبار النقل بين نفس المناطق</h1>
+        
+        <div class="info">
+            <strong>📋 الهدف من الاختبار:</strong><br>
+            التحقق من أن النظام يسمح بنقل المحلات داخل نفس المنطقة (من منطقة إلى نفس المنطقة)
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">✅ التغيير الذي تم إجراؤه</div>
+            <div class="test-description">
+                تم إزالة القيد الذي كان يمنع نقل المحلات عندما تكون المنطقة المصدر والمنطقة المستهدفة متطابقتين.
+                <br><br>
+                <strong>الكود القديم (تمت إزالته):</strong>
+                <pre style="background: #ffebee; padding: 10px; border-radius: 5px;">
+if (sourceAreaId === targetAreaId) {
+    showMessage('moveShopsStatus', 'error', '❌ المنطقة المصدر والمستهدفة متطابقتان');
+    return;
+}</pre>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🔍 خطوات الاختبار</div>
+            <div class="test-steps">
+                <ol>
+                    <li>افتح صفحة <strong>Smart Planner</strong></li>
+                    <li>انتقل إلى قسم "نقل محلات بين المناطق" (↔️)</li>
+                    <li>اختر منطقة معينة من القائمة المنسدلة "المنطقة المصدر"</li>
+                    <li>حدد محل واحد أو أكثر من المحلات المتاحة</li>
+                    <li>في القائمة المنسدلة "المنطقة المستهدفة"، اختر <strong>نفس المنطقة</strong> التي اخترتها كمصدر</li>
+                    <li>انقر على زر "تنفيذ عملية النقل"</li>
+                </ol>
+            </div>
+            
+            <div class="expected-result">
+                <strong>✅ النتيجة المتوقعة:</strong><br>
+                • يجب أن يعمل النظام بدون أخطاء<br>
+                • يجب أن يظهر تأكيد لعملية النقل<br>
+                • يجب أن تتم عملية النقل بنجاح (حتى لو كانت المحلات في نفس المنطقة)<br>
+                • يجب أن تظهر رسالة نجاح: "✅ تم نقل X محل بنجاح إلى..."<br>
+                • <strong>لا يجب</strong> أن تظهر رسالة الخطأ: "❌ المنطقة المصدر والمستهدفة متطابقتان"
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">💡 حالات الاستخدام</div>
+            <div class="test-description">
+                السماح بالنقل داخل نفس المنطقة يمكن أن يكون مفيداً في:
+                <ul>
+                    <li>إعادة تنظيم المحلات داخل المنطقة</li>
+                    <li>تحديث بيانات المحلات</li>
+                    <li>تفعيل عمليات المزامنة والتحديث</li>
+                    <li>أغراض إدارية وتنظيمية أخرى</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🎯 ملاحظات هامة</div>
+            <div class="test-description">
+                <ul>
+                    <li>التغيير يؤثر فقط على ملف <code>smart-planner.html</code></li>
+                    <li>تم إزالة 5 أسطر من الكود (التحقق من التطابق)</li>
+                    <li>باقي عمليات التحقق من الصحة (validation) لا تزال تعمل بشكل طبيعي</li>
+                    <li>يجب على المستخدم تأكيد عملية النقل كالمعتاد</li>
+                </ul>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="smart-planner.html" class="button">🚀 افتح Smart Planner للاختبار</a>
+            <a href="index.html" class="button" style="background: #6c757d;">🏠 العودة للصفحة الرئيسية</a>
+        </div>
+
+        <div class="info" style="margin-top: 30px;">
+            <strong>📝 ملخص التغيير:</strong><br>
+            تم تفعيل النقل بين نفس المناطق في القسم الخاص بنقل المحلات بين المناطق في Smart Planner.
+            الآن يمكن للمستخدمين اختيار نفس المنطقة كمصدر وهدف في عملية النقل.
+        </div>
+    </div>
+</body>
+</html>

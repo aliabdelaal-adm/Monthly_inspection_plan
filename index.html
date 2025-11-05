@@ -7872,6 +7872,7 @@ let shopsData = [
 // Global plan data variable - properly initialize to prevent undefined errors
 let allPlanData = {
     inspectionData: [],
+    groupInspectionData: [],
     inspectors: [],
     areas: [],
     shops: [],
@@ -11483,6 +11484,7 @@ async function loadInspectionData() {
                 // Update global allPlanData with loaded data
                 allPlanData = {
                     inspectionData: inspectionData,
+                    groupInspectionData: groupInspectionData,
                     inspectors: inspectorsData,
                     areas: areasData,
                     shops: shopsData,
@@ -11532,6 +11534,7 @@ async function loadInspectionData() {
             try {
                 const allData = JSON.parse(allLocalData);
                 if (allData.inspectionData) inspectionData = allData.inspectionData;
+                if (allData.groupInspectionData) groupInspectionData = allData.groupInspectionData;
                 if (allData.inspectors) {
                     inspectorsData = allData.inspectors;
                     inspectors = inspectorsData.map(i => i.name);
@@ -11547,6 +11550,7 @@ async function loadInspectionData() {
                 // Update global allPlanData with loaded fallback data
                 allPlanData = {
                     inspectionData: inspectionData,
+                    groupInspectionData: groupInspectionData,
                     inspectors: inspectorsData,
                     areas: areasData,
                     shops: shopsData,
@@ -14792,6 +14796,7 @@ async function saveShopDetails() {
         if (!allPlanData || typeof allPlanData !== 'object') {
             allPlanData = {
                 inspectionData: inspectionData || [],
+                groupInspectionData: groupInspectionData || [],
                 inspectors: inspectorsData || [],
                 areas: areasData || [],
                 shops: shopsData || [],

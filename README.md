@@ -139,6 +139,22 @@ files/
 - 🛡️ **Session Management**: إدارة جلسات آمنة
 - 🚫 **Firewall Protection**: حماية من الهجمات
 - ✅ **Data Validation**: التحقق من صحة البيانات
+- 🔐 **Google Service Accounts**: Secure credential management
+
+### ⚠️ CRITICAL: Google Service Account Security
+
+**NEVER commit service account credentials to Git!**  
+**لا تقم أبداً بإضافة بيانات اعتماد حسابات الخدمة إلى Git!**
+
+📖 **Full Security Guide:** [SERVICE_ACCOUNT_SECURITY_GUIDE.md](./SERVICE_ACCOUNT_SECURITY_GUIDE.md)  
+🔧 **Setup Instructions:** [GOOGLE_SERVICE_ACCOUNT_SETUP.md](./GOOGLE_SERVICE_ACCOUNT_SETUP.md)  
+📋 **Quick Reference:** [SECURITY_QUICK_REFERENCE.md](./SECURITY_QUICK_REFERENCE.md)
+
+**Protected Files (automatically gitignored):**
+- `*service-account*.json` (except templates)
+- `*credentials*.json` (except templates)
+- `.env`, `.env.local`
+- `*.local.js`
 
 ### أفضل الممارسات - Best Practices
 
@@ -147,6 +163,10 @@ files/
 3. **حدّث التوكن دورياً** - Update token regularly
 4. **راقب سجلات النشاط** - Monitor activity logs
 5. **استخدم HTTPS فقط** - Use HTTPS only
+6. **🔐 لا تضع بيانات اعتماد Google في Git** - Never commit Google credentials to Git
+7. **🔄 قم بتدوير مفاتيح الخدمة كل 90 يوماً** - Rotate service account keys every 90 days
+
+**📖 See [SECURITY.md](./SECURITY.md) for complete security policy**
 
 ---
 

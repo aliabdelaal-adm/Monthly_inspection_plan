@@ -2055,6 +2055,32 @@
             #googleMap {
                 min-height: 400px;
             }
+            
+            /* Mobile responsive styles for group inspection table */
+            #smartGroupInspectionTableContainer table {
+                font-size: 0.85em;
+            }
+            
+            #smartGroupInspectionTableContainer th,
+            #smartGroupInspectionTableContainer td {
+                padding: 8px !important;
+            }
+            
+            #smartGroupInspectionTableContainer th {
+                font-size: 0.9em;
+            }
+            
+            /* Stack inspector badges vertically on mobile */
+            #smartGroupInspectionTableContainer td > div {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            /* Reduce button sizes on mobile */
+            #smartGroupInspectionTableContainer button {
+                padding: 4px 8px !important;
+                font-size: 0.85em !important;
+            }
         }
     </style>
     
@@ -2231,6 +2257,10 @@
                 <button class="btn btn-danger" onclick="openDuplicateShopsManager()" style="background: white; color: #e74c3c;">
                     <span>🔄</span>
                     <span>المحلات المكررة والمتشابهة</span>
+                </button>
+                <button class="btn btn-primary" onclick="viewGroupInspectionReports()" style="background: white; color: #ff9800;">
+                    <span>👥</span>
+                    <span>تقارير التفتيش الجماعي</span>
                 </button>
             </div>
             
@@ -3000,17 +3030,25 @@
             <div class="section">
                 <h2 class="section-title">👥 إدارة التفتيش الجماعي</h2>
                 <p style="color: #666; margin-bottom: 20px; text-align: center;">
-                    إضافة وإدارة تفتيشات المحلات الكبيرة التي تحتاج إلى فريق من المفتشين
+                    إضافة وإدارة التفتيشات التي تحتاج إلى فريق من المفتشين
                 </p>
                 
                 <!-- Group Inspection Form -->
                 <div style="background: linear-gradient(135deg, #fff5e6 0%, #ffe8cc 100%); padding: 25px; border-radius: 15px; margin-bottom: 25px; border: 2px solid #ff9800; box-shadow: 0 4px 12px rgba(255, 152, 0, 0.2);">
                     <h3 style="margin: 0 0 20px 0; color: #e65100; text-align: center; font-size: 1.3em;">➕ إضافة تفتيش جماعي جديد</h3>
                     <p style="margin: 0 0 15px 0; color: #666; font-size: 0.95em; text-align: center;">
-                        للمحلات الكبيرة التي تحتاج إلى أكثر من مفتش في نفس الوقت
+                        للتفتيشات التي تحتاج إلى أكثر من مفتش في نفس الوقت
                     </p>
                     
                     <form id="smartGroupInspectionForm" style="max-width: 900px; margin: 0 auto;">
+                        <div class="form-group">
+                            <label class="form-label" style="color: #e65100; font-weight: bold;">👥 اختر المفتشين (متعدد - 2 على الأقل)</label>
+                            <div id="smartGroupInspectorsCheckboxes" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; padding: 15px; background: white; border-radius: 8px; border: 2px solid #ff9800; max-height: 250px; overflow-y: auto;">
+                                <!-- Checkboxes will be populated here -->
+                            </div>
+                            <small style="color: #666; font-size: 0.9em; margin-top: 5px; display: block;">💡 يجب اختيار مفتشين اثنين على الأقل</small>
+                        </div>
+                        
                         <div class="form-group">
                             <label class="form-label" style="color: #e65100; font-weight: bold;">📅 التاريخ</label>
                             <input type="date" id="smartGroupFormDay" required class="form-control">
@@ -3027,22 +3065,17 @@
                         
                         <div class="form-group">
                             <label class="form-label" style="color: #e65100; font-weight: bold;">🗺️ المنطقة</label>
-                            <select id="smartGroupFormArea" required class="form-control">
+                            <select id="smartGroupFormArea" required class="form-control" onchange="updateGroupFormShops()">
                                 <option value="">اختر المنطقة</option>
                             </select>
                         </div>
                         
                         <div class="form-group">
-                            <label class="form-label" style="color: #e65100; font-weight: bold;">🏪 اسم المحل الكبير</label>
-                            <input type="text" id="smartGroupFormShopName" required placeholder="مثال: محل التحالف للحيوانات الأليفة" class="form-control">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label" style="color: #e65100; font-weight: bold;">👥 اختر المفتشين (متعدد - 2 على الأقل)</label>
-                            <div id="smartGroupInspectorsCheckboxes" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; padding: 15px; background: white; border-radius: 8px; border: 2px solid #ff9800; max-height: 250px; overflow-y: auto;">
-                                <!-- Checkboxes will be populated here -->
-                            </div>
-                            <small style="color: #666; font-size: 0.9em; margin-top: 5px; display: block;">💡 يجب اختيار مفتشين اثنين على الأقل</small>
+                            <label class="form-label" style="color: #e65100; font-weight: bold;">🏪 اسم المحل</label>
+                            <select id="smartGroupFormShopName" required class="form-control">
+                                <option value="">اختر المحل</option>
+                            </select>
+                            <small style="color: #666; font-size: 0.9em; margin-top: 5px; display: block;">💡 سيتم عرض محلات المنطقة المختارة فقط</small>
                         </div>
                         
                         <div style="text-align: center; margin-top: 20px;">
@@ -11518,6 +11551,166 @@
             document.body.appendChild(modal);
         }
         
+        // View Group Inspection Reports
+        function viewGroupInspectionReports() {
+            if (!planData || !planData.groupInspectionData || planData.groupInspectionData.length === 0) {
+                alert('⚠️ لا توجد تفتيشات جماعية حالياً');
+                return;
+            }
+            
+            // Create reports modal
+            const modal = document.createElement('div');
+            modal.id = 'groupReportsModal';
+            modal.style.cssText = `
+                display: block;
+                position: fixed;
+                z-index: 10000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                overflow: auto;
+                animation: fadeIn 0.3s ease;
+            `;
+            
+            // Group inspections by area
+            const byArea = {};
+            planData.groupInspectionData.forEach((item, idx) => {
+                const area = item.area || 'غير محدد';
+                if (!byArea[area]) {
+                    byArea[area] = [];
+                }
+                byArea[area].push({...item, index: idx});
+            });
+            
+            // Build area sections
+            let areasHTML = '';
+            Object.keys(byArea).sort().forEach(area => {
+                const items = byArea[area];
+                areasHTML += `
+                    <div style="margin-bottom: 25px; background: #f8f9fa; padding: 20px; border-radius: 12px; border: 2px solid #e0e0e0;">
+                        <h3 style="color: #2d3561; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                            <span>🗺️</span>
+                            <span>${area}</span>
+                            <span style="background: #667eea; color: white; padding: 4px 12px; border-radius: 15px; font-size: 0.85em;">${items.length} تفتيش</span>
+                        </h3>
+                        <div style="display: grid; gap: 15px;">
+                            ${items.map(item => {
+                                const inspectorsList = item.inspectors.join('، ');
+                                const hasReport = item.reportUrl && item.reportUrl.trim() !== '';
+                                return `
+                                    <div style="background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                                            <div>
+                                                <strong style="color: #666; font-size: 0.9em;">📅 التاريخ:</strong>
+                                                <div style="margin-top: 5px;">${item.day}</div>
+                                            </div>
+                                            <div>
+                                                <strong style="color: #666; font-size: 0.9em;">🕐 المناوبة:</strong>
+                                                <div style="margin-top: 5px;">${item.shift || 'غير محدد'}</div>
+                                            </div>
+                                            <div>
+                                                <strong style="color: #666; font-size: 0.9em;">🏪 المحل:</strong>
+                                                <div style="margin-top: 5px; font-weight: 600;">${item.shopName}</div>
+                                            </div>
+                                        </div>
+                                        <div style="margin-bottom: 15px;">
+                                            <strong style="color: #666; font-size: 0.9em;">👥 المفتشين:</strong>
+                                            <div style="margin-top: 5px; display: flex; flex-wrap: wrap; gap: 5px;">
+                                                ${item.inspectors.map(inspector => 
+                                                    `<span style="background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); color: white; padding: 4px 10px; border-radius: 15px; font-size: 0.85em;">👤 ${inspector}</span>`
+                                                ).join('')}
+                                            </div>
+                                        </div>
+                                        <div style="display: flex; gap: 10px; align-items: center;">
+                                            <strong style="color: #666; font-size: 0.9em;">📄 التقرير:</strong>
+                                            ${hasReport ? 
+                                                `<a href="${item.reportUrl}" target="_blank" style="background: #4caf50; color: white; padding: 8px 16px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
+                                                    <span>📥</span>
+                                                    <span>تحميل التقرير</span>
+                                                </a>` :
+                                                `<span style="color: #999; font-style: italic;">لا يوجد تقرير</span>`
+                                            }
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            modal.innerHTML = `
+                <div style="background: white; margin: 3% auto; padding: 30px; border-radius: 20px; max-width: 1000px; box-shadow: 0 20px 60px rgba(0,0,0,0.4);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 3px solid #ff9800;">
+                        <h2 style="color: #2d3561; margin: 0; display: flex; align-items: center; gap: 10px;">
+                            <span>👥</span>
+                            <span>تقارير التفتيش الجماعي</span>
+                            <span style="background: #ff9800; color: white; padding: 4px 12px; border-radius: 15px; font-size: 0.7em;">${planData.groupInspectionData.length} تفتيش</span>
+                        </h2>
+                        <button onclick="document.getElementById('groupReportsModal').remove()" style="font-size: 2em; border: none; background: none; cursor: pointer; color: #999;">×</button>
+                    </div>
+                    
+                    <div style="max-height: 600px; overflow-y: auto; padding-right: 10px;">
+                        ${areasHTML}
+                    </div>
+                    
+                    <div style="margin-top: 25px; padding-top: 20px; border-top: 2px solid #e0e0e0; display: flex; gap: 10px; justify-content: center;">
+                        <button onclick="exportGroupInspectionsToExcel()" class="btn btn-success" style="display: flex; align-items: center; gap: 8px;">
+                            <span>📊</span>
+                            <span>تصدير إلى Excel</span>
+                        </button>
+                        <button onclick="printGroupInspectionReports()" class="btn btn-primary" style="display: flex; align-items: center; gap: 8px;">
+                            <span>🖨️</span>
+                            <span>طباعة</span>
+                        </button>
+                        <button onclick="document.getElementById('groupReportsModal').remove()" class="btn btn-warning">
+                            <span>✕</span>
+                            <span>إغلاق</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+        
+        // Export group inspections to Excel
+        window.exportGroupInspectionsToExcel = function() {
+            if (!planData || !planData.groupInspectionData || planData.groupInspectionData.length === 0) {
+                alert('⚠️ لا توجد بيانات لتصديرها');
+                return;
+            }
+            
+            // Prepare data for Excel
+            const data = planData.groupInspectionData.map(item => ({
+                'التاريخ': item.day,
+                'المناوبة': item.shift || '',
+                'المنطقة': item.area,
+                'المحل': item.shopName,
+                'المفتشين': item.inspectors.join('، '),
+                'حالة التقرير': item.reportUrl ? 'متوفر' : 'غير متوفر'
+            }));
+            
+            // Create worksheet
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'التفتيش الجماعي');
+            
+            // Generate filename
+            const filename = `تقارير_التفتيش_الجماعي_${new Date().toISOString().split('T')[0]}.xlsx`;
+            
+            // Download
+            XLSX.writeFile(wb, filename);
+            alert('✅ تم تصدير البيانات بنجاح!');
+        };
+        
+        // Print group inspection reports
+        window.printGroupInspectionReports = function() {
+            window.print();
+        };
+        
         // Bulk Edit Inspections
         window.bulkEditInspections = function() {
             const selectedRange = prompt('📅 أدخل نطاق التواريخ للتفتيشات المراد تعديلها:\n\nمثال: 2025-01-01 إلى 2025-01-31\n\nالصيغة: من-تاريخ إلى إلى-تاريخ', '2025-01-01 إلى 2025-01-31');
@@ -17873,12 +18066,11 @@
                     <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                         <thead>
                             <tr style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: white;">
+                                <th style="padding: 15px; text-align: right; border-bottom: 2px solid #e65100;">عرض المفتشين</th>
                                 <th style="padding: 15px; text-align: right; border-bottom: 2px solid #e65100;">التاريخ</th>
                                 <th style="padding: 15px; text-align: right; border-bottom: 2px solid #e65100;">المناوبة</th>
-                                <th style="padding: 15px; text-align: right; border-bottom: 2px solid #e65100;">نوع التفتيش</th>
-                                <th style="padding: 15px; text-align: right; border-bottom: 2px solid #e65100;">المفتشين</th>
                                 <th style="padding: 15px; text-align: right; border-bottom: 2px solid #e65100;">المنطقة</th>
-                                <th style="padding: 15px; text-align: right; border-bottom: 2px solid #e65100;">المحل</th>
+                                <th style="padding: 15px; text-align: right; border-bottom: 2px solid #e65100;">المحلات</th>
                                 <th style="padding: 15px; text-align: center; border-bottom: 2px solid #e65100;">الإجراءات</th>
                             </tr>
                         </thead>
@@ -17895,6 +18087,11 @@
                 
                 html += `
                     <tr style="border-bottom: 1px solid #eee; transition: background 0.2s;" onmouseover="this.style.background='#fff3e0'" onmouseout="this.style.background='white'">
+                        <td style="padding: 12px;">
+                            <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                                ${inspectorsBadges}
+                            </div>
+                        </td>
                         <td style="padding: 12px; font-family: 'Cairo', Arial, sans-serif;">
                             <div style="line-height: 1.4;">
                                 <div style="font-weight: 600;">${item.day}</div>
@@ -17905,16 +18102,6 @@
                             <span style="display: inline-block; background: ${item.shift === 'صباحية' ? '#e8f5e8' : '#fff3e0'}; color: ${item.shift === 'صباحية' ? '#2e7d32' : '#ef6c00'}; padding: 6px 12px; border-radius: 10px; font-size: 0.9em; border: 1px solid ${item.shift === 'صباحية' ? '#c8e6c9' : '#ffcc02'};">
                                 ${item.shift === 'صباحية' ? '🌅' : '🌆'} ${item.shift}
                             </span>
-                        </td>
-                        <td style="padding: 12px;">
-                            <span style="display: inline-block; background: linear-gradient(135deg, #ff5722 0%, #e64a19 100%); color: white; padding: 6px 12px; border-radius: 10px; font-size: 0.9em; font-weight: 600;">
-                                👥 جماعي
-                            </span>
-                        </td>
-                        <td style="padding: 12px;">
-                            <div style="display: flex; flex-wrap: wrap; gap: 5px;">
-                                ${inspectorsBadges}
-                            </div>
                         </td>
                         <td style="padding: 12px; font-weight: 600; color: ${areaName === 'سوق الميناء' || areaName === 'سوق التراث' ? '#1976d2' : '#d32f2f'};">
                             ${areaName}
@@ -17941,6 +18128,56 @@
             `;
             
             container.innerHTML = html;
+        }
+        
+        // Update group form shops dropdown based on selected area
+        function updateGroupFormShops() {
+            const areaSelect = document.getElementById('smartGroupFormArea');
+            const shopSelect = document.getElementById('smartGroupFormShopName');
+            
+            if (!areaSelect || !shopSelect) return;
+            
+            const selectedAreaIdOrName = areaSelect.value;
+            
+            // Clear current options
+            shopSelect.innerHTML = '<option value="">اختر المحل</option>';
+            
+            if (!selectedAreaIdOrName) {
+                return;
+            }
+            
+            // Get area name from ID or use as-is
+            let areaName = selectedAreaIdOrName;
+            if (planData && planData.areas) {
+                const areaObj = planData.areas.find(a => a.id === selectedAreaIdOrName);
+                if (areaObj) {
+                    areaName = areaObj.name;
+                }
+            }
+            
+            // Get all shops for the selected area
+            if (planData && planData.shops) {
+                const areaShops = planData.shops.filter(shop => shop.area === areaName);
+                
+                // Sort shops alphabetically
+                areaShops.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+                
+                // Add shops to dropdown
+                areaShops.forEach(shop => {
+                    const option = document.createElement('option');
+                    option.value = shop.name;
+                    option.textContent = shop.name;
+                    shopSelect.appendChild(option);
+                });
+                
+                if (areaShops.length === 0) {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = 'لا توجد محلات في هذه المنطقة';
+                    option.disabled = true;
+                    shopSelect.appendChild(option);
+                }
+            }
         }
         
         // Handle group inspection form submission
@@ -18048,6 +18285,10 @@
                 document.getElementById('smartGroupFormArea').value = item.area;
             }
             
+            // Update shops dropdown based on selected area
+            updateGroupFormShops();
+            
+            // Set shop name
             document.getElementById('smartGroupFormShopName').value = item.shopName;
             
             // Check inspectors

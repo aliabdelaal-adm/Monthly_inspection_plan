@@ -5374,7 +5374,7 @@
     <!-- Group Inspection Section - New Feature for Multi-Inspector Inspections -->
     <div id="groupInspectionSection" class="group-inspection-section" style="display:none;">
         <div class="group-inspection-title">
-            👥 التفتيش الجماعي - المحلات الكبيرة
+            👥 التفتيش الجماعي
         </div>
         <div id="groupInspectionTableContainer"></div>
     </div>
@@ -13727,13 +13727,11 @@ function renderGroupInspectionTable() {
     <table class="group-inspection-table">
         <thead>
             <tr>
+                <th>عرض المفتشين</th>
                 <th>التاريخ</th>
                 <th>المناوبة</th>
-                <th>نوع التفتيش</th>
-                <th>المفتشين</th>
                 <th>المنطقة</th>
-                <th>المحل</th>
-                <th>التقرير</th>
+                <th>المحلات</th>
                 ${isDev ? '<th>تعديل/حذف</th>' : ''}
             </tr>
         </thead>
@@ -13749,17 +13747,13 @@ function renderGroupInspectionTable() {
             `<span class="group-inspector-name">${inspector}</span>`
         ).join('');
         
-        // Report button/upload
-        const reportCell = item.reportUrl ? 
-            `<div style="display:flex;gap:5px;justify-content:center;flex-wrap:wrap;">
-                <a href="${item.reportUrl}" target="_blank" class="group-report-btn" title="تحميل التقرير">📥 تحميل</a>
-                ${isDev ? `<button class="group-upload-btn" onclick="uploadGroupReport(${idx})" title="تحديث التقرير">📤 تحديث</button>` : ''}
-            </div>` :
-            isDev ? `<button class="group-upload-btn" onclick="uploadGroupReport(${idx})" title="رفع التقرير">📤 رفع تقرير</button>` : 
-            '<span style="color:#999;font-style:italic;">لا يوجد تقرير</span>';
-        
         html += `
             <tr>
+                <td>
+                    <div class="group-inspectors-list">
+                        ${inspectorsList}
+                    </div>
+                </td>
                 <td style="font-family:'Cairo', Arial, sans-serif;">
                     <div style="line-height:1.4;">
                         <div style="font-weight:300;">${item.day}</div>
@@ -13771,15 +13765,8 @@ function renderGroupInspectionTable() {
                         ${item.shift}
                     </span>
                 </td>
-                <td><span class="group-type-badge">جماعي</span></td>
-                <td>
-                    <div class="group-inspectors-list">
-                        ${inspectorsList}
-                    </div>
-                </td>
                 <td style="font-weight:600;color:${areaName === 'سوق الميناء' || areaName === 'سوق التراث' ? '#1976d2' : '#d32f2f'};">${areaName}</td>
                 <td style="font-weight:600;">${item.shopName}</td>
-                <td>${reportCell}</td>
                 ${isDev ? `
                 <td style="text-align:center;">
                     <button class="edit-btn" onclick="editGroupInspection(${idx})" style="margin:2px;">تعديل</button>

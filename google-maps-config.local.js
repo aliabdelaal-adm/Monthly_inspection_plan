@@ -1,48 +1,90 @@
 /**
- * Local Google Maps API Configuration Example
- * مثال على تكوين Google Maps API المحلي
+ * Local Google Maps API Configuration
+ * تكوين Google Maps API المحلي
  * 
- * INSTRUCTIONS / التعليمات:
- * 1. Copy this file and rename it to: google-maps-config.local.js
- *    انسخ هذا الملف وأعد تسميته إلى: google-maps-config.local.js
+ * ═══════════════════════════════════════════════════════════════════════════
+ *  🔑 IMPORTANT: UPDATE THIS FILE WITH YOUR NEW GOOGLE MAPS API KEY!
+ *  🔑 مهم جداً: حدّث هذا الملف بمفتاح Google Maps API الجديد الخاص بك!
+ * ═══════════════════════════════════════════════════════════════════════════
  * 
- * 2. Replace 'YOUR_ACTUAL_API_KEY_HERE' with your real Google Maps API key
- *    استبدل 'YOUR_ACTUAL_API_KEY_HERE' بمفتاح Google Maps API الحقيقي الخاص بك
+ * STEP-BY-STEP INSTRUCTIONS / التعليمات خطوة بخطوة:
  * 
- * 3. The .local.js file is gitignored for security
- *    ملف .local.js مضاف لـ gitignore للأمان
+ * ENGLISH:
+ * --------
+ * 1. Go to Google Cloud Console: https://console.cloud.google.com/
+ * 2. Select your "Monthly_inspection_plan" project (or create new one)
+ * 3. Verify these 3 APIs are ENABLED (very important!):
+ *    ✓ Maps JavaScript API
+ *    ✓ Places API
+ *    ✓ Geocoding API
+ *    (Go to "APIs & Services" > "Library" to enable them)
  * 
- * HOW TO GET AN API KEY / كيفية الحصول على مفتاح API:
- * 1. Go to: https://console.cloud.google.com/
- *    اذهب إلى: https://console.cloud.google.com/
+ * 4. Verify BILLING is enabled:
+ *    - Go to "Billing" section
+ *    - Link a billing account (Google provides $200 free credit/month)
+ *    - You won't be charged unless you exceed the free tier
  * 
- * 2. Create a new project or select existing one
- *    أنشئ مشروعاً جديداً أو اختر مشروعاً موجوداً
+ * 5. Get your API Key:
+ *    - Go to "APIs & Services" > "Credentials"
+ *    - Click "Create Credentials" > "API key"
+ *    - COPY the new API key (looks like: AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXX)
  * 
- * 3. Enable these APIs:
- *    فعّل هذه الخدمات:
- *    - Maps JavaScript API
- *    - Places API  
- *    - Geocoding API
+ * 6. Paste your NEW API key in BOTH places below (lines 68 and 73)
  * 
- * 4. Go to "Credentials" and create an API key
- *    اذهب إلى "بيانات الاعتماد" وأنشئ مفتاح API
+ * 7. SAVE this file
  * 
- * 5. IMPORTANT: Set up billing (Google requires it, but provides $200 free monthly credit)
- *    مهم: أعد الفوترة (جوجل تتطلبها، لكن توفر رصيد مجاني 200 دولار شهرياً)
+ * 8. Refresh the page with hard reload:
+ *    - Windows/Linux: Ctrl + Shift + R  or  Ctrl + F5
+ *    - Mac: Cmd + Shift + R
  * 
- * 6. Restrict your API key to your domain for security
- *    قيّد مفتاح API الخاص بك لنطاقك للأمان
+ * 9. OPTIONAL: Restrict API key to your domain for security
+ *    (But for testing, you can leave it unrestricted)
+ * 
+ * 
+ * العربية:
+ * -------
+ * ١. اذهب إلى Google Cloud Console: https://console.cloud.google.com/
+ * ٢. اختر مشروع "Monthly_inspection_plan" (أو أنشئ مشروعاً جديداً)
+ * ٣. تأكد من تفعيل هذه الخدمات الثلاث (مهم جداً!):
+ *    ✓ Maps JavaScript API
+ *    ✓ Places API
+ *    ✓ Geocoding API
+ *    (اذهب إلى "واجهات برمجة التطبيقات والخدمات" > "المكتبة" لتفعيلها)
+ * 
+ * ٤. تأكد من تفعيل الفوترة:
+ *    - اذهب إلى قسم "الفوترة"
+ *    - اربط حساب فوترة (جوجل توفر رصيد مجاني 200 دولار شهرياً)
+ *    - لن يتم فرض رسوم عليك إلا إذا تجاوزت المستوى المجاني
+ * 
+ * ٥. احصل على مفتاح API:
+ *    - اذهب إلى "واجهات برمجة التطبيقات والخدمات" > "بيانات الاعتماد"
+ *    - انقر "إنشاء بيانات اعتماد" > "مفتاح API"
+ *    - انسخ مفتاح API الجديد (يبدو كالتالي: AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXX)
+ * 
+ * ٦. الصق مفتاح API الجديد في الموضعين أدناه (السطرين 68 و 73)
+ * 
+ * ٧. احفظ هذا الملف
+ * 
+ * ٨. حدّث الصفحة بإعادة تحميل كاملة:
+ *    - Windows/Linux: Ctrl + Shift + R  أو  Ctrl + F5
+ *    - Mac: Cmd + Shift + R
+ * 
+ * ٩. اختياري: قيّد مفتاح API لنطاقك للأمان
+ *    (لكن للاختبار، يمكنك تركه بدون قيود)
+ * 
+ * ═══════════════════════════════════════════════════════════════════════════
  */
 
-// Set your actual Google Maps API key here
-// ضع مفتاح Google Maps API الفعلي هنا
-const GOOGLE_MAPS_API_KEY = 'AIzaSyBIu6hLqc2mW6WYKTf1JCMSjKCkN1E-xVU';
+// Set your NEW Google Maps API key here / ضع مفتاح Google Maps API الجديد هنا
+// Replace 'YOUR_NEW_API_KEY_FROM_GOOGLE_CLOUD' with your actual key
+// استبدل 'YOUR_NEW_API_KEY_FROM_GOOGLE_CLOUD' بمفتاحك الفعلي
+const GOOGLE_MAPS_API_KEY = 'YOUR_NEW_API_KEY_FROM_GOOGLE_CLOUD';
 
-// Export the API key
-// تصدير مفتاح API
+// Export the API key / تصدير مفتاح API
+// IMPORTANT: Update this line with the same key as above
+// مهم: حدّث هذا السطر بنفس المفتاح أعلاه
 if (typeof window !== 'undefined') {
-    window.GOOGLE_MAPS_API_KEY = 'AIzaSyBIu6hLqc2mW6WYKTf1JCMSjKCkN1E-xVU';
+    window.GOOGLE_MAPS_API_KEY = 'YOUR_NEW_API_KEY_FROM_GOOGLE_CLOUD';
 }
 
 if (typeof module !== 'undefined' && module.exports) {

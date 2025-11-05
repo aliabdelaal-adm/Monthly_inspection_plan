@@ -143,14 +143,51 @@ class GoogleMapsLoader {
     validateApiKey() {
         const apiKey = this.config.apiKey;
         const placeholder = window.API_KEY_PLACEHOLDER || 'REPLACE_WITH_YOUR_GOOGLE_MAPS_API_KEY';
+        const invalidKeys = window.INVALID_API_KEYS || ['YOUR_NEW_API_KEY_FROM_GOOGLE_CLOUD'];
         
-        if (!apiKey || apiKey === placeholder) {
-            console.error('❌ Google Maps API key is not configured!');
-            console.error('❌ لم يتم تكوين مفتاح Google Maps API!');
+        if (!apiKey || apiKey === placeholder || invalidKeys.includes(apiKey)) {
+            console.error('❌ Google Maps API key is not configured or is invalid!');
+            console.error('❌ لم يتم تكوين مفتاح Google Maps API أو أنه غير صالح!');
+            
+            // Check which specific issue
+            if (apiKey === 'YOUR_NEW_API_KEY_FROM_GOOGLE_CLOUD') {
+                console.error('');
+                console.error('⚠️  You need to REPLACE the placeholder in google-maps-config.local.js');
+                console.error('⚠️  تحتاج إلى استبدال القيمة الافتراضية في google-maps-config.local.js');
+                console.error('');
+                console.error('Current value: YOUR_NEW_API_KEY_FROM_GOOGLE_CLOUD');
+                console.error('القيمة الحالية: YOUR_NEW_API_KEY_FROM_GOOGLE_CLOUD');
+                console.error('');
+                console.error('You need a REAL API key from Google Cloud Console!');
+                console.error('تحتاج إلى مفتاح API حقيقي من Google Cloud Console!');
+            } else if (invalidKeys.includes(apiKey)) {
+                console.error('');
+                console.error('⚠️  The API key you\'re using is OLD or INVALID!');
+                console.error('⚠️  مفتاح API الذي تستخدمه قديم أو غير صالح!');
+                console.error('');
+                console.error('You mentioned you created a NEW project in Google Cloud.');
+                console.error('ذكرت أنك أنشأت مشروعاً جديداً في Google Cloud.');
+                console.error('');
+                console.error('Please update google-maps-config.local.js with your NEW API key!');
+                console.error('الرجاء تحديث google-maps-config.local.js بمفتاح API الجديد!');
+            }
+            
             this.showApiKeyInstructions();
             return false;
         }
         
+        // Additional validation: Check if key looks like a valid Google API key
+        if (!apiKey.startsWith('AIza')) {
+            console.error('❌ API key format appears invalid!');
+            console.error('❌ تنسيق مفتاح API يبدو غير صالح!');
+            console.error('Google Maps API keys should start with "AIza"');
+            console.error('مفاتيح Google Maps API يجب أن تبدأ بـ "AIza"');
+            this.showApiKeyInstructions();
+            return false;
+        }
+        
+        console.log('✅ API key format looks valid');
+        console.log('✅ تنسيق مفتاح API يبدو صالحاً');
         return true;
     }
     
@@ -161,41 +198,121 @@ class GoogleMapsLoader {
     showApiKeyInstructions() {
         const instructions = `
 ╔════════════════════════════════════════════════════════════════╗
-║  Google Maps API Key Setup Instructions                       ║
-║  تعليمات إعداد مفتاح Google Maps API                         ║
+║  🔑 Google Maps API Key Setup - Complete Guide                ║
+║  🔑 دليل إعداد مفتاح Google Maps API - الدليل الكامل        ║
 ╠════════════════════════════════════════════════════════════════╣
 ║                                                                ║
-║  English:                                                      ║
-║  1. Go to: https://console.cloud.google.com/                  ║
-║  2. Create a new project or select an existing one            ║
-║  3. Enable these APIs:                                        ║
-║     • Maps JavaScript API                                     ║
-║     • Places API                                              ║
-║     • Geocoding API                                           ║
-║  4. Go to "Credentials" and create an API key                 ║
-║  5. Set up billing (Google Maps requires billing)             ║
-║  6. Restrict your API key:                                    ║
-║     • HTTP referrers (websites)                               ║
-║     • Add your domain                                         ║
-║  7. Copy the API key                                          ║
-║  8. Update google-maps-config.js:                             ║
-║     apiKey: 'YOUR_ACTUAL_API_KEY_HERE'                        ║
+║  You mentioned you activated a NEW project in Google Cloud.   ║
+║  ذكرت أنك قمت بتفعيل مشروع جديد في Google Cloud.            ║
 ║                                                                ║
-║  العربية:                                                     ║
-║  ١. اذهب إلى: https://console.cloud.google.com/              ║
-║  ٢. أنشئ مشروع جديد أو اختر مشروعاً موجوداً                  ║
-║  ٣. فعّل هذه الخدمات:                                        ║
-║     • Maps JavaScript API                                     ║
-║     • Places API                                              ║
-║     • Geocoding API                                           ║
-║  ٤. اذهب إلى "بيانات الاعتماد" وأنشئ مفتاح API               ║
-║  ٥. أعد إعداد الفوترة (خرائط جوجل تتطلب تفعيل الفوترة)       ║
-║  ٦. قيّد مفتاح API الخاص بك:                                 ║
-║     • HTTP referrers (المواقع الإلكترونية)                   ║
-║     • أضف نطاقك                                              ║
-║  ٧. انسخ مفتاح API                                           ║
-║  ٨. حدّث google-maps-config.js:                              ║
-║     apiKey: 'مفتاح_API_الفعلي_الخاص_بك'                      ║
+║  Now you need to UPDATE the configuration file with your      ║
+║  NEW API key!                                                  ║
+║  الآن تحتاج إلى تحديث ملف الإعدادات بمفتاح API الجديد!       ║
+║                                                                ║
+╠════════════════════════════════════════════════════════════════╣
+║                                                                ║
+║  📋 QUICK STEPS / الخطوات السريعة:                            ║
+║                                                                ║
+║  1️⃣  Get your API key from Google Cloud Console:              ║
+║     احصل على مفتاح API من Google Cloud Console:              ║
+║                                                                ║
+║     a) Go to: https://console.cloud.google.com/               ║
+║        اذهب إلى: https://console.cloud.google.com/           ║
+║                                                                ║
+║     b) Select "Monthly_inspection_plan" project               ║
+║        اختر مشروع "Monthly_inspection_plan"                  ║
+║                                                                ║
+║     c) Go to: APIs & Services → Credentials                   ║
+║        اذهب إلى: واجهات برمجة التطبيقات والخدمات            ║
+║        → بيانات الاعتماد                                      ║
+║                                                                ║
+║     d) You should see your API key there (or create new one)  ║
+║        يجب أن ترى مفتاح API هناك (أو أنشئ واحداً جديداً)    ║
+║                                                                ║
+║     e) COPY the API key (looks like: AIzaSyXXXXX...)          ║
+║        انسخ مفتاح API (يبدو كالتالي: AIzaSyXXXXX...)         ║
+║                                                                ║
+║  2️⃣  Verify these 3 APIs are ENABLED:                          ║
+║     تأكد من تفعيل هذه الخدمات الثلاث:                        ║
+║                                                                ║
+║     ✓ Maps JavaScript API                                     ║
+║     ✓ Places API                                              ║
+║     ✓ Geocoding API                                           ║
+║                                                                ║
+║     (Go to: APIs & Services → Library to enable them)         ║
+║     (اذهب إلى: واجهات برمجة التطبيقات والخدمات → المكتبة)   ║
+║                                                                ║
+║  3️⃣  Verify BILLING is enabled:                                ║
+║     تأكد من تفعيل الفوترة:                                   ║
+║                                                                ║
+║     Go to: Billing section                                    ║
+║     اذهب إلى: قسم الفوترة                                    ║
+║                                                                ║
+║     Make sure billing account is linked                       ║
+║     تأكد من ربط حساب الفوترة                                 ║
+║                                                                ║
+║     💡 Don't worry! Google gives $200 free credit per month   ║
+║     💡 لا تقلق! جوجل تمنح رصيد مجاني 200 دولار شهرياً        ║
+║                                                                ║
+║  4️⃣  Update the configuration file:                            ║
+║     حدّث ملف الإعدادات:                                      ║
+║                                                                ║
+║     a) Open file: google-maps-config.local.js                 ║
+║        افتح ملف: google-maps-config.local.js                 ║
+║                                                                ║
+║     b) Find line ~68:                                         ║
+║        ابحث عن السطر ~68:                                    ║
+║        const GOOGLE_MAPS_API_KEY = 'YOUR_NEW_API_KEY...';     ║
+║                                                                ║
+║     c) REPLACE 'YOUR_NEW_API_KEY_FROM_GOOGLE_CLOUD'           ║
+║        with your ACTUAL API key                               ║
+║        استبدل 'YOUR_NEW_API_KEY_FROM_GOOGLE_CLOUD'           ║
+║        بمفتاح API الفعلي الخاص بك                            ║
+║                                                                ║
+║     d) Also update line ~73:                                  ║
+║        وأيضاً حدّث السطر ~73:                                ║
+║        window.GOOGLE_MAPS_API_KEY = 'YOUR_NEW_API_KEY...';    ║
+║                                                                ║
+║     e) SAVE the file                                          ║
+║        احفظ الملف                                             ║
+║                                                                ║
+║  5️⃣  Refresh the page with HARD reload:                        ║
+║     حدّث الصفحة بإعادة تحميل كاملة:                          ║
+║                                                                ║
+║     Windows/Linux: Ctrl + Shift + R  or  Ctrl + F5            ║
+║     Mac: Cmd + Shift + R                                      ║
+║                                                                ║
+║  6️⃣  Optional - Restrict API key (for security):               ║
+║     اختياري - قيّد مفتاح API (للأمان):                       ║
+║                                                                ║
+║     Current domain: ${typeof window !== 'undefined' ? window.location.hostname : 'N/A'}                               ║
+║     النطاق الحالي: ${typeof window !== 'undefined' ? window.location.hostname : 'N/A'}                               ║
+║                                                                ║
+║     In Google Cloud Console → Credentials:                    ║
+║     - Click on your API key                                   ║
+║     - Set "Application restrictions" to "HTTP referrers"      ║
+║     - Add: ${typeof window !== 'undefined' ? window.location.hostname : 'your-domain.com'}/*                                    ║
+║     - Click Save                                              ║
+║                                                                ║
+╠════════════════════════════════════════════════════════════════╣
+║                                                                ║
+║  ⚠️  COMMON ISSUES / المشاكل الشائعة:                         ║
+║                                                                ║
+║  ❌ "This page can't load Google Maps correctly"              ║
+║     → Billing not enabled or API key invalid                  ║
+║     → الفوترة غير مفعلة أو مفتاح API غير صالح                ║
+║                                                                ║
+║  ❌ "RefererNotAllowedMapError"                               ║
+║     → Domain restrictions are too strict                      ║
+║     → قيود النطاق صارمة جداً                                 ║
+║     → Solution: Remove restrictions temporarily               ║
+║     → الحل: أزل القيود مؤقتاً                                ║
+║                                                                ║
+║  ❌ API key looks like: 'YOUR_NEW_API_KEY_FROM_GOOGLE_CLOUD'  ║
+║     → You forgot to replace the placeholder!                  ║
+║     → نسيت استبدال القيمة الافتراضية!                        ║
+║     → Get your REAL key from Google Cloud Console             ║
+║     → احصل على مفتاحك الحقيقي من Google Cloud Console        ║
 ║                                                                ║
 ╚════════════════════════════════════════════════════════════════╝
         `;

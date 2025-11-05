@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إعداد Google Maps API - Setup Google Maps API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            direction: rtl;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .header h1 {
+            color: #2d3561;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 1.2em;
+        }
+        
+        .project-info {
+            background: #f0f4ff;
+            border-left: 5px solid #667eea;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        .project-info h2 {
+            color: #2d3561;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        
+        .project-info p {
+            margin: 10px 0;
+            color: #444;
+            line-height: 1.6;
+        }
+        
+        .project-info code {
+            background: #fff;
+            padding: 5px 10px;
+            border-radius: 4px;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .steps {
+            margin-bottom: 30px;
+        }
+        
+        .step {
+            background: #f8f9fa;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            border-right: 5px solid #667eea;
+        }
+        
+        .step h3 {
+            color: #2d3561;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .step-number {
+            display: inline-block;
+            width: 35px;
+            height: 35px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 35px;
+            margin-left: 10px;
+            font-weight: bold;
+        }
+        
+        .step ul {
+            margin: 15px 0;
+            padding-right: 20px;
+        }
+        
+        .step li {
+            margin: 10px 0;
+            line-height: 1.8;
+            color: #444;
+        }
+        
+        .step a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .step a:hover {
+            text-decoration: underline;
+        }
+        
+        .input-section {
+            background: #fff9e6;
+            border: 2px solid #ffb700;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+        
+        .input-section h3 {
+            color: #2d3561;
+            margin-bottom: 15px;
+        }
+        
+        .input-group {
+            margin: 20px 0;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 10px;
+            color: #2d3561;
+            font-weight: bold;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            direction: ltr;
+            text-align: left;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            background: #667eea;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 15px;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .result.success {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+        }
+        
+        .result.error {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            color: #721c24;
+        }
+        
+        .result h3 {
+            margin-bottom: 15px;
+        }
+        
+        .code-block {
+            background: #2d3561;
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            direction: ltr;
+            text-align: left;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            border-right: 5px solid #ffc107;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        
+        .warning h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        
+        .success-icon {
+            color: #28a745;
+            font-size: 3em;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .checklist {
+            background: #e7f3ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .checklist h4 {
+            color: #2d3561;
+            margin-bottom: 15px;
+        }
+        
+        .checklist label {
+            display: block;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+        
+        .checklist input[type="checkbox"] {
+            margin-left: 10px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗺️ إعداد Google Maps API</h1>
+            <p>Setup Google Maps API for Smart Planner</p>
+        </div>
+        
+        <div class="project-info">
+            <h2>📋 معلومات المشروع - Project Information</h2>
+            <p><strong>اسم المشروع / Project Name:</strong> <code>monthly-insection-plan</code></p>
+            <p><strong>البريد الإلكتروني للخدمة / Service Email:</strong> <code>monthly-inspection-plan@monthly-insection-plan.iam.gserviceaccount.com</code></p>
+            <p><strong>معرف المشروع / Project ID:</strong> <code>monthly-insection-plan</code></p>
+        </div>
+        
+        <div class="warning">
+            <h4>⚠️ ملاحظة هامة - Important Note</h4>
+            <p>بيانات حساب الخدمة (Service Account) المقدمة لا يمكن استخدامها مباشرة للخرائط في المتصفح. تحتاج إلى مفتاح API للمتصفح.</p>
+            <p><strong>EN:</strong> The service account credentials provided cannot be used directly for browser-based maps. You need a browser API key.</p>
+        </div>
+        
+        <div class="steps">
+            <div class="step">
+                <h3><span class="step-number">1</span> افتح Google Cloud Console</h3>
+                <p>اذهب إلى: <a href="https://console.cloud.google.com/" target="_blank">https://console.cloud.google.com/</a></p>
+                <ul>
+                    <li>قم بتسجيل الدخول بنفس الحساب الذي أنشأت به المشروع</li>
+                    <li>اختر المشروع: <code>monthly-insection-plan</code></li>
+                </ul>
+            </div>
+            
+            <div class="step">
+                <h3><span class="step-number">2</span> فعّل الخدمات المطلوبة - Enable Required APIs</h3>
+                <p>اذهب إلى: APIs & Services → Library</p>
+                <ul>
+                    <li>ابحث وفعّل: <strong>Maps JavaScript API</strong></li>
+                    <li>ابحث وفعّل: <strong>Places API</strong></li>
+                    <li>ابحث وفعّل: <strong>Geocoding API</strong></li>
+                </ul>
+                <p><a href="https://console.cloud.google.com/apis/library" target="_blank">👉 افتح مكتبة الخدمات</a></p>
+            </div>
+            
+            <div class="step">
+                <h3><span class="step-number">3</span> فعّل الفوترة - Enable Billing</h3>
+                <ul>
+                    <li>اذهب إلى: Billing في القائمة الجانبية</li>
+                    <li>قم بربط حساب فوترة (Billing Account)</li>
+                    <li><strong>لا تقلق!</strong> Google توفر 200 دولار رصيد مجاني شهرياً</li>
+                    <li>لن يتم فرض رسوم إلا إذا تجاوزت الاستخدام المجاني</li>
+                </ul>
+                <p><a href="https://console.cloud.google.com/billing" target="_blank">👉 افتح صفحة الفوترة</a></p>
+            </div>
+            
+            <div class="step">
+                <h3><span class="step-number">4</span> أنشئ مفتاح API - Create API Key</h3>
+                <p>اذهب إلى: APIs & Services → Credentials</p>
+                <ul>
+                    <li>انقر على: <strong>Create Credentials</strong></li>
+                    <li>اختر: <strong>API key</strong></li>
+                    <li>سيتم إنشاء مفتاح API جديد</li>
+                    <li><strong>انسخ</strong> المفتاح (يبدأ بـ AIzaSy...)</li>
+                </ul>
+                <p><a href="https://console.cloud.google.com/apis/credentials" target="_blank">👉 افتح صفحة بيانات الاعتماد</a></p>
+            </div>
+        </div>
+        
+        <div class="checklist">
+            <h4>✅ تأكد من إتمام هذه الخطوات - Checklist</h4>
+            <label><input type="checkbox" id="check1"> فتحت Google Cloud Console واخترت المشروع الصحيح</label>
+            <label><input type="checkbox" id="check2"> فعّلت Maps JavaScript API</label>
+            <label><input type="checkbox" id="check3"> فعّلت Places API</label>
+            <label><input type="checkbox" id="check4"> فعّلت Geocoding API</label>
+            <label><input type="checkbox" id="check5"> فعّلت الفوترة (Billing) وربطت حساب فوترة</label>
+            <label><input type="checkbox" id="check6"> أنشأت مفتاح API جديد ونسخته</label>
+        </div>
+        
+        <div class="input-section">
+            <h3>🔑 أدخل مفتاح API الجديد - Enter Your New API Key</h3>
+            <p>الصق مفتاح API الذي نسخته من Google Cloud Console:</p>
+            
+            <div class="input-group">
+                <label for="apiKey">مفتاح API / API Key:</label>
+                <input type="text" id="apiKey" placeholder="AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXX" dir="ltr">
+            </div>
+            
+            <button class="btn" id="validateBtn" onclick="validateAndGenerate()">
+                ✅ التحقق وإنشاء ملف الإعدادات
+            </button>
+        </div>
+        
+        <div id="result" class="result"></div>
+    </div>
+    
+    <script>
+        // Enable the validate button when all checkboxes are checked
+        const checkboxes = document.querySelectorAll('.checklist input[type="checkbox"]');
+        const validateBtn = document.getElementById('validateBtn');
+        
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+                validateBtn.disabled = !allChecked;
+            });
+        });
+        
+        // Initially disable the button
+        validateBtn.disabled = true;
+        
+        function validateAndGenerate() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const resultDiv = document.getElementById('result');
+            
+            // Validate API key format
+            if (!apiKey) {
+                resultDiv.className = 'result error';
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = '<h3>❌ خطأ - Error</h3><p>الرجاء إدخال مفتاح API / Please enter an API key</p>';
+                return;
+            }
+            
+            if (!apiKey.startsWith('AIza')) {
+                resultDiv.className = 'result error';
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = '<h3>❌ خطأ - Error</h3><p>مفتاح API يجب أن يبدأ بـ "AIza" / API key should start with "AIza"</p>';
+                return;
+            }
+            
+            if (apiKey.length < 30) {
+                resultDiv.className = 'result error';
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = '<h3>❌ خطأ - Error</h3><p>مفتاح API قصير جداً / API key is too short</p>';
+                return;
+            }
+            
+            // Generate the configuration file content
+            const configContent = `/**
+ * Local Google Maps API Configuration
+ * تكوين Google Maps API المحلي
+ * 
+ * This file was auto-generated by setup-google-maps-api.html
+ * تم إنشاء هذا الملف تلقائياً بواسطة setup-google-maps-api.html
+ * 
+ * Project: monthly-insection-plan
+ * Generated: ${new Date().toLocaleString('ar-EG')}
+ */
+
+// Your Google Maps API Key
+// مفتاح Google Maps API الخاص بك
+const GOOGLE_MAPS_API_KEY = '${apiKey}';
+
+// Export the API key
+// تصدير مفتاح API
+if (typeof window !== 'undefined') {
+    window.GOOGLE_MAPS_API_KEY = '${apiKey}';
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { GOOGLE_MAPS_API_KEY };
+}`;
+            
+            // Show success message with download option
+            resultDiv.className = 'result success';
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <div class="success-icon">✅</div>
+                <h3>نجح التحقق! - Validation Successful!</h3>
+                <p>تم إنشاء ملف الإعدادات بنجاح / Configuration file generated successfully</p>
+                
+                <div class="warning" style="background: #e7f3ff; border-right-color: #667eea;">
+                    <h4 style="color: #2d3561;">📝 الخطوات التالية - Next Steps:</h4>
+                    <ol style="margin-right: 20px; line-height: 2;">
+                        <li>انسخ الكود أدناه / Copy the code below</li>
+                        <li>افتح ملف: <code>google-maps-config.local.js</code></li>
+                        <li>استبدل محتوى الملف بالكود المنسوخ / Replace file content with copied code</li>
+                        <li>احفظ الملف / Save the file</li>
+                        <li>حدّث صفحة Smart Planner بـ Ctrl+Shift+R</li>
+                    </ol>
+                </div>
+                
+                <div class="code-block" id="configCode">${escapeHtml(configContent)}</div>
+                
+                <button class="btn" onclick="copyConfig()">
+                    📋 نسخ الكود - Copy Code
+                </button>
+                
+                <button class="btn" style="background: #28a745; margin-top: 10px;" onclick="downloadConfig()">
+                    💾 تحميل الملف - Download File
+                </button>
+                
+                <div style="margin-top: 20px; padding: 15px; background: #fff; border-radius: 8px;">
+                    <h4 style="color: #2d3561; margin-bottom: 10px;">🔐 اختياري - تقييد مفتاح API (للأمان)</h4>
+                    <p>يمكنك تقييد استخدام المفتاح لنطاقك فقط:</p>
+                    <ul style="margin-right: 20px; line-height: 1.8;">
+                        <li>في Google Cloud Console → Credentials</li>
+                        <li>انقر على مفتاح API الذي أنشأته</li>
+                        <li>في "Application restrictions" اختر "HTTP referrers"</li>
+                        <li>أضف: <code>${window.location.hostname}/*</code></li>
+                        <li>احفظ التغييرات</li>
+                    </ul>
+                </div>
+            `;
+            
+            // Store the config content for copying/downloading
+            window.generatedConfig = configContent;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function copyConfig() {
+            if (!window.generatedConfig) return;
+            
+            navigator.clipboard.writeText(window.generatedConfig).then(() => {
+                alert('✅ تم نسخ الكود بنجاح!\n✅ Code copied successfully!\n\nالآن افتح ملف google-maps-config.local.js والصق الكود');
+            }).catch(err => {
+                alert('❌ فشل النسخ. الرجاء نسخ الكود يدوياً\n❌ Failed to copy. Please copy the code manually');
+                console.error('Copy failed:', err);
+            });
+        }
+        
+        function downloadConfig() {
+            if (!window.generatedConfig) return;
+            
+            const blob = new Blob([window.generatedConfig], { type: 'text/javascript' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'google-maps-config.local.js';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('✅ تم تحميل الملف!\n✅ File downloaded!\n\nاستبدل الملف القديم بالملف الجديد في مجلد المشروع');
+        }
+    </script>
+</body>
+</html>

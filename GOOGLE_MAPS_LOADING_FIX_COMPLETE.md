@@ -169,7 +169,7 @@ const GOOGLE_MAPS_CONFIG = {
 
 **مثال / Example:**
 ```javascript
-const GOOGLE_MAPS_API_KEY = 'AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXX'; // Your real key
+const GOOGLE_MAPS_API_KEY = 'AIza-YOUR-ACTUAL-API-KEY-HERE'; // Replace with your real key from Google Cloud Console
 ```
 
 #### الخطوة 2: اختبار التكوين

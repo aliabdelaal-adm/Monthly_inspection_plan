@@ -339,12 +339,12 @@
                 if (apiKey === placeholder || apiKey === testPlaceholder) {
                     updateStatus('apiKeyStatus', '⚠️', 'يحتاج إلى تحديث / Needs update', 'warning');
                     logMessage('⚠️ API Key is still a placeholder!', 'warning');
-                    logMessage('   Current value: ' + apiKey, 'warning');
+                    logMessage('   Current value: [PLACEHOLDER - Please update]', 'warning');
                     logMessage('   Please update google-maps-config.local.js with your real API key', 'warning');
                 } else if (apiKey.startsWith('AIza')) {
                     updateStatus('apiKeyStatus', '✅', 'مُكوّن بشكل صحيح / Configured', 'success');
                     logMessage('✅ API Key format looks valid', 'success');
-                    logMessage('   Key: ' + apiKey.substring(0, 10) + '...', 'info');
+                    logMessage('   Key: ' + apiKey.substring(0, 6) + '***' + apiKey.substring(apiKey.length - 4), 'info');
                 } else {
                     updateStatus('apiKeyStatus', '❌', 'تنسيق غير صالح / Invalid format', 'error');
                     logMessage('❌ API Key format appears invalid', 'error');
@@ -355,11 +355,18 @@
                 logMessage('❌ API Key not found in configuration!', 'error');
             }
             
-            // Test 4: Check if Google Maps object is available
-            setTimeout(() => {
+            // Test 4: Check if Google Maps object is available (with polling)
+            let checkAttempts = 0;
+            const maxCheckAttempts = 10;
+            const checkInterval = 500; // Check every 500ms
+            
+            function checkGoogleMapsAvailability() {
+                checkAttempts++;
+                
                 if (typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
                     updateStatus('googleObjectStatus', '✅', 'متاح / Available', 'success');
                     logMessage('✅ Google Maps API loaded successfully!', 'success');
+                    logMessage(`   Loaded after ${checkAttempts * checkInterval}ms`, 'info');
                     
                     // Test 5: Try to initialize map
                     try {
@@ -385,17 +392,25 @@
                         updateStatus('mapInitStatus', '❌', 'فشل / Failed', 'error');
                         logMessage('❌ Failed to initialize map: ' + error.message, 'error');
                     }
+                } else if (checkAttempts < maxCheckAttempts) {
+                    // Continue polling
+                    logMessage(`⏳ Waiting for Google Maps API... (attempt ${checkAttempts}/${maxCheckAttempts})`, 'info');
+                    setTimeout(checkGoogleMapsAvailability, checkInterval);
                 } else {
+                    // Max attempts reached
                     updateStatus('googleObjectStatus', '❌', 'غير متاح / Not available', 'error');
                     updateStatus('mapInitStatus', '❌', 'لم يتم الاختبار / Not tested', 'error');
-                    logMessage('❌ Google Maps API not loaded!', 'error');
+                    logMessage('❌ Google Maps API not loaded after ' + (maxCheckAttempts * checkInterval / 1000) + ' seconds!', 'error');
                     logMessage('⚠️ This could be due to:', 'warning');
                     logMessage('   1. Invalid API key', 'warning');
                     logMessage('   2. Billing not enabled in Google Cloud', 'warning');
                     logMessage('   3. Required APIs not enabled', 'warning');
                     logMessage('   4. Network connectivity issues', 'warning');
                 }
-            }, 3000); // Wait 3 seconds for Google Maps to load
+            }
+            
+            // Start checking after initial delay
+            setTimeout(checkGoogleMapsAvailability, checkInterval);
         }
         
         // Initialize Google Maps Loader on page load

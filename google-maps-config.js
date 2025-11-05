@@ -25,7 +25,7 @@
 
 // Placeholder value for API key validation
 // قيمة نائبة للتحقق من صحة مفتاح API
-const API_KEY_PLACEHOLDER = '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';
+const API_KEY_PLACEHOLDER = 'AIzaSyBIu6hLqc2mW6WYKTf1JCMSjKCkN1E-xVU';
 
 // Known invalid/old API keys that should not be used
 // مفاتيح API قديمة/غير صالحة يجب عدم استخدامها

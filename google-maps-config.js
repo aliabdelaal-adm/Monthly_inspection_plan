@@ -25,7 +25,7 @@
 
 // Placeholder value for API key validation
 // قيمة نائبة للتحقق من صحة مفتاح API
-const API_KEY_PLACEHOLDER = 'REPLACE_WITH_YOUR_GOOGLE_MAPS_API_KEY';
+const API_KEY_PLACEHOLDER = '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';
 
 // Known invalid/old API keys that should not be used
 // مفاتيح API قديمة/غير صالحة يجب عدم استخدامها

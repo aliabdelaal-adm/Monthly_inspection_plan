@@ -2140,9 +2140,15 @@
             margin-bottom: 0;
         }
         .shops-dropdown-list ul li::before {
-            content: '🏪';
+            content: '';
             margin-left: 8px;
             font-size: 0.9em;
+        }
+        .shops-dropdown-list ul li.shop-item::before {
+            content: '🏪';
+        }
+        .shops-dropdown-list ul li.inspector-item::before {
+            content: '👤';
         }
         .shops-count-badge {
             background: #28a745;
@@ -7872,6 +7878,7 @@ let shopsData = [
 // Global plan data variable - properly initialize to prevent undefined errors
 let allPlanData = {
     inspectionData: [],
+    groupInspectionData: [],
     inspectors: [],
     areas: [],
     shops: [],
@@ -11483,6 +11490,7 @@ async function loadInspectionData() {
                 // Update global allPlanData with loaded data
                 allPlanData = {
                     inspectionData: inspectionData,
+                    groupInspectionData: groupInspectionData,
                     inspectors: inspectorsData,
                     areas: areasData,
                     shops: shopsData,
@@ -11532,6 +11540,7 @@ async function loadInspectionData() {
             try {
                 const allData = JSON.parse(allLocalData);
                 if (allData.inspectionData) inspectionData = allData.inspectionData;
+                if (allData.groupInspectionData) groupInspectionData = allData.groupInspectionData;
                 if (allData.inspectors) {
                     inspectorsData = allData.inspectors;
                     inspectors = inspectorsData.map(i => i.name);
@@ -11547,6 +11556,7 @@ async function loadInspectionData() {
                 // Update global allPlanData with loaded fallback data
                 allPlanData = {
                     inspectionData: inspectionData,
+                    groupInspectionData: groupInspectionData,
                     inspectors: inspectorsData,
                     areas: areasData,
                     shops: shopsData,
@@ -13782,13 +13792,13 @@ function renderGroupInspectionTable() {
         
         // Format inspectors dropdown list
         const inspectorsListItems = sortedInspectors.map((inspector, index) => 
-            `<li><span class="inspector-number">${index + 1}.</span> ${inspector}</li>`
+            `<li class="inspector-item"><span class="inspector-number">${index + 1}.</span> ${inspector}</li>`
         ).join('');
         
         // Create shops dropdown - convert single shop to array for consistency
         const shopsArray = Array.isArray(item.shopName) ? item.shopName : [item.shopName];
         const shopsListItems = shopsArray.map((shop, index) => 
-            `<li><span class="shop-number">${index + 1}.</span> ${shop}</li>`
+            `<li class="shop-item"><span class="shop-number">${index + 1}.</span> ${shop}</li>`
         ).join('');
         
         html += `
@@ -14792,6 +14802,7 @@ async function saveShopDetails() {
         if (!allPlanData || typeof allPlanData !== 'object') {
             allPlanData = {
                 inspectionData: inspectionData || [],
+                groupInspectionData: groupInspectionData || [],
                 inspectors: inspectorsData || [],
                 areas: areasData || [],
                 shops: shopsData || [],

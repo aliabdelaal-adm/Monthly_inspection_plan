@@ -2455,6 +2455,29 @@
             border: 1px solid #f57c00;
         }
         
+        /* Column widths for group inspection table */
+        .group-inspection-table th:nth-child(1), .group-inspection-table td:nth-child(1) { /* المفتشين */
+            width: 20%;
+            min-width: 130px;
+        }
+        .group-inspection-table th:nth-child(2), .group-inspection-table td:nth-child(2) { /* التاريخ */
+            width: 18%;
+            min-width: 145px;
+            white-space: nowrap;
+        }
+        .group-inspection-table th:nth-child(3), .group-inspection-table td:nth-child(3) { /* المناوبة */
+            width: 15%;
+            min-width: 105px;
+        }
+        .group-inspection-table th:nth-child(4), .group-inspection-table td:nth-child(4) { /* المنطقة */
+            width: 22%;
+            min-width: 150px;
+        }
+        .group-inspection-table th:nth-child(5), .group-inspection-table td:nth-child(5) { /* المحلات */
+            width: 25%;
+            min-width: 130px;
+        }
+        
         .group-inspection-table td {
             padding: 12px 10px;
             text-align: center;
@@ -2469,6 +2492,18 @@
         .group-inspection-table tbody tr:hover {
             background: #ffe8cc;
             transition: all 0.3s ease;
+        }
+        
+        /* Styling for inspector and shop numbers in dropdown lists */
+        .inspector-number, .shop-number {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-left: 5px;
         }
         
         .group-inspectors-list {
@@ -13727,7 +13762,7 @@ function renderGroupInspectionTable() {
     <table class="group-inspection-table">
         <thead>
             <tr>
-                <th>عرض المفتشين</th>
+                <th>المفتشين</th>
                 <th>التاريخ</th>
                 <th>المناوبة</th>
                 <th>المنطقة</th>
@@ -13742,16 +13777,38 @@ function renderGroupInspectionTable() {
         // Get area name
         const areaName = getAreaName(item.area);
         
-        // Format inspectors list
-        const inspectorsList = item.inspectors.map(inspector => 
-            `<span class="group-inspector-name">${inspector}</span>`
+        // Sort inspectors by name
+        const sortedInspectors = [...item.inspectors].sort((a, b) => a.localeCompare(b, 'ar'));
+        
+        // Format inspectors dropdown list
+        const inspectorsListItems = sortedInspectors.map((inspector, index) => 
+            `<li><span class="inspector-number">${index + 1}.</span> ${inspector}</li>`
+        ).join('');
+        
+        // Create shops dropdown - convert single shop to array for consistency
+        const shopsArray = Array.isArray(item.shopName) ? item.shopName : [item.shopName];
+        const shopsListItems = shopsArray.map((shop, index) => 
+            `<li><span class="shop-number">${index + 1}.</span> ${shop}</li>`
         ).join('');
         
         html += `
             <tr>
                 <td>
-                    <div class="group-inspectors-list">
-                        ${inspectorsList}
+                    <div class="shops-dropdown-wrap">
+                        <button class="show-shops-btn" 
+                            onclick="toggleGroupInspectorsDropdown('${idx}')"
+                            style="background:#007bff;color:#fff;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:0.9em;">
+                            عرض المفتشين (${sortedInspectors.length})
+                        </button>
+                        <div class="shops-dropdown-list" id="group-inspectors-dropdown-${idx}">
+                            <div class="shops-dropdown-header">
+                                <span class="shops-count-badge">${sortedInspectors.length}</span>
+                                قائمة المفتشين
+                            </div>
+                            <ul>
+                                ${inspectorsListItems}
+                            </ul>
+                        </div>
                     </div>
                 </td>
                 <td style="font-family:'Cairo', Arial, sans-serif;">
@@ -13766,7 +13823,24 @@ function renderGroupInspectionTable() {
                     </span>
                 </td>
                 <td style="font-weight:600;color:${areaName === 'سوق الميناء' || areaName === 'سوق التراث' ? '#1976d2' : '#d32f2f'};">${areaName}</td>
-                <td style="font-weight:600;">${item.shopName}</td>
+                <td>
+                    <div class="shops-dropdown-wrap">
+                        <button class="show-shops-btn" 
+                            onclick="toggleGroupShopsDropdown('${idx}')"
+                            style="background:#007bff;color:#fff;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:0.9em;">
+                            عرض المحلات (${shopsArray.length})
+                        </button>
+                        <div class="shops-dropdown-list" id="group-shops-dropdown-${idx}">
+                            <div class="shops-dropdown-header">
+                                <span class="shops-count-badge">${shopsArray.length}</span>
+                                قائمة المحلات المطلوب تفتيشها
+                            </div>
+                            <ul>
+                                ${shopsListItems}
+                            </ul>
+                        </div>
+                    </div>
+                </td>
                 ${isDev ? `
                 <td style="text-align:center;">
                     <button class="edit-btn" onclick="editGroupInspection(${idx})" style="margin:2px;">تعديل</button>
@@ -13950,6 +14024,202 @@ function toggleShopsDropdown(rowIndex) {
     const dropdownId = `shops-dropdown-${rowIndex}`;
     const dropdown = document.getElementById(dropdownId);
     const button = document.querySelector(`button[onclick="toggleShopsDropdown('${rowIndex}')"]`);
+    
+    if (!dropdown || !button) return;
+    
+    // إخفاء جميع القوائم المنسدلة الأخرى وإعادتها لمكانها الأصلي
+    document.querySelectorAll('.shops-dropdown-list').forEach(el => {
+        if (el.id !== dropdownId) {
+            el.style.display = 'none';
+            el.removeAttribute('data-open');
+            // إعادة العنصر لمكانه الأصلي إذا كان منقولاً
+            const originalParent = el.getAttribute('data-original-parent');
+            if (originalParent) {
+                const parent = document.querySelector(`[data-dropdown-parent="${el.id}"]`);
+                if (parent) {
+                    parent.appendChild(el);
+                    el.removeAttribute('data-original-parent');
+                }
+            }
+        }
+    });
+    
+    // تبديل حالة القائمة المنسدلة الحالية
+    if (dropdown.style.display === 'none' || dropdown.style.display === '') {
+        // نقل القائمة المنسدلة إلى body لضمان عرضها كoverlay
+        if (!dropdown.getAttribute('data-original-parent')) {
+            dropdown.setAttribute('data-original-parent', 'true');
+            dropdown.parentElement.setAttribute('data-dropdown-parent', dropdownId);
+            document.body.appendChild(dropdown);
+        }
+        
+        // احصل على موقع الزر لوضع القائمة المنسدلة
+        const buttonRect = button.getBoundingClientRect();
+        dropdown.style.position = 'fixed';
+        dropdown.style.zIndex = '9999';
+        dropdown.style.display = 'block';
+        
+        // حساب موقع القائمة المنسدلة - نعرضها دائماً أسفل الزر
+        const viewportHeight = window.innerHeight;
+        const dropdownMaxHeight = 280; // من CSS max-height المحدث
+        const spaceBelow = viewportHeight - buttonRect.bottom;
+        
+        // موقع القائمة أسفل الزر مباشرة
+        let topPosition = buttonRect.bottom + 5;
+        
+        // التأكد من أن القائمة لن تتجاوز حدود الشاشة
+        if (topPosition + dropdownMaxHeight > viewportHeight) {
+            // إذا كانت القائمة ستتجاوز الشاشة، نضعها أعلى الزر
+            topPosition = Math.max(10, buttonRect.top - dropdownMaxHeight - 5);
+        }
+        
+        dropdown.style.top = `${topPosition}px`;
+        
+        // تحديد أقصى ارتفاع للقائمة حسب المساحة المتاحة
+        const availableHeight = Math.min(dropdownMaxHeight, viewportHeight - topPosition - 20);
+        dropdown.style.maxHeight = `${availableHeight}px`;
+        
+        // تحديد الموقع الأفقي مع التأكد من عدم الخروج من الشاشة
+        const viewportWidth = window.innerWidth;
+        const dropdownWidth = 350; // تحديث العرض المتوقع
+        let leftPosition = buttonRect.left;
+        
+        // التحقق من عدم خروج القائمة من الجانب الأيمن
+        if (leftPosition + dropdownWidth > viewportWidth) {
+            leftPosition = viewportWidth - dropdownWidth - 10;
+        }
+        
+        // التحقق من عدم خروج القائمة من الجانب الأيسر
+        if (leftPosition < 10) {
+            leftPosition = 10;
+        }
+        
+        dropdown.style.left = `${leftPosition}px`;
+        
+        // إضافة تأخير قصير لضمان عدم الإغلاق المباشر
+        setTimeout(() => {
+            dropdown.setAttribute('data-open', 'true');
+        }, 10);
+    } else {
+        dropdown.style.display = 'none';
+        dropdown.removeAttribute('data-open');
+        
+        // إعادة العنصر لمكانه الأصلي
+        const originalParent = dropdown.getAttribute('data-original-parent');
+        if (originalParent) {
+            const parent = document.querySelector(`[data-dropdown-parent="${dropdownId}"]`);
+            if (parent) {
+                parent.appendChild(dropdown);
+                dropdown.removeAttribute('data-original-parent');
+                parent.removeAttribute('data-dropdown-parent');
+            }
+        }
+    }
+}
+
+// Toggle group inspection inspectors dropdown
+function toggleGroupInspectorsDropdown(rowIndex) {
+    const dropdownId = `group-inspectors-dropdown-${rowIndex}`;
+    const dropdown = document.getElementById(dropdownId);
+    const button = document.querySelector(`button[onclick="toggleGroupInspectorsDropdown('${rowIndex}')"]`);
+    
+    if (!dropdown || !button) return;
+    
+    // إخفاء جميع القوائم المنسدلة الأخرى وإعادتها لمكانها الأصلي
+    document.querySelectorAll('.shops-dropdown-list').forEach(el => {
+        if (el.id !== dropdownId) {
+            el.style.display = 'none';
+            el.removeAttribute('data-open');
+            // إعادة العنصر لمكانه الأصلي إذا كان منقولاً
+            const originalParent = el.getAttribute('data-original-parent');
+            if (originalParent) {
+                const parent = document.querySelector(`[data-dropdown-parent="${el.id}"]`);
+                if (parent) {
+                    parent.appendChild(el);
+                    el.removeAttribute('data-original-parent');
+                }
+            }
+        }
+    });
+    
+    // تبديل حالة القائمة المنسدلة الحالية
+    if (dropdown.style.display === 'none' || dropdown.style.display === '') {
+        // نقل القائمة المنسدلة إلى body لضمان عرضها كoverlay
+        if (!dropdown.getAttribute('data-original-parent')) {
+            dropdown.setAttribute('data-original-parent', 'true');
+            dropdown.parentElement.setAttribute('data-dropdown-parent', dropdownId);
+            document.body.appendChild(dropdown);
+        }
+        
+        // احصل على موقع الزر لوضع القائمة المنسدلة
+        const buttonRect = button.getBoundingClientRect();
+        dropdown.style.position = 'fixed';
+        dropdown.style.zIndex = '9999';
+        dropdown.style.display = 'block';
+        
+        // حساب موقع القائمة المنسدلة - نعرضها دائماً أسفل الزر
+        const viewportHeight = window.innerHeight;
+        const dropdownMaxHeight = 280; // من CSS max-height المحدث
+        const spaceBelow = viewportHeight - buttonRect.bottom;
+        
+        // موقع القائمة أسفل الزر مباشرة
+        let topPosition = buttonRect.bottom + 5;
+        
+        // التأكد من أن القائمة لن تتجاوز حدود الشاشة
+        if (topPosition + dropdownMaxHeight > viewportHeight) {
+            // إذا كانت القائمة ستتجاوز الشاشة، نضعها أعلى الزر
+            topPosition = Math.max(10, buttonRect.top - dropdownMaxHeight - 5);
+        }
+        
+        dropdown.style.top = `${topPosition}px`;
+        
+        // تحديد أقصى ارتفاع للقائمة حسب المساحة المتاحة
+        const availableHeight = Math.min(dropdownMaxHeight, viewportHeight - topPosition - 20);
+        dropdown.style.maxHeight = `${availableHeight}px`;
+        
+        // تحديد الموقع الأفقي مع التأكد من عدم الخروج من الشاشة
+        const viewportWidth = window.innerWidth;
+        const dropdownWidth = 350; // تحديث العرض المتوقع
+        let leftPosition = buttonRect.left;
+        
+        // التحقق من عدم خروج القائمة من الجانب الأيمن
+        if (leftPosition + dropdownWidth > viewportWidth) {
+            leftPosition = viewportWidth - dropdownWidth - 10;
+        }
+        
+        // التحقق من عدم خروج القائمة من الجانب الأيسر
+        if (leftPosition < 10) {
+            leftPosition = 10;
+        }
+        
+        dropdown.style.left = `${leftPosition}px`;
+        
+        // إضافة تأخير قصير لضمان عدم الإغلاق المباشر
+        setTimeout(() => {
+            dropdown.setAttribute('data-open', 'true');
+        }, 10);
+    } else {
+        dropdown.style.display = 'none';
+        dropdown.removeAttribute('data-open');
+        
+        // إعادة العنصر لمكانه الأصلي
+        const originalParent = dropdown.getAttribute('data-original-parent');
+        if (originalParent) {
+            const parent = document.querySelector(`[data-dropdown-parent="${dropdownId}"]`);
+            if (parent) {
+                parent.appendChild(dropdown);
+                dropdown.removeAttribute('data-original-parent');
+                parent.removeAttribute('data-dropdown-parent');
+            }
+        }
+    }
+}
+
+// Toggle group inspection shops dropdown
+function toggleGroupShopsDropdown(rowIndex) {
+    const dropdownId = `group-shops-dropdown-${rowIndex}`;
+    const dropdown = document.getElementById(dropdownId);
+    const button = document.querySelector(`button[onclick="toggleGroupShopsDropdown('${rowIndex}')"]`);
     
     if (!dropdown || !button) return;
     

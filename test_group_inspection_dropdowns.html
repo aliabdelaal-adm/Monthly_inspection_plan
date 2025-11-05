@@ -185,7 +185,7 @@
         }
         
         // Test 2: Check if required functions exist
-        function test2() {
+        async function test2() {
             const result = document.getElementById('test2Result');
             const functions = [
                 'toggleGroupInspectorsDropdown',
@@ -193,210 +193,254 @@
                 'renderGroupInspectionTable'
             ];
             
-            let html = '<ul>';
-            let allExist = true;
-            
-            // We can't directly check if functions exist in index.html from here,
-            // so we'll check if the file contains them
-            fetch('./index.html')
-                .then(response => response.text())
-                .then(content => {
-                    functions.forEach(func => {
-                        const exists = content.includes(`function ${func}`);
-                        if (exists) {
-                            html += `<li>✅ ${func} موجودة</li>`;
-                        } else {
-                            html += `<li>❌ ${func} غير موجودة</li>`;
-                            allExist = false;
-                        }
-                    });
-                    
-                    html += '</ul>';
-                    
-                    if (allExist) {
-                        result.innerHTML = `
-                            <div class="test-result pass">
-                                ✅ PASS: جميع الوظائف المطلوبة موجودة
-                            </div>
-                            ${html}
-                        `;
-                        passedTests++;
+            try {
+                const response = await fetch('./index.html');
+                const content = await response.text();
+                
+                let html = '<ul>';
+                let allExist = true;
+                
+                functions.forEach(func => {
+                    const exists = content.includes(`function ${func}`);
+                    if (exists) {
+                        html += `<li>✅ ${func} موجودة</li>`;
                     } else {
-                        result.innerHTML = `
-                            <div class="test-result fail">
-                                ❌ FAIL: بعض الوظائف غير موجودة
-                            </div>
-                            ${html}
-                        `;
+                        html += `<li>❌ ${func} غير موجودة</li>`;
+                        allExist = false;
                     }
                 });
+                
+                html += '</ul>';
+                
+                if (allExist) {
+                    result.innerHTML = `
+                        <div class="test-result pass">
+                            ✅ PASS: جميع الوظائف المطلوبة موجودة
+                        </div>
+                        ${html}
+                    `;
+                    passedTests++;
+                } else {
+                    result.innerHTML = `
+                        <div class="test-result fail">
+                            ❌ FAIL: بعض الوظائف غير موجودة
+                        </div>
+                        ${html}
+                    `;
+                }
+            } catch (error) {
+                result.innerHTML = `
+                    <div class="test-result fail">
+                        ❌ ERROR: فشل تحميل index.html<br>
+                        ${error.message}
+                    </div>
+                `;
+            }
         }
         
         // Test 3: Check CSS styles
-        function test3() {
+        async function test3() {
             const result = document.getElementById('test3Result');
             
-            fetch('./index.html')
-                .then(response => response.text())
-                .then(content => {
-                    const cssChecks = [
-                        { name: '.shops-dropdown-list', exists: content.includes('.shops-dropdown-list') },
-                        { name: '.shops-dropdown-wrap', exists: content.includes('.shops-dropdown-wrap') },
-                        { name: '.inspector-number', exists: content.includes('.inspector-number') },
-                        { name: '.shop-number', exists: content.includes('.shop-number') },
-                        { name: '.inspector-item::before', exists: content.includes('.inspector-item::before') },
-                        { name: '.shop-item::before', exists: content.includes('.shop-item::before') }
-                    ];
-                    
-                    let html = '<ul>';
-                    let allExist = true;
-                    
-                    cssChecks.forEach(check => {
-                        if (check.exists) {
-                            html += `<li>✅ ${check.name} موجود</li>`;
-                        } else {
-                            html += `<li>❌ ${check.name} غير موجود</li>`;
-                            allExist = false;
-                        }
-                    });
-                    
-                    html += '</ul>';
-                    
-                    if (allExist) {
-                        result.innerHTML = `
-                            <div class="test-result pass">
-                                ✅ PASS: جميع أنماط CSS موجودة
-                            </div>
-                            ${html}
-                        `;
-                        passedTests++;
+            try {
+                const response = await fetch('./index.html');
+                const content = await response.text();
+                
+                const cssChecks = [
+                    { name: '.shops-dropdown-list', exists: content.includes('.shops-dropdown-list') },
+                    { name: '.shops-dropdown-wrap', exists: content.includes('.shops-dropdown-wrap') },
+                    { name: '.inspector-number', exists: content.includes('.inspector-number') },
+                    { name: '.shop-number', exists: content.includes('.shop-number') },
+                    { name: '.inspector-item::before', exists: content.includes('.inspector-item::before') },
+                    { name: '.shop-item::before', exists: content.includes('.shop-item::before') }
+                ];
+                
+                let html = '<ul>';
+                let allExist = true;
+                
+                cssChecks.forEach(check => {
+                    if (check.exists) {
+                        html += `<li>✅ ${check.name} موجود</li>`;
                     } else {
-                        result.innerHTML = `
-                            <div class="test-result fail">
-                                ❌ FAIL: بعض أنماط CSS غير موجودة
-                            </div>
-                            ${html}
-                        `;
+                        html += `<li>❌ ${check.name} غير موجود</li>`;
+                        allExist = false;
                     }
                 });
+                
+                html += '</ul>';
+                
+                if (allExist) {
+                    result.innerHTML = `
+                        <div class="test-result pass">
+                            ✅ PASS: جميع أنماط CSS موجودة
+                        </div>
+                        ${html}
+                    `;
+                    passedTests++;
+                } else {
+                    result.innerHTML = `
+                        <div class="test-result fail">
+                            ❌ FAIL: بعض أنماط CSS غير موجودة
+                        </div>
+                        ${html}
+                    `;
+                }
+            } catch (error) {
+                result.innerHTML = `
+                    <div class="test-result fail">
+                        ❌ ERROR: فشل تحميل index.html<br>
+                        ${error.message}
+                    </div>
+                `;
+            }
         }
         
         // Test 4: Check icons
-        function test4() {
+        async function test4() {
             const result = document.getElementById('test4Result');
             
-            fetch('./index.html')
-                .then(response => response.text())
-                .then(content => {
-                    const hasInspectorIcon = content.includes("content: '👤'");
-                    const hasShopIcon = content.includes("content: '🏪'");
-                    const hasInspectorClass = content.includes('class="inspector-item"');
-                    const hasShopClass = content.includes('class="shop-item"');
-                    
-                    let html = '<ul>';
-                    html += `<li>${hasInspectorIcon ? '✅' : '❌'} أيقونة المفتش (👤)</li>`;
-                    html += `<li>${hasShopIcon ? '✅' : '❌'} أيقونة المحل (🏪)</li>`;
-                    html += `<li>${hasInspectorClass ? '✅' : '❌'} CSS class للمفتشين</li>`;
-                    html += `<li>${hasShopClass ? '✅' : '❌'} CSS class للمحلات</li>`;
-                    html += '</ul>';
-                    
-                    if (hasInspectorIcon && hasShopIcon && hasInspectorClass && hasShopClass) {
-                        result.innerHTML = `
-                            <div class="test-result pass">
-                                ✅ PASS: الأيقونات مُعرّفة بشكل صحيح
-                            </div>
-                            ${html}
-                        `;
-                        passedTests++;
-                    } else {
-                        result.innerHTML = `
-                            <div class="test-result fail">
-                                ❌ FAIL: بعض الأيقونات غير مُعرّفة
-                            </div>
-                            ${html}
-                        `;
-                    }
-                });
+            try {
+                const response = await fetch('./index.html');
+                const content = await response.text();
+                
+                const hasInspectorIcon = content.includes("content: '👤'");
+                const hasShopIcon = content.includes("content: '🏪'");
+                const hasInspectorClass = content.includes('class="inspector-item"');
+                const hasShopClass = content.includes('class="shop-item"');
+                
+                let html = '<ul>';
+                html += `<li>${hasInspectorIcon ? '✅' : '❌'} أيقونة المفتش (👤)</li>`;
+                html += `<li>${hasShopIcon ? '✅' : '❌'} أيقونة المحل (🏪)</li>`;
+                html += `<li>${hasInspectorClass ? '✅' : '❌'} CSS class للمفتشين</li>`;
+                html += `<li>${hasShopClass ? '✅' : '❌'} CSS class للمحلات</li>`;
+                html += '</ul>';
+                
+                if (hasInspectorIcon && hasShopIcon && hasInspectorClass && hasShopClass) {
+                    result.innerHTML = `
+                        <div class="test-result pass">
+                            ✅ PASS: الأيقونات مُعرّفة بشكل صحيح
+                        </div>
+                        ${html}
+                    `;
+                    passedTests++;
+                } else {
+                    result.innerHTML = `
+                        <div class="test-result fail">
+                            ❌ FAIL: بعض الأيقونات غير مُعرّفة
+                        </div>
+                        ${html}
+                    `;
+                }
+            } catch (error) {
+                result.innerHTML = `
+                    <div class="test-result fail">
+                        ❌ ERROR: فشل تحميل index.html<br>
+                        ${error.message}
+                    </div>
+                `;
+            }
         }
         
         // Test 5: Check reports view button
-        function test5() {
+        async function test5() {
             const result = document.getElementById('test5Result');
             
-            fetch('./smart-planner.html')
-                .then(response => response.text())
-                .then(content => {
-                    const hasButton = content.includes('viewGroupInspectionReports()');
-                    const hasFunction = content.includes('function viewGroupInspectionReports()');
-                    const isReadOnly = !content.includes('editSmartGroupInspection') || 
-                                      (content.includes('editSmartGroupInspection') && 
-                                       content.includes('function viewGroupInspectionReports()'));
-                    
-                    let html = '<ul>';
-                    html += `<li>${hasButton ? '✅' : '❌'} زر عرض التقارير موجود</li>`;
-                    html += `<li>${hasFunction ? '✅' : '❌'} وظيفة عرض التقارير موجودة</li>`;
-                    html += `<li>✅ الواجهة للقراءة فقط (بدون تعديل أو حذف)</li>`;
-                    html += '</ul>';
-                    
-                    if (hasButton && hasFunction) {
-                        result.innerHTML = `
-                            <div class="test-result pass">
-                                ✅ PASS: نظام عرض التقارير متوفر للمفتشين
-                            </div>
-                            ${html}
-                            <div class="info" style="margin-top: 10px;">
-                                ℹ️ يمكن لأي مفتش عرض وتحميل التقارير فقط، بدون القدرة على التعديل أو الحذف
-                            </div>
-                        `;
-                        passedTests++;
-                    } else {
-                        result.innerHTML = `
-                            <div class="test-result fail">
-                                ❌ FAIL: نظام عرض التقارير غير متوفر
-                            </div>
-                            ${html}
-                        `;
-                    }
-                });
+            try {
+                const response = await fetch('./smart-planner.html');
+                const content = await response.text();
+                
+                const hasButton = content.includes('viewGroupInspectionReports()');
+                const hasFunction = content.includes('function viewGroupInspectionReports()');
+                const isReadOnly = !content.includes('editSmartGroupInspection') || 
+                                  (content.includes('editSmartGroupInspection') && 
+                                   content.includes('function viewGroupInspectionReports()'));
+                
+                let html = '<ul>';
+                html += `<li>${hasButton ? '✅' : '❌'} زر عرض التقارير موجود</li>`;
+                html += `<li>${hasFunction ? '✅' : '❌'} وظيفة عرض التقارير موجودة</li>`;
+                html += `<li>✅ الواجهة للقراءة فقط (بدون تعديل أو حذف)</li>`;
+                html += '</ul>';
+                
+                if (hasButton && hasFunction) {
+                    result.innerHTML = `
+                        <div class="test-result pass">
+                            ✅ PASS: نظام عرض التقارير متوفر للمفتشين
+                        </div>
+                        ${html}
+                        <div class="info" style="margin-top: 10px;">
+                            ℹ️ يمكن لأي مفتش عرض وتحميل التقارير فقط، بدون القدرة على التعديل أو الحذف
+                        </div>
+                    `;
+                    passedTests++;
+                } else {
+                    result.innerHTML = `
+                        <div class="test-result fail">
+                            ❌ FAIL: نظام عرض التقارير غير متوفر
+                        </div>
+                        ${html}
+                    `;
+                }
+            } catch (error) {
+                result.innerHTML = `
+                    <div class="test-result fail">
+                        ❌ ERROR: فشل تحميل smart-planner.html<br>
+                        ${error.message}
+                    </div>
+                `;
+            }
         }
         
         // Run all tests
         async function runAllTests() {
-            await test1();
-            await test2();
-            await test3();
-            await test4();
-            await test5();
-            
-            // Wait a bit for async tests to complete
-            setTimeout(() => {
-                const finalResult = document.getElementById('finalResult');
-                const percentage = (passedTests / totalTests * 100).toFixed(0);
+            try {
+                // Run tests sequentially with proper async/await
+                await test1();
+                await test2();
+                await test3();
+                await test4();
+                await test5();
                 
-                if (passedTests === totalTests) {
-                    finalResult.innerHTML = `
-                        <div class="test-result pass" style="font-size: 1.2em;">
-                            🎉 نجحت جميع الاختبارات!<br>
-                            ${passedTests}/${totalTests} (${percentage}%)<br>
-                            <br>
-                            ✨ الميزة جاهزة للاستخدام!
-                        </div>
-                    `;
-                } else {
-                    finalResult.innerHTML = `
-                        <div class="test-result fail" style="font-size: 1.2em;">
-                            ⚠️ بعض الاختبارات فشلت<br>
-                            ${passedTests}/${totalTests} (${percentage}%)<br>
-                            <br>
-                            يرجى مراجعة النتائج أعلاه
-                        </div>
-                    `;
-                }
-            }, 2000);
+                // Display final results
+                displayFinalResults();
+            } catch (error) {
+                console.error('Error running tests:', error);
+                const finalResult = document.getElementById('finalResult');
+                finalResult.innerHTML = `
+                    <div class="test-result fail">
+                        ❌ خطأ في تشغيل الاختبارات<br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        function displayFinalResults() {
+            const finalResult = document.getElementById('finalResult');
+            const percentage = (passedTests / totalTests * 100).toFixed(0);
+            
+            if (passedTests === totalTests) {
+                finalResult.innerHTML = `
+                    <div class="test-result pass" style="font-size: 1.2em;">
+                        🎉 نجحت جميع الاختبارات!<br>
+                        ${passedTests}/${totalTests} (${percentage}%)<br>
+                        <br>
+                        ✨ الميزة جاهزة للاستخدام!
+                    </div>
+                `;
+            } else {
+                finalResult.innerHTML = `
+                    <div class="test-result fail" style="font-size: 1.2em;">
+                        ⚠️ بعض الاختبارات فشلت<br>
+                        ${passedTests}/${totalTests} (${percentage}%)<br>
+                        <br>
+                        يرجى مراجعة النتائج أعلاه
+                    </div>
+                `;
+            }
         }
         
         // Run tests on page load
-        runAllTests();
+        window.addEventListener('DOMContentLoaded', runAllTests);
     </script>
 </body>
 </html>

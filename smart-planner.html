@@ -2320,6 +2320,22 @@
                     </button>
                 </div>
                 
+                <!-- NEW: Alternative Shop Selection Options -->
+                <div class="btn-group" style="margin-bottom: 15px; gap: 10px;">
+                    <button class="btn btn-info btn-sm" onclick="selectFromAllShops()" title="اختيار من قائمة جميع المحلات">
+                        <span>📋</span>
+                        <span>اختيار من قائمة المحلات</span>
+                    </button>
+                    <button id="selectAllAreaShopsBtn" class="btn btn-success btn-sm" onclick="selectAllShopsInCurrentArea()" style="display: none;" title="اختيار جميع المحلات في المنطقة المحددة">
+                        <span>✅</span>
+                        <span>جميع المحلات في هذه المنطقة</span>
+                    </button>
+                    <button class="btn btn-primary btn-sm" onclick="selectFromOtherAreas()" title="اختيار محلات من مناطق أخرى">
+                        <span>🗺️</span>
+                        <span>اختيار من مناطق أخرى</span>
+                    </button>
+                </div>
+                
                 <!-- Search box for shops in new inspection -->
                 <div class="search-box" id="inspectionShopSearchBox" style="display: none; margin-bottom: 15px;">
                     <input type="text" id="inspectionShopSearch" class="form-control" 
@@ -3623,6 +3639,75 @@
                 </div>
                 
                 <div class="status-message" id="moveShopsStatus"></div>
+            </div>
+        </div>
+        
+        <!-- Shop Selection Modal for Adding Inspection -->
+        <div id="shopSelectionModal" class="modal">
+            <div class="modal-content" style="max-width: 95%; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-header">
+                    <h2>🏪 اختيار المحلات للتفتيش</h2>
+                    <span class="modal-close" onclick="closeShopSelectionModal()">&times;</span>
+                </div>
+                
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; margin-bottom: 20px; color: white;">
+                    <h3 style="margin-bottom: 10px;">ℹ️ معلومات</h3>
+                    <p style="margin: 0; line-height: 1.6;">
+                        يمكنك اختيار المحلات من أي منطقة لإضافتها للتفتيش الجديد.<br>
+                        حدد المحلات المطلوبة ثم اضغط "إضافة المحلات المحددة" في الأسفل.
+                    </p>
+                </div>
+                
+                <!-- Filters -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                    <div>
+                        <label class="form-label">فلترة حسب المنطقة:</label>
+                        <select id="shopSelectionAreaFilter" class="form-control" onchange="filterShopsInSelectionModal()">
+                            <option value="">جميع المناطق</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">البحث:</label>
+                        <input type="text" id="shopSelectionSearch" class="form-control" 
+                               placeholder="🔍 ابحث عن محل..." 
+                               oninput="filterShopsInSelectionModal()">
+                    </div>
+                </div>
+                
+                <!-- Batch Selection Actions -->
+                <div class="btn-group" style="margin-bottom: 20px;">
+                    <button class="btn btn-sm btn-success" onclick="selectAllInSelectionModal()">
+                        <span>☑️</span> تحديد الكل
+                    </button>
+                    <button class="btn btn-sm btn-warning" onclick="deselectAllInSelectionModal()">
+                        <span>⬜</span> إلغاء التحديد
+                    </button>
+                    <button class="btn btn-sm btn-info" onclick="selectHighPriorityInSelectionModal()">
+                        <span>⭐</span> تحديد الأولوية العالية
+                    </button>
+                </div>
+                
+                <!-- Shop List Container -->
+                <div id="shopSelectionListContainer" style="max-height: 500px; overflow-y: auto; border: 2px solid #667eea; padding: 15px; border-radius: 10px; background: #fafafa;">
+                    <p style="text-align: center; color: #999; padding: 40px;">
+                        ⏳ جاري تحميل المحلات...
+                    </p>
+                </div>
+                
+                <!-- Selected Count -->
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 10px; margin-top: 20px; text-align: center;">
+                    <strong>عدد المحلات المحددة: <span id="selectionModalCount">0</span></strong>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="btn-group" style="margin-top: 20px; justify-content: center;">
+                    <button class="btn btn-success" onclick="addSelectedShopsToInspection()">
+                        <span>✅</span> إضافة المحلات المحددة
+                    </button>
+                    <button class="btn btn-danger" onclick="closeShopSelectionModal()">
+                        <span>✖️</span> إلغاء
+                    </button>
+                </div>
             </div>
         </div>
         
@@ -5324,6 +5409,7 @@
             const area = document.getElementById('areaSelect').value;
             const searchBox = document.getElementById('inspectionShopSearchBox');
             const searchInput = document.getElementById('inspectionShopSearch');
+            const selectAllAreaBtn = document.getElementById('selectAllAreaShopsBtn');
             
             // Clear search when filters change
             if (searchInput) {
@@ -5333,12 +5419,14 @@
             // NEW FEATURE: Show monthly shops when only inspector is selected
             if (inspector && !date && !area) {
                 displayMonthlyShopsForInspector(inspector);
+                if (selectAllAreaBtn) selectAllAreaBtn.style.display = 'none';
                 return;
             }
             
             // NEW FEATURE: Show all shops in area when inspector and area are selected (without date)
             if (inspector && area && !date) {
                 displayAllShopsInArea(inspector, area);
+                if (selectAllAreaBtn) selectAllAreaBtn.style.display = 'inline-flex';
                 return;
             }
             
@@ -5346,6 +5434,7 @@
                 document.getElementById('shopsListContainer').innerHTML = 
                     '<p style="text-align: center; color: #999; padding: 20px;">اختر المفتش والمنطقة لعرض جميع المحلات</p>';
                 document.getElementById('showHighPriorityBtn').style.display = 'none';
+                if (selectAllAreaBtn) selectAllAreaBtn.style.display = 'none';
                 if (searchBox) {
                     searchBox.style.display = 'none';
                 }
@@ -5376,6 +5465,13 @@
                 highPriorityBtn.style.display = 'inline-flex';
             } else {
                 highPriorityBtn.style.display = 'none';
+            }
+            
+            // Show/hide the "Select All Shops in Area" button
+            if (selectAllAreaBtn && area && allShops.length > 0) {
+                selectAllAreaBtn.style.display = 'inline-flex';
+            } else if (selectAllAreaBtn) {
+                selectAllAreaBtn.style.display = 'none';
             }
             
             // Reset showing state
@@ -6086,6 +6182,349 @@
                 }
             }
         }
+        
+        // =========================================================================
+        // NEW: Alternative Shop Selection Functions for Adding Inspections
+        // =========================================================================
+        
+        /**
+         * Open modal to select shops from the complete list (all shops, all areas)
+         */
+        function selectFromAllShops() {
+            const inspector = document.getElementById('inspectorSelect').value;
+            
+            if (!inspector) {
+                alert('⚠️ يرجى اختيار المفتش أولاً');
+                return;
+            }
+            
+            if (!planData || !planData.shops) {
+                alert('⚠️ لا توجد بيانات محلات متاحة');
+                return;
+            }
+            
+            // Open the shop selection modal
+            openShopSelectionModal('all');
+        }
+        
+        /**
+         * Select all shops in the currently selected area
+         */
+        function selectAllShopsInCurrentArea() {
+            const inspector = document.getElementById('inspectorSelect').value;
+            const area = document.getElementById('areaSelect').value;
+            
+            if (!inspector) {
+                alert('⚠️ يرجى اختيار المفتش أولاً');
+                return;
+            }
+            
+            if (!area) {
+                alert('⚠️ يرجى اختيار المنطقة أولاً');
+                return;
+            }
+            
+            // Get all shops in the area
+            const allShops = getAllShopsInArea(area);
+            
+            if (allShops.length === 0) {
+                alert('⚠️ لا توجد محلات في هذه المنطقة');
+                return;
+            }
+            
+            // Add all shops to selected shops
+            allShops.forEach(shopName => {
+                if (!selectedShops.includes(shopName)) {
+                    selectedShops.push(shopName);
+                }
+            });
+            
+            // Update display
+            updateSelectedShops();
+            updateStatistics(getAllShopsInArea(area).length, getAllShopsInArea(area).length, currentAvailableShops);
+            
+            // Show confirmation
+            alert(`✅ تم اختيار جميع المحلات في المنطقة "${area}"\n\nعدد المحلات: ${allShops.length} محل`);
+        }
+        
+        /**
+         * Open modal to select shops from other areas
+         */
+        function selectFromOtherAreas() {
+            const inspector = document.getElementById('inspectorSelect').value;
+            
+            if (!inspector) {
+                alert('⚠️ يرجى اختيار المفتش أولاً');
+                return;
+            }
+            
+            if (!planData || !planData.shops || !planData.areas) {
+                alert('⚠️ لا توجد بيانات متاحة');
+                return;
+            }
+            
+            // Open the shop selection modal with area filter
+            openShopSelectionModal('other-areas');
+        }
+        
+        /**
+         * Open the shop selection modal
+         * @param {string} mode - 'all' or 'other-areas'
+         */
+        function openShopSelectionModal(mode = 'all') {
+            const modal = document.getElementById('shopSelectionModal');
+            const areaFilter = document.getElementById('shopSelectionAreaFilter');
+            const currentArea = document.getElementById('areaSelect').value;
+            
+            // Populate area filter
+            areaFilter.innerHTML = '<option value="">جميع المناطق</option>';
+            if (planData && planData.areas) {
+                planData.areas.forEach(area => {
+                    // Skip current area if in 'other-areas' mode
+                    if (mode === 'other-areas' && area.name === currentArea) {
+                        return;
+                    }
+                    
+                    const option = document.createElement('option');
+                    option.value = area.name;
+                    option.textContent = area.name;
+                    areaFilter.appendChild(option);
+                });
+            }
+            
+            // Load shops into the modal
+            loadShopsIntoSelectionModal();
+            
+            // Show modal
+            modal.style.display = 'block';
+        }
+        
+        /**
+         * Close shop selection modal
+         */
+        function closeShopSelectionModal() {
+            const modal = document.getElementById('shopSelectionModal');
+            modal.style.display = 'none';
+        }
+        
+        /**
+         * Load shops into the selection modal
+         */
+        function loadShopsIntoSelectionModal() {
+            const container = document.getElementById('shopSelectionListContainer');
+            const inspector = document.getElementById('inspectorSelect').value;
+            const todayStr = new Date().toISOString().split('T')[0];
+            
+            if (!planData || !planData.shops) {
+                container.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">لا توجد بيانات متاحة</p>';
+                return;
+            }
+            
+            // Get all shops grouped by area
+            const shopsByArea = {};
+            planData.areas.forEach(area => {
+                const areaShops = planData.shops
+                    .filter(shop => shop.areaId === area.id)
+                    .map(shop => shop.name);
+                
+                if (areaShops.length > 0) {
+                    shopsByArea[area.name] = areaShops;
+                }
+            });
+            
+            // Build HTML
+            let html = '';
+            const sortedAreas = Object.keys(shopsByArea).sort();
+            
+            sortedAreas.forEach(areaName => {
+                const shops = shopsByArea[areaName];
+                
+                html += `
+                    <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 15px; border-right: 4px solid #667eea;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <h4 style="margin: 0; color: #2d3561; font-size: 1.1em;">📍 ${escapeHtml(areaName)}</h4>
+                            <span style="background: #667eea; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.9em;">
+                                ${shops.length} محل
+                            </span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px;">
+                `;
+                
+                shops.forEach(shopName => {
+                    const priority = calculateShopPriority(shopName, inspector, todayStr);
+                    const priorityColor = priority.level === 'very-high' ? '#ff6b6b' : 
+                                         priority.level === 'high' ? '#ffa500' : 
+                                         priority.level === 'medium' ? '#4ecdc4' : '#95e1d3';
+                    
+                    const priorityText = priority.level === 'very-high' ? '🔴 قصوى' : 
+                                        priority.level === 'high' ? '🟠 عالية' : 
+                                        priority.level === 'medium' ? '🟡 متوسطة' : '🟢 عادية';
+                    
+                    const isSelected = selectedShops.includes(shopName);
+                    const selectedClass = isSelected ? 'selected' : '';
+                    const checkIcon = isSelected ? '✅' : '☐';
+                    
+                    html += `
+                        <div class="shop-card ${selectedClass}" data-shop-name="${escapeHtml(shopName)}" 
+                             style="background: white; padding: 10px; border-radius: 8px; border-right: 3px solid ${priorityColor}; 
+                                    font-size: 0.9em; cursor: pointer;"
+                             onclick="toggleShopSelectionInModal('${escapeHtml(shopName)}')">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 4px;">
+                                <div style="font-weight: 600; color: #2d3561; flex: 1;">${escapeHtml(shopName)}</div>
+                                <span style="font-size: 1.3em; margin-right: 5px;">${checkIcon}</span>
+                            </div>
+                            <div style="font-size: 0.85em; color: #666;">${priorityText}</div>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            updateSelectionModalCount();
+        }
+        
+        /**
+         * Filter shops in selection modal
+         */
+        function filterShopsInSelectionModal() {
+            const areaFilter = document.getElementById('shopSelectionAreaFilter').value;
+            const searchText = document.getElementById('shopSelectionSearch').value.toLowerCase();
+            const allCards = document.querySelectorAll('#shopSelectionListContainer .shop-card');
+            
+            allCards.forEach(card => {
+                const shopName = card.dataset.shopName;
+                const areaDiv = card.closest('div[style*="border-right: 4px solid"]');
+                const areaName = areaDiv ? areaDiv.querySelector('h4').textContent.replace('📍 ', '').trim() : '';
+                
+                const matchesArea = !areaFilter || areaName === areaFilter;
+                const matchesSearch = !searchText || shopName.toLowerCase().includes(searchText);
+                
+                if (matchesArea && matchesSearch) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            // Show/hide area divs based on visible shops
+            const areaDivs = document.querySelectorAll('#shopSelectionListContainer > div');
+            areaDivs.forEach(areaDiv => {
+                const visibleShops = areaDiv.querySelectorAll('.shop-card[style*="display: block"], .shop-card:not([style*="display: none"])');
+                if (visibleShops.length > 0) {
+                    areaDiv.style.display = 'block';
+                } else {
+                    areaDiv.style.display = 'none';
+                }
+            });
+        }
+        
+        /**
+         * Toggle shop selection in modal
+         */
+        function toggleShopSelectionInModal(shopName) {
+            const index = selectedShops.indexOf(shopName);
+            
+            if (index > -1) {
+                selectedShops.splice(index, 1);
+            } else {
+                selectedShops.push(shopName);
+            }
+            
+            // Update display
+            loadShopsIntoSelectionModal();
+        }
+        
+        /**
+         * Select all shops in selection modal
+         */
+        function selectAllInSelectionModal() {
+            const visibleCards = document.querySelectorAll('#shopSelectionListContainer .shop-card:not([style*="display: none"])');
+            
+            visibleCards.forEach(card => {
+                const shopName = card.dataset.shopName;
+                if (!selectedShops.includes(shopName)) {
+                    selectedShops.push(shopName);
+                }
+            });
+            
+            loadShopsIntoSelectionModal();
+        }
+        
+        /**
+         * Deselect all shops in selection modal
+         */
+        function deselectAllInSelectionModal() {
+            const visibleCards = document.querySelectorAll('#shopSelectionListContainer .shop-card:not([style*="display: none"])');
+            
+            visibleCards.forEach(card => {
+                const shopName = card.dataset.shopName;
+                const index = selectedShops.indexOf(shopName);
+                if (index > -1) {
+                    selectedShops.splice(index, 1);
+                }
+            });
+            
+            loadShopsIntoSelectionModal();
+        }
+        
+        /**
+         * Select high priority shops in selection modal
+         */
+        function selectHighPriorityInSelectionModal() {
+            const inspector = document.getElementById('inspectorSelect').value;
+            const todayStr = new Date().toISOString().split('T')[0];
+            const visibleCards = document.querySelectorAll('#shopSelectionListContainer .shop-card:not([style*="display: none"])');
+            
+            visibleCards.forEach(card => {
+                const shopName = card.dataset.shopName;
+                const priority = calculateShopPriority(shopName, inspector, todayStr);
+                
+                if ((priority.level === 'very-high' || priority.level === 'high') && !selectedShops.includes(shopName)) {
+                    selectedShops.push(shopName);
+                }
+            });
+            
+            loadShopsIntoSelectionModal();
+        }
+        
+        /**
+         * Update selection count in modal
+         */
+        function updateSelectionModalCount() {
+            const countElement = document.getElementById('selectionModalCount');
+            if (countElement) {
+                countElement.textContent = selectedShops.length;
+            }
+        }
+        
+        /**
+         * Add selected shops to inspection and close modal
+         */
+        function addSelectedShopsToInspection() {
+            if (selectedShops.length === 0) {
+                alert('⚠️ لم تقم باختيار أي محلات');
+                return;
+            }
+            
+            // Close modal
+            closeShopSelectionModal();
+            
+            // Update the main display
+            updateSelectedShops();
+            updatePreview();
+            
+            // Show confirmation
+            alert(`✅ تم إضافة ${selectedShops.length} محل للتفتيش`);
+        }
+        
+        // =========================================================================
+        // End of Alternative Shop Selection Functions
+        // =========================================================================
         
         // Populate filter dropdowns
         function populateFilterDropdowns() {

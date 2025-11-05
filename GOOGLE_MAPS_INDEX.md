@@ -250,6 +250,10 @@ nano google-maps-config.local.js
 - **معرف المشروع:** monthly-insection-plan
 - **البريد الإلكتروني:** monthly-inspection-plan@monthly-insection-plan.iam.gserviceaccount.com
 
+**ملاحظة:** هناك خطأ إملائي في اسم المشروع الأصلي ("insection" بدلاً من "inspection"). هذا الخطأ موجود في Google Cloud نفسه ولا يمكن تغييره الآن، لكنه لا يؤثر على عمل الخرائط.
+
+**Note:** There's a typo in the original project name ("insection" instead of "inspection"). This typo exists in Google Cloud itself and cannot be changed now, but it doesn't affect the maps functionality.
+
 ### الخدمات المطلوبة
 1. Maps JavaScript API - لعرض الخرائط
 2. Places API - للبحث عن الأماكن

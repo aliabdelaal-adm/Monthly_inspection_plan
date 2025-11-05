@@ -79,8 +79,8 @@ API_KEY_WINDOW=$(grep "window.GOOGLE_MAPS_API_KEY = " google-maps-config.local.j
 
 if [ "$API_KEY" != "$API_KEY_WINDOW" ]; then
     echo -e "${YELLOW}⚠️  Warning: API keys don't match! / تحذير: مفاتيح API غير متطابقة!${NC}"
-    echo "   Line ~81: $API_KEY"
-    echo "   Line ~87: $API_KEY_WINDOW"
+    echo "   const GOOGLE_MAPS_API_KEY: $API_KEY"
+    echo "   window.GOOGLE_MAPS_API_KEY: $API_KEY_WINDOW"
     echo ""
     echo "Please make sure both occurrences use the same API key."
     echo "الرجاء التأكد من أن كلا الموضعين يستخدمان نفس مفتاح API."

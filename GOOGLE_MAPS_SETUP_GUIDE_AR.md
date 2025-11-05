@@ -17,6 +17,10 @@
 - **معرف المشروع / Project ID:** `monthly-insection-plan`
 - **البريد الإلكتروني للخدمة:** `monthly-inspection-plan@monthly-insection-plan.iam.gserviceaccount.com`
 
+**⚠️ ملاحظة:** هناك خطأ إملائي في اسم المشروع الأصلي ("insection" بدلاً من "inspection"). هذا الخطأ موجود في Google Cloud نفسه ولا يمكن تغييره، لكنه لا يؤثر على عمل الخرائط.
+
+**Note:** There's a typo in the original project name ("insection" instead of "inspection"). This exists in Google Cloud and cannot be changed, but it doesn't affect maps functionality.
+
 ---
 
 ## ⚠️ ملاحظة هامة جداً - IMPORTANT NOTE

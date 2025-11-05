@@ -6241,7 +6241,7 @@
             
             // Update display
             updateSelectedShops();
-            updateStatistics(getAllShopsInArea(area).length, getAllShopsInArea(area).length, currentAvailableShops);
+            updateStatistics(allShops.length, allShops.length, currentAvailableShops);
             
             // Show confirmation
             alert(`✅ تم اختيار جميع المحلات في المنطقة "${area}"\n\nعدد المحلات: ${allShops.length} محل`);
@@ -6424,7 +6424,7 @@
         }
         
         /**
-         * Toggle shop selection in modal
+         * Toggle shop selection in modal (optimized to update only the specific card)
          */
         function toggleShopSelectionInModal(shopName) {
             const index = selectedShops.indexOf(shopName);
@@ -6435,8 +6435,23 @@
                 selectedShops.push(shopName);
             }
             
-            // Update display
-            loadShopsIntoSelectionModal();
+            // Update only the specific card instead of rebuilding entire modal
+            const cards = document.querySelectorAll(`#shopSelectionListContainer .shop-card[data-shop-name="${shopName}"]`);
+            cards.forEach(card => {
+                const isSelected = selectedShops.includes(shopName);
+                if (isSelected) {
+                    card.classList.add('selected');
+                    const checkIcon = card.querySelector('span:last-child');
+                    if (checkIcon) checkIcon.textContent = '✅';
+                } else {
+                    card.classList.remove('selected');
+                    const checkIcon = card.querySelector('span:last-child');
+                    if (checkIcon) checkIcon.textContent = '☐';
+                }
+            });
+            
+            // Update counter
+            updateSelectionModalCount();
         }
         
         /**

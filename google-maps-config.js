@@ -1,4 +1,18 @@
-/**
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Simple Marker</title>
+    <!-- The callback parameter is required, so we use console.debug as a noop -->
+    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBIu6hLqc2mW6WYKTf1JCMSjKCkN1E-xVU&callback=console.debug&libraries=maps,marker&v=beta">
+    </script>
+    <link rel="stylesheet" href="./style.css"/>
+  </head>
+  <body>
+    <gmp-map center="40.12150192260742,-100.45039367675781" zoom="4" map-id="DEMO_MAP_ID">
+      <gmp-advanced-marker position="40.12150192260742,-100.45039367675781" title="My location"></gmp-advanced-marker>
+    </gmp-map>
+  </body>
+</html>/**
  * Google Maps API Configuration
  * تكوين Google Maps API
  * 
@@ -246,7 +260,24 @@ function validateGoogleMapsApiKey() {
         console.info('  افتح ملف: google-maps-config.local.js');
         console.info('  Replace BOTH occurrences of the old API key with your NEW key:');
         console.info('  استبدل كلا الموضعين لمفتاح API القديم بالمفتاح الجديد:');
-        console.info('    Line 40: const GOOGLE_MAPS_API_KEY = \'YOUR_NEW_KEY\';');
+        console.info('    Line 40: const GOOGLE_MAPS_API_KE<!DOCTYPE html>
+<html>
+  <head>
+    <title>Simple Places Autocomplete</title>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/@googlemaps/extended-component-library/0.6.11/index.min.js">
+    </script>
+    <link rel="stylesheet" href="./style.css"/>
+  </head>
+  <body>
+    <gmpx-api-loader key="AIzaSyBIu6hLqc2mW6WYKTf1JCMSjKCkN1E-xVU" solution-channel="GMP_GE_placepicker_v2">
+    </gmpx-api-loader>
+    <div id="place-picker-box">
+      <div id="place-picker-container">
+        <gmpx-place-picker placeholder="Enter an address"></gmpx-place-picker>
+      </div>
+    </div>
+  </body>
+</html>Y = \'YOUR_NEW_KEY\';');
         console.info('    Line 45: window.GOOGLE_MAPS_API_KEY = \'YOUR_NEW_KEY\';');
         console.info('');
         console.info('STEP 7 / الخطوة 7:');
@@ -305,4 +336,54 @@ if (typeof module !== 'undefined' && module.exports) {
         validateGoogleMapsApiKey,
         buildGoogleMapsApiUrl
     };
-}
+}<!DOCTYPE html>
+<html>
+  <head>
+    <title>Simple Places Autocomplete</title>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/@googlemaps/extended-component-library/0.6.11/index.min.js">
+    </script>
+    <link rel="stylesheet" href="./style.css"/>
+  </head>
+  <body>
+    <gmpx-api-loader key="AIzaSyBIu6hLqc2mW6WYKTf1JCMSjKCkN1E-xVU" solution-channel="GMP_GE_placepicker_v2">
+    </gmpx-api-loader>
+    <div id="place-picker-box">
+      <div id="place-picker-container">
+        <gmpx-place-picker placeholder="Enter an address"></gmpx-place-picker>
+      </div>
+    </div>
+  </body>
+</html><!DOCTYPE html>
+<html>
+  <head>
+    <title>Simple Marker</title>
+    <!-- The callback parameter is required, so we use console.debug as a noop -->
+    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBIu6hLqc2mW6WYKTf1JCMSjKCkN1E-xVU&callback=console.debug&libraries=maps,marker&v=beta">
+    </script>
+    <link rel="stylesheet" href="./style.css"/>
+  </head>
+  <body>
+    <gmp-map center="40.12150192260742,-100.45039367675781" zoom="4" map-id="DEMO_MAP_ID">
+      <gmp-advanced-marker position="40.12150192260742,-100.45039367675781" title="My location"></gmp-advanced-marker>
+    </gmp-map>
+  </body>
+</html><!DOCTYPE html>
+<html>
+  <head>
+    <title>Maps and Places Autocomplete</title>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/@googlemaps/extended-component-library/0.6.11/index.min.js">
+    </script>
+    <link rel="stylesheet" href="./style.css"/>
+  </head>
+  <body>
+    <gmpx-api-loader key="AIzaSyBIu6hLqc2mW6WYKTf1JCMSjKCkN1E-xVU" solution-channel="GMP_GE_mapsandplacesautocomplete_v2">
+    </gmpx-api-loader>
+    <gmp-map center="40.749933,-73.98633" zoom="13" map-id="DEMO_MAP_ID">
+      <div slot="control-block-start-inline-start" class="place-picker-container">
+        <gmpx-place-picker placeholder="Enter an address"></gmpx-place-picker>
+      </div>
+      <gmp-advanced-marker></gmp-advanced-marker>
+    </gmp-map>
+    <script src="./index.js"></script>
+  </body>
+</html>

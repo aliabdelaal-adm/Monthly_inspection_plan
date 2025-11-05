@@ -65,7 +65,7 @@ const GOOGLE_MAPS_CONFIG = {
     // 
     // ⚠️ IMPORTANT: Update google-maps-config.local.js with your NEW API key!
     // ⚠️ مهم: حدّث ملف google-maps-config.local.js بمفتاح API الجديد الخاص بك!
-    apiKey: API_KEY_PLACEHOLDER,
+    apiKey: API_KEY,  // Use the API_KEY variable that was loaded from local config
     
     // API Libraries to load
     // مكتبات API المطلوب تحميلها

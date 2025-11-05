@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار تكوين خرائط جوجل - Google Maps Configuration Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+        
+        .status-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid #3498db;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin: 10px 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .status-icon {
+            font-size: 2em;
+            margin-left: 15px;
+            width: 50px;
+            text-align: center;
+        }
+        
+        .status-text {
+            flex: 1;
+        }
+        
+        .status-label {
+            font-weight: bold;
+            color: #2c3e50;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .status-value {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        
+        .success {
+            border-left-color: #27ae60;
+        }
+        
+        .success .status-icon {
+            color: #27ae60;
+        }
+        
+        .error {
+            border-left-color: #e74c3c;
+        }
+        
+        .error .status-icon {
+            color: #e74c3c;
+        }
+        
+        .warning {
+            border-left-color: #f39c12;
+        }
+        
+        .warning .status-icon {
+            color: #f39c12;
+        }
+        
+        .map-container {
+            height: 400px;
+            margin: 20px 0;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        #testMap {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .instructions {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .instructions h3 {
+            color: #856404;
+            margin-top: 0;
+        }
+        
+        .instructions ol {
+            margin: 10px 0;
+            padding-right: 20px;
+        }
+        
+        .instructions li {
+            margin: 8px 0;
+            color: #856404;
+        }
+        
+        .console-log {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+        }
+        
+        .log-entry.success {
+            color: #4ec9b0;
+        }
+        
+        .log-entry.error {
+            color: #f48771;
+        }
+        
+        .log-entry.warning {
+            color: #dcdcaa;
+        }
+        
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin: 10px 5px;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗺️ اختبار تكوين خرائط جوجل</h1>
+        <h2 style="text-align: center; color: #7f8c8d; font-size: 1.2em;">Google Maps Configuration Test</h2>
+        
+        <div class="status-section">
+            <h3 style="margin-top: 0;">📊 حالة التكوين / Configuration Status</h3>
+            
+            <div class="status-item" id="configLoadStatus">
+                <div class="status-icon">⏳</div>
+                <div class="status-text">
+                    <span class="status-label">تحميل ملف التكوين / Config File Load</span>
+                    <span class="status-value">جاري الفحص... / Checking...</span>
+                </div>
+            </div>
+            
+            <div class="status-item" id="loaderStatus">
+                <div class="status-icon">⏳</div>
+                <div class="status-text">
+                    <span class="status-label">محمل خرائط جوجل / Google Maps Loader</span>
+                    <span class="status-value">جاري الفحص... / Checking...</span>
+                </div>
+            </div>
+            
+            <div class="status-item" id="apiKeyStatus">
+                <div class="status-icon">⏳</div>
+                <div class="status-text">
+                    <span class="status-label">مفتاح API / API Key</span>
+                    <span class="status-value">جاري الفحص... / Checking...</span>
+                </div>
+            </div>
+            
+            <div class="status-item" id="googleObjectStatus">
+                <div class="status-icon">⏳</div>
+                <div class="status-text">
+                    <span class="status-label">كائن Google Maps / Google Maps Object</span>
+                    <span class="status-value">جاري الفحص... / Checking...</span>
+                </div>
+            </div>
+            
+            <div class="status-item" id="mapInitStatus">
+                <div class="status-icon">⏳</div>
+                <div class="status-text">
+                    <span class="status-label">تهيئة الخريطة / Map Initialization</span>
+                    <span class="status-value">جاري الفحص... / Checking...</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="map-container">
+            <div id="testMap"></div>
+        </div>
+        
+        <div style="text-align: center;">
+            <button class="btn" onclick="runTest()">🔄 إعادة الاختبار / Re-run Test</button>
+            <button class="btn" onclick="location.reload()">🔄 إعادة تحميل الصفحة / Reload Page</button>
+        </div>
+        
+        <div class="instructions">
+            <h3>📋 التعليمات / Instructions</h3>
+            <p><strong>إذا رأيت أخطاء، اتبع هذه الخطوات:</strong></p>
+            <p><strong>If you see errors, follow these steps:</strong></p>
+            <ol>
+                <li><strong>تأكد من تحميل جميع الملفات:</strong>
+                    <ul>
+                        <li>google-maps-config.local.js</li>
+                        <li>google-maps-config.js</li>
+                        <li>google-maps-loader.js</li>
+                    </ul>
+                </li>
+                <li><strong>افتح ملف google-maps-config.local.js وحدّث مفتاح API</strong>
+                    <br>Open google-maps-config.local.js and update the API key
+                </li>
+                <li><strong>استبدل 'YOUR_NEW_API_KEY_FROM_GOOGLE_CLOUD' بمفتاح API الفعلي</strong>
+                    <br>Replace 'YOUR_NEW_API_KEY_FROM_GOOGLE_CLOUD' with your actual API key
+                </li>
+                <li><strong>احفظ الملف وحدّث الصفحة (Ctrl+Shift+R)</strong>
+                    <br>Save the file and hard refresh (Ctrl+Shift+R)
+                </li>
+            </ol>
+        </div>
+        
+        <div class="console-log" id="consoleLog">
+            <div class="log-entry">📋 سجل النظام / System Log</div>
+            <div class="log-entry">جاري تشغيل الاختبارات... / Running tests...</div>
+        </div>
+    </div>
+    
+    <!-- Load Google Maps Configuration -->
+    <script src="google-maps-config.local.js" onerror="logMessage('⚠️ No local Google Maps API key config found. Using default config.', 'warning')"></script>
+    <script src="google-maps-config.js"></script>
+    <script src="google-maps-loader.js"></script>
+    
+    <script>
+        const logContainer = document.getElementById('consoleLog');
+        
+        function logMessage(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = message;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            
+            if (type === 'success') {
+                console.log('✅', message);
+            } else if (type === 'error') {
+                console.error('❌', message);
+            } else if (type === 'warning') {
+                console.warn('⚠️', message);
+            } else {
+                console.log('ℹ️', message);
+            }
+        }
+        
+        function updateStatus(elementId, icon, text, type = 'success') {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.className = `status-item ${type}`;
+                element.querySelector('.status-icon').textContent = icon;
+                element.querySelector('.status-value').textContent = text;
+            }
+        }
+        
+        function runTest() {
+            logMessage('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'info');
+            logMessage('🔍 بدء الاختبار / Starting test...', 'info');
+            
+            // Test 1: Check if GOOGLE_MAPS_CONFIG is loaded
+            if (typeof GOOGLE_MAPS_CONFIG !== 'undefined') {
+                updateStatus('configLoadStatus', '✅', 'تم التحميل بنجاح / Loaded successfully', 'success');
+                logMessage('✅ GOOGLE_MAPS_CONFIG loaded successfully', 'success');
+                logMessage('   API Key starts with: ' + (GOOGLE_MAPS_CONFIG.apiKey ? GOOGLE_MAPS_CONFIG.apiKey.substring(0, 10) + '...' : 'NOT SET'), 'info');
+            } else {
+                updateStatus('configLoadStatus', '❌', 'فشل التحميل / Failed to load', 'error');
+                logMessage('❌ GOOGLE_MAPS_CONFIG not found!', 'error');
+            }
+            
+            // Test 2: Check if googleMapsLoader is available
+            if (typeof googleMapsLoader !== 'undefined' && typeof window.googleMapsLoader !== 'undefined') {
+                updateStatus('loaderStatus', '✅', 'متاح / Available', 'success');
+                logMessage('✅ googleMapsLoader is available', 'success');
+                logMessage('   Loader status: ' + window.googleMapsLoader.getStatus(), 'info');
+            } else {
+                updateStatus('loaderStatus', '❌', 'غير متاح / Not available', 'error');
+                logMessage('❌ googleMapsLoader not found!', 'error');
+                logMessage('⚠️ Make sure google-maps-loader.js is loaded', 'warning');
+            }
+            
+            // Test 3: Check API Key
+            if (typeof GOOGLE_MAPS_CONFIG !== 'undefined' && GOOGLE_MAPS_CONFIG.apiKey) {
+                const apiKey = GOOGLE_MAPS_CONFIG.apiKey;
+                const placeholder = 'REPLACE_WITH_YOUR_GOOGLE_MAPS_API_KEY';
+                const testPlaceholder = 'YOUR_NEW_API_KEY_FROM_GOOGLE_CLOUD';
+                
+                if (apiKey === placeholder || apiKey === testPlaceholder) {
+                    updateStatus('apiKeyStatus', '⚠️', 'يحتاج إلى تحديث / Needs update', 'warning');
+                    logMessage('⚠️ API Key is still a placeholder!', 'warning');
+                    logMessage('   Current value: [PLACEHOLDER - Please update]', 'warning');
+                    logMessage('   Please update google-maps-config.local.js with your real API key', 'warning');
+                } else if (apiKey.startsWith('AIza')) {
+                    updateStatus('apiKeyStatus', '✅', 'مُكوّن بشكل صحيح / Configured', 'success');
+                    logMessage('✅ API Key format looks valid', 'success');
+                    logMessage('   Key: ' + apiKey.substring(0, 6) + '***' + apiKey.substring(apiKey.length - 4), 'info');
+                } else {
+                    updateStatus('apiKeyStatus', '❌', 'تنسيق غير صالح / Invalid format', 'error');
+                    logMessage('❌ API Key format appears invalid', 'error');
+                    logMessage('   Google Maps API keys should start with "AIza"', 'error');
+                }
+            } else {
+                updateStatus('apiKeyStatus', '❌', 'غير موجود / Not found', 'error');
+                logMessage('❌ API Key not found in configuration!', 'error');
+            }
+            
+            // Test 4: Check if Google Maps object is available (with polling)
+            let checkAttempts = 0;
+            const maxCheckAttempts = 10;
+            const checkInterval = 500; // Check every 500ms
+            
+            function checkGoogleMapsAvailability() {
+                checkAttempts++;
+                
+                if (typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
+                    updateStatus('googleObjectStatus', '✅', 'متاح / Available', 'success');
+                    logMessage('✅ Google Maps API loaded successfully!', 'success');
+                    logMessage(`   Loaded after ${checkAttempts * checkInterval}ms`, 'info');
+                    
+                    // Test 5: Try to initialize map
+                    try {
+                        const mapElement = document.getElementById('testMap');
+                        const map = new google.maps.Map(mapElement, {
+                            center: { lat: 24.4539, lng: 54.3773 }, // Abu Dhabi
+                            zoom: 12
+                        });
+                        
+                        // Add marker
+                        new google.maps.Marker({
+                            position: { lat: 24.4539, lng: 54.3773 },
+                            map: map,
+                            title: 'أبو ظبي / Abu Dhabi'
+                        });
+                        
+                        updateStatus('mapInitStatus', '✅', 'نجح / Success', 'success');
+                        logMessage('✅ Map initialized successfully!', 'success');
+                        logMessage('✅ خرائط جوجل تعمل بشكل صحيح!', 'success');
+                        logMessage('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'success');
+                        logMessage('🎉 جميع الاختبارات نجحت! / All tests passed!', 'success');
+                    } catch (error) {
+                        updateStatus('mapInitStatus', '❌', 'فشل / Failed', 'error');
+                        logMessage('❌ Failed to initialize map: ' + error.message, 'error');
+                    }
+                } else if (checkAttempts < maxCheckAttempts) {
+                    // Continue polling
+                    logMessage(`⏳ Waiting for Google Maps API... (attempt ${checkAttempts}/${maxCheckAttempts})`, 'info');
+                    setTimeout(checkGoogleMapsAvailability, checkInterval);
+                } else {
+                    // Max attempts reached
+                    updateStatus('googleObjectStatus', '❌', 'غير متاح / Not available', 'error');
+                    updateStatus('mapInitStatus', '❌', 'لم يتم الاختبار / Not tested', 'error');
+                    logMessage('❌ Google Maps API not loaded after ' + (maxCheckAttempts * checkInterval / 1000) + ' seconds!', 'error');
+                    logMessage('⚠️ This could be due to:', 'warning');
+                    logMessage('   1. Invalid API key', 'warning');
+                    logMessage('   2. Billing not enabled in Google Cloud', 'warning');
+                    logMessage('   3. Required APIs not enabled', 'warning');
+                    logMessage('   4. Network connectivity issues', 'warning');
+                }
+            }
+            
+            // Start checking after initial delay
+            setTimeout(checkGoogleMapsAvailability, checkInterval);
+        }
+        
+        // Initialize Google Maps Loader on page load
+        window.addEventListener('load', function() {
+            logMessage('🌐 الصفحة محملة / Page loaded', 'info');
+            
+            if (typeof window.googleMapsLoader !== 'undefined') {
+                logMessage('🗺️ Initializing Google Maps Loader...', 'info');
+                window.googleMapsLoader.init()
+                    .then(() => {
+                        logMessage('✅ Google Maps Loader initialized', 'success');
+                        runTest();
+                    })
+                    .catch((error) => {
+                        logMessage('❌ Google Maps Loader failed: ' + error.message, 'error');
+                        runTest();
+                    });
+            } else {
+                logMessage('⚠️ Google Maps Loader not found, running basic test', 'warning');
+                runTest();
+            }
+        });
+    </script>
+</body>
+</html>

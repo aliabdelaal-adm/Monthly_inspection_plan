@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار ميزة تقارير التفتيش الجماعي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Cairo', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #234085;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .test-title {
+            font-size: 1.3em;
+            color: #234085;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .test-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            background: white;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-icon {
+            font-size: 1.5em;
+        }
+        
+        .pass {
+            color: #28a745;
+        }
+        
+        .fail {
+            color: #dc3545;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1em;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(102,126,234,0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102,126,234,0.4);
+        }
+        
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            background: #e8f5e9;
+            border-radius: 10px;
+            border-left: 4px solid #28a745;
+        }
+        
+        .results h2 {
+            color: #1b5e20;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 اختبار ميزة تقارير التفتيش الجماعي</h1>
+        
+        <div class="test-section">
+            <div class="test-title">📋 فحص عناصر الواجهة</div>
+            <div id="ui-tests"></div>
+        </div>
+        
+        <div class="test-section">
+            <div class="test-title">⚙️ فحص الوظائف البرمجية</div>
+            <div id="function-tests"></div>
+        </div>
+        
+        <div class="test-section">
+            <div class="test-title">📁 فحص ملف التصنيفات</div>
+            <div id="category-tests"></div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <button class="btn" onclick="runTests()">▶️ تشغيل الاختبارات</button>
+        </div>
+        
+        <div id="results" style="display: none;" class="results">
+            <h2>📊 النتائج النهائية</h2>
+            <div id="results-content"></div>
+        </div>
+    </div>
+    
+    <script>
+        let testResults = {
+            passed: 0,
+            failed: 0,
+            total: 0
+        };
+        
+        function addTestResult(containerId, testName, passed) {
+            testResults.total++;
+            if (passed) {
+                testResults.passed++;
+            } else {
+                testResults.failed++;
+            }
+            
+            const container = document.getElementById(containerId);
+            const item = document.createElement('div');
+            item.className = 'test-item';
+            item.innerHTML = `
+                <span class="status-icon ${passed ? 'pass' : 'fail'}">${passed ? '✅' : '❌'}</span>
+                <span>${testName}</span>
+            `;
+            container.appendChild(item);
+        }
+        
+        async function runTests() {
+            // إعادة تعيين النتائج
+            testResults = { passed: 0, failed: 0, total: 0 };
+            document.getElementById('ui-tests').innerHTML = '';
+            document.getElementById('function-tests').innerHTML = '';
+            document.getElementById('category-tests').innerHTML = '';
+            document.getElementById('results').style.display = 'none';
+            
+            // فحص عناصر الواجهة
+            await testUIElements();
+            
+            // فحص الوظائف البرمجية
+            await testFunctions();
+            
+            // فحص ملف التصنيفات
+            await testCategories();
+            
+            // عرض النتائج النهائية
+            showResults();
+        }
+        
+        async function testUIElements() {
+            // فحص وجود الزر في قسم خدمات النظام
+            const response = await fetch('index.html');
+            const html = await response.text();
+            
+            addTestResult('ui-tests', 'وجود زر "تقارير التفتيش الجماعي"', 
+                html.includes('تقارير التفتيش الجماعي'));
+            
+            addTestResult('ui-tests', 'وجود دالة showGroupInspectionReportsModal', 
+                html.includes('showGroupInspectionReportsModal'));
+            
+            addTestResult('ui-tests', 'وجود المودال groupInspectionReportsModal', 
+                html.includes('id="groupInspectionReportsModal"'));
+            
+            addTestResult('ui-tests', 'وجود قسم رفع التقارير للمطور', 
+                html.includes('developerGroupReportUploadSection'));
+            
+            addTestResult('ui-tests', 'وجود قائمة التقارير', 
+                html.includes('groupReportsList'));
+        }
+        
+        async function testFunctions() {
+            const response = await fetch('index.html');
+            const html = await response.text();
+            
+            addTestResult('function-tests', 'دالة عرض المودال', 
+                html.includes('function showGroupInspectionReportsModal()'));
+            
+            addTestResult('function-tests', 'دالة إغلاق المودال', 
+                html.includes('function closeGroupInspectionReportsModal()'));
+            
+            addTestResult('function-tests', 'دالة تحميل التقارير', 
+                html.includes('async function loadGroupInspectionReports()'));
+            
+            addTestResult('function-tests', 'دالة رفع التقرير', 
+                html.includes('async function uploadGroupInspectionReport()'));
+            
+            addTestResult('function-tests', 'دالة تحميل التقرير', 
+                html.includes('async function downloadGroupReport('));
+            
+            addTestResult('function-tests', 'دالة حذف التقرير', 
+                html.includes('async function deleteGroupReport('));
+            
+            addTestResult('function-tests', 'دالة تحديث سجل التقارير', 
+                html.includes('async function updateGroupReportsRegistry('));
+            
+            addTestResult('function-tests', 'فحص صلاحيات المطور في الرفع', 
+                html.includes('if (!isDev && !window.isDev)') && 
+                html.includes('صلاحيات المطور مطلوبة لرفع التقارير'));
+        }
+        
+        async function testCategories() {
+            try {
+                const response = await fetch('files.json');
+                const data = await response.json();
+                
+                addTestResult('category-tests', 'تحميل ملف files.json بنجاح', true);
+                
+                const category = data.categories.find(c => c.id === 'group_inspection_reports');
+                addTestResult('category-tests', 'وجود فئة group_inspection_reports', !!category);
+                
+                if (category) {
+                    addTestResult('category-tests', 'الاسم العربي صحيح', 
+                        category.name === 'تقارير التفتيش الجماعي');
+                    
+                    addTestResult('category-tests', 'الاسم الإنجليزي صحيح', 
+                        category.nameEn === 'Group Inspection Reports');
+                    
+                    addTestResult('category-tests', 'المسار صحيح', 
+                        category.path === 'files/group_inspection_reports/');
+                }
+            } catch (error) {
+                addTestResult('category-tests', 'تحميل ملف files.json', false);
+                console.error('خطأ في تحميل files.json:', error);
+            }
+        }
+        
+        function showResults() {
+            const resultsDiv = document.getElementById('results');
+            const resultsContent = document.getElementById('results-content');
+            
+            const percentage = ((testResults.passed / testResults.total) * 100).toFixed(1);
+            
+            resultsContent.innerHTML = `
+                <div style="font-size: 1.2em; margin-bottom: 15px;">
+                    <strong>إجمالي الاختبارات:</strong> ${testResults.total}
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div style="background: #d4edda; padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 2em; color: #28a745;">✅</div>
+                        <div style="font-size: 1.3em; font-weight: bold; color: #155724;">${testResults.passed}</div>
+                        <div style="color: #155724;">نجح</div>
+                    </div>
+                    <div style="background: ${testResults.failed > 0 ? '#f8d7da' : '#d4edda'}; padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 2em; color: ${testResults.failed > 0 ? '#dc3545' : '#28a745'};">${testResults.failed > 0 ? '❌' : '✅'}</div>
+                        <div style="font-size: 1.3em; font-weight: bold; color: ${testResults.failed > 0 ? '#721c24' : '#155724'};">${testResults.failed}</div>
+                        <div style="color: ${testResults.failed > 0 ? '#721c24' : '#155724'};">فشل</div>
+                    </div>
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 1.1em; margin-bottom: 8px;">نسبة النجاح</div>
+                    <div style="font-size: 2.5em; font-weight: bold; color: ${percentage >= 90 ? '#28a745' : percentage >= 70 ? '#ffc107' : '#dc3545'};">
+                        ${percentage}%
+                    </div>
+                </div>
+                ${percentage >= 90 ? 
+                    '<div style="margin-top: 20px; padding: 15px; background: #d4edda; border-radius: 8px; text-align: center; color: #155724; font-size: 1.1em; font-weight: bold;">🎉 ممتاز! جميع الاختبارات نجحت تقريباً</div>' : 
+                    percentage >= 70 ?
+                    '<div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 8px; text-align: center; color: #856404; font-size: 1.1em; font-weight: bold;">⚠️ جيد! بعض الاختبارات تحتاج إلى تحسين</div>' :
+                    '<div style="margin-top: 20px; padding: 15px; background: #f8d7da; border-radius: 8px; text-align: center; color: #721c24; font-size: 1.1em; font-weight: bold;">❌ تحتاج إلى مراجعة! عدد كبير من الاختبارات فشلت</div>'
+                }
+            `;
+            
+            resultsDiv.style.display = 'block';
+        }
+        
+        // تشغيل الاختبارات تلقائياً عند تحميل الصفحة
+        window.addEventListener('load', () => {
+            setTimeout(() => runTests(), 500);
+        });
+    </script>
+</body>
+</html>

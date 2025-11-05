@@ -3306,25 +3306,19 @@
         const shopNames = Object.keys(shopsDetails);
         
         // Find duplicates based on license, name, phone, or empty data
-        const duplicateGroups = [];
         const seenLicenses = {};
         const seenNamesAr = {};
         const seenNamesEn = {};
         const seenPhones = {};
         const emptyDataShops = [];
-        const processedShops = new Set();
         
         shopNames.forEach(shopName => {
-          if (processedShops.has(shopName)) return;
-          
           const shop = shopsDetails[shopName];
-          const duplicates = [shopName];
           
           // Check if shop has empty/missing data
           const hasEmptyData = !shop.licenseNo && !shop.contact && !shop.nameEn;
           if (hasEmptyData) {
             emptyDataShops.push(shopName);
-            processedShops.add(shopName);
             return;
           }
           
@@ -3385,52 +3379,36 @@
           }
         });
         
-        // Add Arabic name duplicates
-        Object.values(seenNamesAr).forEach(group => {
+        // Add Arabic name duplicates (excluding those already in license duplicates)
+        Object.entries(seenNamesAr).forEach(([name, group]) => {
           if (group.length > 1) {
-            // Check if not already in duplicates
-            const isNewGroup = !allDuplicates.some(d => 
-              d.shops.every(s => group.includes(s))
-            );
-            if (isNewGroup) {
-              allDuplicates.push({
-                type: 'الإسم بالعربية',
-                shops: group,
-                identifier: shopsDetails[group[0]].nameAr
-              });
-            }
+            allDuplicates.push({
+              type: 'الإسم بالعربية',
+              shops: group,
+              identifier: shopsDetails[group[0]].nameAr
+            });
           }
         });
         
-        // Add English name duplicates
-        Object.values(seenNamesEn).forEach(group => {
+        // Add English name duplicates (excluding those already covered)
+        Object.entries(seenNamesEn).forEach(([name, group]) => {
           if (group.length > 1) {
-            const isNewGroup = !allDuplicates.some(d => 
-              d.shops.every(s => group.includes(s))
-            );
-            if (isNewGroup) {
-              allDuplicates.push({
-                type: 'الإسم بالإنجليزية',
-                shops: group,
-                identifier: shopsDetails[group[0]].nameEn
-              });
-            }
+            allDuplicates.push({
+              type: 'الإسم بالإنجليزية',
+              shops: group,
+              identifier: shopsDetails[group[0]].nameEn
+            });
           }
         });
         
-        // Add phone duplicates
-        Object.values(seenPhones).forEach(group => {
+        // Add phone duplicates (excluding those already covered)
+        Object.entries(seenPhones).forEach(([phone, group]) => {
           if (group.length > 1) {
-            const isNewGroup = !allDuplicates.some(d => 
-              d.shops.every(s => group.includes(s))
-            );
-            if (isNewGroup) {
-              allDuplicates.push({
-                type: 'رقم الهاتف',
-                shops: group,
-                identifier: shopsDetails[group[0]].contact
-              });
-            }
+            allDuplicates.push({
+              type: 'رقم الهاتف',
+              shops: group,
+              identifier: shopsDetails[group[0]].contact
+            });
           }
         });
         

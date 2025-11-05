@@ -1308,7 +1308,7 @@
       <div class="content-card">
         <div class="content-card-header">
           <h3 class="content-card-title">إدارة المحلات</h3>
-          <div style="display: flex; gap: 10px;">
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
             <button class="btn btn-primary" onclick="addShop()">
               <i class="fas fa-store"></i>
               إضافة محل جديد
@@ -1321,6 +1321,10 @@
             <button class="btn btn-warning" onclick="loadShops()">
               <i class="fas fa-sync-alt"></i>
               تحديث القائمة
+            </button>
+            <button class="btn btn-danger" onclick="removeDuplicateShops()">
+              <i class="fas fa-filter"></i>
+              حذف المحلات المكررة
             </button>
           </div>
         </div>
@@ -3285,6 +3289,282 @@
       
       showMessage("shopsStatus", "success", `✅ تم حذف المحل "${name}" من ${deleteCount} سجل! اضغط "حفظ في GitHub" لحفظ التغييرات.`);
       logActivity("حذف محل", `تم حذف المحل "${name}" من ${deleteCount} سجل`);
+    }
+    
+    // Remove Duplicate Shops
+    async function removeDuplicateShops() {
+      try {
+        // Load shops_details.json to check for duplicates
+        showMessage("shopsStatus", "info", "جاري البحث عن المحلات المكررة...");
+        
+        const response = await fetch('shops_details.json?' + new Date().getTime());
+        if (!response.ok) {
+          throw new Error('فشل تحميل بيانات المحلات');
+        }
+        
+        const shopsDetails = await response.json();
+        const shopNames = Object.keys(shopsDetails);
+        
+        // Find duplicates based on license, name, phone, or empty data
+        const duplicateGroups = [];
+        const seenLicenses = {};
+        const seenNamesAr = {};
+        const seenNamesEn = {};
+        const seenPhones = {};
+        const emptyDataShops = [];
+        const processedShops = new Set();
+        
+        shopNames.forEach(shopName => {
+          if (processedShops.has(shopName)) return;
+          
+          const shop = shopsDetails[shopName];
+          const duplicates = [shopName];
+          
+          // Check if shop has empty/missing data
+          const hasEmptyData = !shop.licenseNo && !shop.contact && !shop.nameEn;
+          if (hasEmptyData) {
+            emptyDataShops.push(shopName);
+            processedShops.add(shopName);
+            return;
+          }
+          
+          // Find duplicates based on license number
+          if (shop.licenseNo && shop.licenseNo.trim() !== '') {
+            const license = shop.licenseNo.trim().toLowerCase();
+            if (seenLicenses[license]) {
+              seenLicenses[license].push(shopName);
+            } else {
+              seenLicenses[license] = [shopName];
+            }
+          }
+          
+          // Find duplicates based on Arabic name
+          if (shop.nameAr && shop.nameAr.trim() !== '') {
+            const nameAr = shop.nameAr.trim().toLowerCase();
+            if (seenNamesAr[nameAr]) {
+              seenNamesAr[nameAr].push(shopName);
+            } else {
+              seenNamesAr[nameAr] = [shopName];
+            }
+          }
+          
+          // Find duplicates based on English name
+          if (shop.nameEn && shop.nameEn.trim() !== '') {
+            const nameEn = shop.nameEn.trim().toLowerCase();
+            if (seenNamesEn[nameEn]) {
+              seenNamesEn[nameEn].push(shopName);
+            } else {
+              seenNamesEn[nameEn] = [shopName];
+            }
+          }
+          
+          // Find duplicates based on phone
+          if (shop.contact && shop.contact.trim() !== '') {
+            const phone = shop.contact.trim().replace(/\D/g, ''); // Remove non-digits
+            if (phone.length > 0) {
+              if (seenPhones[phone]) {
+                seenPhones[phone].push(shopName);
+              } else {
+                seenPhones[phone] = [shopName];
+              }
+            }
+          }
+        });
+        
+        // Collect all duplicate groups
+        const allDuplicates = [];
+        
+        // Add license duplicates
+        Object.values(seenLicenses).forEach(group => {
+          if (group.length > 1) {
+            allDuplicates.push({
+              type: 'رقم الترخيص',
+              shops: group,
+              identifier: shopsDetails[group[0]].licenseNo
+            });
+          }
+        });
+        
+        // Add Arabic name duplicates
+        Object.values(seenNamesAr).forEach(group => {
+          if (group.length > 1) {
+            // Check if not already in duplicates
+            const isNewGroup = !allDuplicates.some(d => 
+              d.shops.every(s => group.includes(s))
+            );
+            if (isNewGroup) {
+              allDuplicates.push({
+                type: 'الإسم بالعربية',
+                shops: group,
+                identifier: shopsDetails[group[0]].nameAr
+              });
+            }
+          }
+        });
+        
+        // Add English name duplicates
+        Object.values(seenNamesEn).forEach(group => {
+          if (group.length > 1) {
+            const isNewGroup = !allDuplicates.some(d => 
+              d.shops.every(s => group.includes(s))
+            );
+            if (isNewGroup) {
+              allDuplicates.push({
+                type: 'الإسم بالإنجليزية',
+                shops: group,
+                identifier: shopsDetails[group[0]].nameEn
+              });
+            }
+          }
+        });
+        
+        // Add phone duplicates
+        Object.values(seenPhones).forEach(group => {
+          if (group.length > 1) {
+            const isNewGroup = !allDuplicates.some(d => 
+              d.shops.every(s => group.includes(s))
+            );
+            if (isNewGroup) {
+              allDuplicates.push({
+                type: 'رقم الهاتف',
+                shops: group,
+                identifier: shopsDetails[group[0]].contact
+              });
+            }
+          }
+        });
+        
+        // Show results
+        if (allDuplicates.length === 0 && emptyDataShops.length === 0) {
+          showMessage("shopsStatus", "success", "✅ لا توجد محلات مكررة أو بدون بيانات!");
+          return;
+        }
+        
+        // Build report
+        let report = '🔍 تقرير المحلات المكررة والبيانات الناقصة\n\n';
+        report += '=' .repeat(60) + '\n\n';
+        
+        if (allDuplicates.length > 0) {
+          report += `📋 عدد مجموعات المحلات المكررة: ${allDuplicates.length}\n\n`;
+          
+          allDuplicates.forEach((group, index) => {
+            report += `المجموعة ${index + 1}: تكرار في ${group.type}\n`;
+            report += `القيمة المكررة: ${group.identifier}\n`;
+            report += `المحلات:\n`;
+            group.shops.forEach((shop, idx) => {
+              report += `  ${idx + 1}. ${shop}\n`;
+            });
+            report += '\n';
+          });
+        }
+        
+        if (emptyDataShops.length > 0) {
+          report += `\n📝 محلات بدون بيانات كافية: ${emptyDataShops.length}\n`;
+          emptyDataShops.forEach((shop, idx) => {
+            report += `  ${idx + 1}. ${shop}\n`;
+          });
+        }
+        
+        report += '\n' + '='.repeat(60) + '\n';
+        report += 'هل تريد حذف المحلات المكررة والبيانات الناقصة؟\n';
+        report += '⚠️ سيتم الاحتفاظ بأول محل من كل مجموعة وحذف الباقي.\n';
+        
+        if (!confirm(report)) {
+          showMessage("shopsStatus", "info", "تم إلغاء العملية");
+          return;
+        }
+        
+        // Remove duplicates - keep first shop in each group
+        const shopsToDelete = new Set();
+        
+        allDuplicates.forEach(group => {
+          // Keep first, delete rest
+          for (let i = 1; i < group.shops.length; i++) {
+            shopsToDelete.add(group.shops[i]);
+          }
+        });
+        
+        // Add empty data shops to deletion list
+        emptyDataShops.forEach(shop => shopsToDelete.add(shop));
+        
+        // Delete from inspectionData
+        let deletedCount = 0;
+        if (planData && planData.inspectionData) {
+          planData.inspectionData.forEach(inspection => {
+            if (inspection.shops && Array.isArray(inspection.shops)) {
+              const beforeLength = inspection.shops.length;
+              inspection.shops = inspection.shops.filter(shop => !shopsToDelete.has(shop));
+              deletedCount += (beforeLength - inspection.shops.length);
+            }
+          });
+        }
+        
+        // Delete from shops_details.json
+        shopsToDelete.forEach(shopName => {
+          delete shopsDetails[shopName];
+        });
+        
+        // Save updated shops_details.json
+        const token = getToken();
+        if (!token) {
+          showTokenModal();
+          return;
+        }
+        
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(shopsDetails, null, 2))));
+        
+        // Get current file SHA
+        const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/shops_details.json`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+        
+        let sha = "";
+        if (getRes.ok) {
+          const file = await getRes.json();
+          sha = file.sha;
+        }
+        
+        // Save to GitHub
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/shops_details.json`, {
+          method: "PUT",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: `حذف ${shopsToDelete.size} محلات مكررة وبدون بيانات`,
+            content: content,
+            sha: sha
+          })
+        });
+        
+        if (!res.ok) {
+          throw new Error('فشل حفظ التغييرات في GitHub');
+        }
+        
+        // Update plan data if modified
+        if (deletedCount > 0) {
+          document.getElementById('planEditor').value = JSON.stringify(planData, null, 2);
+          await savePlanToGitHub();
+        }
+        
+        // Reload the list
+        loadShopsList();
+        
+        showMessage("shopsStatus", "success", 
+          `✅ تم حذف ${shopsToDelete.size} محلات مكررة وبدون بيانات بنجاح!\n` +
+          `تم الحذف من ${deletedCount} سجل تفتيش.\n` +
+          `تم حفظ التغييرات في GitHub.`
+        );
+        logActivity("حذف المحلات المكررة", `تم حذف ${shopsToDelete.size} محلات`);
+        
+      } catch (error) {
+        showMessage("shopsStatus", "error", `❌ فشل حذف المحلات المكررة: ${error.message}`);
+        console.error('Error removing duplicates:', error);
+      }
     }
     
     // ========================

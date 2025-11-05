@@ -3373,8 +3373,8 @@
                         
                         <!-- Row 2: Advanced Management Actions -->
                         <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
-                            <button class="btn btn-info" onclick="mergeDuplicateShops()" style="background: white; color: #17a2b8;">
-                                <span>🔄</span> دمج المحلات المكررة
+                            <button class="btn btn-danger" onclick="mergeDuplicateShops()" style="background: white; color: #dc3545;">
+                                <span>🗑️</span> حذف المحلات المكررة
                             </button>
                             <button class="btn btn-success" onclick="syncShopsWithGitHub()" style="background: white; color: #11998e;">
                                 <span>☁️</span> مزامنة مع GitHub
@@ -15165,61 +15165,196 @@
         
         // Merge Duplicate Shops
         async function mergeDuplicateShops() {
-            if (!confirm('🔄 دمج المحلات المكررة\n\nسيتم البحث عن المحلات المكررة ودمجها\n\nهل تريد المتابعة؟')) {
+            if (!confirm('🔄 حذف المحلات المكررة والبيانات الناقصة\n\nسيتم البحث عن المحلات المكررة بناءً على:\n• رقم الترخيص\n• الإسم بالعربية والإنجليزية\n• رقم الهاتف\n• المحلات بدون بيانات\n\nهل تريد المتابعة؟')) {
                 return;
             }
             
             try {
                 const shopNames = Object.keys(shopsDetails);
-                const duplicates = [];
-                const seen = new Map();
                 
-                // Find duplicates
+                // Find duplicates based on license, name, phone, or empty data
+                const seenLicenses = {};
+                const seenNamesAr = {};
+                const seenNamesEn = {};
+                const seenPhones = {};
+                const emptyDataShops = [];
+                
                 shopNames.forEach(shopName => {
-                    const normalized = shopName.trim().toLowerCase();
+                    const shop = shopsDetails[shopName];
                     
-                    if (seen.has(normalized)) {
-                        duplicates.push({
-                            original: seen.get(normalized),
-                            duplicate: shopName
-                        });
-                    } else {
-                        seen.set(normalized, shopName);
+                    // Check if shop has empty/missing data
+                    const hasEmptyData = !shop.licenseNo && !shop.contact && !shop.nameEn;
+                    if (hasEmptyData) {
+                        emptyDataShops.push(shopName);
+                        return;
+                    }
+                    
+                    // Find duplicates based on license number
+                    if (shop.licenseNo && shop.licenseNo.trim() !== '') {
+                        const license = shop.licenseNo.trim().toLowerCase();
+                        if (seenLicenses[license]) {
+                            seenLicenses[license].push(shopName);
+                        } else {
+                            seenLicenses[license] = [shopName];
+                        }
+                    }
+                    
+                    // Find duplicates based on Arabic name
+                    if (shop.nameAr && shop.nameAr.trim() !== '') {
+                        const nameAr = shop.nameAr.trim().toLowerCase();
+                        if (seenNamesAr[nameAr]) {
+                            seenNamesAr[nameAr].push(shopName);
+                        } else {
+                            seenNamesAr[nameAr] = [shopName];
+                        }
+                    }
+                    
+                    // Find duplicates based on English name
+                    if (shop.nameEn && shop.nameEn.trim() !== '') {
+                        const nameEn = shop.nameEn.trim().toLowerCase();
+                        if (seenNamesEn[nameEn]) {
+                            seenNamesEn[nameEn].push(shopName);
+                        } else {
+                            seenNamesEn[nameEn] = [shopName];
+                        }
+                    }
+                    
+                    // Find duplicates based on phone
+                    if (shop.contact && shop.contact.trim() !== '') {
+                        const phone = shop.contact.trim().replace(/\D/g, ''); // Remove non-digits
+                        if (phone.length > 0) {
+                            if (seenPhones[phone]) {
+                                seenPhones[phone].push(shopName);
+                            } else {
+                                seenPhones[phone] = [shopName];
+                            }
+                        }
                     }
                 });
                 
-                if (duplicates.length === 0) {
-                    alert('✅ لا توجد محلات مكررة!\n\nجميع المحلات فريدة.');
+                // Collect all duplicate groups
+                const allDuplicates = [];
+                
+                // Add license duplicates
+                Object.values(seenLicenses).forEach(group => {
+                    if (group.length > 1) {
+                        allDuplicates.push({
+                            type: 'رقم الترخيص',
+                            shops: group,
+                            identifier: shopsDetails[group[0]].licenseNo
+                        });
+                    }
+                });
+                
+                // Add Arabic name duplicates
+                Object.entries(seenNamesAr).forEach(([name, group]) => {
+                    if (group.length > 1) {
+                        allDuplicates.push({
+                            type: 'الإسم بالعربية',
+                            shops: group,
+                            identifier: shopsDetails[group[0]].nameAr
+                        });
+                    }
+                });
+                
+                // Add English name duplicates
+                Object.entries(seenNamesEn).forEach(([name, group]) => {
+                    if (group.length > 1) {
+                        allDuplicates.push({
+                            type: 'الإسم بالإنجليزية',
+                            shops: group,
+                            identifier: shopsDetails[group[0]].nameEn
+                        });
+                    }
+                });
+                
+                // Add phone duplicates
+                Object.entries(seenPhones).forEach(([phone, group]) => {
+                    if (group.length > 1) {
+                        allDuplicates.push({
+                            type: 'رقم الهاتف',
+                            shops: group,
+                            identifier: shopsDetails[group[0]].contact
+                        });
+                    }
+                });
+                
+                // Show results
+                if (allDuplicates.length === 0 && emptyDataShops.length === 0) {
+                    alert('✅ لا توجد محلات مكررة أو بدون بيانات!\n\nجميع المحلات فريدة.');
                     return;
                 }
                 
-                // Show duplicates and merge
-                const duplicatesList = duplicates.map(d => `• ${d.duplicate} → ${d.original}`).join('\n');
+                // Build report
+                let report = '🔍 تقرير المحلات المكررة والبيانات الناقصة\n\n';
+                report += '=' .repeat(60) + '\n\n';
                 
-                if (confirm(`🔍 تم العثور على ${duplicates.length} محل مكرر:\n\n${duplicatesList}\n\nهل تريد دمجها؟`)) {
-                    duplicates.forEach(d => {
-                        // Merge data from duplicate to original
-                        const original = shopsDetails[d.original];
-                        const duplicate = shopsDetails[d.duplicate];
-                        
-                        // Keep non-empty fields from duplicate
-                        Object.keys(duplicate).forEach(key => {
-                            if (duplicate[key] && !original[key]) {
-                                original[key] = duplicate[key];
-                            }
-                        });
-                        
-                        // Delete duplicate
-                        delete shopsDetails[d.duplicate];
-                    });
+                if (allDuplicates.length > 0) {
+                    report += `📋 عدد مجموعات المحلات المكررة: ${allDuplicates.length}\n\n`;
                     
-                    alert(`✅ تم دمج ${duplicates.length} محل مكرر بنجاح!\n\n💾 لا تنسَ حفظ التغييرات والمزامنة مع GitHub`);
-                    updateSmartShopList();
+                    allDuplicates.forEach((group, index) => {
+                        report += `المجموعة ${index + 1}: تكرار في ${group.type}\n`;
+                        report += `القيمة المكررة: ${group.identifier}\n`;
+                        report += `المحلات:\n`;
+                        group.shops.forEach((shop, idx) => {
+                            report += `  ${idx + 1}. ${shop}\n`;
+                        });
+                        report += '\n';
+                    });
                 }
                 
+                if (emptyDataShops.length > 0) {
+                    report += `\n📝 محلات بدون بيانات كافية: ${emptyDataShops.length}\n`;
+                    emptyDataShops.forEach((shop, idx) => {
+                        report += `  ${idx + 1}. ${shop}\n`;
+                    });
+                }
+                
+                report += '\n' + '='.repeat(60) + '\n';
+                report += 'هل تريد حذف المحلات المكررة والبيانات الناقصة؟\n';
+                report += '⚠️ سيتم الاحتفاظ بأول محل من كل مجموعة وحذف الباقي.\n';
+                
+                if (!confirm(report)) {
+                    alert('تم إلغاء العملية');
+                    return;
+                }
+                
+                // Remove duplicates - keep first shop in each group
+                const shopsToDelete = new Set();
+                
+                allDuplicates.forEach(group => {
+                    // Keep first, delete rest
+                    for (let i = 1; i < group.shops.length; i++) {
+                        shopsToDelete.add(group.shops[i]);
+                    }
+                });
+                
+                // Add empty data shops to deletion list
+                emptyDataShops.forEach(shop => shopsToDelete.add(shop));
+                
+                // Delete from shopsDetails
+                shopsToDelete.forEach(shopName => {
+                    delete shopsDetails[shopName];
+                });
+                
+                // Delete from planData if exists
+                let deletedCount = 0;
+                if (planData && planData.inspectionData) {
+                    planData.inspectionData.forEach(inspection => {
+                        if (inspection.shops && Array.isArray(inspection.shops)) {
+                            const beforeLength = inspection.shops.length;
+                            inspection.shops = inspection.shops.filter(shop => !shopsToDelete.has(shop));
+                            deletedCount += (beforeLength - inspection.shops.length);
+                        }
+                    });
+                }
+                
+                alert(`✅ تم حذف ${shopsToDelete.size} محلات مكررة وبدون بيانات بنجاح!\n\n💾 لا تنسَ حفظ التغييرات والمزامنة مع GitHub`);
+                updateSmartShopList();
+                
             } catch (error) {
-                console.error('Error merging duplicates:', error);
-                alert('❌ خطأ في دمج المحلات المكررة: ' + error.message);
+                console.error('Error removing duplicates:', error);
+                alert('❌ خطأ في حذف المحلات المكررة: ' + error.message);
             }
         }
         

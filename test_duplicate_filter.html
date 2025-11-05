@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Duplicate Filter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            direction: ltr;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 اختبار فلتر المحلات المكررة</h1>
+        
+        <div class="test-section">
+            <h2>📋 البيانات التجريبية</h2>
+            <p>يحتوي هذا الاختبار على:</p>
+            <ul>
+                <li>محلات مكررة برقم الترخيص</li>
+                <li>محلات مكررة بالإسم العربي</li>
+                <li>محلات مكررة بالإسم الإنجليزي</li>
+                <li>محلات مكررة برقم الهاتف</li>
+                <li>محلات بدون بيانات</li>
+            </ul>
+            <button onclick="runTest()">▶️ تشغيل الاختبار</button>
+            <button onclick="clearResults()">🗑️ مسح النتائج</button>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        // Test data with various duplicate scenarios
+        const testShopsDetails = {
+            "محل الورود": {
+                "nameAr": "محل الورود",
+                "nameEn": "Flowers Shop",
+                "licenseNo": "CN-1234567",
+                "contact": "525182727",
+                "activity": "بيع الورود"
+            },
+            "محل الزهور": {
+                "nameAr": "محل الزهور",
+                "nameEn": "Flowers Shop",  // Duplicate English name
+                "licenseNo": "CN-7654321",
+                "contact": "556246297",
+                "activity": "بيع الورود"
+            },
+            "الحديقة الجميلة": {
+                "nameAr": "الحديقة الجميلة",
+                "nameEn": "Beautiful Garden",
+                "licenseNo": "CN-1234567",  // Duplicate license
+                "contact": "544415723",
+                "activity": "بيع النباتات"
+            },
+            "محل الطيور": {
+                "nameAr": "محل الطيور",
+                "nameEn": "Birds Store",
+                "licenseNo": "CN-9999999",
+                "contact": "525182727",  // Duplicate phone
+                "activity": "بيع الطيور"
+            },
+            "محل الطيور": {  // Duplicate Arabic name (exact match in key)
+                "nameAr": "محل الطيور",
+                "nameEn": "Birds Shop",
+                "licenseNo": "CN-8888888",
+                "contact": "508771156",
+                "activity": "بيع الطيور"
+            },
+            "محل فارغ 1": {
+                "nameAr": "محل فارغ 1",
+                "nameEn": "",
+                "licenseNo": "",
+                "contact": "",
+                "activity": ""
+            },
+            "محل فارغ 2": {
+                "nameAr": "محل فارغ 2",
+                "nameEn": "",
+                "licenseNo": "",
+                "contact": "",
+                "activity": ""
+            },
+            "محل نظيف": {
+                "nameAr": "محل نظيف",
+                "nameEn": "Clean Shop",
+                "licenseNo": "CN-5555555",
+                "contact": "503680076",
+                "activity": "بيع المنظفات"
+            }
+        };
+
+        function findDuplicates(shopsDetails) {
+            const shopNames = Object.keys(shopsDetails);
+            const seenLicenses = {};
+            const seenNamesAr = {};
+            const seenNamesEn = {};
+            const seenPhones = {};
+            const emptyDataShops = [];
+            
+            shopNames.forEach(shopName => {
+                const shop = shopsDetails[shopName];
+                
+                // Check if shop has empty/missing data
+                const hasEmptyData = !shop.licenseNo && !shop.contact && !shop.nameEn;
+                if (hasEmptyData) {
+                    emptyDataShops.push(shopName);
+                    return;
+                }
+                
+                // Find duplicates based on license number
+                if (shop.licenseNo && shop.licenseNo.trim() !== '') {
+                    const license = shop.licenseNo.trim().toLowerCase();
+                    if (seenLicenses[license]) {
+                        seenLicenses[license].push(shopName);
+                    } else {
+                        seenLicenses[license] = [shopName];
+                    }
+                }
+                
+                // Find duplicates based on Arabic name
+                if (shop.nameAr && shop.nameAr.trim() !== '') {
+                    const nameAr = shop.nameAr.trim().toLowerCase();
+                    if (seenNamesAr[nameAr]) {
+                        seenNamesAr[nameAr].push(shopName);
+                    } else {
+                        seenNamesAr[nameAr] = [shopName];
+                    }
+                }
+                
+                // Find duplicates based on English name
+                if (shop.nameEn && shop.nameEn.trim() !== '') {
+                    const nameEn = shop.nameEn.trim().toLowerCase();
+                    if (seenNamesEn[nameEn]) {
+                        seenNamesEn[nameEn].push(shopName);
+                    } else {
+                        seenNamesEn[nameEn] = [shopName];
+                    }
+                }
+                
+                // Find duplicates based on phone
+                if (shop.contact && shop.contact.trim() !== '') {
+                    const phone = shop.contact.trim().replace(/\D/g, ''); // Remove non-digits
+                    if (phone.length > 0) {
+                        if (seenPhones[phone]) {
+                            seenPhones[phone].push(shopName);
+                        } else {
+                            seenPhones[phone] = [shopName];
+                        }
+                    }
+                }
+            });
+            
+            // Collect all duplicate groups
+            const allDuplicates = [];
+            
+            // Add license duplicates
+            Object.values(seenLicenses).forEach(group => {
+                if (group.length > 1) {
+                    allDuplicates.push({
+                        type: 'رقم الترخيص',
+                        shops: group,
+                        identifier: shopsDetails[group[0]].licenseNo
+                    });
+                }
+            });
+            
+            // Add Arabic name duplicates
+            Object.values(seenNamesAr).forEach(group => {
+                if (group.length > 1) {
+                    const isNewGroup = !allDuplicates.some(d => 
+                        d.shops.every(s => group.includes(s))
+                    );
+                    if (isNewGroup) {
+                        allDuplicates.push({
+                            type: 'الإسم بالعربية',
+                            shops: group,
+                            identifier: shopsDetails[group[0]].nameAr
+                        });
+                    }
+                }
+            });
+            
+            // Add English name duplicates
+            Object.values(seenNamesEn).forEach(group => {
+                if (group.length > 1) {
+                    const isNewGroup = !allDuplicates.some(d => 
+                        d.shops.every(s => group.includes(s))
+                    );
+                    if (isNewGroup) {
+                        allDuplicates.push({
+                            type: 'الإسم بالإنجليزية',
+                            shops: group,
+                            identifier: shopsDetails[group[0]].nameEn
+                        });
+                    }
+                }
+            });
+            
+            // Add phone duplicates
+            Object.values(seenPhones).forEach(group => {
+                if (group.length > 1) {
+                    const isNewGroup = !allDuplicates.some(d => 
+                        d.shops.every(s => group.includes(s))
+                    );
+                    if (isNewGroup) {
+                        allDuplicates.push({
+                            type: 'رقم الهاتف',
+                            shops: group,
+                            identifier: shopsDetails[group[0]].contact
+                        });
+                    }
+                }
+            });
+            
+            return { allDuplicates, emptyDataShops };
+        }
+
+        function runTest() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<h2>📊 نتائج الاختبار</h2>';
+            
+            // Test 1: Find duplicates
+            const { allDuplicates, emptyDataShops } = findDuplicates(testShopsDetails);
+            
+            let html = '';
+            
+            // Display test data
+            html += '<div class="test-section">';
+            html += '<h3>📦 البيانات المستخدمة</h3>';
+            html += '<pre>' + JSON.stringify(testShopsDetails, null, 2) + '</pre>';
+            html += '</div>';
+            
+            // Display duplicate groups
+            if (allDuplicates.length > 0) {
+                html += '<div class="test-result info">';
+                html += `<h3>✅ تم العثور على ${allDuplicates.length} مجموعات مكررة</h3>`;
+                
+                allDuplicates.forEach((group, index) => {
+                    html += '<div style="margin: 15px 0; padding: 10px; background: white; border-radius: 5px;">';
+                    html += `<strong>المجموعة ${index + 1}:</strong> تكرار في ${group.type}<br>`;
+                    html += `<strong>القيمة المكررة:</strong> ${group.identifier}<br>`;
+                    html += '<strong>المحلات:</strong><ul>';
+                    group.shops.forEach(shop => {
+                        html += `<li>${shop}</li>`;
+                    });
+                    html += '</ul></div>';
+                });
+                
+                html += '</div>';
+            } else {
+                html += '<div class="test-result success">';
+                html += '<h3>✅ لا توجد محلات مكررة</h3>';
+                html += '</div>';
+            }
+            
+            // Display empty data shops
+            if (emptyDataShops.length > 0) {
+                html += '<div class="test-result info">';
+                html += `<h3>📝 تم العثور على ${emptyDataShops.length} محلات بدون بيانات</h3>`;
+                html += '<ul>';
+                emptyDataShops.forEach(shop => {
+                    html += `<li>${shop}</li>`;
+                });
+                html += '</ul></div>';
+            } else {
+                html += '<div class="test-result success">';
+                html += '<h3>✅ لا توجد محلات بدون بيانات</h3>';
+                html += '</div>';
+            }
+            
+            // Summary
+            const totalDuplicates = allDuplicates.reduce((sum, group) => sum + (group.shops.length - 1), 0);
+            const totalToDelete = totalDuplicates + emptyDataShops.length;
+            
+            html += '<div class="test-result ' + (totalToDelete > 0 ? 'error' : 'success') + '">';
+            html += '<h3>📊 الملخص</h3>';
+            html += `<p>إجمالي المحلات: ${Object.keys(testShopsDetails).length}</p>`;
+            html += `<p>محلات سيتم حذفها: ${totalToDelete}</p>`;
+            html += `<p>محلات ستبقى: ${Object.keys(testShopsDetails).length - totalToDelete}</p>`;
+            html += '</div>';
+            
+            resultsDiv.innerHTML += html;
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+    </script>
+</body>
+</html>

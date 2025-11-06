@@ -2401,12 +2401,18 @@
             </div>
             
             <div class="form-group">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
                     <label class="form-label" style="margin-bottom: 0;">المحلات المتاحة (مرتبة حسب الأولوية)</label>
-                    <button id="showHighPriorityBtn" class="btn btn-warning btn-sm" onclick="toggleHighPriorityShops()" style="display: none; padding: 8px 16px;">
-                        <span id="highPriorityBtnIcon">👁️</span>
-                        <span id="highPriorityBtnText">عرض المحلات ذات الأولوية العالية</span>
-                    </button>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button id="showAllShopsBtn" class="btn btn-info btn-sm" onclick="toggleShowAllShops()" style="display: none; padding: 8px 16px;">
+                            <span id="showAllShopsBtnIcon">🌍</span>
+                            <span id="showAllShopsBtnText">عرض جميع المحلات في هذه المنطقة</span>
+                        </button>
+                        <button id="showHighPriorityBtn" class="btn btn-warning btn-sm" onclick="toggleHighPriorityShops()" style="display: none; padding: 8px 16px;">
+                            <span id="highPriorityBtnIcon">👁️</span>
+                            <span id="highPriorityBtnText">عرض المحلات ذات الأولوية العالية</span>
+                        </button>
+                    </div>
                 </div>
                 
                 <!-- NEW: Alternative Shop Selection Options -->
@@ -4124,8 +4130,10 @@
         let currentEditingIndex = -1;
         let selectedInspectionsForDelete = [];
         let showingHighPriority = false;
+        let showingAllShops = false; // NEW: Toggle to show all shops bypassing filters
         let currentAvailableShops = [];
         let currentHighPriorityShops = [];
+        let currentAllAreaShops = []; // NEW: Store all shops in the area
         
         // Error message constants for token validation
         const TOKEN_ERROR_MESSAGES = {
@@ -5626,6 +5634,7 @@
                 document.getElementById('shopsListContainer').innerHTML = 
                     '<p style="text-align: center; color: #999; padding: 20px;">اختر المفتش والمنطقة لعرض جميع المحلات</p>';
                 document.getElementById('showHighPriorityBtn').style.display = 'none';
+                document.getElementById('showAllShopsBtn').style.display = 'none';
                 if (selectAllAreaBtn) selectAllAreaBtn.style.display = 'none';
                 if (searchBox) {
                     searchBox.style.display = 'none';
@@ -5641,6 +5650,7 @@
             
             // Sort shops by priority
             const sortedShops = sortShopsByPriority(availableShops, inspector, date || new Date().toISOString().split('T')[0]);
+            const sortedAllShops = sortShopsByPriority(allShops, inspector, date || new Date().toISOString().split('T')[0]);
             
             // Get high-priority shops that were filtered out
             const unavailableShops = allShops.filter(shop => !availableShops.includes(shop));
@@ -5650,6 +5660,7 @@
             // Store for later use
             currentAvailableShops = sortedShops;
             currentHighPriorityShops = highPriorityUnavailable;
+            currentAllAreaShops = sortedAllShops;
             
             // Show/hide the high priority button based on availability
             const highPriorityBtn = document.getElementById('showHighPriorityBtn');
@@ -5657,6 +5668,14 @@
                 highPriorityBtn.style.display = 'inline-flex';
             } else {
                 highPriorityBtn.style.display = 'none';
+            }
+            
+            // NEW: Show/hide the "Show All Shops" button when date is selected and there are filtered shops
+            const showAllShopsBtn = document.getElementById('showAllShopsBtn');
+            if (date && allShops.length > availableShops.length) {
+                showAllShopsBtn.style.display = 'inline-flex';
+            } else {
+                showAllShopsBtn.style.display = 'none';
             }
             
             // Show/hide the "Select All Shops in Area" button
@@ -5668,8 +5687,11 @@
             
             // Reset showing state
             showingHighPriority = false;
+            showingAllShops = false;
             document.getElementById('highPriorityBtnText').textContent = 'عرض المحلات ذات الأولوية العالية';
             document.getElementById('highPriorityBtnIcon').textContent = '👁️';
+            document.getElementById('showAllShopsBtnText').textContent = 'عرض جميع المحلات في هذه المنطقة';
+            document.getElementById('showAllShopsBtnIcon').textContent = '🌍';
             
             // Update statistics
             updateStatistics(allShops.length, availableShops.length, sortedShops);
@@ -5976,20 +5998,19 @@
             });
         }
         
-        // Check if shop was recently inspected by the same inspector (within 7 days)
+        // Check if shop was recently inspected by the same inspector (same day only for weekly planning)
+        // Changed from 7-day filter to same-day only to support weekly inspection planning
         function wasShopRecentlyInspected(shop, inspector, date) {
             if (!planData || !planData.inspectionData) return false;
             
-            const targetDate = new Date(date);
-            const sevenDaysAgo = new Date(targetDate);
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-            
+            // Only check if the shop is already assigned to this inspector on the same day
+            // This allows shops to be redistributed weekly instead of monthly
             return planData.inspectionData.some(inspection => {
                 if (inspection.inspector !== inspector) return false;
                 if (!inspection.shops || !inspection.shops.includes(shop)) return false;
                 
-                const inspectionDate = new Date(inspection.day);
-                return inspectionDate > sevenDaysAgo && inspectionDate < targetDate;
+                // Only prevent if it's the exact same day
+                return inspection.day === date;
             });
         }
         
@@ -6112,7 +6133,7 @@
         }
         
         // Display shops
-        function displayShops(shops, showingHighPriority = false) {
+        function displayShops(shops, showingHighPriority = false, showingAll = false) {
             const container = document.getElementById('shopsListContainer');
             const searchBox = document.getElementById('inspectionShopSearchBox');
             
@@ -6129,10 +6150,14 @@
             }
             
             // Clear container (except info message if it exists)
-            const infoDiv = document.getElementById('highPriorityInfo');
+            const highPriorityInfo = document.getElementById('highPriorityInfo');
+            const allShopsInfo = document.getElementById('allShopsInfo');
             container.innerHTML = '';
-            if (infoDiv && showingHighPriority) {
-                container.appendChild(infoDiv);
+            if (highPriorityInfo && showingHighPriority) {
+                container.appendChild(highPriorityInfo);
+            }
+            if (allShopsInfo && showingAll) {
+                container.appendChild(allShopsInfo);
             }
             
             // Create shops list container
@@ -6369,6 +6394,54 @@
                 
                 // Remove info message
                 const infoDiv = document.getElementById('highPriorityInfo');
+                if (infoDiv) {
+                    infoDiv.remove();
+                }
+            }
+        }
+        
+        // NEW: Toggle showing all shops in the area (bypass all filters)
+        function toggleShowAllShops() {
+            showingAllShops = !showingAllShops;
+            
+            if (showingAllShops) {
+                // Show ALL shops in the area, bypassing filters
+                displayShops(currentAllAreaShops, false, true);
+                
+                // Update button text
+                document.getElementById('showAllShopsBtnText').textContent = 'إخفاء المحلات المفلترة';
+                document.getElementById('showAllShopsBtnIcon').textContent = '🚫';
+                
+                // Show info message
+                const container = document.getElementById('shopsListContainer');
+                const infoDiv = document.createElement('div');
+                infoDiv.id = 'allShopsInfo';
+                infoDiv.style.cssText = 'background: #d1ecf1; border: 2px solid #17a2b8; padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: center;';
+                infoDiv.innerHTML = `
+                    <strong>ℹ️ ملاحظة:</strong> يتم عرض جميع المحلات في هذه المنطقة بدون تصفية.
+                    <br>
+                    <small style="color: #0c5460;">هذا يشمل المحلات التي تم تفتيشها مؤخراً. مناسب للتخطيط الأسبوعي وإعادة توزيع المحلات.</small>
+                `;
+                container.insertBefore(infoDiv, container.firstChild);
+                
+                // Hide high priority button when showing all shops
+                showingHighPriority = false;
+                document.getElementById('highPriorityBtnText').textContent = 'عرض المحلات ذات الأولوية العالية';
+                document.getElementById('highPriorityBtnIcon').textContent = '👁️';
+                const highPriorityInfo = document.getElementById('highPriorityInfo');
+                if (highPriorityInfo) {
+                    highPriorityInfo.remove();
+                }
+            } else {
+                // Show only available shops (filtered)
+                displayShops(currentAvailableShops);
+                
+                // Update button text
+                document.getElementById('showAllShopsBtnText').textContent = 'عرض جميع المحلات في هذه المنطقة';
+                document.getElementById('showAllShopsBtnIcon').textContent = '🌍';
+                
+                // Remove info message
+                const infoDiv = document.getElementById('allShopsInfo');
                 if (infoDiv) {
                     infoDiv.remove();
                 }

@@ -5975,7 +5975,7 @@
                 // Rule 1: Check if shop is already assigned to ANY inspector on the same day
                 const assignedToday = isShopAssignedToday(shop, date);
                 
-                // Rule 2: Check if shop was inspected by THIS inspector in the last 7 days
+                // Rule 2: Check if shop was inspected by THIS inspector on the same day (for weekly planning)
                 const recentlyInspected = wasShopRecentlyInspected(shop, inspector, date);
                 
                 // If shop passes both rules, it's available
@@ -5999,12 +5999,12 @@
         }
         
         // Check if shop was recently inspected by the same inspector (same day only for weekly planning)
-        // Changed from 7-day filter to same-day only to support weekly inspection planning
+        // Changed from 7-day restriction to same-day only restriction to support weekly inspection planning
         function wasShopRecentlyInspected(shop, inspector, date) {
             if (!planData || !planData.inspectionData) return false;
             
             // Only check if the shop is already assigned to this inspector on the same day
-            // This allows shops to be redistributed weekly instead of monthly
+            // This allows shops to be redistributed weekly (changed from 7-day restriction)
             return planData.inspectionData.some(inspection => {
                 if (inspection.inspector !== inspector) return false;
                 if (!inspection.shops || !inspection.shops.includes(shop)) return false;

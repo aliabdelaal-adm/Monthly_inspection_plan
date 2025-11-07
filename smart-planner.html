@@ -7935,12 +7935,15 @@
                 shop = planData.shops.find(s => s.name === shopIdOrName);
             }
             
-            // If still not found, create a new shop entry
+            // Store whether this is an existing shop in plan-data
+            const isExistingShop = !!shop;
+            
+            // If still not found, create a temporary shop entry for the modal
             if (!shop) {
                 // This might be a shop from shops_details.json not yet in plan-data
-                console.log('Shop not found in plan-data, will create new entry:', shopIdOrName);
+                console.log('Shop not found in plan-data, loading from shops_details.json:', shopIdOrName);
                 shop = {
-                    id: '',  // Will be generated when saving
+                    id: '',  // Will be found/generated when saving
                     name: shopIdOrName,
                     areaId: '',
                     area: ''
@@ -7962,7 +7965,11 @@
                     select.appendChild(option);
                 });
             }
-            select.value = shop.areaId;
+            
+            // Set initial area value if available
+            if (shop.areaId) {
+                select.value = shop.areaId;
+            }
             
             // Load additional details from shops_details.json
             fetch('shops_details.json?' + new Date().getTime())
@@ -7970,6 +7977,7 @@
                 .then(shopsDetails => {
                     const details = shopsDetails[shop.name];
                     if (details) {
+                        // Always populate all fields from shops_details.json
                         document.getElementById('shopModalNameEn').value = details.nameEn || '';
                         document.getElementById('shopModalLicense').value = details.licenseNo || '';
                         document.getElementById('shopModalAddress').value = details.address || '';
@@ -7979,33 +7987,45 @@
                         document.getElementById('shopModalActivity').value = details.activity || '';
                         document.getElementById('shopModalAdmCode').value = details.admCode || '';
                         
-                        // If shop was not in planData.shops, update the area from shops_details
-                        if (!shop.areaId && details.areaId) {
+                        // Update area from shops_details if not already set
+                        // This handles both cases: shop not in planData.shops, or shop in planData but area changed
+                        if (details.areaId) {
                             select.value = details.areaId;
+                            // Update the shop object's areaId for proper saving
+                            shop.areaId = details.areaId;
+                            if (details.area) {
+                                shop.area = details.area;
+                            }
+                        }
+                        
+                        // If shop doesn't have an ID yet but exists in shops_details, find or create the ID
+                        if (!shop.id && !isExistingShop) {
+                            // Look for an existing shop in planData.shops by name
+                            const existingShop = planData.shops.find(s => s.name === shop.name);
+                            if (existingShop) {
+                                // Shop exists in planData, use its ID
+                                shop.id = existingShop.id;
+                                document.getElementById('shopModalId').value = shop.id;
+                            }
                         }
                     } else {
-                        // Clear optional fields if no details found
-                        document.getElementById('shopModalNameEn').value = '';
-                        document.getElementById('shopModalLicense').value = '';
-                        document.getElementById('shopModalAddress').value = '';
-                        document.getElementById('shopModalPhone').value = '';
-                        document.getElementById('shopModalEmail').value = '';
-                        document.getElementById('shopModalGoogleMaps').value = '';
-                        document.getElementById('shopModalActivity').value = '';
-                        document.getElementById('shopModalAdmCode').value = '';
+                        // Only clear fields if no details found AND this is a new shop
+                        if (!isExistingShop) {
+                            document.getElementById('shopModalNameEn').value = '';
+                            document.getElementById('shopModalLicense').value = '';
+                            document.getElementById('shopModalAddress').value = '';
+                            document.getElementById('shopModalPhone').value = '';
+                            document.getElementById('shopModalEmail').value = '';
+                            document.getElementById('shopModalGoogleMaps').value = '';
+                            document.getElementById('shopModalActivity').value = '';
+                            document.getElementById('shopModalAdmCode').value = '';
+                        }
                     }
                 })
                 .catch(error => {
                     console.error('Error loading shop details:', error);
-                    // Clear optional fields on error
-                    document.getElementById('shopModalNameEn').value = '';
-                    document.getElementById('shopModalLicense').value = '';
-                    document.getElementById('shopModalAddress').value = '';
-                    document.getElementById('shopModalPhone').value = '';
-                    document.getElementById('shopModalEmail').value = '';
-                    document.getElementById('shopModalGoogleMaps').value = '';
-                    document.getElementById('shopModalActivity').value = '';
-                    document.getElementById('shopModalAdmCode').value = '';
+                    // Don't clear fields on error - keep what we have
+                    alert('⚠️ تحذير: فشل تحميل تفاصيل المحل من shops_details.json\nالمعلومات الأساسية متاحة فقط');
                 });
             
             document.getElementById('shopModal').style.display = 'block';
@@ -8018,7 +8038,7 @@
         
         // Save shop (add or edit)
         async function saveShop() {
-            const shopId = document.getElementById('shopModalId').value;
+            let shopId = document.getElementById('shopModalId').value.trim();
             const shopName = document.getElementById('shopModalName').value.trim();
             const areaId = document.getElementById('shopModalArea').value;
             
@@ -8054,6 +8074,18 @@
             
             try {
                 let oldShopName = null;
+                let isUpdate = false;
+                
+                // If shopId is empty, try to find existing shop by name to prevent duplicates
+                if (!shopId) {
+                    const existingShop = planData.shops.find(s => s.name === shopName);
+                    if (existingShop) {
+                        // Shop exists, this is an update operation
+                        shopId = existingShop.id;
+                        isUpdate = true;
+                        console.log('Found existing shop by name, updating instead of creating duplicate:', shopName);
+                    }
+                }
                 
                 // Update or add shop in plan-data.json
                 if (shopId) {
@@ -8069,9 +8101,10 @@
                         if (area) {
                             planData.shops[shopIndex].area = area.name;
                         }
+                        console.log('Updated existing shop:', shopName);
                     }
                 } else {
-                    // Add new shop
+                    // Add new shop only if it doesn't exist
                     const area = planData.areas.find(a => a.id === areaId);
                     const newShop = {
                         id: 'shop_' + Date.now(),
@@ -8080,6 +8113,7 @@
                         area: area ? area.name : ''
                     };
                     planData.shops.push(newShop);
+                    console.log('Added new shop:', shopName);
                 }
                 
                 // If shop name changed, update it in all inspection data
@@ -8098,8 +8132,13 @@
                 // Save to plan-data.json on GitHub
                 await savePlanDataToGitHub(`تحديث محل: ${shopName}`);
                 
+                // Get area name for saving to shops_details
+                const area = planData.areas.find(a => a.id === areaId);
+                const areaName = area ? area.name : '';
+                
                 // Save additional details to shops_details.json if any optional field is filled
-                if (shopNameEn || licenseNo || address || contact || email || locationMap || activity || admCode) {
+                // Always save area and areaId to keep shops_details.json in sync
+                if (shopNameEn || licenseNo || address || contact || email || locationMap || activity || admCode || areaId) {
                     await saveShopDetailsToGitHub(shopName, {
                         nameAr: shopName,
                         nameEn: shopNameEn,
@@ -8109,7 +8148,9 @@
                         email: email,
                         locationMap: locationMap,
                         activity: activity,
-                        admCode: admCode
+                        admCode: admCode,
+                        area: areaName,
+                        areaId: areaId
                     });
                 }
                 
@@ -8165,6 +8206,8 @@
                 if (details.locationMap) cleanDetails.locationMap = details.locationMap;
                 if (details.activity) cleanDetails.activity = details.activity;
                 if (details.admCode) cleanDetails.admCode = details.admCode;
+                if (details.area) cleanDetails.area = details.area;
+                if (details.areaId) cleanDetails.areaId = details.areaId;
                 
                 currentContent[shopName] = cleanDetails;
                 

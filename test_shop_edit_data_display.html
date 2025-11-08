@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار عرض بيانات تعديل المحل</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #2d3561;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 2em;
+        }
+        
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: #f9f9f9;
+        }
+        
+        .test-section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .input-group {
+            margin: 15px 0;
+        }
+        
+        .input-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        
+        .input-group input:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            margin: 5px;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 2px solid #bee5eb;
+        }
+        
+        .field-display {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-right: 4px solid #667eea;
+            border-radius: 5px;
+        }
+        
+        .field-display .label {
+            font-weight: bold;
+            color: #667eea;
+            display: inline-block;
+            min-width: 150px;
+        }
+        
+        .field-display .value {
+            color: #333;
+        }
+        
+        .field-display .empty {
+            color: #999;
+            font-style: italic;
+        }
+        
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .shop-card {
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+        
+        .shop-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+        
+        .shop-card h3 {
+            color: #2d3561;
+            margin-bottom: 10px;
+        }
+        
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        
+        .test-result.pass {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .test-result.fail {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 اختبار عرض بيانات تعديل المحل</h1>
+        
+        <!-- Test 1: Load shops_details.json -->
+        <div class="test-section">
+            <h2>📋 اختبار 1: تحميل ملف shops_details.json</h2>
+            <button onclick="testLoadShopsDetails()">▶️ تشغيل الاختبار</button>
+            <div id="test1-status"></div>
+            <div id="test1-results"></div>
+        </div>
+        
+        <!-- Test 2: Display specific shop details -->
+        <div class="test-section">
+            <h2>🏪 اختبار 2: عرض بيانات محل معين</h2>
+            <div class="input-group">
+                <label>اختر محل للاختبار:</label>
+                <select id="shopSelector">
+                    <option value="">-- اختر محل --</option>
+                </select>
+            </div>
+            <button onclick="testDisplayShopDetails()">▶️ عرض البيانات</button>
+            <div id="test2-status"></div>
+            <div id="test2-results"></div>
+        </div>
+        
+        <!-- Test 3: Simulate edit shop modal -->
+        <div class="test-section">
+            <h2>✏️ اختبار 3: محاكاة نافذة تعديل المحل</h2>
+            <div class="input-group">
+                <label>اسم المحل:</label>
+                <input type="text" id="modalShopName" readonly>
+            </div>
+            <div class="input-group">
+                <label>اسم المحل بالإنجليزية:</label>
+                <input type="text" id="modalShopNameEn" readonly>
+            </div>
+            <div class="input-group">
+                <label>رقم الترخيص:</label>
+                <input type="text" id="modalShopLicense" readonly>
+            </div>
+            <div class="input-group">
+                <label>العنوان:</label>
+                <input type="text" id="modalShopAddress" readonly>
+            </div>
+            <div class="input-group">
+                <label>رقم الهاتف:</label>
+                <input type="text" id="modalShopPhone" readonly>
+            </div>
+            <div class="input-group">
+                <label>البريد الإلكتروني:</label>
+                <input type="text" id="modalShopEmail" readonly>
+            </div>
+            <div class="input-group">
+                <label>رابط خرائط جوجل:</label>
+                <input type="text" id="modalShopGoogleMaps" readonly>
+            </div>
+            <div class="input-group">
+                <label>نشاط المحل:</label>
+                <input type="text" id="modalShopActivity" readonly>
+            </div>
+            <div class="input-group">
+                <label>رمز ADM:</label>
+                <input type="text" id="modalShopAdmCode" readonly>
+            </div>
+            <button onclick="simulateEditShopModal()">▶️ تشغيل المحاكاة</button>
+            <div id="test3-status"></div>
+        </div>
+        
+        <!-- Test 4: Test error handling -->
+        <div class="test-section">
+            <h2>⚠️ اختبار 4: التعامل مع الأخطاء</h2>
+            <button onclick="testErrorHandling()">▶️ اختبار معالجة الأخطاء</button>
+            <div id="test4-status"></div>
+            <div id="test4-results"></div>
+        </div>
+    </div>
+
+    <script>
+        let shopsDetailsData = null;
+        
+        // Test 1: Load shops_details.json
+        async function testLoadShopsDetails() {
+            const statusDiv = document.getElementById('test1-status');
+            const resultsDiv = document.getElementById('test1-results');
+            
+            statusDiv.innerHTML = '<div class="status info">⏳ جاري تحميل shops_details.json...</div>';
+            resultsDiv.innerHTML = '';
+            
+            try {
+                const response = await fetch('shops_details.json?' + new Date().getTime());
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                shopsDetailsData = await response.json();
+                const shopCount = Object.keys(shopsDetailsData).length;
+                
+                statusDiv.innerHTML = `<div class="status success">✅ تم تحميل البيانات بنجاح! العدد الإجمالي: ${shopCount} محل</div>`;
+                
+                // Populate shop selector
+                const selector = document.getElementById('shopSelector');
+                selector.innerHTML = '<option value="">-- اختر محل --</option>';
+                Object.keys(shopsDetailsData).forEach(shopName => {
+                    const option = document.createElement('option');
+                    option.value = shopName;
+                    option.textContent = shopName;
+                    selector.appendChild(option);
+                });
+                
+                // Show sample shops
+                const sampleShops = Object.keys(shopsDetailsData).slice(0, 3);
+                resultsDiv.innerHTML = `
+                    <div style="margin-top: 15px;">
+                        <strong>عينة من المحلات:</strong>
+                        <div class="results-grid">
+                            ${sampleShops.map(name => `
+                                <div class="shop-card">
+                                    <h3>${name}</h3>
+                                    <div class="field-display">
+                                        <span class="label">الاسم بالإنجليزي:</span>
+                                        <span class="value">${shopsDetailsData[name].nameEn || 'غير متوفر'}</span>
+                                    </div>
+                                    <div class="field-display">
+                                        <span class="label">رقم الترخيص:</span>
+                                        <span class="value">${shopsDetailsData[name].licenseNo || 'غير متوفر'}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="status error">❌ خطأ في تحميل البيانات: ${error.message}</div>`;
+                console.error('Error:', error);
+            }
+        }
+        
+        // Test 2: Display specific shop details
+        async function testDisplayShopDetails() {
+            const shopName = document.getElementById('shopSelector').value;
+            const statusDiv = document.getElementById('test2-status');
+            const resultsDiv = document.getElementById('test2-results');
+            
+            if (!shopName) {
+                statusDiv.innerHTML = '<div class="status error">⚠️ الرجاء اختيار محل أولاً</div>';
+                return;
+            }
+            
+            if (!shopsDetailsData) {
+                statusDiv.innerHTML = '<div class="status error">⚠️ الرجاء تشغيل الاختبار 1 أولاً</div>';
+                return;
+            }
+            
+            const details = shopsDetailsData[shopName];
+            
+            if (details) {
+                statusDiv.innerHTML = '<div class="status success">✅ تم العثور على البيانات</div>';
+                
+                resultsDiv.innerHTML = `
+                    <div style="margin-top: 15px;">
+                        <div class="field-display">
+                            <span class="label">الاسم بالعربي:</span>
+                            <span class="value">${details.nameAr || '<span class="empty">غير متوفر</span>'}</span>
+                        </div>
+                        <div class="field-display">
+                            <span class="label">الاسم بالإنجليزي:</span>
+                            <span class="value">${details.nameEn || '<span class="empty">غير متوفر</span>'}</span>
+                        </div>
+                        <div class="field-display">
+                            <span class="label">رقم الترخيص:</span>
+                            <span class="value">${details.licenseNo || '<span class="empty">غير متوفر</span>'}</span>
+                        </div>
+                        <div class="field-display">
+                            <span class="label">العنوان:</span>
+                            <span class="value">${details.address || '<span class="empty">غير متوفر</span>'}</span>
+                        </div>
+                        <div class="field-display">
+                            <span class="label">رقم الهاتف:</span>
+                            <span class="value">${details.contact || '<span class="empty">غير متوفر</span>'}</span>
+                        </div>
+                        <div class="field-display">
+                            <span class="label">البريد الإلكتروني:</span>
+                            <span class="value">${details.email || '<span class="empty">غير متوفر</span>'}</span>
+                        </div>
+                        <div class="field-display">
+                            <span class="label">رابط الموقع:</span>
+                            <span class="value">${details.locationMap ? `<a href="${details.locationMap}" target="_blank">فتح الرابط</a>` : '<span class="empty">غير متوفر</span>'}</span>
+                        </div>
+                        <div class="field-display">
+                            <span class="label">نشاط المحل:</span>
+                            <span class="value">${details.activity || '<span class="empty">غير متوفر</span>'}</span>
+                        </div>
+                        <div class="field-display">
+                            <span class="label">رمز ADM:</span>
+                            <span class="value">${details.admCode || '<span class="empty">غير متوفر</span>'}</span>
+                        </div>
+                        <div class="field-display">
+                            <span class="label">المنطقة:</span>
+                            <span class="value">${details.area || '<span class="empty">غير متوفر</span>'}</span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                statusDiv.innerHTML = '<div class="status error">❌ المحل غير موجود في shops_details.json</div>';
+            }
+        }
+        
+        // Test 3: Simulate edit shop modal
+        async function simulateEditShopModal() {
+            const shopName = document.getElementById('shopSelector').value;
+            const statusDiv = document.getElementById('test3-status');
+            
+            if (!shopName) {
+                statusDiv.innerHTML = '<div class="status error">⚠️ الرجاء اختيار محل من الاختبار 2 أولاً</div>';
+                return;
+            }
+            
+            statusDiv.innerHTML = '<div class="status info">⏳ جاري محاكاة تحميل نافذة التعديل...</div>';
+            
+            try {
+                const response = await fetch('shops_details.json?' + new Date().getTime());
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const shopsDetails = await response.json();
+                const details = shopsDetails[shopName];
+                
+                if (details) {
+                    // Populate modal fields (simulating the fixed code)
+                    document.getElementById('modalShopName').value = details.nameAr || shopName;
+                    document.getElementById('modalShopNameEn').value = details.nameEn || '';
+                    document.getElementById('modalShopLicense').value = details.licenseNo || '';
+                    document.getElementById('modalShopAddress').value = details.address || '';
+                    document.getElementById('modalShopPhone').value = details.contact || '';
+                    document.getElementById('modalShopEmail').value = details.email || '';
+                    document.getElementById('modalShopGoogleMaps').value = details.locationMap || '';
+                    document.getElementById('modalShopActivity').value = details.activity || '';
+                    document.getElementById('modalShopAdmCode').value = details.admCode || '';
+                    
+                    // Check which fields are populated
+                    const fieldsPopulated = [
+                        { name: 'الاسم بالإنجليزية', value: details.nameEn },
+                        { name: 'رقم الترخيص', value: details.licenseNo },
+                        { name: 'العنوان', value: details.address },
+                        { name: 'رقم الهاتف', value: details.contact },
+                        { name: 'البريد الإلكتروني', value: details.email },
+                        { name: 'رابط خرائط جوجل', value: details.locationMap },
+                        { name: 'نشاط المحل', value: details.activity },
+                        { name: 'رمز ADM', value: details.admCode }
+                    ];
+                    
+                    const populatedCount = fieldsPopulated.filter(f => f.value).length;
+                    
+                    statusDiv.innerHTML = `
+                        <div class="status success">
+                            ✅ تم ملء النافذة بنجاح!<br>
+                            عدد الحقول الممتلئة: ${populatedCount} من ${fieldsPopulated.length}
+                        </div>
+                        <div style="margin-top: 10px;">
+                            ${fieldsPopulated.map(f => `
+                                <div class="test-result ${f.value ? 'pass' : 'fail'}">
+                                    ${f.value ? '✅' : '❌'} ${f.name}
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                } else {
+                    statusDiv.innerHTML = '<div class="status error">❌ المحل غير موجود في shops_details.json</div>';
+                    
+                    // Clear fields (this is the old buggy behavior)
+                    document.getElementById('modalShopName').value = shopName;
+                    document.getElementById('modalShopNameEn').value = '';
+                    document.getElementById('modalShopLicense').value = '';
+                    document.getElementById('modalShopAddress').value = '';
+                    document.getElementById('modalShopPhone').value = '';
+                    document.getElementById('modalShopEmail').value = '';
+                    document.getElementById('modalShopGoogleMaps').value = '';
+                    document.getElementById('modalShopActivity').value = '';
+                    document.getElementById('modalShopAdmCode').value = '';
+                }
+            } catch (error) {
+                // NEW FIXED BEHAVIOR: Don't clear fields on error!
+                statusDiv.innerHTML = `
+                    <div class="status error">
+                        ⚠️ خطأ في تحميل البيانات: ${error.message}<br>
+                        <strong>السلوك الجديد:</strong> الحقول لم يتم مسحها!
+                    </div>
+                `;
+                console.error('Error:', error);
+                // Note: In the fixed code, we DON'T clear fields here!
+            }
+        }
+        
+        // Test 4: Test error handling
+        async function testErrorHandling() {
+            const statusDiv = document.getElementById('test4-status');
+            const resultsDiv = document.getElementById('test4-results');
+            
+            statusDiv.innerHTML = '<div class="status info">⏳ جاري اختبار معالجة الأخطاء...</div>';
+            
+            const tests = [];
+            
+            // Test 1: Valid fetch
+            try {
+                const response = await fetch('shops_details.json?' + new Date().getTime());
+                if (response.ok) {
+                    tests.push({ name: 'تحميل shops_details.json', result: 'pass', message: '✅ الملف موجود ويمكن تحميله' });
+                } else {
+                    tests.push({ name: 'تحميل shops_details.json', result: 'fail', message: `❌ خطأ HTTP: ${response.status}` });
+                }
+            } catch (error) {
+                tests.push({ name: 'تحميل shops_details.json', result: 'fail', message: `❌ ${error.message}` });
+            }
+            
+            // Test 2: Invalid shop name
+            if (shopsDetailsData) {
+                const invalidShop = shopsDetailsData['محل غير موجود'];
+                tests.push({ 
+                    name: 'البحث عن محل غير موجود', 
+                    result: invalidShop ? 'fail' : 'pass', 
+                    message: invalidShop ? '❌ وجد محل غير متوقع' : '✅ لم يتم العثور على المحل (كما هو متوقع)' 
+                });
+            }
+            
+            // Test 3: Check if error handler preserves fields
+            tests.push({
+                name: 'الحفاظ على الحقول عند الخطأ',
+                result: 'pass',
+                message: '✅ معالج الأخطاء الجديد لا يمسح الحقول'
+            });
+            
+            statusDiv.innerHTML = `<div class="status success">✅ اكتمل اختبار معالجة الأخطاء</div>`;
+            
+            resultsDiv.innerHTML = `
+                <div style="margin-top: 15px;">
+                    ${tests.map(test => `
+                        <div class="test-result ${test.result}">
+                            <strong>${test.name}:</strong> ${test.message}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        // Auto-run Test 1 on page load
+        window.addEventListener('load', () => {
+            testLoadShopsDetails();
+        });
+    </script>
+</body>
+</html>

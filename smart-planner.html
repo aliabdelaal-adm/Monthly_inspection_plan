@@ -7973,7 +7973,13 @@
             
             // Load additional details from shops_details.json
             fetch('shops_details.json?' + new Date().getTime())
-                .then(response => response.json())
+                .then(response => {
+                    // Check if response is OK before parsing JSON
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(shopsDetails => {
                     const details = shopsDetails[shop.name];
                     if (details) {
@@ -8009,7 +8015,8 @@
                             }
                         }
                     } else {
-                        // Only clear fields if no details found AND this is a new shop
+                        // Shop not in shops_details.json is OK - only clear fields for new shops
+                        console.log('Shop not found in shops_details.json:', shop.name);
                         if (!isExistingShop) {
                             document.getElementById('shopModalNameEn').value = '';
                             document.getElementById('shopModalLicense').value = '';
@@ -8023,9 +8030,9 @@
                     }
                 })
                 .catch(error => {
-                    console.error('Error loading shop details:', error);
-                    // Don't clear fields on error - keep what we have
-                    alert('⚠️ تحذير: فشل تحميل تفاصيل المحل من shops_details.json\nالمعلومات الأساسية متاحة فقط');
+                    console.error('Error loading shop details from shops_details.json:', error);
+                    // Only show alert for critical file loading failures (not for missing shop entries)
+                    // Silent fallback - keep existing field values
                 });
             
             document.getElementById('shopModal').style.display = 'block';

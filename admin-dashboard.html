@@ -3040,6 +3040,12 @@
       // Load additional details from shops_details.json
       try {
         const response = await fetch('shops_details.json?' + new Date().getTime());
+        
+        // Check if response is OK before parsing JSON
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const shopsDetails = await response.json();
         const details = shopsDetails[shopName];
         
@@ -3053,7 +3059,8 @@
           document.getElementById('shopEditActivity').value = details.activity || '';
           document.getElementById('shopEditAdmCode').value = details.admCode || '';
         } else {
-          // Clear optional fields if no details found
+          // Shop not in shops_details.json is OK - clear optional fields
+          console.log('Shop not found in shops_details.json:', shopName);
           document.getElementById('shopEditNameEn').value = '';
           document.getElementById('shopEditLicense').value = '';
           document.getElementById('shopEditAddress').value = '';
@@ -3064,8 +3071,9 @@
           document.getElementById('shopEditAdmCode').value = '';
         }
       } catch (error) {
-        console.error('Error loading shop details:', error);
-        // Clear optional fields on error
+        console.error('Error loading shop details from shops_details.json:', error);
+        // Silent fallback - only clear optional fields, no alert shown
+        // This prevents unnecessary warnings for network issues or file access problems
         document.getElementById('shopEditNameEn').value = '';
         document.getElementById('shopEditLicense').value = '';
         document.getElementById('shopEditAddress').value = '';

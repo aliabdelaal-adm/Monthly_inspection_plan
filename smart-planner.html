@@ -4202,70 +4202,44 @@
         
         // Initialize Google Maps using the new loader
         function initGoogleMaps() {
-            console.log('🔍 Checking Google Maps initialization prerequisites...');
-            
-            // Debug: Log config availability
-            console.log('GOOGLE_MAPS_CONFIG available:', !!window.GOOGLE_MAPS_CONFIG);
-            console.log('googleMapsLoader available:', !!window.googleMapsLoader);
-            
-            if (window.GOOGLE_MAPS_CONFIG) {
-                // Security: Only log if API key is set, don't show any characters
-                console.log('API Key configured:', window.GOOGLE_MAPS_CONFIG.apiKey ? 'Yes (****)' : 'NOT SET');
-            }
+            console.log('🔍 Initializing Google Maps for store selection...');
+            console.log('🔍 تهيئة خرائط جوجل لاختيار المحلات...');
             
             // Check if loader is available
             if (!window.googleMapsLoader) {
                 console.error('❌ Google Maps Loader not available');
-                console.error('This may happen if:');
-                console.error('1. google-maps-config.js failed to load');
-                console.error('2. google-maps-loader.js failed to load');
-                console.error('3. Scripts loaded in wrong order');
-                updateMapsStatusIndicator('error', 'خطأ في تحميل النظام - تحقق من Console');
+                console.error('❌ محمل خرائط جوجل غير متاح');
+                updateMapsStatusIndicator('error', 'خطأ في النظام');
                 return;
             }
             
-            console.log('🚀 Starting Google Maps initialization...');
             updateMapsStatusIndicator('loading', 'جاري تحميل خرائط جوجل...');
             
-            // Set up event listeners
+            // Set up event listeners for successful load
             window.googleMapsLoader.on('onLoad', () => {
                 console.log('✅ Google Maps loaded successfully!');
-                console.log('✅ google.maps available:', typeof google !== 'undefined' && typeof google.maps !== 'undefined');
+                console.log('✅ تم تحميل خرائط جوجل بنجاح!');
                 isMapInitialized = true;
                 updateMapsStatusIndicator('ready', 'خرائط جوجل جاهزة ✓');
             });
             
+            // Set up error handler
             window.googleMapsLoader.on('onError', (error) => {
-                console.error('❌ Google Maps failed to load:', error);
-                console.error('Error details:', {
-                    message: error.message,
-                    stack: error.stack
-                });
+                console.error('❌ Failed to load Google Maps:', error.message);
+                console.error('❌ فشل تحميل خرائط جوجل:', error.message);
                 isMapInitialized = false;
-                
-                const errorMessage = error.message || 'فشل تحميل الخرائط';
-                updateMapsStatusIndicator('error', 'فشل التحميل - انقر للمزيد');
-                
-                // Make indicator clickable for troubleshooting
-                const indicator = document.getElementById('mapsStatusIndicator');
-                if (indicator) {
-                    indicator.style.cursor = 'pointer';
-                    indicator.onclick = function() {
-                        showGoogleMapsErrorDialog(error);
-                    };
-                }
+                updateMapsStatusIndicator('error', 'فشل التحميل');
             });
             
+            // Set up retry handler
             window.googleMapsLoader.on('onRetry', (data) => {
-                console.log(`🔄 Retrying... Attempt ${data.attempt}/${window.GOOGLE_MAPS_CONFIG.loading.maxRetryAttempts}`);
-                console.log('Previous error:', data.error);
+                console.log(`🔄 Retrying... Attempt ${data.attempt}`);
                 updateMapsStatusIndicator('loading', `محاولة ${data.attempt}...`);
             });
             
-            // Initialize the loader
-            console.log('📡 Initiating Google Maps API load...');
+            // Start loading
             window.googleMapsLoader.init().catch(error => {
-                console.error('💥 Fatal error during Google Maps initialization:', error);
+                console.error('💥 Critical error:', error);
             });
         }
         

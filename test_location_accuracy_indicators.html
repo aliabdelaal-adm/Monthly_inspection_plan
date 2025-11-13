@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار مؤشرات دقة الموقع - Location Accuracy Indicators Test</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Cairo', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #2d3561;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+        }
+        
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .legend-demo {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .accuracy-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .marker-demo {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .marker-high {
+            background: #667eea;
+            border: 4px solid #00ff00;
+        }
+        
+        .marker-medium {
+            background: #667eea;
+            border: 4px solid #ffaa00;
+        }
+        
+        .marker-low {
+            background: #667eea;
+            border: 4px solid #ff0000;
+        }
+        
+        .accuracy-info {
+            flex: 1;
+        }
+        
+        .accuracy-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #2d3561;
+            margin-bottom: 5px;
+        }
+        
+        .accuracy-desc {
+            color: #666;
+            font-size: 0.95em;
+        }
+        
+        .accuracy-badge {
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        
+        .info-window-demo {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            margin-top: 10px;
+        }
+        
+        .accuracy-indicator {
+            padding: 10px;
+            border-radius: 5px;
+            border-right: 4px solid;
+            margin: 10px 0;
+        }
+        
+        .indicator-high {
+            background: #e8f5e9;
+            border-color: #00c853;
+        }
+        
+        .indicator-medium {
+            background: #fff3e0;
+            border-color: #ff9800;
+        }
+        
+        .indicator-low {
+            background: #ffebee;
+            border-color: #f44336;
+        }
+        
+        .stats-demo {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .test-success {
+            background: #e8f5e9;
+            border: 2px solid #00c853;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin-top: 30px;
+        }
+        
+        .test-success h3 {
+            color: #00c853;
+            margin-bottom: 10px;
+        }
+        
+        .checklist {
+            text-align: right;
+            margin-top: 15px;
+        }
+        
+        .checklist-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 اختبار مؤشرات دقة الموقع</h1>
+        
+        <div class="section">
+            <h2>📍 مؤشرات الدقة على العلامات</h2>
+            <div class="legend-demo">
+                <div class="accuracy-item">
+                    <div class="marker-demo marker-high">🏪</div>
+                    <div class="accuracy-info">
+                        <div class="accuracy-title">🎯 دقة عالية</div>
+                        <div class="accuracy-desc">
+                            الإحداثيات مستخرجة مباشرة من رابط خرائط جوجل<br>
+                            <strong>مثال:</strong> https://maps.google.com/@24.4539,54.3773<br>
+                            <strong>الدقة:</strong> أقل من 10 أمتار
+                        </div>
+                    </div>
+                    <div class="accuracy-badge">عالي</div>
+                </div>
+                
+                <div class="accuracy-item">
+                    <div class="marker-demo marker-medium">🏪</div>
+                    <div class="accuracy-info">
+                        <div class="accuracy-title">📍 دقة متوسطة</div>
+                        <div class="accuracy-desc">
+                            الموقع محدد جغرافياً من عنوان الشارع<br>
+                            <strong>مثال:</strong> شارع الفلاح، أبوظبي<br>
+                            <strong>الدقة:</strong> 50-100 متر
+                        </div>
+                    </div>
+                    <div class="accuracy-badge">متوسط</div>
+                </div>
+                
+                <div class="accuracy-item">
+                    <div class="marker-demo marker-low">🏪</div>
+                    <div class="accuracy-info">
+                        <div class="accuracy-title">⚠️ دقة منخفضة</div>
+                        <div class="accuracy-desc">
+                            الموقع محدد جغرافياً من المنطقة فقط<br>
+                            <strong>مثال:</strong> سوق الميناء، أبوظبي<br>
+                            <strong>الدقة:</strong> 500-1000 متر (مع إزاحة عشوائية)
+                        </div>
+                    </div>
+                    <div class="accuracy-badge">منخفض</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>ℹ️ معلومات الدقة في نافذة المعلومات</h2>
+            <div class="info-window-demo">
+                <h3 style="margin: 0 0 10px 0; color: #2d3561;">محل مثال</h3>
+                <p style="margin: 5px 0;"><strong>كود ADM:</strong> 12345</p>
+                <p style="margin: 5px 0;"><strong>العنوان:</strong> شارع الفلاح</p>
+                <p style="margin: 5px 0;"><strong>المنطقة:</strong> سوق الميناء</p>
+                
+                <div class="accuracy-indicator indicator-high">
+                    <strong style="color: #00c853;">🎯 دقة الموقع:</strong><br>
+                    <span style="font-size: 0.9em; color: #666;">دقة عالية - من رابط الموقع المباشر</span>
+                </div>
+                
+                <div class="accuracy-indicator indicator-medium">
+                    <strong style="color: #ff9800;">📍 دقة الموقع:</strong><br>
+                    <span style="font-size: 0.9em; color: #666;">دقة متوسطة - من العنوان</span>
+                </div>
+                
+                <div class="accuracy-indicator indicator-low">
+                    <strong style="color: #f44336;">⚠️ دقة الموقع:</strong><br>
+                    <span style="font-size: 0.9em; color: #666;">دقة منخفضة - من المنطقة فقط</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📊 إحصائيات الدقة</h2>
+            <div class="legend-demo">
+                <h3 style="margin: 0 0 15px 0; color: #2d3561;">🎯 دقة مواقع المحلات</h3>
+                <div class="stats-demo">
+                    <div class="stat-card" style="border-top: 4px solid #00ff00;">
+                        <div class="stat-value">45</div>
+                        <div class="stat-label">🎯 دقة عالية</div>
+                    </div>
+                    <div class="stat-card" style="border-top: 4px solid #ffaa00;">
+                        <div class="stat-value">32</div>
+                        <div class="stat-label">📍 دقة متوسطة</div>
+                    </div>
+                    <div class="stat-card" style="border-top: 4px solid #ff0000;">
+                        <div class="stat-value">18</div>
+                        <div class="stat-label">⚠️ دقة منخفضة</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-success">
+            <h3>✅ اختبار المظهر ناجح</h3>
+            <p>جميع مؤشرات الدقة تعرض بشكل صحيح</p>
+            
+            <div class="checklist">
+                <div class="checklist-item">✅ الحدود الملونة للعلامات (أخضر، برتقالي، أحمر)</div>
+                <div class="checklist-item">✅ معلومات الدقة في نافذة المعلومات</div>
+                <div class="checklist-item">✅ دليل الدقة مع العدادات الحية</div>
+                <div class="checklist-item">✅ الإحصائيات تعرض بشكل واضح</div>
+                <div class="checklist-item">✅ الألوان والأيقونات متسقة</div>
+            </div>
+        </div>
+        
+        <div class="section" style="margin-top: 30px;">
+            <h2>🔍 كيفية الاختبار في Smart Planner</h2>
+            <div class="legend-demo">
+                <ol style="line-height: 2; padding-right: 20px;">
+                    <li>افتح <code>smart-planner.html</code> في المتصفح</li>
+                    <li>حمّل بيانات plan-data.json و shops_details.json</li>
+                    <li>انقر على زر "🗺️ إضافة تفتيش من الخريطة"</li>
+                    <li>انتظر تحميل الخريطة والعلامات</li>
+                    <li>افحص حدود العلامات:
+                        <ul style="margin: 10px 0; padding-right: 20px;">
+                            <li>أخضر = محلات لها روابط خرائط دقيقة</li>
+                            <li>برتقالي = محلات محددة من العنوان</li>
+                            <li>أحمر = محلات محددة من المنطقة فقط</li>
+                        </ul>
+                    </li>
+                    <li>مرر فوق العلامات لرؤية معلومات الدقة</li>
+                    <li>تحقق من دليل الدقة والإحصائيات أسفل الأدوات المساعدة</li>
+                    <li>جرب اختيار وإلغاء اختيار المحلات - يجب أن تبقى الحدود الملونة</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

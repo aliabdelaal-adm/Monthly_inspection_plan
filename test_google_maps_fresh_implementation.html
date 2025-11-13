@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار تكامل خرائط جوجل - Fresh Implementation Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2d3561;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+        
+        .test-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 5px solid #667eea;
+        }
+        
+        .test-title {
+            font-size: 1.3em;
+            color: #2d3561;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .test-result {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffeaa7;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 2px solid #bee5eb;
+        }
+        
+        .test-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+        }
+        
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        #mapContainer {
+            width: 100%;
+            height: 500px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border: 3px solid #667eea;
+        }
+        
+        pre {
+            background: #2d3561;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 اختبار تكامل خرائط جوجل الجديد</h1>
+        <h2 style="text-align: center; color: #666; margin-bottom: 30px;">Fresh Google Maps Implementation Test</h2>
+        
+        <!-- Test 1: Configuration Files -->
+        <div class="test-section">
+            <div class="test-title">📋 Test 1: Configuration Files Loading</div>
+            <div id="test1Result"></div>
+            <button class="test-button" onclick="runTest1()">Run Test 1</button>
+        </div>
+        
+        <!-- Test 2: API Key Validation -->
+        <div class="test-section">
+            <div class="test-title">🔑 Test 2: API Key Validation</div>
+            <div id="test2Result"></div>
+            <button class="test-button" onclick="runTest2()">Run Test 2</button>
+        </div>
+        
+        <!-- Test 3: Google Maps Loader -->
+        <div class="test-section">
+            <div class="test-title">🚀 Test 3: Google Maps Loader Status</div>
+            <div id="test3Result"></div>
+            <button class="test-button" onclick="runTest3()">Run Test 3</button>
+        </div>
+        
+        <!-- Test 4: Load Google Maps API -->
+        <div class="test-section">
+            <div class="test-title">🌍 Test 4: Load and Initialize Google Maps</div>
+            <div id="test4Result"></div>
+            <button class="test-button" onclick="runTest4()">Run Test 4</button>
+        </div>
+        
+        <!-- Test 5: Create Map Instance -->
+        <div class="test-section">
+            <div class="test-title">🗺️ Test 5: Create Map Instance</div>
+            <div id="test5Result"></div>
+            <button class="test-button" onclick="runTest5()">Run Test 5</button>
+            <div id="mapContainer"></div>
+        </div>
+        
+        <!-- Full Test Report -->
+        <div class="test-section">
+            <div class="test-title">📊 Complete Test Report</div>
+            <div id="fullReport"></div>
+            <button class="test-button" onclick="runAllTests()">🏃 Run All Tests</button>
+        </div>
+    </div>
+    
+    <!-- Load Google Maps Configuration -->
+    <script src="google-maps-config.local.js"></script>
+    <script src="google-maps-config.js"></script>
+    <script src="google-maps-loader.js"></script>
+    
+    <script>
+        let testResults = {
+            test1: null,
+            test2: null,
+            test3: null,
+            test4: null,
+            test5: null
+        };
+        
+        // Test 1: Configuration Files Loading
+        function runTest1() {
+            const resultDiv = document.getElementById('test1Result');
+            let html = '';
+            
+            // Check if GOOGLE_MAPS_CONFIG is loaded
+            if (typeof window.GOOGLE_MAPS_CONFIG !== 'undefined') {
+                html += '<div class="test-result success">✅ GOOGLE_MAPS_CONFIG loaded successfully</div>';
+                html += '<div class="test-result info">Configuration details:<br>';
+                html += `• Libraries: ${window.GOOGLE_MAPS_CONFIG.libraries.join(', ')}<br>`;
+                html += `• Language: ${window.GOOGLE_MAPS_CONFIG.language}<br>`;
+                html += `• Region: ${window.GOOGLE_MAPS_CONFIG.region}<br>`;
+                html += `• Default Center: ${JSON.stringify(window.GOOGLE_MAPS_CONFIG.mapConfig.defaultCenter)}<br>`;
+                html += '</div>';
+                testResults.test1 = true;
+            } else {
+                html += '<div class="test-result error">❌ GOOGLE_MAPS_CONFIG not loaded</div>';
+                testResults.test1 = false;
+            }
+            
+            // Check if GoogleMapsLoader is available
+            if (typeof GoogleMapsLoader !== 'undefined' || typeof window.googleMapsLoader !== 'undefined') {
+                html += '<div class="test-result success">✅ GoogleMapsLoader class available</div>';
+            } else {
+                html += '<div class="test-result error">❌ GoogleMapsLoader class not available</div>';
+                testResults.test1 = false;
+            }
+            
+            resultDiv.innerHTML = html;
+        }
+        
+        // Test 2: API Key Validation
+        function runTest2() {
+            const resultDiv = document.getElementById('test2Result');
+            let html = '';
+            
+            if (typeof window.GOOGLE_MAPS_CONFIG !== 'undefined') {
+                const apiKey = window.GOOGLE_MAPS_CONFIG.apiKey;
+                
+                // Check if API key is set
+                if (!apiKey || apiKey === 'YOUR_API_KEY_HERE') {
+                    html += '<div class="test-result error">❌ API Key not configured</div>';
+                    html += '<div class="test-result warning">Please update google-maps-config.local.js with your API key</div>';
+                    testResults.test2 = false;
+                } else if (apiKey.startsWith('AIza')) {
+                    html += '<div class="test-result success">✅ API Key format is valid (starts with AIza)</div>';
+                    html += '<div class="test-result info">API Key: ' + apiKey.substring(0, 10) + '****</div>';
+                    testResults.test2 = true;
+                } else {
+                    html += '<div class="test-result warning">⚠️ API Key is set but format looks unusual</div>';
+                    html += '<div class="test-result info">API Key: ' + apiKey.substring(0, 10) + '****</div>';
+                    testResults.test2 = false;
+                }
+            } else {
+                html += '<div class="test-result error">❌ Configuration not loaded</div>';
+                testResults.test2 = false;
+            }
+            
+            resultDiv.innerHTML = html;
+        }
+        
+        // Test 3: Google Maps Loader Status
+        function runTest3() {
+            const resultDiv = document.getElementById('test3Result');
+            let html = '';
+            
+            if (window.googleMapsLoader) {
+                html += '<div class="test-result success">✅ Google Maps Loader instance created</div>';
+                const status = window.googleMapsLoader.getStatus();
+                html += '<div class="test-result info">Loader Status: ' + status + '</div>';
+                
+                if (window.googleMapsLoader.isGoogleMapsAvailable()) {
+                    html += '<div class="test-result success">✅ Google Maps API is already available!</div>';
+                    testResults.test3 = true;
+                } else {
+                    html += '<div class="test-result warning">⚠️ Google Maps API not loaded yet</div>';
+                    testResults.test3 = false;
+                }
+            } else {
+                html += '<div class="test-result error">❌ Google Maps Loader not initialized</div>';
+                testResults.test3 = false;
+            }
+            
+            resultDiv.innerHTML = html;
+        }
+        
+        // Test 4: Load Google Maps API
+        async function runTest4() {
+            const resultDiv = document.getElementById('test4Result');
+            let html = '<div class="test-result info">⏳ Loading Google Maps API...</div>';
+            resultDiv.innerHTML = html;
+            
+            try {
+                if (!window.googleMapsLoader) {
+                    throw new Error('Google Maps Loader not available');
+                }
+                
+                await window.googleMapsLoader.init();
+                
+                if (window.googleMapsLoader.isGoogleMapsAvailable()) {
+                    html = '<div class="test-result success">✅ Google Maps API loaded successfully!</div>';
+                    html += '<div class="test-result info">google.maps object is available</div>';
+                    html += '<div class="test-result info">google.maps.Map class is available</div>';
+                    testResults.test4 = true;
+                } else {
+                    html = '<div class="test-result error">❌ Google Maps API loaded but objects not available</div>';
+                    testResults.test4 = false;
+                }
+            } catch (error) {
+                html = '<div class="test-result error">❌ Failed to load Google Maps API</div>';
+                html += '<div class="test-result error">Error: ' + error.message + '</div>';
+                testResults.test4 = false;
+            }
+            
+            resultDiv.innerHTML = html;
+        }
+        
+        // Test 5: Create Map Instance
+        async function runTest5() {
+            const resultDiv = document.getElementById('test5Result');
+            const mapContainer = document.getElementById('mapContainer');
+            let html = '';
+            
+            try {
+                // Ensure Google Maps is loaded
+                if (!window.googleMapsLoader || !window.googleMapsLoader.isGoogleMapsAvailable()) {
+                    html += '<div class="test-result warning">⚠️ Loading Google Maps first...</div>';
+                    resultDiv.innerHTML = html;
+                    await runTest4();
+                }
+                
+                if (!window.googleMapsLoader.isGoogleMapsAvailable()) {
+                    throw new Error('Google Maps API is not available');
+                }
+                
+                // Create map
+                const map = new google.maps.Map(mapContainer, {
+                    center: window.GOOGLE_MAPS_CONFIG.mapConfig.defaultCenter,
+                    zoom: window.GOOGLE_MAPS_CONFIG.mapConfig.defaultZoom,
+                    mapTypeControl: true,
+                    zoomControl: true,
+                    streetViewControl: true,
+                    fullscreenControl: true
+                });
+                
+                // Add a marker at the center
+                const marker = new google.maps.Marker({
+                    position: window.GOOGLE_MAPS_CONFIG.mapConfig.defaultCenter,
+                    map: map,
+                    title: 'Abu Dhabi, UAE',
+                    animation: google.maps.Animation.DROP
+                });
+                
+                html = '<div class="test-result success">✅ Map created successfully!</div>';
+                html += '<div class="test-result success">✅ Marker added at Abu Dhabi</div>';
+                html += '<div class="test-result info">Map is fully interactive and ready to use</div>';
+                testResults.test5 = true;
+            } catch (error) {
+                html = '<div class="test-result error">❌ Failed to create map</div>';
+                html += '<div class="test-result error">Error: ' + error.message + '</div>';
+                testResults.test5 = false;
+            }
+            
+            resultDiv.innerHTML = html;
+        }
+        
+        // Run all tests
+        async function runAllTests() {
+            const reportDiv = document.getElementById('fullReport');
+            reportDiv.innerHTML = '<div class="test-result info">⏳ Running all tests...</div>';
+            
+            await runTest1();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await runTest2();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await runTest3();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await runTest4();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await runTest5();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Generate report
+            const passed = Object.values(testResults).filter(r => r === true).length;
+            const total = Object.keys(testResults).length;
+            
+            let html = '<pre>';
+            html += '╔════════════════════════════════════════╗\n';
+            html += '║   📊 TEST RESULTS SUMMARY              ║\n';
+            html += '╠════════════════════════════════════════╣\n';
+            html += `║   Tests Passed: ${passed}/${total}                     ║\n`;
+            html += '╠════════════════════════════════════════╣\n';
+            html += `║   Test 1 (Config): ${testResults.test1 ? '✅ PASS' : '❌ FAIL'}             ║\n`;
+            html += `║   Test 2 (API Key): ${testResults.test2 ? '✅ PASS' : '❌ FAIL'}            ║\n`;
+            html += `║   Test 3 (Loader): ${testResults.test3 ? '✅ PASS' : '❌ FAIL'}             ║\n`;
+            html += `║   Test 4 (Load API): ${testResults.test4 ? '✅ PASS' : '❌ FAIL'}           ║\n`;
+            html += `║   Test 5 (Create Map): ${testResults.test5 ? '✅ PASS' : '❌ FAIL'}         ║\n`;
+            html += '╠════════════════════════════════════════╣\n';
+            
+            if (passed === total) {
+                html += '║   🎉 ALL TESTS PASSED!                 ║\n';
+                html += '║   Google Maps is ready to use!         ║\n';
+            } else {
+                html += '║   ⚠️  SOME TESTS FAILED                ║\n';
+                html += '║   Check individual test results        ║\n';
+            }
+            
+            html += '╚════════════════════════════════════════╝\n';
+            html += '</pre>';
+            
+            if (passed === total) {
+                html = '<div class="test-result success">' + html + '</div>';
+            } else {
+                html = '<div class="test-result warning">' + html + '</div>';
+            }
+            
+            reportDiv.innerHTML = html;
+        }
+        
+        // Auto-run configuration tests on load
+        window.addEventListener('load', function() {
+            console.log('🧪 Test page loaded. Ready to run tests.');
+            runTest1();
+            runTest2();
+            runTest3();
+        });
+    </script>
+</body>
+</html>

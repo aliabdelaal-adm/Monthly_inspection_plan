@@ -1993,6 +1993,75 @@
             color: white;
         }
         
+        .map-accuracy-legend {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 20px;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .map-accuracy-legend h4 {
+            margin: 0 0 10px 0;
+            color: #2d3561;
+            font-size: 1.1em;
+        }
+        
+        .accuracy-legend-items {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .accuracy-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        
+        .accuracy-indicator-high,
+        .accuracy-indicator-medium,
+        .accuracy-indicator-low {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 3px solid;
+            flex-shrink: 0;
+        }
+        
+        .accuracy-indicator-high {
+            background: white;
+            border-color: #00ff00;
+        }
+        
+        .accuracy-indicator-medium {
+            background: white;
+            border-color: #ffaa00;
+        }
+        
+        .accuracy-indicator-low {
+            background: white;
+            border-color: #ff0000;
+        }
+        
+        .accuracy-label {
+            flex: 1;
+            color: #2d3561;
+            font-weight: 500;
+        }
+        
+        .accuracy-count {
+            background: #667eea;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+        
         .selected-shops-on-map {
             background: white;
             border-radius: 10px;
@@ -4070,6 +4139,28 @@
                     </div>
                 </div>
                 
+                <!-- Location Accuracy Legend -->
+                <div class="map-accuracy-legend">
+                    <h4>🎯 دقة مواقع المحلات</h4>
+                    <div class="accuracy-legend-items">
+                        <div class="accuracy-legend-item">
+                            <span class="accuracy-indicator-high"></span>
+                            <span class="accuracy-label">🎯 دقة عالية - رابط خرائط مباشر</span>
+                            <span class="accuracy-count" id="accuracyHighCount">0</span>
+                        </div>
+                        <div class="accuracy-legend-item">
+                            <span class="accuracy-indicator-medium"></span>
+                            <span class="accuracy-label">📍 دقة متوسطة - من العنوان</span>
+                            <span class="accuracy-count" id="accuracyMediumCount">0</span>
+                        </div>
+                        <div class="accuracy-legend-item">
+                            <span class="accuracy-indicator-low"></span>
+                            <span class="accuracy-label">⚠️ دقة منخفضة - من المنطقة</span>
+                            <span class="accuracy-count" id="accuracyLowCount">0</span>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Selected Shops Display -->
                 <div id="selectedShopsOnMap" class="selected-shops-on-map" style="display: none;">
                     <h4>✅ المحلات المختارة (<span id="mapSelectedCount">0</span>)</h4>
@@ -4557,17 +4648,27 @@
                 
                 const batchPromises = batch.map(async ({ shopName, shop }) => {
                     // Extract coordinates from Google Maps link
-                    let coords = extractCoordinatesFromLink(shop.locationMap);
+                    let locationData = extractCoordinatesFromLink(shop.locationMap);
+                    let accuracy = 'none';
+                    let coords = null;
+                    
+                    // If we have location data from link
+                    if (locationData) {
+                        coords = locationData.coords;
+                        accuracy = locationData.accuracy;
+                    }
                     
                     // If coordinates not found and we have a location link or address, try geocoding
                     if (!coords && (shop.locationMap || shop.address)) {
                         pendingGeocodingCount++;
-                        coords = await geocodeShopLocation(shop, shopName);
-                        if (coords) {
+                        const geocodedData = await geocodeShopLocation(shop, shopName);
+                        if (geocodedData) {
+                            coords = geocodedData.coords;
+                            accuracy = geocodedData.accuracy;
                             geocodedCount++;
                             // Cache the coordinates for this shop
                             if (shop.locationMap) {
-                                coordinatesCache[shop.locationMap] = coords;
+                                coordinatesCache[shop.locationMap] = geocodedData;
                             }
                         }
                     }
@@ -4588,6 +4689,20 @@
                             else markerColor = '#667eea';
                         }
                         
+                        // Determine stroke color based on accuracy level
+                        let strokeColor = 'white';
+                        let strokeWeight = 2;
+                        if (accuracy === 'high') {
+                            strokeColor = '#00ff00'; // Bright green for high accuracy
+                            strokeWeight = 3;
+                        } else if (accuracy === 'medium') {
+                            strokeColor = '#ffaa00'; // Orange for medium accuracy
+                            strokeWeight = 3;
+                        } else if (accuracy === 'low') {
+                            strokeColor = '#ff0000'; // Red for low accuracy
+                            strokeWeight = 3;
+                        }
+                        
                         const marker = new google.maps.Marker({
                             position: coords,
                             map: map,
@@ -4597,12 +4712,13 @@
                                 scale: isSelected ? 12 : 8,
                                 fillColor: markerColor,
                                 fillOpacity: isSelected ? 1 : 0.8,
-                                strokeColor: 'white',
-                                strokeWeight: 2
+                                strokeColor: strokeColor,
+                                strokeWeight: strokeWeight
                             },
                             shopName: shopName,
                             shopData: shop,
-                            isAvailable: isAvailable
+                            isAvailable: isAvailable,
+                            locationAccuracy: accuracy
                         });
                         
                         // Add click event to marker
@@ -4620,7 +4736,7 @@
                             showInfoWindow(marker, null);
                         });
                         
-                        return { marker, coords };
+                        return { marker, coords, accuracy };
                     }
                     
                     return null;
@@ -4666,6 +4782,7 @@
         }
         
         // Geocode shop location using Google Maps Geocoding API
+        // Returns: { coords: {lat, lng}, accuracy: 'high'|'medium'|'low' }
         async function geocodeShopLocation(shop, shopName) {
             // Create a geocoder instance
             if (!window.geocoder) {
@@ -4693,8 +4810,11 @@
                     
                     if (result && result.geometry && result.geometry.location) {
                         return {
-                            lat: result.geometry.location.lat(),
-                            lng: result.geometry.location.lng()
+                            coords: {
+                                lat: result.geometry.location.lat(),
+                                lng: result.geometry.location.lng()
+                            },
+                            accuracy: 'medium' // Geocoded from address
                         };
                     }
                 }
@@ -4721,8 +4841,11 @@
                         // Add small random offset to avoid overlapping markers in same area
                         const randomOffset = () => (Math.random() - 0.5) * MAP_CONFIG.areaOverlapOffset;
                         return {
-                            lat: result.geometry.location.lat() + randomOffset(),
-                            lng: result.geometry.location.lng() + randomOffset()
+                            coords: {
+                                lat: result.geometry.location.lat() + randomOffset(),
+                                lng: result.geometry.location.lng() + randomOffset()
+                            },
+                            accuracy: 'low' // Geocoded from area only
                         };
                     }
                 }
@@ -4738,6 +4861,7 @@
         const coordinatesCache = {};
         
         // Synchronous version that returns null for short links (to be resolved via geocoding)
+        // Returns: { coords: {lat, lng}, accuracy: 'high' } or null
         function extractCoordinatesFromLink(link) {
             if (!link) return null;
             
@@ -4752,12 +4876,15 @@
                 if (link.includes('@')) {
                     const match = link.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
                     if (match) {
-                        const coords = {
-                            lat: parseFloat(match[1]),
-                            lng: parseFloat(match[2])
+                        const result = {
+                            coords: {
+                                lat: parseFloat(match[1]),
+                                lng: parseFloat(match[2])
+                            },
+                            accuracy: 'high' // Direct coordinates from Google Maps link
                         };
-                        coordinatesCache[link] = coords;
-                        return coords;
+                        coordinatesCache[link] = result;
+                        return result;
                     }
                 }
                 
@@ -4768,12 +4895,15 @@
                         const q = url.searchParams.get('q');
                         const match = q.match(/(-?\d+\.\d+),\s*(-?\d+\.\d+)/);
                         if (match) {
-                            const coords = {
-                                lat: parseFloat(match[1]),
-                                lng: parseFloat(match[2])
+                            const result = {
+                                coords: {
+                                    lat: parseFloat(match[1]),
+                                    lng: parseFloat(match[2])
+                                },
+                                accuracy: 'high' // Direct coordinates from Google Maps link
                             };
-                            coordinatesCache[link] = coords;
-                            return coords;
+                            coordinatesCache[link] = result;
+                            return result;
                         }
                     }
                 } catch (urlError) {
@@ -4843,6 +4973,21 @@
         function toggleShopSelection(marker) {
             const shopName = marker.shopName;
             const index = mapSelectedShops.indexOf(shopName);
+            const accuracy = marker.locationAccuracy || 'none';
+            
+            // Determine stroke color based on accuracy level
+            let strokeColor = 'white';
+            let strokeWeight = 2;
+            if (accuracy === 'high') {
+                strokeColor = '#00ff00'; // Bright green for high accuracy
+                strokeWeight = 3;
+            } else if (accuracy === 'medium') {
+                strokeColor = '#ffaa00'; // Orange for medium accuracy
+                strokeWeight = 3;
+            } else if (accuracy === 'low') {
+                strokeColor = '#ff0000'; // Red for low accuracy
+                strokeWeight = 3;
+            }
             
             if (index > -1) {
                 // Deselect
@@ -4852,8 +4997,8 @@
                     scale: 8,
                     fillColor: getPriorityColor(shopName),
                     fillOpacity: 0.8,
-                    strokeColor: 'white',
-                    strokeWeight: 2
+                    strokeColor: strokeColor,
+                    strokeWeight: strokeWeight
                 });
             } else {
                 // Select
@@ -4863,8 +5008,8 @@
                     scale: 12,
                     fillColor: '#28a745',
                     fillOpacity: 1,
-                    strokeColor: 'white',
-                    strokeWeight: 2
+                    strokeColor: strokeColor,
+                    strokeWeight: strokeWeight
                 });
             }
             
@@ -4885,6 +5030,7 @@
             const shop = marker.shopData;
             const shopName = marker.shopName;
             const priority = getShopPriority(shopName);
+            const accuracy = marker.locationAccuracy || 'none';
             
             let priorityText = '';
             if (priority === 'very-high') priorityText = '🔴 أولوية عالية جداً';
@@ -4892,8 +5038,30 @@
             else if (priority === 'medium') priorityText = '🟡 أولوية متوسطة';
             else priorityText = '🟢 أولوية منخفضة';
             
+            // Accuracy indicator
+            let accuracyText = '';
+            let accuracyColor = '#999';
+            let accuracyIcon = '❓';
+            if (accuracy === 'high') {
+                accuracyText = 'دقة عالية - من رابط الموقع المباشر';
+                accuracyColor = '#00c853';
+                accuracyIcon = '🎯';
+            } else if (accuracy === 'medium') {
+                accuracyText = 'دقة متوسطة - من العنوان';
+                accuracyColor = '#ff9800';
+                accuracyIcon = '📍';
+            } else if (accuracy === 'low') {
+                accuracyText = 'دقة منخفضة - من المنطقة فقط';
+                accuracyColor = '#f44336';
+                accuracyIcon = '⚠️';
+            } else {
+                accuracyText = 'موقع غير محدد';
+                accuracyColor = '#999';
+                accuracyIcon = '❓';
+            }
+            
             const content = customMessage || `
-                <div style="font-family: Cairo, Arial; direction: rtl; text-align: right; padding: 10px;">
+                <div style="font-family: Cairo, Arial; direction: rtl; text-align: right; padding: 10px; min-width: 250px;">
                     <h3 style="margin: 0 0 10px 0; color: #2d3561;">${shop.nameAr || shopName}</h3>
                     ${shop.nameEn ? `<p style="margin: 5px 0; color: #666;"><strong>English:</strong> ${shop.nameEn}</p>` : ''}
                     ${shop.admCode ? `<p style="margin: 5px 0;"><strong>كود ADM:</strong> ${shop.admCode}</p>` : ''}
@@ -4901,6 +5069,10 @@
                     ${shop.address ? `<p style="margin: 5px 0;"><strong>العنوان:</strong> ${shop.address}</p>` : ''}
                     ${shop.area ? `<p style="margin: 5px 0;"><strong>المنطقة:</strong> ${shop.area}</p>` : ''}
                     <p style="margin: 5px 0;"><strong>الأولوية:</strong> ${priorityText}</p>
+                    <div style="margin: 10px 0; padding: 8px; background: #f5f5f5; border-radius: 5px; border-right: 4px solid ${accuracyColor};">
+                        <strong style="color: ${accuracyColor};">${accuracyIcon} دقة الموقع:</strong><br>
+                        <span style="font-size: 0.9em; color: #666;">${accuracyText}</span>
+                    </div>
                     ${marker.isAvailable ? 
                         `<p style="margin: 10px 0 0 0; color: #28a745; font-weight: 600;">✅ متاح للاختيار</p>` : 
                         `<p style="margin: 10px 0 0 0; color: #dc3545; font-weight: 600;">❌ غير متاح</p>`
@@ -4957,13 +5129,29 @@
                 // Update marker
                 const marker = markers.find(m => m.shopName === shopName);
                 if (marker) {
+                    const accuracy = marker.locationAccuracy || 'none';
+                    
+                    // Determine stroke color based on accuracy level
+                    let strokeColor = 'white';
+                    let strokeWeight = 2;
+                    if (accuracy === 'high') {
+                        strokeColor = '#00ff00'; // Bright green for high accuracy
+                        strokeWeight = 3;
+                    } else if (accuracy === 'medium') {
+                        strokeColor = '#ffaa00'; // Orange for medium accuracy
+                        strokeWeight = 3;
+                    } else if (accuracy === 'low') {
+                        strokeColor = '#ff0000'; // Red for low accuracy
+                        strokeWeight = 3;
+                    }
+                    
                     marker.setIcon({
                         path: google.maps.SymbolPath.CIRCLE,
                         scale: 8,
                         fillColor: getPriorityColor(shopName),
                         fillOpacity: 0.8,
-                        strokeColor: 'white',
-                        strokeWeight: 2
+                        strokeColor: strokeColor,
+                        strokeWeight: strokeWeight
                     });
                 }
                 
@@ -4981,10 +5169,27 @@
                 return priority === 'high' || priority === 'very-high';
             }).length;
             
+            // Count accuracy levels
+            let highAccuracyCount = 0;
+            let mediumAccuracyCount = 0;
+            let lowAccuracyCount = 0;
+            
+            markers.forEach(marker => {
+                const accuracy = marker.locationAccuracy || 'none';
+                if (accuracy === 'high') highAccuracyCount++;
+                else if (accuracy === 'medium') mediumAccuracyCount++;
+                else if (accuracy === 'low') lowAccuracyCount++;
+            });
+            
             document.getElementById('mapTotalShops').textContent = totalShops;
             document.getElementById('mapAvailableShops').textContent = availableShops;
             document.getElementById('mapSelectedShops').textContent = selectedShops;
             document.getElementById('mapHighPriorityShops').textContent = highPriorityShops;
+            
+            // Update accuracy counts
+            document.getElementById('accuracyHighCount').textContent = highAccuracyCount;
+            document.getElementById('accuracyMediumCount').textContent = mediumAccuracyCount;
+            document.getElementById('accuracyLowCount').textContent = lowAccuracyCount;
         }
         
         // Helper functions for map tools

@@ -13828,12 +13828,16 @@ function renderPlanTable() {
                             }
                             
                             const hasLocation = shopDetails && shopDetails.locationMap && shopDetails.locationMap !== '';
+                            const placeholderMap = 'https://maps.app.goo.gl/WLKn2FPk9gN7MSNC8';
+                            const hasAccurateLocation = hasLocation && shopDetails.locationMap !== placeholderMap;
+                            
+                            // Show different icons for accurate vs placeholder coordinates
                             const mapsIcon = hasLocation ? 
                                 `<a href="${shopDetails.locationMap}" target="_blank" onclick="event.stopPropagation();" 
-                                    style="display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#28a745,#20c997);color:white;padding:4px 10px;border-radius:6px;text-decoration:none;font-size:0.85em;font-weight:600;box-shadow:0 2px 6px rgba(40,167,69,0.3);transition:all 0.2s ease;margin-right:8px;" 
-                                    onmouseover="this.style.transform='scale(1.05)';this.style.boxShadow='0 4px 10px rgba(40,167,69,0.5)';" 
-                                    onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 2px 6px rgba(40,167,69,0.3)';"
-                                    title="فتح الموقع على خرائط جوجل">📍 خريطة</a>` : '';
+                                    style="display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,${hasAccurateLocation ? '#28a745,#20c997' : '#ffc107,#ff9800'});color:white;padding:4px 10px;border-radius:6px;text-decoration:none;font-size:0.85em;font-weight:600;box-shadow:0 2px 6px rgba(${hasAccurateLocation ? '40,167,69' : '255,193,7'},0.3);transition:all 0.2s ease;margin-right:8px;" 
+                                    onmouseover="this.style.transform='scale(1.05)';this.style.boxShadow='0 4px 10px rgba(${hasAccurateLocation ? '40,167,69' : '255,193,7'},0.5)';" 
+                                    onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 2px 6px rgba(${hasAccurateLocation ? '40,167,69' : '255,193,7'},0.3)';"
+                                    title="${hasAccurateLocation ? 'فتح الموقع الدقيق على خرائط جوجل ✓' : 'موقع تقريبي - يحتاج تحديث'}">📍 ${hasAccurateLocation ? 'خريطة دقيقة' : 'خريطة'}</a>` : '';
                             
                             return `<li class="shop-item-clickable" 
                                 onclick="showIndividualShopDetails('${shop.replace(/'/g, "\\'")}')" 

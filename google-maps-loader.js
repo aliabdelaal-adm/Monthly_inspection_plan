@@ -110,10 +110,43 @@ class GoogleMapsLoader {
             };
             
             // Error handler
-            script.onerror = () => {
+            script.onerror = (event) => {
                 clearTimeout(timeout);
                 this.isLoading = false;
-                const error = new Error('Script failed to load');
+                
+                // Detect if blocked by browser/extension (ERR_BLOCKED_BY_CLIENT)
+                // Use proper URL validation to prevent URL substring bypass
+                let isBlocked = !navigator.onLine;
+                if (event.target && event.target.src) {
+                    try {
+                        const url = new URL(event.target.src);
+                        // Check if hostname ends with googleapis.com (proper domain validation)
+                        isBlocked = isBlocked || url.hostname.endsWith('.googleapis.com') || url.hostname === 'googleapis.com';
+                    } catch (e) {
+                        // Invalid URL, treat as blocked
+                        isBlocked = true;
+                    }
+                }
+                
+                let errorMsg = 'Script failed to load';
+                if (isBlocked) {
+                    errorMsg = 'Google Maps blocked by browser/extension (ERR_BLOCKED_BY_CLIENT)';
+                    console.error('❌ Google Maps is being blocked!');
+                    console.error('❌ خرائط جوجل محجوبة!');
+                    console.error('');
+                    console.error('Possible causes / الأسباب المحتملة:');
+                    console.error('1. Ad blocker extension / إضافة مانع الإعلانات');
+                    console.error('2. Privacy/security extension / إضافة الخصوصية/الأمان');
+                    console.error('3. Browser security settings / إعدادات أمان المتصفح');
+                    console.error('4. Network firewall / جدار حماية الشبكة');
+                    console.error('');
+                    console.error('Solution / الحل:');
+                    console.error('- Disable ad blocker temporarily / عطّل مانع الإعلانات مؤقتاً');
+                    console.error('- Allow maps.googleapis.com / اسمح بـ maps.googleapis.com');
+                    console.error('- Check browser extensions / افحص إضافات المتصفح');
+                }
+                
+                const error = new Error(errorMsg);
                 this._handleError(error, reject);
             };
             
@@ -180,7 +213,41 @@ class GoogleMapsLoader {
      */
     _handleError(error, reject) {
         console.error('❌ Google Maps loading error:', error.message);
+        console.error('❌ خطأ في تحميل خرائط جوجل:', error.message);
         
+        // Check if it's a blocking error
+        const isBlockingError = error.message.includes('blocked') || 
+                               error.message.includes('ERR_BLOCKED_BY_CLIENT');
+        
+        // Don't retry if blocked by browser
+        if (isBlockingError) {
+            console.error('');
+            console.error('⛔ Google Maps is blocked by your browser or extension');
+            console.error('⛔ خرائط جوجل محجوبة بواسطة المتصفح أو إضافة');
+            console.error('');
+            console.error('📋 To fix this issue / لإصلاح هذه المشكلة:');
+            console.error('');
+            console.error('English:');
+            console.error('1. Disable your ad blocker for this site');
+            console.error('2. Whitelist maps.googleapis.com in your privacy extensions');
+            console.error('3. Check browser security settings');
+            console.error('4. Reload the page after making changes');
+            console.error('');
+            console.error('العربية:');
+            console.error('1. عطّل مانع الإعلانات لهذا الموقع');
+            console.error('2. أضف maps.googleapis.com إلى القائمة المسموحة في إضافات الخصوصية');
+            console.error('3. افحص إعدادات أمان المتصفح');
+            console.error('4. أعد تحميل الصفحة بعد إجراء التغييرات');
+            console.error('');
+            
+            this._triggerCallbacks('onError', error);
+            if (reject) reject(error);
+            return;
+        }
+        
+ copilot/fix-google-maps-config-load
+        // Check if we should retry for non-blocking errors
+
         // Check if error is due to ad blocker / content blocker
         if (error.message.includes('Script failed to load')) {
             console.warn('⚠️ Google Maps script blocked - This may be due to:');
@@ -201,8 +268,10 @@ class GoogleMapsLoader {
         }
         
         // Check if we should retry
+ main
         if (this.loadAttempts < this.config.loading.maxRetryAttempts) {
             console.log(`🔄 Will retry in ${this.config.loading.retryDelay}ms...`);
+            console.log(`🔄 سيتم إعادة المحاولة خلال ${this.config.loading.retryDelay}ms...`);
             
             this._triggerCallbacks('onRetry', { 
                 attempt: this.loadAttempts, 
@@ -215,9 +284,13 @@ class GoogleMapsLoader {
             }, this.config.loading.retryDelay);
         } else {
             console.error('❌ Maximum retry attempts reached');
+ copilot/fix-google-maps-config-load
+            console.error('❌ تم الوصول إلى الحد الأقصى لمحاولات إعادة المحاولة');
+
             console.error('');
             console.error('✅ Don\'t worry! All shops have direct Google Maps links');
             console.error('✅ لا تقلق! جميع المحلات لديها روابط خرائط جوجل مباشرة');
+ main
             this._triggerCallbacks('onError', error);
             if (reject) reject(error);
         }

@@ -181,6 +181,25 @@ class GoogleMapsLoader {
     _handleError(error, reject) {
         console.error('❌ Google Maps loading error:', error.message);
         
+        // Check if error is due to ad blocker / content blocker
+        if (error.message.includes('Script failed to load')) {
+            console.warn('⚠️ Google Maps script blocked - This may be due to:');
+            console.warn('   1. Ad blocker or content blocker extension');
+            console.warn('   2. Browser privacy settings');
+            console.warn('   3. Network firewall restrictions');
+            console.warn('');
+            console.warn('💡 Solution: The app will use direct Google Maps links instead');
+            console.warn('   All shops have working Google Maps links that will open in a new tab');
+            console.warn('');
+            console.warn('⚠️ الخرائط محجوبة - قد يكون السبب:');
+            console.warn('   1. إضافة حجب الإعلانات أو المحتوى');
+            console.warn('   2. إعدادات الخصوصية في المتصفح');
+            console.warn('   3. قيود جدار الحماية');
+            console.warn('');
+            console.warn('💡 الحل: سيستخدم التطبيق روابط خرائط جوجل المباشرة');
+            console.warn('   جميع المحلات لديها روابط خرائط جوجل تعمل وتفتح في نافذة جديدة');
+        }
+        
         // Check if we should retry
         if (this.loadAttempts < this.config.loading.maxRetryAttempts) {
             console.log(`🔄 Will retry in ${this.config.loading.retryDelay}ms...`);
@@ -196,6 +215,9 @@ class GoogleMapsLoader {
             }, this.config.loading.retryDelay);
         } else {
             console.error('❌ Maximum retry attempts reached');
+            console.error('');
+            console.error('✅ Don\'t worry! All shops have direct Google Maps links');
+            console.error('✅ لا تقلق! جميع المحلات لديها روابط خرائط جوجل مباشرة');
             this._triggerCallbacks('onError', error);
             if (reject) reject(error);
         }

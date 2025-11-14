@@ -245,9 +245,6 @@ class GoogleMapsLoader {
             return;
         }
         
- copilot/fix-google-maps-config-load
-        // Check if we should retry for non-blocking errors
-
         // Check if error is due to ad blocker / content blocker
         if (error.message.includes('Script failed to load')) {
             console.warn('⚠️ Google Maps script blocked - This may be due to:');
@@ -268,7 +265,6 @@ class GoogleMapsLoader {
         }
         
         // Check if we should retry
- main
         if (this.loadAttempts < this.config.loading.maxRetryAttempts) {
             console.log(`🔄 Will retry in ${this.config.loading.retryDelay}ms...`);
             console.log(`🔄 سيتم إعادة المحاولة خلال ${this.config.loading.retryDelay}ms...`);
@@ -284,13 +280,10 @@ class GoogleMapsLoader {
             }, this.config.loading.retryDelay);
         } else {
             console.error('❌ Maximum retry attempts reached');
- copilot/fix-google-maps-config-load
             console.error('❌ تم الوصول إلى الحد الأقصى لمحاولات إعادة المحاولة');
-
             console.error('');
             console.error('✅ Don\'t worry! All shops have direct Google Maps links');
             console.error('✅ لا تقلق! جميع المحلات لديها روابط خرائط جوجل مباشرة');
- main
             this._triggerCallbacks('onError', error);
             if (reject) reject(error);
         }

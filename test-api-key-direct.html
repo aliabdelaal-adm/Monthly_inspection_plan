@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار Google Maps API / Test Google Maps API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            direction: rtl;
+        }
+        #map {
+            height: 400px;
+            width: 100%;
+            margin: 20px 0;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .warning { background: #fff3cd; color: #856404; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>اختبار Google Maps API</h1>
+    <h2>Test Google Maps API</h2>
+    
+    <div id="status"></div>
+    
+    <h3>الخريطة / Map</h3>
+    <div id="map"></div>
+    
+    <h3>التفاصيل / Details</h3>
+    <pre id="details"></pre>
+    
+    <script>
+        const API_KEY = 'AIzaSyBIu6hLqc2mW6WYKTf1JCMSjKCkN1E-xVU';
+        const statusDiv = document.getElementById('status');
+        const detailsDiv = document.getElementById('details');
+        
+        function logStatus(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = message;
+            statusDiv.appendChild(div);
+            console.log(`[${type}] ${message}`);
+        }
+        
+        function logDetails(key, value) {
+            detailsDiv.textContent += `${key}: ${value}\n`;
+        }
+        
+        // Test 1: Check API key format
+        logStatus('🔍 اختبار 1: فحص تنسيق مفتاح API', 'info');
+        logDetails('API Key', API_KEY);
+        
+        if (API_KEY.startsWith('AIza')) {
+            logStatus('✅ تنسيق مفتاح API يبدو صحيحاً', 'success');
+            logDetails('Key Format', '✅ Valid');
+        } else {
+            logStatus('❌ تنسيق مفتاح API غير صحيح', 'error');
+            logDetails('Key Format', '❌ Invalid');
+        }
+        
+        // Test 2: Load Google Maps API
+        logStatus('🔍 اختبار 2: تحميل Google Maps API...', 'info');
+        
+        window.initMap = function() {
+            logStatus('✅ تم استدعاء initMap', 'success');
+            
+            // Test 3: Check if google.maps is available
+            if (typeof google === 'undefined') {
+                logStatus('❌ google غير معرّف', 'error');
+                logDetails('google', '❌ undefined');
+                return;
+            }
+            logStatus('✅ google معرّف', 'success');
+            logDetails('google', '✅ defined');
+            
+            if (typeof google.maps === 'undefined') {
+                logStatus('❌ google.maps غير معرّف', 'error');
+                logDetails('google.maps', '❌ undefined');
+                return;
+            }
+            logStatus('✅ google.maps معرّف', 'success');
+            logDetails('google.maps', '✅ defined');
+            
+            // Test 4: Create map
+            try {
+                logStatus('🔍 اختبار 3: إنشاء الخريطة...', 'info');
+                const map = new google.maps.Map(document.getElementById('map'), {
+                    center: { lat: 24.4539, lng: 54.3773 }, // Abu Dhabi
+                    zoom: 12
+                });
+                logStatus('✅ تم إنشاء الخريطة بنجاح!', 'success');
+                logDetails('Map Creation', '✅ Success');
+                
+                // Test 5: Add marker
+                const marker = new google.maps.Marker({
+                    position: { lat: 24.4539, lng: 54.3773 },
+                    map: map,
+                    title: 'أبوظبي / Abu Dhabi'
+                });
+                logStatus('✅ تم إضافة علامة بنجاح!', 'success');
+                logDetails('Marker Creation', '✅ Success');
+                
+                logStatus('🎉 جميع الاختبارات نجحت! الخرائط تعمل بشكل صحيح', 'success');
+            } catch (error) {
+                logStatus(`❌ خطأ في إنشاء الخريطة: ${error.message}`, 'error');
+                logDetails('Map Creation Error', error.message);
+                console.error('Map creation error:', error);
+            }
+        };
+        
+        window.gm_authFailure = function() {
+            logStatus('❌ فشل التحقق من مفتاح API', 'error');
+            logStatus('⚠️ يرجى التحقق من:', 'warning');
+            logStatus('1. هل مفتاح API صحيح؟', 'warning');
+            logStatus('2. هل تم تفعيل الفوترة في Google Cloud؟', 'warning');
+            logStatus('3. هل تم تفعيل Maps JavaScript API؟', 'warning');
+            logStatus('4. هل النطاق مسموح في قيود API؟', 'warning');
+            logDetails('Authentication', '❌ Failed');
+        };
+        
+        // Load the Google Maps script
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=initMap&libraries=places,geocoding`;
+        script.async = true;
+        script.defer = true;
+        
+        script.onerror = function() {
+            logStatus('❌ فشل تحميل سكريبت Google Maps', 'error');
+            logDetails('Script Loading', '❌ Failed');
+        };
+        
+        document.head.appendChild(script);
+        logStatus('⏳ جاري تحميل Google Maps API...', 'info');
+    </script>
+</body>
+</html>

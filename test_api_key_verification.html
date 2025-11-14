@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار مفتاح Google Maps API - API Key Verification Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #2d3561;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .test-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .test-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-right: 4px solid #ddd;
+        }
+        
+        .test-item.success {
+            border-right-color: #28a745;
+        }
+        
+        .test-item.error {
+            border-right-color: #dc3545;
+        }
+        
+        .test-item.warning {
+            border-right-color: #ffc107;
+        }
+        
+        .status-icon {
+            font-size: 2em;
+            margin-left: 15px;
+            min-width: 40px;
+        }
+        
+        .test-content {
+            flex: 1;
+        }
+        
+        .test-title {
+            font-weight: 600;
+            color: #2d3561;
+            margin-bottom: 5px;
+        }
+        
+        .test-description {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .api-key-display {
+            background: #2d3561;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+            margin-top: 10px;
+        }
+        
+        .map-container {
+            width: 100%;
+            height: 400px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 400px;
+            color: #666;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-top: 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗺️ اختبار مفتاح Google Maps API</h1>
+            <p>Google Maps API Key Verification Test</p>
+        </div>
+        
+        <div class="test-section">
+            <h3 style="margin-bottom: 15px; color: #2d3561;">نتائج الفحص - Test Results</h3>
+            
+            <div class="test-item" id="test-file">
+                <div class="status-icon">⏳</div>
+                <div class="test-content">
+                    <div class="test-title">تحميل ملف الإعداد - Loading Configuration File</div>
+                    <div class="test-description">جاري التحقق من google-maps-config.local.js...</div>
+                </div>
+            </div>
+            
+            <div class="test-item" id="test-key">
+                <div class="status-icon">⏳</div>
+                <div class="test-content">
+                    <div class="test-title">التحقق من المفتاح - Verifying API Key</div>
+                    <div class="test-description">جاري التحقق من وجود المفتاح...</div>
+                </div>
+            </div>
+            
+            <div class="test-item" id="test-format">
+                <div class="status-icon">⏳</div>
+                <div class="test-content">
+                    <div class="test-title">صيغة المفتاح - Key Format</div>
+                    <div class="test-description">جاري التحقق من صحة الصيغة...</div>
+                </div>
+            </div>
+            
+            <div class="test-item" id="test-api">
+                <div class="status-icon">⏳</div>
+                <div class="test-content">
+                    <div class="test-title">تحميل Google Maps API</div>
+                    <div class="test-description">جاري تحميل المكتبة...</div>
+                </div>
+            </div>
+            
+            <div id="api-key-info" style="display: none;">
+                <h4 style="margin-top: 20px; margin-bottom: 10px; color: #2d3561;">
+                    المفتاح المستخدم - API Key in Use:
+                </h4>
+                <div class="api-key-display" id="key-display"></div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3 style="margin-bottom: 15px; color: #2d3561;">اختبار الخريطة - Map Test</h3>
+            <p style="color: #666; margin-bottom: 10px;">
+                إذا ظهرت الخريطة أدناه، فهذا يعني أن المفتاح يعمل بشكل صحيح:
+            </p>
+            <p style="color: #666; margin-bottom: 15px;">
+                <strong>If the map appears below, the API key is working correctly:</strong>
+            </p>
+            
+            <div id="map" class="map-container">
+                <div class="loading">
+                    <div>⏳ جاري تحميل الخريطة... Loading map...</div>
+                </div>
+            </div>
+            
+            <button class="btn" onclick="reloadTest()" style="margin-top: 15px;">
+                🔄 إعادة الاختبار - Retry Test
+            </button>
+        </div>
+        
+        <div class="test-section" id="summary-section" style="display: none;">
+            <h3 style="margin-bottom: 15px; color: #2d3561;">الملخص - Summary</h3>
+            <div id="summary-content"></div>
+        </div>
+    </div>
+    
+    <!-- Load Google Maps Configuration -->
+    <script src="google-maps-config.local.js" onerror="handleConfigError()"></script>
+    <script src="google-maps-config.js" onerror="handleConfigError()"></script>
+    
+    <script>
+        let testsCompleted = 0;
+        const totalTests = 4;
+        
+        function updateTest(testId, status, title, description) {
+            const testItem = document.getElementById(testId);
+            testItem.className = 'test-item ' + status;
+            
+            const icons = {
+                'success': '✅',
+                'error': '❌',
+                'warning': '⚠️'
+            };
+            
+            testItem.querySelector('.status-icon').textContent = icons[status] || '⏳';
+            testItem.querySelector('.test-title').textContent = title;
+            testItem.querySelector('.test-description').textContent = description;
+            
+            testsCompleted++;
+            
+            if (testsCompleted === totalTests) {
+                showSummary();
+            }
+        }
+        
+        function handleConfigError() {
+            updateTest(
+                'test-file',
+                'error',
+                'فشل تحميل ملف الإعداد - Configuration File Failed',
+                'لم يتم العثور على google-maps-config.local.js أو google-maps-config.js'
+            );
+        }
+        
+        // Test 1: Check if configuration file loaded
+        setTimeout(() => {
+            if (typeof window.GOOGLE_MAPS_API_KEY !== 'undefined' || typeof window.GOOGLE_MAPS_CONFIG !== 'undefined') {
+                updateTest(
+                    'test-file',
+                    'success',
+                    'ملف الإعداد محمّل - Configuration File Loaded',
+                    '✅ تم تحميل google-maps-config.local.js بنجاح'
+                );
+            } else {
+                updateTest(
+                    'test-file',
+                    'error',
+                    'ملف الإعداد غير محمّل - Configuration File Not Loaded',
+                    '❌ فشل تحميل ملف الإعداد'
+                );
+            }
+        }, 100);
+        
+        // Test 2: Check if API key exists
+        setTimeout(() => {
+            const apiKey = window.GOOGLE_MAPS_API_KEY || (window.GOOGLE_MAPS_CONFIG && window.GOOGLE_MAPS_CONFIG.apiKey);
+            
+            if (apiKey && apiKey !== 'YOUR_API_KEY_HERE') {
+                updateTest(
+                    'test-key',
+                    'success',
+                    'المفتاح موجود - API Key Found',
+                    '✅ تم العثور على مفتاح API'
+                );
+                
+                // Show the key
+                document.getElementById('api-key-info').style.display = 'block';
+                document.getElementById('key-display').textContent = apiKey;
+            } else {
+                updateTest(
+                    'test-key',
+                    'error',
+                    'المفتاح غير موجود - API Key Not Found',
+                    '❌ لم يتم العثور على مفتاح API صالح'
+                );
+            }
+        }, 200);
+        
+        // Test 3: Validate API key format
+        setTimeout(() => {
+            const apiKey = window.GOOGLE_MAPS_API_KEY || (window.GOOGLE_MAPS_CONFIG && window.GOOGLE_MAPS_CONFIG.apiKey);
+            const expectedKey = 'AIzaSyBIu6hLqc2mW6WYKTf1JCMSjKCkN1E-xVU';
+            
+            if (apiKey === expectedKey) {
+                updateTest(
+                    'test-format',
+                    'success',
+                    'المفتاح صحيح - Correct Key',
+                    '✅ المفتاح يطابق المفتاح المتوقع: ' + expectedKey
+                );
+            } else if (apiKey && /^AIza[0-9A-Za-z_-]{35}$/.test(apiKey)) {
+                updateTest(
+                    'test-format',
+                    'warning',
+                    'صيغة صحيحة، مفتاح مختلف - Valid Format, Different Key',
+                    '⚠️ الصيغة صحيحة لكن المفتاح مختلف عن المتوقع'
+                );
+            } else {
+                updateTest(
+                    'test-format',
+                    'error',
+                    'صيغة غير صحيحة - Invalid Format',
+                    '❌ صيغة المفتاح غير صحيحة'
+                );
+            }
+        }, 300);
+        
+        // Test 4: Load Google Maps API and show map
+        setTimeout(() => {
+            const apiKey = window.GOOGLE_MAPS_API_KEY || (window.GOOGLE_MAPS_CONFIG && window.GOOGLE_MAPS_CONFIG.apiKey);
+            
+            if (!apiKey || apiKey === 'YOUR_API_KEY_HERE') {
+                updateTest(
+                    'test-api',
+                    'error',
+                    'فشل تحميل Google Maps - Google Maps Loading Failed',
+                    '❌ لا يمكن تحميل Google Maps بدون مفتاح API صالح'
+                );
+                document.getElementById('map').innerHTML = 
+                    '<div class="loading" style="color: #dc3545;">❌ لا يمكن تحميل الخريطة بدون مفتاح API</div>';
+                return;
+            }
+            
+            // Load Google Maps API
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&language=ar&region=AE`;
+            script.async = true;
+            script.defer = true;
+            
+            script.onload = () => {
+                updateTest(
+                    'test-api',
+                    'success',
+                    'Google Maps API محمّل - Google Maps API Loaded',
+                    '✅ تم تحميل Google Maps API بنجاح'
+                );
+                
+                // Initialize map
+                initMap();
+            };
+            
+            script.onerror = () => {
+                updateTest(
+                    'test-api',
+                    'error',
+                    'فشل تحميل Google Maps API',
+                    '❌ حدث خطأ أثناء تحميل Google Maps API'
+                );
+                document.getElementById('map').innerHTML = 
+                    '<div class="loading" style="color: #dc3545;">❌ فشل تحميل Google Maps API</div>';
+            };
+            
+            document.head.appendChild(script);
+        }, 500);
+        
+        function initMap() {
+            try {
+                const map = new google.maps.Map(document.getElementById('map'), {
+                    center: { lat: 24.4539, lng: 54.3773 }, // Abu Dhabi
+                    zoom: 12,
+                    mapTypeControl: true,
+                    streetViewControl: true,
+                    fullscreenControl: true
+                });
+                
+                // Add a marker
+                const marker = new google.maps.Marker({
+                    position: { lat: 24.4539, lng: 54.3773 },
+                    map: map,
+                    title: 'أبوظبي - Abu Dhabi',
+                    animation: google.maps.Animation.DROP
+                });
+                
+                // Add info window
+                const infoWindow = new google.maps.InfoWindow({
+                    content: '<div style="text-align: center; padding: 10px;">' +
+                             '<h3 style="margin: 0 0 5px 0;">✅ الخريطة تعمل!</h3>' +
+                             '<p style="margin: 0;">Map is working correctly!</p>' +
+                             '</div>'
+                });
+                
+                marker.addListener('click', () => {
+                    infoWindow.open(map, marker);
+                });
+                
+                // Auto-open info window
+                setTimeout(() => {
+                    infoWindow.open(map, marker);
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Error initializing map:', error);
+                document.getElementById('map').innerHTML = 
+                    '<div class="loading" style="color: #dc3545;">❌ خطأ: ' + error.message + '</div>';
+            }
+        }
+        
+        function showSummary() {
+            const summarySection = document.getElementById('summary-section');
+            const summaryContent = document.getElementById('summary-content');
+            
+            const successCount = document.querySelectorAll('.test-item.success').length;
+            const errorCount = document.querySelectorAll('.test-item.error').length;
+            const warningCount = document.querySelectorAll('.test-item.warning').length;
+            
+            let summaryHTML = '<div style="font-size: 1.1em; line-height: 1.8;">';
+            
+            if (successCount === totalTests) {
+                summaryHTML += '<div style="color: #28a745; font-weight: 600; font-size: 1.2em; margin-bottom: 10px;">' +
+                              '🎉 ممتاز! جميع الاختبارات نجحت - Excellent! All tests passed</div>';
+                summaryHTML += '<p style="color: #666;">مفتاح Google Maps API مُعد بشكل صحيح ويعمل تماماً. ' +
+                              'يمكنك الآن استخدام الخرائط في Smart Planner.</p>';
+            } else if (errorCount > 0) {
+                summaryHTML += '<div style="color: #dc3545; font-weight: 600; font-size: 1.2em; margin-bottom: 10px;">' +
+                              '❌ يوجد مشاكل - Issues Found</div>';
+                summaryHTML += '<p style="color: #666;">يرجى مراجعة الأخطاء أعلاه وإصلاحها. ' +
+                              'راجع GOOGLE_MAPS_API_KEY_STATUS.md للمزيد من المعلومات.</p>';
+            } else {
+                summaryHTML += '<div style="color: #ffc107; font-weight: 600; font-size: 1.2em; margin-bottom: 10px;">' +
+                              '⚠️ تحذيرات - Warnings</div>';
+                summaryHTML += '<p style="color: #666;">الإعداد يعمل لكن يوجد بعض التحذيرات.</p>';
+            }
+            
+            summaryHTML += '<div style="margin-top: 15px; padding: 15px; background: white; border-radius: 8px;">';
+            summaryHTML += `<div>✅ نجح: ${successCount}/${totalTests}</div>`;
+            summaryHTML += `<div>⚠️ تحذير: ${warningCount}/${totalTests}</div>`;
+            summaryHTML += `<div>❌ فشل: ${errorCount}/${totalTests}</div>`;
+            summaryHTML += '</div></div>';
+            
+            summaryContent.innerHTML = summaryHTML;
+            summarySection.style.display = 'block';
+        }
+        
+        function reloadTest() {
+            location.reload();
+        }
+    </script>
+</body>
+</html>

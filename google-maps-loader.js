@@ -115,9 +115,18 @@ class GoogleMapsLoader {
                 this.isLoading = false;
                 
                 // Detect if blocked by browser/extension (ERR_BLOCKED_BY_CLIENT)
-                const isBlocked = !navigator.onLine || 
-                                 event.type === 'error' && 
-                                 (!event.target || event.target.src.includes('maps.googleapis.com'));
+                // Use proper URL validation to prevent URL substring bypass
+                let isBlocked = !navigator.onLine;
+                if (event.target && event.target.src) {
+                    try {
+                        const url = new URL(event.target.src);
+                        // Check if hostname ends with googleapis.com (proper domain validation)
+                        isBlocked = isBlocked || url.hostname.endsWith('.googleapis.com') || url.hostname === 'googleapis.com';
+                    } catch (e) {
+                        // Invalid URL, treat as blocked
+                        isBlocked = true;
+                    }
+                }
                 
                 let errorMsg = 'Script failed to load';
                 if (isBlocked) {

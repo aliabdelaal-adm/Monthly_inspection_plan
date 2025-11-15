@@ -4527,6 +4527,201 @@
             }
         }
 
+        /* Duty Schedule Analytics Modal Styles */
+        .analysis-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .analysis-modal-content {
+            background: white;
+            border-radius: 20px;
+            max-width: 95%;
+            max-height: 90vh;
+            overflow: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .analysis-header {
+            background: linear-gradient(135deg, #fd7e14 0%, #ffc107 100%);
+            padding: 25px 30px;
+            border-radius: 20px 20px 0 0;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .analysis-header h2 {
+            margin: 0;
+            font-size: 1.8em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .analysis-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 1.8em;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .analysis-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .analysis-body {
+            padding: 30px;
+        }
+
+        .analysis-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px;
+            border-radius: 12px;
+            border-right: 4px solid;
+            text-align: center;
+        }
+
+        .summary-card.inspectors {
+            border-color: #667eea;
+        }
+
+        .summary-card.shifts {
+            border-color: #28a745;
+        }
+
+        .summary-card.days {
+            border-color: #fd7e14;
+        }
+
+        .summary-card.hours {
+            border-color: #dc3545;
+        }
+
+        .summary-value {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: #2d3561;
+            margin-bottom: 5px;
+        }
+
+        .summary-label {
+            font-size: 0.95em;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .analysis-table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .analysis-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        .analysis-table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .analysis-table th {
+            padding: 15px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 1em;
+            border-bottom: 3px solid #764ba2;
+        }
+
+        .analysis-table td {
+            padding: 12px 15px;
+            text-align: center;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .analysis-table tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        .analysis-table tbody tr:hover {
+            background: #f8f9fa;
+            transform: scale(1.01);
+        }
+
+        .analysis-table tbody tr:nth-child(even) {
+            background: #fafbfc;
+        }
+
+        .analysis-table .inspector-name {
+            font-weight: 600;
+            color: #2d3561;
+            text-align: right;
+        }
+
+        .shift-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .shift-badge.morning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .shift-badge.evening {
+            background: #cfe2ff;
+            color: #084298;
+        }
+
+        .shift-badge.total {
+            background: #d1e7dd;
+            color: #0f5132;
+        }
+
 
     </style>
     
@@ -6353,6 +6548,29 @@
         <!-- معلومات إضافية -->
         <div style="margin-top: 15px; padding: 10px; background: #f0f9ff; border-radius: 6px; font-size: 0.9em; color: #0369a1;">
             <strong>ملاحظة:</strong> هذه الجداول تعرض ساعات وأيام عمل كل مفتش، وليس خطة التفتيش الشهرية. انقر على "عرض" لمعاينة الجدول أو "تحميل" لتنزيل الملف.
+        </div>
+    </div>
+</div>
+
+<!-- مودال تحليل جدول المناوبات -->
+<div id="dutyAnalysisModal" class="analysis-modal" style="display: none;">
+    <div class="analysis-modal-content">
+        <div class="analysis-header">
+            <h2>
+                <i class="fas fa-chart-line"></i>
+                <span id="dutyAnalysisTitle">تحليل جدول المناوبات</span>
+            </h2>
+            <button class="analysis-close" onclick="closeDutyAnalysisModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="analysis-body">
+            <div id="dutyAnalysisContent">
+                <div style="text-align: center; padding: 40px;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 2em; color: #667eea;"></i>
+                    <p style="margin-top: 15px; color: #666;">جاري تحليل البيانات...</p>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -19245,6 +19463,14 @@ function renderScheduleCalendar(schedules) {
                                 onmouseout="this.style.background='rgba(255,255,255,0.3)'; this.style.transform='scale(1)';">
                             ⬇️ تحميل
                         </button>
+                        <button onclick="event.stopPropagation(); analyzeDutySchedule(${schedule.monthNum}, '${schedule.month}')" 
+                                style="background: rgba(255,255,255,0.3); color: white; border: 1px solid rgba(255,255,255,0.6); 
+                                       padding: 6px 10px; border-radius: 15px; font-weight: bold; cursor: pointer;
+                                       font-size: 0.7em; transition: all 0.3s ease; backdrop-filter: blur(3px);"
+                                onmouseover="this.style.background='rgba(255,255,255,0.5)'; this.style.transform='scale(1.05)';"
+                                onmouseout="this.style.background='rgba(255,255,255,0.3)'; this.style.transform='scale(1)';">
+                            📊 تحليل
+                        </button>
                     </div>
                 </div>
             </div>
@@ -19391,6 +19617,180 @@ function downloadScheduleFile(filename) {
     
     // عرض رسالة تأكيد
     showScheduleNotification(`✅ جاري تحميل ملف ${filename}...`, 'success');
+}
+
+// تحليل جدول مناوبات شهر معين
+async function analyzeDutySchedule(monthNumber, monthName) {
+    const modal = document.getElementById('dutyAnalysisModal');
+    const titleElement = document.getElementById('dutyAnalysisTitle');
+    const contentElement = document.getElementById('dutyAnalysisContent');
+    
+    titleElement.textContent = `تحليل جدول مناوبات ${monthName} - شهر ${monthNumber}`;
+    modal.style.display = 'flex';
+    
+    // Show loading
+    contentElement.innerHTML = `
+        <div style="text-align: center; padding: 40px;">
+            <i class="fas fa-spinner fa-spin" style="font-size: 2em; color: #667eea;"></i>
+            <p style="margin-top: 15px; color: #666;">جاري تحليل البيانات...</p>
+        </div>
+    `;
+    
+    try {
+        // Load plan data
+        const response = await fetch('plan-data.json');
+        if (!response.ok) {
+            throw new Error('فشل في تحميل بيانات الخطة');
+        }
+        
+        const data = await response.json();
+        const inspectionData = data.inspectionData || [];
+        
+        // Filter data for the selected month
+        const monthData = inspectionData.filter(item => {
+            if (!item.day) return false;
+            const itemDate = new Date(item.day);
+            const itemMonth = itemDate.getMonth() + 1;
+            return itemMonth === monthNumber;
+        });
+        
+        if (monthData.length === 0) {
+            contentElement.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #999;">
+                    <i class="fas fa-info-circle" style="font-size: 2em;"></i>
+                    <p style="margin-top: 15px;">لا توجد بيانات متاحة لشهر ${monthName}</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Analyze data by inspector
+        const inspectorStats = {};
+        const allDates = new Set();
+        
+        monthData.forEach(item => {
+            const inspector = item.inspector;
+            const shift = item.shift;
+            const day = item.day;
+            
+            allDates.add(day);
+            
+            if (!inspectorStats[inspector]) {
+                inspectorStats[inspector] = {
+                    name: inspector,
+                    morningShifts: 0,
+                    eveningShifts: 0,
+                    workingDays: new Set(),
+                    totalHours: 0
+                };
+            }
+            
+            if (shift === 'صباحية') {
+                inspectorStats[inspector].morningShifts++;
+                inspectorStats[inspector].totalHours += 8; // Assuming 8 hours per morning shift
+            } else if (shift === 'مسائية') {
+                inspectorStats[inspector].eveningShifts++;
+                inspectorStats[inspector].totalHours += 6; // Assuming 6 hours per evening shift
+            }
+            
+            inspectorStats[inspector].workingDays.add(day);
+        });
+        
+        // Calculate vacation days for each inspector
+        const totalDaysInMonth = allDates.size;
+        const inspectorsList = Object.values(inspectorStats).map(stats => {
+            const workingDays = stats.workingDays.size;
+            const vacationDays = totalDaysInMonth - workingDays;
+            return {
+                ...stats,
+                workingDays: workingDays,
+                vacationDays: vacationDays > 0 ? vacationDays : 0,
+                totalShifts: stats.morningShifts + stats.eveningShifts
+            };
+        });
+        
+        // Sort by total shifts (descending)
+        inspectorsList.sort((a, b) => b.totalShifts - a.totalShifts);
+        
+        // Calculate summary statistics
+        const totalInspectors = inspectorsList.length;
+        const totalShifts = inspectorsList.reduce((sum, i) => sum + i.totalShifts, 0);
+        const totalWorkingDays = inspectorsList.reduce((sum, i) => sum + i.workingDays, 0);
+        const totalHours = inspectorsList.reduce((sum, i) => sum + i.totalHours, 0);
+        
+        // Generate HTML
+        let html = `
+            <div class="analysis-summary">
+                <div class="summary-card inspectors">
+                    <div class="summary-value">${totalInspectors}</div>
+                    <div class="summary-label">عدد المفتشين</div>
+                </div>
+                <div class="summary-card shifts">
+                    <div class="summary-value">${totalShifts}</div>
+                    <div class="summary-label">إجمالي المناوبات</div>
+                </div>
+                <div class="summary-card days">
+                    <div class="summary-value">${totalWorkingDays}</div>
+                    <div class="summary-label">إجمالي أيام العمل</div>
+                </div>
+                <div class="summary-card hours">
+                    <div class="summary-value">${totalHours}</div>
+                    <div class="summary-label">إجمالي ساعات العمل</div>
+                </div>
+            </div>
+            
+            <div class="analysis-table-container">
+                <table class="analysis-table">
+                    <thead>
+                        <tr>
+                            <th>اسم المفتش</th>
+                            <th>المناوبات الصباحية</th>
+                            <th>المناوبات المسائية</th>
+                            <th>إجمالي المناوبات</th>
+                            <th>أيام العمل</th>
+                            <th>ساعات العمل</th>
+                            <th>أيام الإجازة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        inspectorsList.forEach(inspector => {
+            html += `
+                <tr>
+                    <td class="inspector-name">${inspector.name}</td>
+                    <td><span class="shift-badge morning">${inspector.morningShifts}</span></td>
+                    <td><span class="shift-badge evening">${inspector.eveningShifts}</span></td>
+                    <td><span class="shift-badge total">${inspector.totalShifts}</span></td>
+                    <td>${inspector.workingDays}</td>
+                    <td>${inspector.totalHours}</td>
+                    <td>${inspector.vacationDays}</td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+        contentElement.innerHTML = html;
+        
+    } catch (error) {
+        console.error('Error analyzing duty schedule:', error);
+        contentElement.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #dc3545;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 2em;"></i>
+                <p style="margin-top: 15px;">حدث خطأ في تحليل البيانات: ${error.message}</p>
+            </div>
+        `;
+    }
+}
+
+// إغلاق مودال تحليل جدول المناوبات
+function closeDutyAnalysisModal() {
+    document.getElementById('dutyAnalysisModal').style.display = 'none';
 }
 
 // عرض رسالة إشعار بسيطة

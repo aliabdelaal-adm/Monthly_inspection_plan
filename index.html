@@ -4535,11 +4535,12 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 10000;
-            align-items: center;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 99999;
+            align-items: flex-start;
             justify-content: center;
             padding: 20px;
+            overflow-y: auto;
         }
 
         .analysis-modal-content {
@@ -4548,13 +4549,25 @@
             max-width: 95%;
             max-height: 90vh;
             overflow: auto;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            animation: slideUp 0.3s ease;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            animation: slideDown 0.4s ease;
+            margin-top: 20px;
         }
 
         @keyframes slideUp {
             from {
                 transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideDown {
+            from {
+                transform: translateY(-30px);
                 opacity: 0;
             }
             to {
@@ -4582,23 +4595,27 @@
         }
 
         .analysis-close {
-            background: rgba(255, 255, 255, 0.2);
+            background: white;
             border: none;
-            color: white;
-            font-size: 1.8em;
-            width: 40px;
-            height: 40px;
+            color: #dc3545;
+            font-size: 2em;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
             cursor: pointer;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            font-weight: bold;
         }
 
         .analysis-close:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: rotate(90deg);
+            background: #dc3545;
+            color: white;
+            transform: rotate(90deg) scale(1.1);
+            box-shadow: 0 4px 12px rgba(220,53,69,0.4);
         }
 
         .analysis-body {
@@ -6522,7 +6539,7 @@
             </h4>
             
             <!-- تقويم ذكي بأيقونات احترافية -->
-            <div id="scheduleCalendarGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; margin-bottom: 20px; justify-items: center;">
+            <div id="scheduleCalendarGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; margin-bottom: 20px; justify-items: center;">
                 <!-- سيتم ملء التقويم هنا بواسطة JavaScript -->
             </div>
             
@@ -6560,8 +6577,8 @@
                 <i class="fas fa-chart-line"></i>
                 <span id="dutyAnalysisTitle">تحليل جدول المناوبات</span>
             </h2>
-            <button class="analysis-close" onclick="closeDutyAnalysisModal()">
-                <i class="fas fa-times"></i>
+            <button class="analysis-close" onclick="closeDutyAnalysisModal()" title="إغلاق">
+                ×
             </button>
         </div>
         <div class="analysis-body">
@@ -19387,7 +19404,7 @@ function renderScheduleCalendar(schedules) {
         7: '🌻', 8: '🌞', 9: '🍂', 10: '🍁', 11: '🍃', 12: '🎄'
     };
     
-    // الألوان والتدرجات حسب الشهر
+    // الألوان والتدرجات حسب الشهر - ألوان أكثر وضوحاً
     const monthGradients = [
         'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',  // يناير
         'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',  // فبراير
@@ -19398,8 +19415,8 @@ function renderScheduleCalendar(schedules) {
         'linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)',  // يوليو
         'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)',  // أغسطس
         'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',  // سبتمبر
-        'linear-gradient(135deg, #fad0c4 0%, #ffd1ff 100%)',  // أكتوبر
-        'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',  // نوفمبر
+        'linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%)',  // أكتوبر - برتقالي زاهي
+        'linear-gradient(135deg, #00b4d8 0%, #0077b6 100%)',  // نوفمبر - أزرق زاهي
         'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)'   // ديسمبر
     ];
     
@@ -19412,63 +19429,69 @@ function renderScheduleCalendar(schedules) {
             <div class="schedule-card schedule-card-compact" data-month="${schedule.monthNum}" data-year="${schedule.year}" 
                  data-tags="${schedule.tags.join(' ')}"
                  style="background: ${gradient}; 
-                        padding: 12px 8px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                        padding: 10px 6px; border-radius: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.2);
                         color: white; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                        position: relative; overflow: hidden; cursor: pointer; width: 120px;
-                        animation: slideIn 0.5s ease ${index * 0.1}s both; text-align: center;"
+                        position: relative; overflow: hidden; cursor: pointer; width: 100px;
+                        animation: slideIn 0.5s ease ${index * 0.1}s both; text-align: center;
+                        border: 2px solid rgba(255,255,255,0.3);"
                  onclick="viewScheduleFile('${schedule.file}')"
-                 onmouseover="this.style.transform='translateY(-5px) scale(1.05)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.25)';"
-                 onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)';">
+                 onmouseover="this.style.transform='translateY(-5px) scale(1.05)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.35)';"
+                 onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 3px 10px rgba(0,0,0,0.2)';">
                 
                 <!-- الشارة الصغيرة -->
-                <div style="position: absolute; top: 5px; left: 5px; background: rgba(255,255,255,0.35); 
-                            padding: 2px 6px; border-radius: 10px; font-size: 0.5em; font-weight: bold;
+                <div style="position: absolute; top: 4px; left: 4px; background: rgba(255,255,255,0.4); 
+                            padding: 2px 5px; border-radius: 8px; font-size: 0.5em; font-weight: bold;
                             backdrop-filter: blur(5px);">
                     📋
                 </div>
                 
                 <div style="position: relative; z-index: 1;">
                     <!-- أيقونة الشهر -->
-                    <div style="font-size: 2.5em; margin-bottom: 8px; text-align: center; 
-                                text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                    <div style="font-size: 2.2em; margin-bottom: 6px; text-align: center; 
+                                text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                                filter: drop-shadow(0 1px 2px rgba(255,255,255,0.3));">
                         ${monthIcon}
                     </div>
                     
                     <!-- اسم الشهر -->
-                    <div style="margin: 0 0 4px 0; text-align: center; font-size: 0.9em; font-weight: bold;
-                               text-shadow: 0 1px 2px rgba(0,0,0,0.2);">
+                    <div style="margin: 0 0 3px 0; text-align: center; font-size: 0.85em; font-weight: bold;
+                               text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
                         ${schedule.month}
                     </div>
                     
                     <!-- السنة -->
-                    <div style="text-align: center; font-size: 0.75em; opacity: 0.9; margin-bottom: 8px;">
+                    <div style="text-align: center; font-size: 0.7em; opacity: 0.95; margin-bottom: 6px;
+                               text-shadow: 0 1px 2px rgba(0,0,0,0.2);">
                         ${schedule.year}
                     </div>
                     
                     <!-- الأزرار المصغرة -->
-                    <div style="display: flex; gap: 4px; justify-content: center; flex-direction: column;">
+                    <div style="display: flex; gap: 3px; justify-content: center; flex-direction: column;">
                         <button onclick="event.stopPropagation(); viewScheduleFile('${schedule.file}')" 
-                                style="background: white; color: #2336a0; border: none; padding: 6px 10px;
-                                       border-radius: 15px; font-weight: bold; cursor: pointer; font-size: 0.7em;
-                                       transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.15);"
-                                onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 3px 8px rgba(0,0,0,0.25)';"
-                                onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 5px rgba(0,0,0,0.15)';">
+                                style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; 
+                                       padding: 5px 8px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 0.65em;
+                                       transition: all 0.3s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+                                       text-shadow: 0 1px 2px rgba(0,0,0,0.2);"
+                                onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 3px 10px rgba(40,167,69,0.5)';"
+                                onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.2)';">
                             👁️ عرض
                         </button>
                         <button onclick="event.stopPropagation(); downloadScheduleFile('${schedule.file}')" 
-                                style="background: rgba(255,255,255,0.3); color: white; border: 1px solid rgba(255,255,255,0.6); 
-                                       padding: 6px 10px; border-radius: 15px; font-weight: bold; cursor: pointer;
-                                       font-size: 0.7em; transition: all 0.3s ease; backdrop-filter: blur(3px);"
-                                onmouseover="this.style.background='rgba(255,255,255,0.5)'; this.style.transform='scale(1.05)';"
-                                onmouseout="this.style.background='rgba(255,255,255,0.3)'; this.style.transform='scale(1)';">
+                                style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; 
+                                       border: none; padding: 5px 8px; border-radius: 12px; font-weight: bold; cursor: pointer;
+                                       font-size: 0.65em; transition: all 0.3s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+                                       text-shadow: 0 1px 2px rgba(0,0,0,0.2);"
+                                onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 3px 10px rgba(0,123,255,0.5)';"
+                                onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.2)';">
                             ⬇️ تحميل
                         </button>
                         <button onclick="event.stopPropagation(); analyzeDutySchedule(${schedule.monthNum}, '${schedule.month}')" 
-                                style="background: rgba(255,255,255,0.3); color: white; border: 1px solid rgba(255,255,255,0.6); 
-                                       padding: 6px 10px; border-radius: 15px; font-weight: bold; cursor: pointer;
-                                       font-size: 0.7em; transition: all 0.3s ease; backdrop-filter: blur(3px);"
-                                onmouseover="this.style.background='rgba(255,255,255,0.5)'; this.style.transform='scale(1.05)';"
-                                onmouseout="this.style.background='rgba(255,255,255,0.3)'; this.style.transform='scale(1)';">
+                                style="background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%); color: #212529; 
+                                       border: none; padding: 5px 8px; border-radius: 12px; font-weight: bold; cursor: pointer;
+                                       font-size: 0.65em; transition: all 0.3s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+                                       text-shadow: 0 1px 2px rgba(255,255,255,0.3);"
+                                onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 3px 10px rgba(255,193,7,0.5)';"
+                                onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.2)';">
                             📊 تحليل
                         </button>
                     </div>

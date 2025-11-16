@@ -6738,44 +6738,22 @@
         }
         
         /**
-         * Open the shop selection modal
-         * @param {string} mode - 'all', 'other-areas', or 'specific-area'
+         * Open the shop selection modal - displays all shops from all areas
+         * @param {string} mode - Mode parameter (kept for backward compatibility, no longer affects filtering)
          */
         function openShopSelectionModal(mode = 'all') {
             const modal = document.getElementById('shopSelectionModal');
             const areaFilter = document.getElementById('shopSelectionAreaFilter');
-            const currentArea = document.getElementById('areaSelect').value;
             
-            // Populate area filter
+            // Populate area filter - show all areas without any filtering
             areaFilter.innerHTML = '<option value="">جميع المناطق</option>';
             if (planData && planData.areas) {
                 planData.areas.forEach(area => {
-                    // Skip current area if in 'other-areas' mode
-                    if (mode === 'other-areas' && area.name === currentArea) {
-                        return;
-                    }
-                    
                     const option = document.createElement('option');
                     option.value = area.name;
                     option.textContent = area.name;
                     areaFilter.appendChild(option);
                 });
-            }
-            
-            // Highlight area filter for 'specific-area' mode
-            if (mode === 'specific-area') {
-                // Add visual emphasis to the area filter
-                setTimeout(() => {
-                    areaFilter.style.border = '3px solid #ffc107';
-                    areaFilter.style.boxShadow = '0 0 10px rgba(255, 193, 7, 0.5)';
-                    areaFilter.focus();
-                    
-                    // Remove emphasis after a few seconds
-                    setTimeout(() => {
-                        areaFilter.style.border = '';
-                        areaFilter.style.boxShadow = '';
-                    }, 3000);
-                }, 100);
             }
             
             // Load shops into the modal

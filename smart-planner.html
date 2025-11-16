@@ -2500,6 +2500,10 @@
                         <span>🗺️</span>
                         <span>اختيار من مناطق أخرى</span>
                     </button>
+                    <button class="btn btn-warning btn-sm" onclick="displayShopsBySpecificArea()" title="عرض محلات منطقة معينة">
+                        <span>🏘️</span>
+                        <span>عرض محلات منطقة معينة</span>
+                    </button>
                 </div>
                 
                 <!-- Search box for shops in new inspection -->
@@ -6714,8 +6718,28 @@
         }
         
         /**
+         * Display shops by specific area - Opens modal with area filter emphasized
+         */
+        function displayShopsBySpecificArea() {
+            const inspector = document.getElementById('inspectorSelect').value;
+            
+            if (!inspector) {
+                alert('⚠️ يرجى اختيار المفتش أولاً');
+                return;
+            }
+            
+            if (!planData || !planData.shops || !planData.areas) {
+                alert('⚠️ لا توجد بيانات متاحة');
+                return;
+            }
+            
+            // Open the shop selection modal with all areas
+            openShopSelectionModal('specific-area');
+        }
+        
+        /**
          * Open the shop selection modal
-         * @param {string} mode - 'all' or 'other-areas'
+         * @param {string} mode - 'all', 'other-areas', or 'specific-area'
          */
         function openShopSelectionModal(mode = 'all') {
             const modal = document.getElementById('shopSelectionModal');
@@ -6736,6 +6760,22 @@
                     option.textContent = area.name;
                     areaFilter.appendChild(option);
                 });
+            }
+            
+            // Highlight area filter for 'specific-area' mode
+            if (mode === 'specific-area') {
+                // Add visual emphasis to the area filter
+                setTimeout(() => {
+                    areaFilter.style.border = '3px solid #ffc107';
+                    areaFilter.style.boxShadow = '0 0 10px rgba(255, 193, 7, 0.5)';
+                    areaFilter.focus();
+                    
+                    // Remove emphasis after a few seconds
+                    setTimeout(() => {
+                        areaFilter.style.border = '';
+                        areaFilter.style.boxShadow = '';
+                    }, 3000);
+                }, 100);
             }
             
             // Load shops into the modal

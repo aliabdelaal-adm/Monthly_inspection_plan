@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار محلات الوثبة جنوب</title>
+    <style>
+        body {
+            font-family: 'Cairo', Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .stats {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #4caf50;
+        }
+        .shop-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .shop-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-right: 4px solid #667eea;
+        }
+        .shop-card h3 {
+            color: #2d3561;
+            margin: 0 0 10px 0;
+            font-size: 1em;
+        }
+        .shop-card p {
+            margin: 5px 0;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #c62828;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏪 اختبار محلات منطقة الوثبة جنوب</h1>
+        
+        <div id="stats" class="stats">
+            <h2>📊 الإحصائيات</h2>
+            <p>جارِ التحميل...</p>
+        </div>
+        
+        <div id="shops" class="shop-list">
+            <p>جارِ تحميل المحلات...</p>
+        </div>
+    </div>
+
+    <script>
+        async function loadData() {
+            try {
+                // Load plan-data.json
+                const response = await fetch('plan-data.json');
+                if (!response.ok) {
+                    throw new Error('Failed to load plan-data.json');
+                }
+                const data = await response.json();
+                
+                // Filter shops in الوثبة جنوب
+                const areaName = 'الوثبة جنوب';
+                const wathbaShops = data.shops.filter(shop => shop.area === areaName);
+                
+                // Display stats
+                const statsDiv = document.getElementById('stats');
+                statsDiv.innerHTML = `
+                    <h2>📊 الإحصائيات</h2>
+                    <p><strong>إجمالي المحلات في قاعدة البيانات:</strong> ${data.shops.length}</p>
+                    <p><strong>محلات منطقة الوثبة جنوب:</strong> ${wathbaShops.length}</p>
+                    <p><strong>الحالة:</strong> ${wathbaShops.length === 16 ? '✅ ممتاز! جميع المحلات موجودة (16 محل)' : '⚠️ ناقص - يجب أن يكون 16 محل'}</p>
+                `;
+                
+                // Display shops
+                const shopsDiv = document.getElementById('shops');
+                if (wathbaShops.length === 0) {
+                    shopsDiv.innerHTML = '<p class="error">❌ لا توجد محلات في منطقة الوثبة جنوب</p>';
+                    return;
+                }
+                
+                // Sort shops alphabetically
+                wathbaShops.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+                
+                let html = '';
+                wathbaShops.forEach((shop, index) => {
+                    html += `
+                        <div class="shop-card">
+                            <h3>${index + 1}. ${shop.name}</h3>
+                            <p>🆔 <strong>ID:</strong> ${shop.id}</p>
+                            <p>📍 <strong>المنطقة:</strong> ${shop.area}</p>
+                            <p>🔗 <strong>Area ID:</strong> ${shop.areaId}</p>
+                        </div>
+                    `;
+                });
+                
+                shopsDiv.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('stats').innerHTML = `
+                    <div class="error">
+                        <h2>❌ خطأ في التحميل</h2>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+                document.getElementById('shops').innerHTML = '';
+            }
+        }
+        
+        // Load data when page loads
+        loadData();
+    </script>
+</body>
+</html>

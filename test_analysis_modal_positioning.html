@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار موضع نافذة التحليل - Analysis Modal Position Test</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .test-header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .test-header h1 {
+            color: #2d3561;
+            margin-bottom: 15px;
+            font-size: 2em;
+        }
+
+        .test-header p {
+            color: #666;
+            line-height: 1.8;
+            margin-bottom: 10px;
+        }
+
+        .test-controls {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #fd7e14 0%, #ffc107 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(253, 126, 20, 0.4);
+            font-family: 'Cairo', Arial, sans-serif;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(253, 126, 20, 0.6);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .test-info {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 10px;
+            border-right: 4px solid #2196f3;
+            margin-top: 20px;
+        }
+
+        .test-info h3 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+
+        .test-info ul {
+            color: #424242;
+            padding-right: 25px;
+            line-height: 1.8;
+        }
+
+        /* Emergency Dev Panel (High z-index) */
+        .emergency-dev-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 99999999;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            font-family: 'Cairo', Arial, sans-serif;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .emergency-dev-panel h2 {
+            font-size: 1.2em;
+        }
+
+        /* Dev Toast (High z-index) */
+        .dev-toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            font-family: 'Cairo', Arial, sans-serif;
+            font-size: 1.1em;
+            font-weight: 600;
+            z-index: 999999998;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* Analysis Modal - FIXED with highest z-index */
+        .analysis-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 999999999; /* HIGHEST z-index - This is the FIX */
+            align-items: flex-start;
+            justify-content: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .analysis-modal-content {
+            background: white;
+            border-radius: 20px;
+            max-width: 95%;
+            max-height: 90vh;
+            overflow: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            animation: slideDown 0.4s ease;
+            margin-top: 20px;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .analysis-header {
+            background: linear-gradient(135deg, #fd7e14 0%, #ffc107 100%);
+            padding: 25px 30px;
+            border-radius: 20px 20px 0 0;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .analysis-header h2 {
+            margin: 0;
+            font-size: 1.8em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .analysis-close {
+            background: white;
+            border: none;
+            color: #dc3545;
+            font-size: 2em;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            font-weight: bold;
+        }
+
+        .analysis-close:hover {
+            background: #dc3545;
+            color: white;
+            transform: rotate(90deg) scale(1.1);
+            box-shadow: 0 4px 12px rgba(220,53,69,0.4);
+        }
+
+        .analysis-body {
+            padding: 30px;
+        }
+
+        .success-indicator {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #c3e6cb;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .test-result {
+            display: none;
+            background: #fff3cd;
+            color: #856404;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #ffeaa7;
+            margin-top: 20px;
+        }
+
+        .test-result.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Emergency Dev Panel (Highest z-index element) -->
+    <div class="emergency-dev-panel">
+        <h2><i class="fas fa-tools"></i> لوحة تحكم المطور (z-index: 99999999)</h2>
+        <span>هذا العنصر له أعلى قيمة z-index</span>
+    </div>
+
+    <!-- Dev Toast (Very high z-index) -->
+    <div class="dev-toast">
+        <i class="fas fa-bell"></i>
+        <span>رسالة إشعار (z-index: 999999998)</span>
+    </div>
+
+    <div class="test-header">
+        <h1><i class="fas fa-bug"></i> اختبار إصلاح موضع نافذة التحليل</h1>
+        <h2>Analysis Modal Position Fix Test</h2>
+        <p>هذا الاختبار يوضح إصلاح مشكلة ظهور نافذة التحليل خلف العناصر الأخرى</p>
+        <p><strong>المشكلة السابقة:</strong> كانت نافذة التحليل لها z-index: 99999 بينما العناصر الأخرى لها قيم أعلى</p>
+        <p><strong>الحل:</strong> تم زيادة z-index للنافذة إلى 999999999 لتظهر فوق جميع العناصر</p>
+    </div>
+
+    <div class="test-controls">
+        <h2 style="color: #2d3561; margin-bottom: 20px;">
+            <i class="fas fa-play-circle"></i> اختبر النافذة المنبثقة
+        </h2>
+        
+        <div style="text-align: center;">
+            <button class="btn" onclick="openModal()">
+                <i class="fas fa-chart-line"></i> فتح نافذة التحليل
+            </button>
+            
+            <button class="btn btn-secondary" onclick="scrollPageDown()">
+                <i class="fas fa-arrow-down"></i> تحريك الصفحة للأسفل أولاً
+            </button>
+        </div>
+
+        <div class="test-info">
+            <h3><i class="fas fa-check-circle"></i> خطوات الاختبار:</h3>
+            <ul>
+                <li>✅ تأكد من أن لوحة تحكم المطور ظاهرة في الأعلى (z-index: 99999999)</li>
+                <li>✅ تأكد من أن رسالة الإشعار ظاهرة في الأسفل (z-index: 999999998)</li>
+                <li>✅ اضغط على زر "فتح نافذة التحليل"</li>
+                <li>✅ يجب أن تظهر النافذة فوق جميع العناصر</li>
+                <li>✅ يجب أن تكون النافذة في أعلى الصفحة (align-items: flex-start)</li>
+                <li>✅ يجب أن تكون قابلة للتمرير إذا كان المحتوى طويلاً</li>
+            </ul>
+        </div>
+
+        <div class="success-indicator">
+            <i class="fas fa-trophy"></i> 
+            <strong>النافذة الآن لها z-index: 999999999 - الأعلى من كل العناصر!</strong>
+        </div>
+
+        <div id="testResult" class="test-result">
+            <strong><i class="fas fa-info-circle"></i> ملاحظة:</strong>
+            لاحظ أن النافذة ظهرت فوق جميع العناصر الأخرى بنجاح!
+        </div>
+    </div>
+
+    <!-- Analysis Modal -->
+    <div id="dutyAnalysisModal" class="analysis-modal" style="display: none;">
+        <div class="analysis-modal-content">
+            <div class="analysis-header">
+                <h2>
+                    <i class="fas fa-chart-line"></i>
+                    <span>تحليل جدول المناوبات - اختبار</span>
+                </h2>
+                <button class="analysis-close" onclick="closeModal()" title="إغلاق">
+                    ×
+                </button>
+            </div>
+            <div class="analysis-body">
+                <div style="text-align: center; padding: 40px;">
+                    <i class="fas fa-check-circle" style="font-size: 4em; color: #28a745; margin-bottom: 20px;"></i>
+                    <h2 style="color: #2d3561; margin-bottom: 20px;">تم الإصلاح بنجاح! ✓</h2>
+                    <p style="font-size: 1.2em; color: #666; line-height: 1.8;">
+                        النافذة الآن تظهر فوق جميع العناصر الأخرى بفضل:<br>
+                        <strong>z-index: 999999999</strong> (الأعلى من كل العناصر)<br>
+                        <strong>align-items: flex-start</strong> (تظهر في أعلى الصفحة)<br>
+                        <strong>modal.scrollTop = 0</strong> (التمرير للأعلى عند الفتح)
+                    </p>
+                    
+                    <div style="background: #e3f2fd; padding: 20px; border-radius: 10px; margin-top: 30px; text-align: right;">
+                        <h3 style="color: #1976d2; margin-bottom: 15px;">التغييرات المطبقة:</h3>
+                        <ul style="line-height: 2; color: #424242;">
+                            <li>✅ تم تغيير z-index من 99999 إلى 999999999</li>
+                            <li>✅ تم إضافة modal.scrollTop = 0 عند فتح النافذة</li>
+                            <li>✅ align-items: flex-start يضمن الظهور في الأعلى</li>
+                            <li>✅ النافذة الآن فوق جميع العناصر بما فيها لوحة المطور</li>
+                        </ul>
+                    </div>
+
+                    <div style="margin-top: 30px; padding: 30px; background: #fff; border: 2px solid #ddd; border-radius: 10px;">
+                        <p style="font-size: 1.5em; margin-bottom: 20px;">محتوى تجريبي طويل للاختبار</p>
+                        <p style="margin-bottom: 15px;">هذا المحتوى موجود لاختبار قابلية التمرير داخل النافذة</p>
+                        <p style="margin-bottom: 15px;">يمكنك التمرير لأسفل لرؤية المزيد من المحتوى</p>
+                        <p style="margin-bottom: 15px;">النافذة يجب أن تبدأ من الأعلى دائماً</p>
+                        <p style="margin-bottom: 15px;">حتى لو كانت الصفحة الأساسية في وضع التمرير</p>
+                        <div style="height: 200px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.3em; margin: 20px 0;">
+                            محتوى إضافي لاختبار التمرير
+                        </div>
+                        <p>نهاية المحتوى التجريبي</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openModal() {
+            const modal = document.getElementById('dutyAnalysisModal');
+            modal.style.display = 'flex';
+            
+            // Scroll modal to top to ensure visibility at viewport top
+            modal.scrollTop = 0;
+            
+            // Show test result
+            document.getElementById('testResult').classList.add('show');
+            
+            console.log('✓ Modal opened with z-index: 999999999');
+            console.log('✓ Modal scrollTop set to 0');
+            console.log('✓ Modal should appear above all elements!');
+        }
+
+        function closeModal() {
+            document.getElementById('dutyAnalysisModal').style.display = 'none';
+        }
+
+        function scrollPageDown() {
+            window.scrollTo({
+                top: 500,
+                behavior: 'smooth'
+            });
+            setTimeout(() => {
+                alert('الآن جرب فتح النافذة - يجب أن تظهر في أعلى الشاشة حتى بعد التمرير');
+            }, 800);
+        }
+
+        // Close modal on background click
+        document.getElementById('dutyAnalysisModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>

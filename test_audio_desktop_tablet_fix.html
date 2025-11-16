@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار إصلاح الصوت للكمبيوتر والتابلت - Audio Fix Test for Desktop & Tablet</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            direction: rtl;
+            text-align: right;
+        }
+        
+        .test-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            opacity: 0.9;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        
+        .status-box {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-right: 4px solid #4CAF50;
+        }
+        
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .status-item:last-child {
+            border-bottom: none;
+        }
+        
+        .status-label {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .status-value {
+            font-size: 18px;
+            padding: 5px 15px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .log-container {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin-top: 20px;
+        }
+        
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+        
+        .log-time {
+            color: #FFD700;
+            margin-left: 10px;
+        }
+        
+        .success {
+            color: #4CAF50;
+        }
+        
+        .info {
+            color: #2196F3;
+        }
+        
+        .warning {
+            color: #FF9800;
+        }
+        
+        .error {
+            color: #F44336;
+        }
+        
+        .interaction-info {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .interaction-info strong {
+            color: #FFD700;
+        }
+        
+        button {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .button-group {
+            text-align: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🎵 اختبار إصلاح الصوت للكمبيوتر والتابلت</h1>
+        <p class="subtitle">Audio Fix Test for Desktop & Tablet Devices</p>
+        
+        <div class="status-box">
+            <div class="status-item">
+                <span class="status-label">حالة الصوت / Audio Status:</span>
+                <span id="audioStatus" class="status-value">⏸️ متوقف / Stopped</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">نوع الجهاز / Device Type:</span>
+                <span id="deviceType" class="status-value">🖥️ جاري الكشف...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">التفاعل الأول / First Interaction:</span>
+                <span id="interactionType" class="status-value">⏳ في الانتظار...</span>
+            </div>
+        </div>
+        
+        <div class="interaction-info">
+            <strong>📌 تعليمات الاختبار / Test Instructions:</strong><br>
+            <br>
+            ✅ <strong>على الكمبيوتر / On Computer:</strong> حرك الماوس أو استخدم عجلة التمرير / Move mouse or use scroll wheel<br>
+            ✅ <strong>على التابلت / On Tablet:</strong> المس الشاشة أو قم بالتمرير / Touch screen or scroll<br>
+            ✅ <strong>على الهاتف / On Phone:</strong> المس الشاشة في أي مكان / Tap anywhere on screen<br>
+            <br>
+            🎯 سيبدأ الصوت تلقائياً عند أي تفاعل / Audio will start automatically on any interaction
+        </div>
+        
+        <div class="button-group">
+            <button onclick="manualPlay()">▶️ تشغيل يدوي / Manual Play</button>
+            <button onclick="manualStop()">⏹️ إيقاف / Stop</button>
+            <button onclick="clearLog()">🗑️ مسح السجل / Clear Log</button>
+        </div>
+        
+        <div class="log-container" id="logContainer">
+            <div class="log-entry info">📝 سجل الأحداث / Event Log</div>
+        </div>
+    </div>
+    
+    <!-- Audio element -->
+    <audio id="testAudio" preload="metadata" loop style="display: none;">
+        <source src="piano.mp3" type="audio/mpeg">
+        متصفحك لا يدعم تشغيل الصوت / Your browser doesn't support audio
+    </audio>
+    
+    <script>
+        const audio = document.getElementById('testAudio');
+        let firstInteractionDetected = false;
+        let audioStarted = false;
+        
+        // Detect device type
+        function detectDevice() {
+            const ua = navigator.userAgent;
+            let deviceType = '🖥️ كمبيوتر / Desktop';
+            
+            if (/tablet|ipad|playbook|silk/i.test(ua)) {
+                deviceType = '📱 تابلت / Tablet';
+            } else if (/mobile|iphone|ipod|android|blackberry|opera mini|windows phone/i.test(ua)) {
+                deviceType = '📱 هاتف / Phone';
+            }
+            
+            document.getElementById('deviceType').textContent = deviceType;
+            logEvent('info', `نوع الجهاز المكتشف: ${deviceType}`);
+        }
+        
+        // Log events
+        function logEvent(type, message) {
+            const logContainer = document.getElementById('logContainer');
+            const time = new Date().toLocaleTimeString('ar-SA');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerHTML = `<span class="log-time">[${time}]</span> ${message}`;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        // Clear log
+        function clearLog() {
+            const logContainer = document.getElementById('logContainer');
+            logContainer.innerHTML = '<div class="log-entry info">📝 سجل الأحداث / Event Log</div>';
+        }
+        
+        // Start audio
+        function startAudio(interactionType) {
+            if (audioStarted) {
+                logEvent('warning', 'الصوت يعمل بالفعل / Audio already playing');
+                return;
+            }
+            
+            audio.volume = 0.05; // Low volume for testing
+            const playPromise = audio.play();
+            
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    audioStarted = true;
+                    document.getElementById('audioStatus').textContent = '▶️ يعمل / Playing';
+                    logEvent('success', `✅ الصوت يعمل بنجاح عبر: ${interactionType}`);
+                }).catch(err => {
+                    logEvent('error', `❌ فشل تشغيل الصوت: ${err.message}`);
+                });
+            }
+        }
+        
+        // Manual play
+        function manualPlay() {
+            if (!audioStarted) {
+                startAudio('تشغيل يدوي / Manual Play');
+            }
+        }
+        
+        // Manual stop
+        function manualStop() {
+            audio.pause();
+            audio.currentTime = 0;
+            audioStarted = false;
+            document.getElementById('audioStatus').textContent = '⏸️ متوقف / Stopped';
+            logEvent('info', 'تم إيقاف الصوت / Audio stopped');
+        }
+        
+        // Enhanced interaction handler
+        function handleInteraction(eventType) {
+            if (!firstInteractionDetected) {
+                firstInteractionDetected = true;
+                
+                const interactionLabel = {
+                    'click': '🖱️ نقر بالماوس / Mouse Click',
+                    'touchstart': '👆 لمس الشاشة / Screen Touch',
+                    'keydown': '⌨️ ضغط مفتاح / Key Press',
+                    'mousemove': '🖱️ حركة الماوس / Mouse Move',
+                    'wheel': '🖱️ عجلة الماوس / Mouse Wheel',
+                    'scroll': '📜 التمرير / Scroll',
+                    'mousedown': '🖱️ ضغط الماوس / Mouse Down',
+                    'touchmove': '👆 تحريك الإصبع / Touch Move'
+                };
+                
+                const label = interactionLabel[eventType] || eventType;
+                document.getElementById('interactionType').textContent = label;
+                logEvent('success', `✅ تفاعل أول مكتشف: ${label}`);
+                
+                // Start audio on first interaction
+                startAudio(label);
+            }
+        }
+        
+        // Setup enhanced event listeners (matching the fix in index.html)
+        document.addEventListener('click', () => handleInteraction('click'), { once: true });
+        document.addEventListener('touchstart', () => handleInteraction('touchstart'), { once: true });
+        document.addEventListener('keydown', () => handleInteraction('keydown'), { once: true });
+        
+        // Additional listeners for desktop/tablet interactions
+        document.addEventListener('mousemove', () => handleInteraction('mousemove'), { once: true, passive: true });
+        document.addEventListener('wheel', () => handleInteraction('wheel'), { once: true, passive: true });
+        document.addEventListener('scroll', () => handleInteraction('scroll'), { once: true, passive: true });
+        document.addEventListener('mousedown', () => handleInteraction('mousedown'), { once: true });
+        document.addEventListener('touchmove', () => handleInteraction('touchmove'), { once: true, passive: true });
+        
+        // Initialize
+        window.addEventListener('DOMContentLoaded', () => {
+            detectDevice();
+            logEvent('info', 'تم تحميل الصفحة - في انتظار التفاعل / Page loaded - waiting for interaction');
+            logEvent('info', 'الأحداث المراقبة: click, touch, keyboard, mousemove, wheel, scroll');
+        });
+        
+        // Log audio element events
+        audio.addEventListener('play', () => {
+            logEvent('success', '🎵 حدث play تم تشغيله / play event triggered');
+        });
+        
+        audio.addEventListener('pause', () => {
+            logEvent('info', '⏸️ حدث pause تم تشغيله / pause event triggered');
+        });
+        
+        audio.addEventListener('error', (e) => {
+            logEvent('error', `❌ خطأ في الصوت: ${e.message || 'Unknown error'}`);
+        });
+    </script>
+</body>
+</html>

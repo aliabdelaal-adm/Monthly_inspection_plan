@@ -14205,9 +14205,62 @@ function renderGroupInspectionTable() {
         
         // Create shops dropdown - convert single shop to array for consistency
         const shopsArray = Array.isArray(item.shopName) ? item.shopName : [item.shopName];
-        const shopsListItems = shopsArray.map((shop, index) => 
-            `<li class="shop-item"><span class="shop-number">${index + 1}.</span> ${shop}</li>`
-        ).join('');
+        const shopsListItems = shopsArray.map((shop, index) => {
+            // Get shop details for Google Maps link - IMPROVED MATCHING (same as regular table)
+            let shopDetails = shopsDetailsData[shop];
+            
+            // Try without "محل " prefix
+            if (!shopDetails) {
+                const cleanedName = shop.replace(/^محل\s+/, '');
+                shopDetails = shopsDetailsData[cleanedName];
+            }
+            
+            // Try fuzzy matching with partial names and better normalization
+            if (!shopDetails) {
+                const cleanedName = shop.replace(/^محل\s+/, '').replace(/^صيدلية\s+/, '').replace(/^صالون\s+/, '');
+                
+                // Normalize for comparison: remove extra spaces, normalize "ل" variations
+                const normalizeForMatch = (text) => {
+                    return text.trim()
+                        .replace(/\s+/g, ' ')
+                        .replace(/للطيور/g, 'لطيور')
+                        .replace(/للأدوية/g, 'لأدوية')
+                        .replace(/لأسماك/g, 'لاسماك')
+                        .replace(/لاسماك/g, 'لاسماك')
+                        .replace(/\s*و\s*/g, ' ')
+                        .replace(/الزينة/g, 'الزينة')
+                        .replace(/الزينه/g, 'الزينة');
+                };
+                
+                const normalizedClean = normalizeForMatch(cleanedName);
+                
+                for (const [key, value] of Object.entries(shopsDetailsData || {})) {
+                    const normalizedKey = normalizeForMatch(key);
+                    
+                    // Check if the cleaned name contains key or vice versa (for partial matches)
+                    if (normalizedKey.includes(normalizedClean) || normalizedClean.includes(normalizedKey)) {
+                        shopDetails = value;
+                        break;
+                    }
+                }
+            }
+            
+            const hasLocation = shopDetails && shopDetails.locationMap && shopDetails.locationMap !== '';
+            const mapsIcon = hasLocation ? 
+                `<a href="${shopDetails.locationMap}" target="_blank" onclick="event.stopPropagation();" 
+                    style="display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#28a745,#20c997);color:white;padding:4px 10px;border-radius:6px;text-decoration:none;font-size:0.85em;font-weight:600;box-shadow:0 2px 6px rgba(40,167,69,0.3);transition:all 0.2s ease;margin-right:8px;" 
+                    onmouseover="this.style.transform='scale(1.05)';this.style.boxShadow='0 4px 10px rgba(40,167,69,0.5)';" 
+                    onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 2px 6px rgba(40,167,69,0.3)';"
+                    title="فتح الموقع على خرائط جوجل">📍 خريطة</a>` : '';
+            
+            return `<li class="shop-item-clickable" 
+                onclick="showIndividualShopDetails('${shop.replace(/'/g, "\\'")}')" 
+                style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:10px 12px;" 
+                title="انقر لعرض تفاصيل ${shop}">
+                <span style="flex:1;">${shop}</span>
+                ${mapsIcon}
+            </li>`;
+        }).join('');
         
         html += `
             <tr>

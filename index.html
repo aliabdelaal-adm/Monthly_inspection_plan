@@ -5974,7 +5974,7 @@
     </div>
     
     <!-- Shelter Inspection Section - New Feature for Shelter Inspections -->
-    <div id="shelterInspectionSection" class="shelter-inspection-section" style="display:none;">
+    <div id="shelterInspectionSection" class="shelter-inspection-section">
         <div class="shelter-inspection-title">
             🏘️ خطة تفتيش الملاجىء
         </div>
@@ -14570,14 +14570,18 @@ function renderGroupInspectionTable() {
     container.innerHTML = html;
 }
 
-// Render Shelter Inspection Table - HIDDEN as per requirements
+// Render Shelter Inspection Table
 function renderShelterInspectionTable() {
     const container = document.getElementById('shelterInspectionTableContainer');
     const section = document.getElementById('shelterInspectionSection');
     
-    // Always hide the shelter inspection section
-    section.style.display = 'none';
-    return;
+    // Show the shelter inspection section if there is data
+    if (groupInspectionData && groupInspectionData.length > 0) {
+        section.style.display = 'block';
+    } else {
+        section.style.display = 'none';
+        return;
+    }
     
     let html = `
     <table class="shelter-inspection-table">

@@ -2612,54 +2612,109 @@
         
         .shelter-inspection-table th {
             background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%);
-            color: white;
-            padding: 14px 10px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 1.05em;
-            border: 1px solid #7b1fa2;
+            color:#fff;
+            font-weight:600;
+            font-size:0.9em;
+            padding:10px 8px;
+            text-align:center;
+            border-bottom:2px solid #6a1b9a;
+            position:relative;
+            text-shadow:0 1px 2px rgba(0,0,0,0.2);
+        }
+        .shelter-inspection-table th:not(:last-child):after {
+            content:'';
+            position:absolute;
+            right:0;
+            top:25%;
+            height:50%;
+            width:1px;
+            background:rgba(255,255,255,0.2);
         }
         
-        /* Column widths for shelter inspection table */
+        /* Enhanced borders for specific header columns */
+        .shelter-inspection-table th:nth-child(1), 
+        .shelter-inspection-table th:nth-child(2), 
+        .shelter-inspection-table th:nth-child(3), 
+        .shelter-inspection-table th:nth-child(4) {
+            border-right: 2px solid rgba(255,255,255,0.3);
+        }
+        
+        /* Column widths for shelter inspection table - matched with plan-table */
         .shelter-inspection-table th:nth-child(1), .shelter-inspection-table td:nth-child(1) { /* المفتشين */
-            width: 20%;
-            min-width: 130px;
+            width: 25%;
+            min-width: 160px;
+            white-space: nowrap;
+            font-size: 0.75em;
+            border-right: 1px solid rgba(35, 64, 133, 0.12);
         }
         .shelter-inspection-table th:nth-child(2), .shelter-inspection-table td:nth-child(2) { /* التاريخ */
             width: 18%;
             min-width: 145px;
             white-space: nowrap;
+            font-size: 0.80em;
+            border-right: 1px solid rgba(35, 64, 133, 0.12);
         }
         .shelter-inspection-table th:nth-child(3), .shelter-inspection-table td:nth-child(3) { /* المناوبة */
             width: 15%;
             min-width: 105px;
+            white-space: nowrap;
+            font-size: 0.85em;
+            border-right: 1px solid rgba(35, 64, 133, 0.12);
+            text-align: center;
         }
         .shelter-inspection-table th:nth-child(4), .shelter-inspection-table td:nth-child(4) { /* المنطقة */
             width: 24%;
-            min-width: 170px;
+            min-width: 220px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            font-size: 0.85em;
+            border-right: 1px solid rgba(35, 64, 133, 0.12);
+            /* Safari-specific fixes for text visibility */
+            -webkit-text-size-adjust: 100%;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
         }
-        .shelter-inspection-table th:nth-child(5), .shelter-inspection-table td:nth-child(5) { /* المحلات */
-            width: 23%;
+        .shelter-inspection-table th:nth-child(5), .shelter-inspection-table td:nth-child(5) { /* اسم الملجأ */
+            width: 30%;
             min-width: 130px;
+            overflow: visible;
+            position: relative;
+            font-size: 0.82em;
         }
         
         .shelter-inspection-table td {
-            padding: 12px 10px;
-            text-align: center;
-            border: 1px solid #e1bee7;
-            background: #fff;
+            padding:8px 6px;
+            border-bottom:1px solid #e6ecf5;
+            font-size:0.85em;
+            vertical-align:middle;
+            transition:background-color 0.2s ease;
+            height: auto;
         }
-        
+        .shelter-inspection-table tr:hover {
+            background:linear-gradient(90deg, #f0f4ff 0%, #fafbff 100%);
+            transform:translateY(-1px);
+            box-shadow:0 2px 8px rgba(35, 64, 133, 0.1);
+        }
         .shelter-inspection-table tbody tr:nth-child(even) {
-            background: #f9f0fc;
+            background:#fffacd;
+        }
+        .shelter-inspection-table tbody tr:nth-child(odd) {
+            background:#ffffff;
         }
         
-        .shelter-inspection-table tbody tr:hover {
-            background: #f3e5f5;
-            transition: all 0.3s ease;
+        /* Desktop table data cell backgrounds - only for td elements */
+        .shelter-inspection-table td:nth-child(1) { /* المفتشين */
+            background: #ffff00; /* Yellow background for inspector column */
+        }
+        .shelter-inspection-table td:nth-child(2) { /* التاريخ */
+            background: linear-gradient(135deg, rgba(245, 248, 255, 0.6) 0%, rgba(238, 243, 255, 0.7) 100%);
+        }
+        .shelter-inspection-table td:nth-child(3) { /* المناوبة */
+            background: linear-gradient(135deg, rgba(250, 251, 255, 0.5) 0%, rgba(245, 248, 255, 0.6) 100%);
+        }
+        .shelter-inspection-table td:nth-child(4) { /* المنطقة */
+            background: #ffffff !important;
         }
         
         /* Inspector Report Specific Styling */
@@ -14445,7 +14500,7 @@ function renderShelterInspectionTable() {
                 <th>التاريخ</th>
                 <th>المناوبة</th>
                 <th>المنطقة</th>
-                <th>المحلات</th>
+                <th>اسم الملجأ</th>
             </tr>
         </thead>
         <tbody>
@@ -14562,13 +14617,13 @@ function renderShelterInspectionTable() {
                             onclick="toggleShelterShopsDropdown('${idx}')"
                             style="background:#9c27b0;color:#fff;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-size:0.9em;display:flex;flex-direction:column;align-items:center;line-height:1.3;">
                             <span>عرض</span>
-                            <span>المحلات</span>
+                            <span>الملاجئ</span>
                             <span>(${shopsArray.length})</span>
                         </button>
                         <div class="shops-dropdown-list" id="shelter-shops-dropdown-${idx}">
                             <div class="shops-dropdown-header">
                                 <span class="shops-count-badge">${shopsArray.length}</span>
-                                قائمة المحلات المطلوب تفتيشها
+                                قائمة الملاجئ المطلوب تفتيشها
                             </div>
                             <ul>
                                 ${shopsListItems}

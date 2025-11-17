@@ -5731,9 +5731,9 @@
         
         <!-- Group Inspection Form -->
         <div id="groupInspectionFormSection" style="margin-top:30px;padding:20px;background:linear-gradient(135deg, #fff5e6 0%, #ffe8cc 100%);border-radius:12px;border:2px solid #ff9800;box-shadow:0 4px 12px rgba(255, 152, 0, 0.2);">
-            <h3 style="margin:0 0 20px 0;color:#e65100;text-align:center;font-size:1.3em;">👥 إضافة تفتيش جماعي</h3>
+            <h3 style="margin:0 0 20px 0;color:#e65100;text-align:center;font-size:1.3em;">🏘️ إدارة تفتيش الملاجىء</h3>
             <p style="margin:0 0 15px 0;color:#666;font-size:0.95em;text-align:center;">
-                للمحلات الكبيرة التي تحتاج إلى أكثر من مفتش في نفس الوقت
+                إضافة خطة تفتيش ملجأ جديدة - يمكن اختيار مفتش واحد فقط
             </p>
             
             <form id="groupInspectionForm" style="width:100%;max-width:800px;display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:center;margin-bottom:12px;">
@@ -5769,13 +5769,13 @@
                     </div>
                 </div>
                 
-                <!-- Inspectors Selection -->
-                <div style="width:100%;">
-                    <label style="display:block;margin-bottom:8px;font-weight:bold;color:#e65100;">👥 اختر المفتشين (متعدد):</label>
-                    <div id="groupInspectorsCheckboxes" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;padding:15px;background:white;border-radius:8px;border:2px solid #ff9800;max-height:250px;overflow-y:auto;">
-                        <!-- Checkboxes will be populated here -->
-                    </div>
-                    <small style="color:#666;font-size:0.9em;margin-top:5px;display:block;">💡 يجب اختيار مفتشين اثنين على الأقل</small>
+                <!-- Inspector Selection - Single Inspector -->
+                <div style="flex:1;min-width:200px;">
+                    <label style="display:block;margin-bottom:5px;font-weight:bold;color:#e65100;">👤 اختر المفتش:</label>
+                    <select id="groupFormInspector" required style="width:100%;padding:8px;border:1px solid #ff9800;border-radius:4px;">
+                        <option value="">اختر مفتش</option>
+                    </select>
+                    <small style="color:#666;font-size:0.9em;margin-top:5px;display:block;">💡 يمكن اختيار مفتش واحد فقط</small>
                 </div>
                 
                 <button type="submit" style="background:linear-gradient(135deg, #ff9800 0%, #f57c00 100%);color:#fff;border:none;padding:10px 30px;border-radius:7px;font-size:1.1em;cursor:pointer;font-weight:bold;box-shadow:0 4px 8px rgba(255, 152, 0, 0.3);">
@@ -13029,28 +13029,12 @@ function fillInspectorsDropdowns() {
         });
     }
     
-    // مفتشين في نموذج التفتيش الجماعي (checkboxes)
-    const groupInspectorsCheckboxes = document.getElementById('groupInspectorsCheckboxes');
-    if (groupInspectorsCheckboxes) {
-        groupInspectorsCheckboxes.innerHTML = '';
+    // مفتش في نموذج التفتيش الجماعي (dropdown - اختيار واحد فقط)
+    const groupInspectorSelect = document.getElementById('groupFormInspector');
+    if (groupInspectorSelect) {
+        groupInspectorSelect.innerHTML = '<option value="">اختر مفتش</option>';
         inspectorsData.forEach(inspector => {
-            const checkboxWrapper = document.createElement('div');
-            checkboxWrapper.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px;background:#f8f9fa;border-radius:6px;';
-            
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.value = inspector.name;
-            checkbox.id = `group-insp-${inspector.id}`;
-            checkbox.style.cssText = 'width:18px;height:18px;cursor:pointer;';
-            
-            const label = document.createElement('label');
-            label.htmlFor = `group-insp-${inspector.id}`;
-            label.textContent = inspector.name;
-            label.style.cssText = 'cursor:pointer;font-weight:500;';
-            
-            checkboxWrapper.appendChild(checkbox);
-            checkboxWrapper.appendChild(label);
-            groupInspectorsCheckboxes.appendChild(checkboxWrapper);
+            groupInspectorSelect.innerHTML += `<option value="${inspector.name}">${inspector.name}</option>`;
         });
     }
 }
@@ -14071,14 +14055,14 @@ document.getElementById("groupInspectionForm").addEventListener("submit", functi
     const area = document.getElementById("groupFormArea").value;
     const shopName = document.getElementById("groupFormShopName").value.trim();
     
-    // Get selected inspectors from checkboxes
-    const checkboxes = document.querySelectorAll('#groupInspectorsCheckboxes input[type="checkbox"]:checked');
-    const inspectors = Array.from(checkboxes).map(cb => cb.value);
+    // Get selected inspector from dropdown (single inspector)
+    const inspector = document.getElementById("groupFormInspector").value;
+    const inspectors = [inspector]; // Convert to array for compatibility
     
     const editingIdx = document.getElementById("groupFormEditingIndex").value;
     
-    if (!day || !shift || !area || !shopName || inspectors.length < 2) {
-        alert("يرجى تعبئة جميع الحقول واختيار مفتشين اثنين على الأقل!");
+    if (!day || !shift || !area || !shopName || !inspector) {
+        alert("يرجى تعبئة جميع الحقول واختيار مفتش واحد!");
         return;
     }
     
@@ -14565,18 +14549,14 @@ function renderGroupInspectionTable() {
     container.innerHTML = html;
 }
 
-// Render Shelter Inspection Table - Uses same data as Group Inspection
+// Render Shelter Inspection Table - HIDDEN as per requirements
 function renderShelterInspectionTable() {
     const container = document.getElementById('shelterInspectionTableContainer');
     const section = document.getElementById('shelterInspectionSection');
     
-    // Use the same data as group inspection
-    if (!groupInspectionData || groupInspectionData.length === 0) {
-        section.style.display = 'none';
-        return;
-    }
-    
-    section.style.display = 'block';
+    // Always hide the shelter inspection section
+    section.style.display = 'none';
+    return;
     
     let html = `
     <table class="shelter-inspection-table">
@@ -14796,11 +14776,11 @@ function editGroupInspection(idx) {
     
     document.getElementById("groupFormShopName").value = item.shopName;
     
-    // Check inspectors
-    const checkboxes = document.querySelectorAll('#groupInspectorsCheckboxes input[type="checkbox"]');
-    checkboxes.forEach(cb => {
-        cb.checked = item.inspectors.includes(cb.value);
-    });
+    // Set inspector (use first inspector from array for backward compatibility)
+    const inspectorSelect = document.getElementById("groupFormInspector");
+    if (inspectorSelect && item.inspectors && item.inspectors.length > 0) {
+        inspectorSelect.value = item.inspectors[0];
+    }
     
     document.getElementById("groupFormEditingIndex").value = idx;
     

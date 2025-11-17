@@ -2333,6 +2333,10 @@
                     <span>👥</span>
                     <span>تقارير التفتيش الجماعي</span>
                 </button>
+                <button class="btn btn-primary" onclick="switchTab('shelterInspection')" style="background: white; color: #9c27b0;">
+                    <span>🏘️</span>
+                    <span>تخطيط تفتيش الملاجئ</span>
+                </button>
             </div>
             
             <!-- Bell Notifications Control Button -->
@@ -2416,6 +2420,9 @@
                 </button>
                 <button class="tab-button" onclick="switchTab('groupInspection')">
                     <span>👥</span> التفتيش الجماعي
+                </button>
+                <button class="tab-button" onclick="switchTab('shelterInspection')">
+                    <span>🏘️</span> تفتيش الملاجئ
                 </button>
             </div>
             
@@ -3184,6 +3191,89 @@
                 </div>
                 
                 <div class="status-message" id="groupInspectionStatus"></div>
+            </div>
+        </div>
+        
+        <!-- Shelter Inspection Tab -->
+        <div id="shelterInspectionTab" class="tab-content">
+            <div class="section">
+                <h2 class="section-title">🏘️ إدارة تفتيش الملاجئ</h2>
+                <p style="color: #666; margin-bottom: 20px; text-align: center;">
+                    إضافة وإدارة خطط تفتيش الملاجئ بفريق من المفتشين
+                </p>
+                
+                <!-- Shelter Inspection Form -->
+                <div style="background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%); padding: 25px; border-radius: 15px; margin-bottom: 25px; border: 2px solid #9c27b0; box-shadow: 0 4px 12px rgba(156, 39, 176, 0.2);">
+                    <h3 style="margin: 0 0 20px 0; color: #6a1b9a; text-align: center; font-size: 1.3em;">➕ إضافة خطة تفتيش ملجأ جديدة</h3>
+                    <p style="margin: 0 0 15px 0; color: #666; font-size: 0.95em; text-align: center;">
+                        للتفتيشات التي تحتاج إلى فريق متخصص لتفتيش الملاجئ
+                    </p>
+                    
+                    <form id="smartShelterInspectionForm" style="max-width: 900px; margin: 0 auto;">
+                        <div class="form-group">
+                            <label class="form-label" style="color: #6a1b9a; font-weight: bold;">👥 اختر المفتشين (متعدد - 2 على الأقل)</label>
+                            <div id="smartShelterInspectorsCheckboxes" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; padding: 15px; background: white; border-radius: 8px; border: 2px solid #9c27b0; max-height: 250px; overflow-y: auto;">
+                                <!-- Checkboxes will be populated here -->
+                            </div>
+                            <small style="color: #666; font-size: 0.9em; margin-top: 5px; display: block;">💡 يجب اختيار مفتشين اثنين على الأقل</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" style="color: #6a1b9a; font-weight: bold;">📅 التاريخ</label>
+                            <input type="date" id="smartShelterFormDay" required class="form-control">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" style="color: #6a1b9a; font-weight: bold;">🕐 المناوبة</label>
+                            <select id="smartShelterFormShift" required class="form-control">
+                                <option value="">اختر المناوبة</option>
+                                <option value="صباحية">صباحية</option>
+                                <option value="مسائية">مسائية</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" style="color: #6a1b9a; font-weight: bold;">📍 موقع الملجأ</label>
+                            <input type="text" id="smartShelterFormLocation" required class="form-control" placeholder="أدخل موقع الملجأ">
+                            <small style="color: #666; font-size: 0.9em; margin-top: 5px; display: block;">💡 مثال: منطقة الصناعية، شارع الملك فيصل</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" style="color: #6a1b9a; font-weight: bold;">🏘️ اسم الملجأ</label>
+                            <input type="text" id="smartShelterFormName" required class="form-control" placeholder="أدخل اسم الملجأ">
+                            <small style="color: #666; font-size: 0.9em; margin-top: 5px; display: block;">💡 مثال: ملجأ الأمان، ملجأ الرعاية الاجتماعية</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" style="color: #6a1b9a; font-weight: bold;">📝 ملاحظات إضافية (اختياري)</label>
+                            <textarea id="smartShelterFormNotes" class="form-control" rows="3" placeholder="أضف أي ملاحظات خاصة بالتفتيش"></textarea>
+                        </div>
+                        
+                        <div style="text-align: center; margin-top: 20px;">
+                            <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%); color: white; padding: 12px 30px; font-size: 1.1em; border: none;">
+                                <span>➕</span>
+                                <span id="smartShelterFormSubmitText">إضافة خطة تفتيش</span>
+                            </button>
+                            <button type="button" id="smartShelterFormCancelBtn" onclick="cancelShelterInspectionEdit()" class="btn" style="display: none; background: #6c757d; color: white; padding: 12px 30px; font-size: 1.1em; margin-right: 10px;">
+                                <span>❌</span>
+                                <span>إلغاء التعديل</span>
+                            </button>
+                        </div>
+                        <input type="hidden" id="smartShelterFormEditingIndex" value="">
+                    </form>
+                </div>
+                
+                <!-- Shelter Inspections List -->
+                <div style="background: #f8f9fa; padding: 25px; border-radius: 15px; border: 2px solid #e0e0e0;">
+                    <h3 style="margin: 0 0 20px 0; color: #2d3561; text-align: center; font-size: 1.3em;">📋 خطط تفتيش الملاجئ المجدولة</h3>
+                    <div id="smartShelterInspectionTableContainer">
+                        <p style="text-align: center; color: #999; padding: 40px 20px;">
+                            لا توجد خطط تفتيش ملاجئ حالياً. قم بإضافة خطة جديدة باستخدام النموذج أعلاه.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="status-message" id="shelterInspectionStatus"></div>
             </div>
         </div>
         
@@ -5635,6 +5725,29 @@
                     });
                 } else {
                     initializeGroupInspection();
+                }
+            } else if (tabName === 'shelterInspection') {
+                // Load planData if not already loaded
+                if (!planData) {
+                    loadPlanData().then(() => {
+                        initializeShelterInspection();
+                    }).catch(error => {
+                        console.error('Error loading plan data:', error);
+                        // Initialize empty planData for read-only mode
+                        if (!planData) {
+                            planData = {
+                                shops: [],
+                                areas: [],
+                                inspectionData: [],
+                                inspectors: [],
+                                groupInspectionData: [],
+                                shelterInspectionData: []
+                            };
+                        }
+                        initializeShelterInspection();
+                    });
+                } else {
+                    initializeShelterInspection();
                 }
             }
         }
@@ -17774,7 +17887,7 @@
         let gestureThreshold = 0.15; // Movement threshold for gesture detection
         
         // Tab management
-        const tabs = ['add', 'view', 'stats', 'calendar', 'shops', 'areas', 'maintenance'];
+        const tabs = ['add', 'view', 'stats', 'calendar', 'shops', 'areas', 'maintenance', 'groupInspection', 'shelterInspection'];
         let currentTabIndex = 0;
         
         // Toggle gesture control
@@ -18108,6 +18221,8 @@
                 else if (tabText.includes('المحلات')) currentTabIndex = 4;
                 else if (tabText.includes('المناطق')) currentTabIndex = 5;
                 else if (tabText.includes('الصيانة')) currentTabIndex = 6;
+                else if (tabText.includes('التفتيش الجماعي')) currentTabIndex = 7;
+                else if (tabText.includes('الملاجئ')) currentTabIndex = 8;
             }
         }
         
@@ -18681,6 +18796,306 @@
         
         // ========================================
         // End of Group Inspection Management
+        // ========================================
+        
+        // ========================================
+        // Shelter Inspection Management Functions
+        // ========================================
+        
+        // Initialize shelter inspection tab
+        function initializeShelterInspection() {
+            // Populate inspectors checkboxes for shelter inspection
+            const checkboxContainer = document.getElementById('smartShelterInspectorsCheckboxes');
+            if (checkboxContainer) {
+                checkboxContainer.innerHTML = '';
+                if (planData && planData.inspectors) {
+                    planData.inspectors.forEach(inspector => {
+                        const label = document.createElement('label');
+                        label.style.cssText = 'display: flex; align-items: center; gap: 8px; padding: 8px; background: #f8f9fa; border-radius: 6px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;';
+                        label.onmouseover = function() { this.style.borderColor = '#9c27b0'; this.style.background = '#f3e5f5'; };
+                        label.onmouseout = function() { this.style.borderColor = 'transparent'; this.style.background = '#f8f9fa'; };
+                        
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.value = inspector.name;
+                        checkbox.style.cssText = 'width: 18px; height: 18px; cursor: pointer;';
+                        
+                        const span = document.createElement('span');
+                        span.textContent = inspector.name;
+                        span.style.cssText = 'font-size: 0.95em;';
+                        
+                        label.appendChild(checkbox);
+                        label.appendChild(span);
+                        checkboxContainer.appendChild(label);
+                    });
+                }
+            }
+            
+            // Render the shelter inspections table
+            renderSmartShelterInspectionTable();
+        }
+        
+        // Render shelter inspection table
+        function renderSmartShelterInspectionTable() {
+            const container = document.getElementById('smartShelterInspectionTableContainer');
+            if (!container) return;
+            
+            // Initialize shelterInspectionData if it doesn't exist
+            if (!planData.shelterInspectionData) {
+                planData.shelterInspectionData = [];
+            }
+            
+            if (!planData.shelterInspectionData || planData.shelterInspectionData.length === 0) {
+                container.innerHTML = `
+                    <p style="text-align: center; color: #999; padding: 40px 20px;">
+                        لا توجد خطط تفتيش ملاجئ حالياً. قم بإضافة خطة جديدة باستخدام النموذج أعلاه.
+                    </p>
+                `;
+                return;
+            }
+            
+            // Helper function to get Arabic day name
+            function getArabicDayName(dateStr) {
+                const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+                const date = new Date(dateStr);
+                return days[date.getDay()];
+            }
+            
+            let html = `
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <thead>
+                            <tr style="background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%); color: white;">
+                                <th style="padding: 15px; text-align: right; border-bottom: 2px solid #6a1b9a;">المفتشون</th>
+                                <th style="padding: 15px; text-align: right; border-bottom: 2px solid #6a1b9a;">التاريخ</th>
+                                <th style="padding: 15px; text-align: right; border-bottom: 2px solid #6a1b9a;">المناوبة</th>
+                                <th style="padding: 15px; text-align: right; border-bottom: 2px solid #6a1b9a;">الموقع</th>
+                                <th style="padding: 15px; text-align: right; border-bottom: 2px solid #6a1b9a;">اسم الملجأ</th>
+                                <th style="padding: 15px; text-align: right; border-bottom: 2px solid #6a1b9a;">الملاحظات</th>
+                                <th style="padding: 15px; text-align: center; border-bottom: 2px solid #6a1b9a;">الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            planData.shelterInspectionData.forEach((item, idx) => {
+                const dayName = getArabicDayName(item.day);
+                
+                const inspectorsBadges = item.inspectors.map(inspector => 
+                    `<span style="display: inline-block; background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%); color: white; padding: 4px 10px; border-radius: 15px; font-size: 0.85em; margin: 2px; white-space: nowrap;">👤 ${inspector}</span>`
+                ).join('');
+                
+                const notes = item.notes ? item.notes : 'لا توجد ملاحظات';
+                
+                html += `
+                    <tr style="border-bottom: 1px solid #eee; transition: background 0.2s;" onmouseover="this.style.background='#f3e5f5'" onmouseout="this.style.background='white'">
+                        <td style="padding: 12px;">
+                            <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                                ${inspectorsBadges}
+                            </div>
+                        </td>
+                        <td style="padding: 12px; font-family: 'Cairo', Arial, sans-serif;">
+                            <div style="line-height: 1.4;">
+                                <div style="font-weight: 600;">${item.day}</div>
+                                <div style="font-size: 0.85em; color: #666;">${dayName}</div>
+                            </div>
+                        </td>
+                        <td style="padding: 12px;">
+                            <span style="display: inline-block; background: ${item.shift === 'صباحية' ? '#e8f5e8' : '#fff3e0'}; color: ${item.shift === 'صباحية' ? '#2e7d32' : '#ef6c00'}; padding: 6px 12px; border-radius: 10px; font-size: 0.9em; border: 1px solid ${item.shift === 'صباحية' ? '#c8e6c9' : '#ffcc02'};">
+                                ${item.shift === 'صباحية' ? '🌅' : '🌆'} ${item.shift}
+                            </span>
+                        </td>
+                        <td style="padding: 12px; font-weight: 600; color: #9c27b0;">
+                            ${item.location}
+                        </td>
+                        <td style="padding: 12px; font-weight: 600;">
+                            ${item.shelterName}
+                        </td>
+                        <td style="padding: 12px; color: #666; font-size: 0.9em;">
+                            ${notes}
+                        </td>
+                        <td style="padding: 12px; text-align: center;">
+                            <button onclick="editSmartShelterInspection(${idx})" class="btn btn-sm" style="background: #2196f3; color: white; padding: 6px 12px; margin: 2px; border: none; border-radius: 5px; cursor: pointer;">
+                                ✏️ تعديل
+                            </button>
+                            <button onclick="deleteSmartShelterInspection(${idx})" class="btn btn-sm" style="background: #f44336; color: white; padding: 6px 12px; margin: 2px; border: none; border-radius: 5px; cursor: pointer;">
+                                🗑️ حذف
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        // Handle shelter inspection form submission
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('smartShelterInspectionForm');
+            if (form) {
+                form.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const day = document.getElementById('smartShelterFormDay').value;
+                    const shift = document.getElementById('smartShelterFormShift').value;
+                    const location = document.getElementById('smartShelterFormLocation').value.trim();
+                    const shelterName = document.getElementById('smartShelterFormName').value.trim();
+                    const notes = document.getElementById('smartShelterFormNotes').value.trim();
+                    
+                    // Get selected inspectors from checkboxes
+                    const checkboxes = document.querySelectorAll('#smartShelterInspectorsCheckboxes input[type="checkbox"]:checked');
+                    const inspectors = Array.from(checkboxes).map(cb => cb.value);
+                    
+                    const editingIdx = document.getElementById('smartShelterFormEditingIndex').value;
+                    
+                    // Validation
+                    if (!day || !shift || !location || !shelterName) {
+                        showShelterInspectionStatus('⚠️ يرجى تعبئة جميع الحقول المطلوبة!', 'error');
+                        return;
+                    }
+                    
+                    if (inspectors.length < 2) {
+                        showShelterInspectionStatus('⚠️ يجب اختيار مفتشين اثنين على الأقل!', 'error');
+                        return;
+                    }
+                    
+                    const newShelterInspection = {
+                        day,
+                        shift,
+                        location,
+                        shelterName,
+                        inspectors,
+                        notes,
+                        reportUrl: null
+                    };
+                    
+                    // Initialize shelterInspectionData if it doesn't exist
+                    if (!planData.shelterInspectionData) {
+                        planData.shelterInspectionData = [];
+                    }
+                    
+                    if (editingIdx === "") {
+                        // Add new
+                        planData.shelterInspectionData.push(newShelterInspection);
+                        showShelterInspectionStatus('✅ تم إضافة خطة تفتيش الملجأ بنجاح!', 'success');
+                    } else {
+                        // Edit existing
+                        if (planData.shelterInspectionData[editingIdx] && planData.shelterInspectionData[editingIdx].reportUrl) {
+                            newShelterInspection.reportUrl = planData.shelterInspectionData[editingIdx].reportUrl;
+                        }
+                        planData.shelterInspectionData[editingIdx] = newShelterInspection;
+                        showShelterInspectionStatus('✅ تم تعديل خطة تفتيش الملجأ بنجاح!', 'success');
+                    }
+                    
+                    // Save to GitHub
+                    try {
+                        await savePlanDataToGitHub();
+                        renderSmartShelterInspectionTable();
+                        
+                        // Reset form
+                        form.reset();
+                        document.getElementById('smartShelterFormEditingIndex').value = "";
+                        document.getElementById('smartShelterFormSubmitText').textContent = "إضافة خطة تفتيش";
+                        document.getElementById('smartShelterFormCancelBtn').style.display = 'none';
+                        
+                        // Uncheck all checkboxes
+                        document.querySelectorAll('#smartShelterInspectorsCheckboxes input[type="checkbox"]').forEach(cb => {
+                            cb.checked = false;
+                        });
+                    } catch (error) {
+                        console.error('Error saving shelter inspection:', error);
+                        showShelterInspectionStatus('❌ حدث خطأ أثناء الحفظ: ' + error.message, 'error');
+                    }
+                });
+            }
+        });
+        
+        // Edit shelter inspection
+        function editSmartShelterInspection(idx) {
+            if (!planData.shelterInspectionData || !planData.shelterInspectionData[idx]) return;
+            
+            const item = planData.shelterInspectionData[idx];
+            
+            document.getElementById('smartShelterFormDay').value = item.day;
+            document.getElementById('smartShelterFormShift').value = item.shift;
+            document.getElementById('smartShelterFormLocation').value = item.location;
+            document.getElementById('smartShelterFormName').value = item.shelterName;
+            document.getElementById('smartShelterFormNotes').value = item.notes || '';
+            
+            // Check inspectors
+            const checkboxes = document.querySelectorAll('#smartShelterInspectorsCheckboxes input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                cb.checked = item.inspectors.includes(cb.value);
+            });
+            
+            document.getElementById('smartShelterFormEditingIndex').value = idx;
+            document.getElementById('smartShelterFormSubmitText').textContent = "حفظ التعديلات";
+            document.getElementById('smartShelterFormCancelBtn').style.display = 'inline-block';
+            
+            // Scroll to form
+            document.querySelector('#shelterInspectionTab .section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        
+        // Cancel shelter inspection edit
+        function cancelShelterInspectionEdit() {
+            const form = document.getElementById('smartShelterInspectionForm');
+            if (form) {
+                form.reset();
+            }
+            
+            document.getElementById('smartShelterFormEditingIndex').value = "";
+            document.getElementById('smartShelterFormSubmitText').textContent = "إضافة خطة تفتيش";
+            document.getElementById('smartShelterFormCancelBtn').style.display = 'none';
+            
+            // Uncheck all checkboxes
+            document.querySelectorAll('#smartShelterInspectorsCheckboxes input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+            });
+        }
+        
+        // Delete shelter inspection
+        async function deleteSmartShelterInspection(idx) {
+            if (!planData.shelterInspectionData || !planData.shelterInspectionData[idx]) return;
+            
+            const item = planData.shelterInspectionData[idx];
+            const confirmMsg = `هل تريد حذف خطة تفتيش هذا الملجأ نهائياً؟\n\nالملجأ: ${item.shelterName}\nالموقع: ${item.location}\nالتاريخ: ${item.day}\nالمفتشين: ${item.inspectors.join(', ')}`;
+            
+            if (!confirm(confirmMsg)) return;
+            
+            planData.shelterInspectionData.splice(idx, 1);
+            
+            try {
+                await savePlanDataToGitHub();
+                renderSmartShelterInspectionTable();
+                showShelterInspectionStatus('✅ تم حذف خطة تفتيش الملجأ بنجاح!', 'success');
+            } catch (error) {
+                console.error('Error deleting shelter inspection:', error);
+                showShelterInspectionStatus('❌ حدث خطأ أثناء الحذف: ' + error.message, 'error');
+            }
+        }
+        
+        // Show status message for shelter inspection
+        function showShelterInspectionStatus(message, type) {
+            const statusDiv = document.getElementById('shelterInspectionStatus');
+            if (!statusDiv) return;
+            
+            statusDiv.textContent = message;
+            statusDiv.className = 'status-message ' + type;
+            statusDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        // ========================================
+        // End of Shelter Inspection Management
         // ========================================
     </script>
 </body>

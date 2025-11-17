@@ -18487,6 +18487,32 @@
                 return;
             }
             
+            // Helper function to check if a date is in the past
+            function isDateInPast(dateStr) {
+                const inspectionDate = new Date(dateStr);
+                const today = new Date();
+                // Set time to start of day for both dates to compare only dates
+                inspectionDate.setHours(0, 0, 0, 0);
+                today.setHours(0, 0, 0, 0);
+                return inspectionDate < today;
+            }
+            
+            // Filter out past inspections - only show today and future inspections
+            const upcomingInspections = planData.groupInspectionData.filter((item, idx) => {
+                return !isDateInPast(item.day);
+            });
+            
+            // If no upcoming inspections, show message
+            if (upcomingInspections.length === 0) {
+                container.innerHTML = `
+                    <p style="text-align: center; color: #999; padding: 40px 20px;">
+                        لا توجد تفتيشات جماعية قادمة. جميع التفتيشات المجدولة قد انتهت.<br>
+                        قم بإضافة تفتيش جماعي جديد باستخدام النموذج أعلاه.
+                    </p>
+                `;
+                return;
+            }
+            
             // Helper function to get area name
             function getAreaName(areaIdOrName) {
                 if (!planData.areas) return areaIdOrName;
@@ -18517,7 +18543,10 @@
                         <tbody>
             `;
             
-            planData.groupInspectionData.forEach((item, idx) => {
+            // Iterate over upcoming inspections only, but keep original index for edit/delete
+            upcomingInspections.forEach((item) => {
+                // Find the original index in the full array for edit/delete operations
+                const originalIdx = planData.groupInspectionData.indexOf(item);
                 const areaName = getAreaName(item.area);
                 const dayName = getArabicDayName(item.day);
                 
@@ -18550,10 +18579,10 @@
                             ${item.shopName}
                         </td>
                         <td style="padding: 12px; text-align: center;">
-                            <button onclick="editSmartGroupInspection(${idx})" class="btn btn-sm" style="background: #2196f3; color: white; padding: 6px 12px; margin: 2px; border: none; border-radius: 5px; cursor: pointer;">
+                            <button onclick="editSmartGroupInspection(${originalIdx})" class="btn btn-sm" style="background: #2196f3; color: white; padding: 6px 12px; margin: 2px; border: none; border-radius: 5px; cursor: pointer;">
                                 ✏️ تعديل
                             </button>
-                            <button onclick="deleteSmartGroupInspection(${idx})" class="btn btn-sm" style="background: #f44336; color: white; padding: 6px 12px; margin: 2px; border: none; border-radius: 5px; cursor: pointer;">
+                            <button onclick="deleteSmartGroupInspection(${originalIdx})" class="btn btn-sm" style="background: #f44336; color: white; padding: 6px 12px; margin: 2px; border: none; border-radius: 5px; cursor: pointer;">
                                 🗑️ حذف
                             </button>
                         </td>
@@ -18921,6 +18950,32 @@
                 return;
             }
             
+            // Helper function to check if a date is in the past
+            function isDateInPast(dateStr) {
+                const inspectionDate = new Date(dateStr);
+                const today = new Date();
+                // Set time to start of day for both dates to compare only dates
+                inspectionDate.setHours(0, 0, 0, 0);
+                today.setHours(0, 0, 0, 0);
+                return inspectionDate < today;
+            }
+            
+            // Filter out past inspections - only show today and future inspections
+            const upcomingInspections = planData.shelterInspectionData.filter((item) => {
+                return !isDateInPast(item.day);
+            });
+            
+            // If no upcoming inspections, show message
+            if (upcomingInspections.length === 0) {
+                container.innerHTML = `
+                    <p style="text-align: center; color: #999; padding: 40px 20px;">
+                        لا توجد خطط تفتيش ملاجئ قادمة. جميع خطط التفتيش المجدولة قد انتهت.<br>
+                        قم بإضافة خطة تفتيش جديدة باستخدام النموذج أعلاه.
+                    </p>
+                `;
+                return;
+            }
+            
             // Helper function to get Arabic day name
             function getArabicDayName(dateStr) {
                 const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
@@ -18945,7 +19000,10 @@
                         <tbody>
             `;
             
-            planData.shelterInspectionData.forEach((item, idx) => {
+            // Iterate over upcoming inspections only, but keep original index for edit/delete
+            upcomingInspections.forEach((item) => {
+                // Find the original index in the full array for edit/delete operations
+                const originalIdx = planData.shelterInspectionData.indexOf(item);
                 const dayName = getArabicDayName(item.day);
                 
                 const inspectorsBadges = item.inspectors.map(inspector => 
@@ -18985,10 +19043,10 @@
                             ${notes}
                         </td>
                         <td style="padding: 12px; text-align: center;">
-                            <button onclick="editSmartShelterInspection(${idx})" class="btn btn-sm" style="background: #2196f3; color: white; padding: 6px 12px; margin: 2px; border: none; border-radius: 5px; cursor: pointer;">
+                            <button onclick="editSmartShelterInspection(${originalIdx})" class="btn btn-sm" style="background: #2196f3; color: white; padding: 6px 12px; margin: 2px; border: none; border-radius: 5px; cursor: pointer;">
                                 ✏️ تعديل
                             </button>
-                            <button onclick="deleteSmartShelterInspection(${idx})" class="btn btn-sm" style="background: #f44336; color: white; padding: 6px 12px; margin: 2px; border: none; border-radius: 5px; cursor: pointer;">
+                            <button onclick="deleteSmartShelterInspection(${originalIdx})" class="btn btn-sm" style="background: #f44336; color: white; padding: 6px 12px; margin: 2px; border: none; border-radius: 5px; cursor: pointer;">
                                 🗑️ حذف
                             </button>
                         </td>

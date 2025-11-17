@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Test - Shelter Inspection Table Mobile Responsive</title>
+    <style>
+        body {
+            font-family: 'Cairo', Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        
+        .test-container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #234085;
+            margin-bottom: 10px;
+        }
+        
+        .test-info {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+        
+        .viewport-indicator {
+            text-align: center;
+            padding: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        /* Shelter Inspection Section Styles */
+        .shelter-inspection-section {
+            margin-top: 40px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+            border-radius: 12px;
+            border: 2px solid #9c27b0;
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.2);
+        }
+        
+        .shelter-inspection-title {
+            text-align: center;
+            color: #6a1b9a;
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%);
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(156, 39, 176, 0.3);
+        }
+        
+        /* Container for shelter inspection table - matching plan-table-container */
+        #shelterInspectionTableContainer {
+            width: 100%;
+            margin: 6px auto;
+            overflow-x: auto;
+            overflow-y: visible;
+            display: flex;
+            justify-content: center;
+            padding-right: 20px;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .shelter-inspection-table {
+            width: 100%;
+            max-width: 1150px;
+            margin: 0 auto;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .shelter-inspection-table th {
+            background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%);
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.9em;
+            padding: 10px 8px;
+            text-align: center;
+            border-bottom: 2px solid #6a1b9a;
+            position: relative;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        
+        .shelter-inspection-table th:not(:last-child):after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 25%;
+            height: 50%;
+            width: 1px;
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .shelter-inspection-table th:nth-child(1), 
+        .shelter-inspection-table th:nth-child(2), 
+        .shelter-inspection-table th:nth-child(3), 
+        .shelter-inspection-table th:nth-child(4) {
+            border-right: 2px solid rgba(255,255,255,0.3);
+        }
+        
+        /* Desktop column widths */
+        .shelter-inspection-table th:nth-child(1), .shelter-inspection-table td:nth-child(1) {
+            width: 25%;
+            min-width: 160px;
+            white-space: nowrap;
+            font-size: 0.75em;
+            border-right: 1px solid rgba(35, 64, 133, 0.12);
+        }
+        .shelter-inspection-table th:nth-child(2), .shelter-inspection-table td:nth-child(2) {
+            width: 18%;
+            min-width: 145px;
+            white-space: nowrap;
+            font-size: 0.80em;
+            border-right: 1px solid rgba(35, 64, 133, 0.12);
+        }
+        .shelter-inspection-table th:nth-child(3), .shelter-inspection-table td:nth-child(3) {
+            width: 15%;
+            min-width: 105px;
+            white-space: nowrap;
+            font-size: 0.85em;
+            border-right: 1px solid rgba(35, 64, 133, 0.12);
+            text-align: center;
+        }
+        .shelter-inspection-table th:nth-child(4), .shelter-inspection-table td:nth-child(4) {
+            width: 24%;
+            min-width: 220px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 0.85em;
+            border-right: 1px solid rgba(35, 64, 133, 0.12);
+        }
+        .shelter-inspection-table th:nth-child(5), .shelter-inspection-table td:nth-child(5) {
+            width: 30%;
+            min-width: 130px;
+            overflow: visible;
+            position: relative;
+            font-size: 0.82em;
+        }
+        
+        .shelter-inspection-table td {
+            padding: 8px 6px;
+            border-bottom: 1px solid #e6ecf5;
+            font-size: 0.85em;
+            vertical-align: middle;
+            transition: background-color 0.2s ease;
+            height: auto;
+        }
+        
+        .shelter-inspection-table tr:hover {
+            background: linear-gradient(90deg, #f0f4ff 0%, #fafbff 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(35, 64, 133, 0.1);
+        }
+        
+        .shelter-inspection-table tbody tr:nth-child(even) {
+            background: #fffacd;
+        }
+        .shelter-inspection-table tbody tr:nth-child(odd) {
+            background: #ffffff;
+        }
+        
+        .shelter-inspection-table td:nth-child(1) {
+            background: #ffff00;
+        }
+        .shelter-inspection-table td:nth-child(2) {
+            background: linear-gradient(135deg, rgba(245, 248, 255, 0.6) 0%, rgba(238, 243, 255, 0.7) 100%);
+        }
+        .shelter-inspection-table td:nth-child(3) {
+            background: linear-gradient(135deg, rgba(250, 251, 255, 0.5) 0%, rgba(245, 248, 255, 0.6) 100%);
+        }
+        .shelter-inspection-table td:nth-child(4) {
+            background: #ffffff !important;
+        }
+        
+        /* Mobile responsive styles - THE FIX */
+        @media (max-width: 480px) {
+            #shelterInspectionTableContainer {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                padding-right: 10px;
+            }
+            
+            .shelter-inspection-table {
+                width: 100%;
+                table-layout: fixed;
+            }
+            
+            .shelter-inspection-table th, .shelter-inspection-table td {
+                padding: 6px 4px;
+                font-size: 0.8em;
+                min-width: 50px;
+            }
+            
+            /* Optimized column widths for mobile */
+            .shelter-inspection-table th:nth-child(1), .shelter-inspection-table td:nth-child(1) {
+                width: 26%;
+                min-width: 26%;
+                font-size: 0.7em;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                border-right: 1px solid rgba(35, 64, 133, 0.12);
+            }
+            .shelter-inspection-table th:nth-child(2), .shelter-inspection-table td:nth-child(2) {
+                width: 21%;
+                min-width: 21%;
+                font-size: 0.75em;
+                white-space: nowrap;
+                border-right: 1px solid rgba(35, 64, 133, 0.12);
+                text-align: center;
+            }
+            .shelter-inspection-table th:nth-child(3), .shelter-inspection-table td:nth-child(3) {
+                width: 16%;
+                min-width: 16%;
+                font-size: 0.78em;
+                white-space: nowrap;
+                border-right: 1px solid rgba(35, 64, 133, 0.12);
+                text-align: center;
+            }
+            .shelter-inspection-table th:nth-child(4), .shelter-inspection-table td:nth-child(4) {
+                width: 25%;
+                min-width: 25%;
+                font-size: 0.78em;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                border-right: 1px solid rgba(35, 64, 133, 0.12);
+            }
+            .shelter-inspection-table th:nth-child(5), .shelter-inspection-table td:nth-child(5) {
+                width: 22%;
+                min-width: 22%;
+                font-size: 0.75em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 اختبار جدول تفتيش الملاجئ - الجوال</h1>
+        <div class="test-info">
+            Test case for mobile responsive shelter inspection table<br>
+            Resize browser to see mobile styles (width < 480px)
+        </div>
+        
+        <div class="viewport-indicator">
+            عرض الشاشة الحالي: <span id="viewportWidth">-</span> بكسل
+        </div>
+        
+        <div class="shelter-inspection-section">
+            <div class="shelter-inspection-title">
+                🏘️ خطة تفتيش الملاجىء
+            </div>
+            <div id="shelterInspectionTableContainer">
+                <table class="shelter-inspection-table">
+                    <thead>
+                        <tr>
+                            <th>المفتشين</th>
+                            <th>التاريخ</th>
+                            <th>المناوبة</th>
+                            <th>المنطقة</th>
+                            <th>اسم الملجأ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>محمد أحمد, علي حسن</td>
+                            <td>2025-11-17</td>
+                            <td>صباحية</td>
+                            <td>منطقة السوق المركزي</td>
+                            <td>ملجأ الطيور والحيوانات الأليفة</td>
+                        </tr>
+                        <tr>
+                            <td>فاطمة محمود</td>
+                            <td>2025-11-18</td>
+                            <td>مسائية</td>
+                            <td>الشارع الرئيسي</td>
+                            <td>ملجأ الحيوانات الضالة</td>
+                        </tr>
+                        <tr>
+                            <td>خالد عبدالله, سارة علي, أحمد محمد</td>
+                            <td>2025-11-19</td>
+                            <td>صباحية</td>
+                            <td>حي الصناعة</td>
+                            <td>ملجأ القطط والكلاب</td>
+                        </tr>
+                        <tr>
+                            <td>نور الدين</td>
+                            <td>2025-11-20</td>
+                            <td>مسائية</td>
+                            <td>منطقة الميناء</td>
+                            <td>ملجأ إنقاذ الحيوانات</td>
+                        </tr>
+                        <tr>
+                            <td>عائشة حسن, زينب أحمد</td>
+                            <td>2025-11-21</td>
+                            <td>صباحية</td>
+                            <td>السوق القديم</td>
+                            <td>ملجأ رعاية الحيوانات المهجورة</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function updateViewportWidth() {
+            const width = window.innerWidth;
+            document.getElementById('viewportWidth').textContent = width;
+            
+            // Update indicator color based on width
+            const indicator = document.querySelector('.viewport-indicator');
+            if (width < 480) {
+                indicator.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+                indicator.innerHTML = `✅ عرض الشاشة الحالي: <span id="viewportWidth">${width}</span> بكسل (وضع الجوال مفعّل)`;
+            } else {
+                indicator.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                indicator.innerHTML = `📱 عرض الشاشة الحالي: <span id="viewportWidth">${width}</span> بكسل (وضع سطح المكتب)`;
+            }
+        }
+        
+        updateViewportWidth();
+        window.addEventListener('resize', updateViewportWidth);
+    </script>
+</body>
+</html>

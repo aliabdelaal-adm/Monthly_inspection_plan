@@ -3233,15 +3233,18 @@
                         </div>
                         
                         <div class="form-group">
-                            <label class="form-label" style="color: #6a1b9a; font-weight: bold;">📍 موقع الملجأ</label>
-                            <input type="text" id="smartShelterFormLocation" required class="form-control" placeholder="أدخل موقع الملجأ">
-                            <small style="color: #666; font-size: 0.9em; margin-top: 5px; display: block;">💡 مثال: منطقة الصناعية، شارع الملك فيصل</small>
+                            <label class="form-label" style="color: #6a1b9a; font-weight: bold;">🗺️ المنطقة</label>
+                            <select id="smartShelterFormArea" required class="form-control" onchange="updateShelterFormShelters()">
+                                <option value="">اختر المنطقة</option>
+                            </select>
                         </div>
                         
                         <div class="form-group">
-                            <label class="form-label" style="color: #6a1b9a; font-weight: bold;">🏘️ الملجأ</label>
-                            <input type="text" id="smartShelterFormName" required class="form-control" placeholder="أدخل الملجأ">
-                            <small style="color: #666; font-size: 0.9em; margin-top: 5px; display: block;">💡 مثال: ملجأ الأمان، ملجأ الرعاية الاجتماعية</small>
+                            <label class="form-label" style="color: #6a1b9a; font-weight: bold;">🏘️ اسم الملجأ</label>
+                            <select id="smartShelterFormShelterName" required class="form-control">
+                                <option value="">اختر الملجأ</option>
+                            </select>
+                            <small style="color: #666; font-size: 0.9em; margin-top: 5px; display: block;">💡 سيتم عرض الملاجئ للمنطقة المختارة فقط</small>
                         </div>
                         
                         <div class="form-group">
@@ -18617,6 +18620,56 @@
             }
         }
         
+        // Update shelter form shelters dropdown based on selected area
+        function updateShelterFormShelters() {
+            const areaSelect = document.getElementById('smartShelterFormArea');
+            const shelterSelect = document.getElementById('smartShelterFormShelterName');
+            
+            if (!areaSelect || !shelterSelect) return;
+            
+            const selectedAreaIdOrName = areaSelect.value;
+            
+            // Clear current options
+            shelterSelect.innerHTML = '<option value="">اختر الملجأ</option>';
+            
+            if (!selectedAreaIdOrName) {
+                return;
+            }
+            
+            // Get area name from ID or use as-is
+            let areaName = selectedAreaIdOrName;
+            if (planData && planData.areas) {
+                const areaObj = planData.areas.find(a => a.id === selectedAreaIdOrName);
+                if (areaObj) {
+                    areaName = areaObj.name;
+                }
+            }
+            
+            // Get all shops for the selected area (treating shops as shelters in this context)
+            if (planData && planData.shops) {
+                const areaShelters = planData.shops.filter(shop => shop.area === areaName);
+                
+                // Sort shelters alphabetically
+                areaShelters.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+                
+                // Add shelters to dropdown
+                areaShelters.forEach(shelter => {
+                    const option = document.createElement('option');
+                    option.value = shelter.name;
+                    option.textContent = shelter.name;
+                    shelterSelect.appendChild(option);
+                });
+                
+                if (areaShelters.length === 0) {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = 'لا توجد ملاجئ في هذه المنطقة';
+                    option.disabled = true;
+                    shelterSelect.appendChild(option);
+                }
+            }
+        }
+        
         // Handle group inspection form submission
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('smartGroupInspectionForm');
@@ -18804,6 +18857,20 @@
         
         // Initialize shelter inspection tab
         function initializeShelterInspection() {
+            // Populate areas dropdown for shelter inspection
+            const areaSelect = document.getElementById('smartShelterFormArea');
+            if (areaSelect) {
+                areaSelect.innerHTML = '<option value="">اختر المنطقة</option>';
+                if (planData && planData.areas) {
+                    planData.areas.forEach(area => {
+                        const option = document.createElement('option');
+                        option.value = area.id || area.name;
+                        option.textContent = area.name;
+                        areaSelect.appendChild(option);
+                    });
+                }
+            }
+            
             // Populate inspectors checkboxes for shelter inspection
             const checkboxContainer = document.getElementById('smartShelterInspectorsCheckboxes');
             if (checkboxContainer) {
@@ -18869,7 +18936,7 @@
                                 <th style="padding: 15px; text-align: right; border-bottom: 2px solid #6a1b9a;">المفتشون</th>
                                 <th style="padding: 15px; text-align: right; border-bottom: 2px solid #6a1b9a;">التاريخ</th>
                                 <th style="padding: 15px; text-align: right; border-bottom: 2px solid #6a1b9a;">المناوبة</th>
-                                <th style="padding: 15px; text-align: right; border-bottom: 2px solid #6a1b9a;">الموقع</th>
+                                <th style="padding: 15px; text-align: right; border-bottom: 2px solid #6a1b9a;">المنطقة</th>
                                 <th style="padding: 15px; text-align: right; border-bottom: 2px solid #6a1b9a;">الملجأ</th>
                                 <th style="padding: 15px; text-align: right; border-bottom: 2px solid #6a1b9a;">الملاحظات</th>
                                 <th style="padding: 15px; text-align: center; border-bottom: 2px solid #6a1b9a;">الإجراءات</th>
@@ -18886,6 +18953,9 @@
                 ).join('');
                 
                 const notes = item.notes ? item.notes : 'لا توجد ملاحظات';
+                
+                // Handle both old format (item.location) and new format (item.area)
+                const areaName = item.area || item.location;
                 
                 html += `
                     <tr style="border-bottom: 1px solid #eee; transition: background 0.2s;" onmouseover="this.style.background='#f3e5f5'" onmouseout="this.style.background='white'">
@@ -18906,7 +18976,7 @@
                             </span>
                         </td>
                         <td style="padding: 12px; font-weight: 600; color: #9c27b0;">
-                            ${item.location}
+                            ${areaName}
                         </td>
                         <td style="padding: 12px; font-weight: 600;">
                             ${item.shelterName}
@@ -18944,8 +19014,8 @@
                     
                     const day = document.getElementById('smartShelterFormDay').value;
                     const shift = document.getElementById('smartShelterFormShift').value;
-                    const location = document.getElementById('smartShelterFormLocation').value.trim();
-                    const shelterName = document.getElementById('smartShelterFormName').value.trim();
+                    const areaIdOrName = document.getElementById('smartShelterFormArea').value;
+                    const shelterName = document.getElementById('smartShelterFormShelterName').value;
                     const notes = document.getElementById('smartShelterFormNotes').value.trim();
                     
                     // Get selected inspectors from checkboxes
@@ -18955,7 +19025,7 @@
                     const editingIdx = document.getElementById('smartShelterFormEditingIndex').value;
                     
                     // Validation
-                    if (!day || !shift || !location || !shelterName) {
+                    if (!day || !shift || !areaIdOrName || !shelterName) {
                         showShelterInspectionStatus('⚠️ يرجى تعبئة جميع الحقول المطلوبة!', 'error');
                         return;
                     }
@@ -18965,10 +19035,19 @@
                         return;
                     }
                     
+                    // Get area name from ID or use as-is
+                    let areaName = areaIdOrName;
+                    if (planData && planData.areas) {
+                        const areaObj = planData.areas.find(a => a.id === areaIdOrName);
+                        if (areaObj) {
+                            areaName = areaObj.name;
+                        }
+                    }
+                    
                     const newShelterInspection = {
                         day,
                         shift,
-                        location,
+                        area: areaName,
                         shelterName,
                         inspectors,
                         notes,
@@ -19024,8 +19103,20 @@
             
             document.getElementById('smartShelterFormDay').value = item.day;
             document.getElementById('smartShelterFormShift').value = item.shift;
-            document.getElementById('smartShelterFormLocation').value = item.location;
-            document.getElementById('smartShelterFormName').value = item.shelterName;
+            
+            // Set area dropdown - handle both old format (item.location) and new format (item.area)
+            const areaValue = item.area || item.location;
+            if (planData && planData.areas) {
+                const areaObj = planData.areas.find(a => a.name === areaValue);
+                document.getElementById('smartShelterFormArea').value = areaObj ? (areaObj.id || areaObj.name) : areaValue;
+            } else {
+                document.getElementById('smartShelterFormArea').value = areaValue;
+            }
+            
+            // Update shelters dropdown and set selected shelter
+            updateShelterFormShelters();
+            document.getElementById('smartShelterFormShelterName').value = item.shelterName;
+            
             document.getElementById('smartShelterFormNotes').value = item.notes || '';
             
             // Check inspectors

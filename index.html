@@ -8541,6 +8541,7 @@ let shopsData = [
 let allPlanData = {
     inspectionData: [],
     groupInspectionData: [],
+    shelterInspectionData: [],
     inspectors: [],
     areas: [],
     shops: [],
@@ -8572,6 +8573,9 @@ let inspectionData = defaultInspectionData.slice();
 
 // Group Inspection Data - For inspections requiring multiple inspectors
 let groupInspectionData = [];
+
+// Shelter Inspection Data - For shelter inspections
+let shelterInspectionData = [];
 
 let bellNotesData = { 
     infoText: "توجيهات وإشعارات للمفتشين - يتم حفظها مركزياً لجميع المفتشين", 
@@ -12097,6 +12101,7 @@ async function loadInspectionData() {
                     
                     if (cachedData.inspectionData) inspectionData = cachedData.inspectionData;
                     if (cachedData.groupInspectionData) groupInspectionData = cachedData.groupInspectionData;
+                    if (cachedData.shelterInspectionData) shelterInspectionData = cachedData.shelterInspectionData;
                     if (cachedData.inspectors) {
                         inspectorsData = cachedData.inspectors;
                         inspectors = inspectorsData.map(i => i.name);
@@ -12127,6 +12132,9 @@ async function loadInspectionData() {
                 if (data.groupInspectionData && Array.isArray(data.groupInspectionData)) {
                     groupInspectionData = data.groupInspectionData;
                 }
+                if (data.shelterInspectionData && Array.isArray(data.shelterInspectionData)) {
+                    shelterInspectionData = data.shelterInspectionData;
+                }
                 if (data.inspectors && Array.isArray(data.inspectors)) {
                     inspectorsData = data.inspectors;
                     inspectors = inspectorsData.map(i=>i.name);
@@ -12153,6 +12161,7 @@ async function loadInspectionData() {
                 allPlanData = {
                     inspectionData: inspectionData,
                     groupInspectionData: groupInspectionData,
+                    shelterInspectionData: shelterInspectionData,
                     inspectors: inspectorsData,
                     areas: areasData,
                     shops: shopsData,
@@ -12203,6 +12212,7 @@ async function loadInspectionData() {
                 const allData = JSON.parse(allLocalData);
                 if (allData.inspectionData) inspectionData = allData.inspectionData;
                 if (allData.groupInspectionData) groupInspectionData = allData.groupInspectionData;
+                if (allData.shelterInspectionData) shelterInspectionData = allData.shelterInspectionData;
                 if (allData.inspectors) {
                     inspectorsData = allData.inspectors;
                     inspectors = inspectorsData.map(i => i.name);
@@ -12219,6 +12229,7 @@ async function loadInspectionData() {
                 allPlanData = {
                     inspectionData: inspectionData,
                     groupInspectionData: groupInspectionData,
+                    shelterInspectionData: shelterInspectionData,
                     inspectors: inspectorsData,
                     areas: areasData,
                     shops: shopsData,
@@ -12240,6 +12251,10 @@ async function loadInspectionData() {
                 if (localGroupInspectionData) {
                     groupInspectionData = JSON.parse(localGroupInspectionData);
                 }
+                const localShelterInspectionData = localStorage.getItem('shelterInspectionData');
+                if (localShelterInspectionData) {
+                    shelterInspectionData = JSON.parse(localShelterInspectionData);
+                }
                 // No lastUpdate available in individual fallback
                 displayLastUpdateFromData(null);
             }
@@ -12252,6 +12267,10 @@ async function loadInspectionData() {
             const localGroupInspectionData = localStorage.getItem('groupInspectionData');
             if (localGroupInspectionData) {
                 groupInspectionData = JSON.parse(localGroupInspectionData);
+            }
+            const localShelterInspectionData = localStorage.getItem('shelterInspectionData');
+            if (localShelterInspectionData) {
+                shelterInspectionData = JSON.parse(localShelterInspectionData);
             }
             // No lastUpdate available in individual fallback
             displayLastUpdateFromData(null);
@@ -14576,7 +14595,7 @@ function renderShelterInspectionTable() {
     const section = document.getElementById('shelterInspectionSection');
     
     // Show the shelter inspection section if there is data
-    if (groupInspectionData && groupInspectionData.length > 0) {
+    if (shelterInspectionData && shelterInspectionData.length > 0) {
         section.style.display = 'block';
     } else {
         section.style.display = 'none';
@@ -14597,7 +14616,7 @@ function renderShelterInspectionTable() {
         <tbody>
     `;
     
-    groupInspectionData.forEach((item, idx) => {
+    shelterInspectionData.forEach((item, idx) => {
         // Get area name
         const areaName = getAreaName(item.area);
         
@@ -14609,21 +14628,21 @@ function renderShelterInspectionTable() {
             `<li class="inspector-item"><span class="inspector-number">${index + 1}.</span> ${inspector}</li>`
         ).join('');
         
-        // Create shops dropdown - convert single shop to array for consistency
-        const shopsArray = Array.isArray(item.shopName) ? item.shopName : [item.shopName];
-        const shopsListItems = shopsArray.map((shop, index) => {
+        // Create shelters array - convert single shelter to array for consistency
+        const sheltersArray = Array.isArray(item.shelterName) ? item.shelterName : [item.shelterName];
+        const sheltersListItems = sheltersArray.map((shelter, index) => {
             // Get shop details for Google Maps link - IMPROVED MATCHING (same as regular table)
-            let shopDetails = shopsDetailsData[shop];
+            let shopDetails = shopsDetailsData[shelter];
             
-            // Try without "محل " prefix
+            // Try without "محل " or "ملجأ " prefix
             if (!shopDetails) {
-                const cleanedName = shop.replace(/^محل\s+/, '');
+                const cleanedName = shelter.replace(/^محل\s+/, '').replace(/^ملجأ\s+/, '');
                 shopDetails = shopsDetailsData[cleanedName];
             }
             
             // Try fuzzy matching with partial names and better normalization
             if (!shopDetails) {
-                const cleanedName = shop.replace(/^محل\s+/, '').replace(/^صيدلية\s+/, '').replace(/^صالون\s+/, '');
+                const cleanedName = shelter.replace(/^محل\s+/, '').replace(/^ملجأ\s+/, '').replace(/^صيدلية\s+/, '').replace(/^صالون\s+/, '');
                 
                 // Normalize for comparison: remove extra spaces, normalize "ل" variations
                 const normalizeForMatch = (text) => {
@@ -14660,10 +14679,10 @@ function renderShelterInspectionTable() {
                     title="فتح الموقع على خرائط جوجل">📍 خريطة</a>` : '';
             
             return `<li class="shop-item-clickable" 
-                onclick="showIndividualShopDetails('${shop.replace(/'/g, "\\'")}')" 
+                onclick="showIndividualShopDetails('${shelter.replace(/'/g, "\\'")}')" 
                 style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:10px 12px;" 
-                title="انقر لعرض تفاصيل ${shop}">
-                <span style="flex:1;">${shop}</span>
+                title="انقر لعرض تفاصيل ${shelter}">
+                <span style="flex:1;">${shelter}</span>
                 ${mapsIcon}
             </li>`;
         }).join('');
@@ -14692,15 +14711,15 @@ function renderShelterInspectionTable() {
                             style="background:#007bff;color:#fff;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-size:0.9em;display:flex;flex-direction:column;align-items:center;line-height:1.3;">
                             <span>عرض</span>
                             <span>الملاجئ</span>
-                            <span>(${shopsArray.length})</span>
+                            <span>(${sheltersArray.length})</span>
                         </button>
                         <div class="shops-dropdown-list" id="shelter-shops-dropdown-${idx}">
                             <div class="shops-dropdown-header">
-                                <span class="shops-count-badge">${shopsArray.length}</span>
+                                <span class="shops-count-badge">${sheltersArray.length}</span>
                                 قائمة الملاجئ المطلوب تفتيشها
                             </div>
                             <ul>
-                                ${shopsListItems}
+                                ${sheltersListItems}
                             </ul>
                         </div>
                     </div>
@@ -15849,6 +15868,7 @@ async function saveShopDetails() {
             allPlanData = {
                 inspectionData: inspectionData || [],
                 groupInspectionData: groupInspectionData || [],
+                shelterInspectionData: shelterInspectionData || [],
                 inspectors: inspectorsData || [],
                 areas: areasData || [],
                 shops: shopsData || [],

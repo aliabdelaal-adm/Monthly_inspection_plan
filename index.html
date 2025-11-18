@@ -5108,10 +5108,10 @@
 <body>
 <!-- ============================================ -->
 <!-- 🎬 VIDEO SPLASH SCREEN - UAE54.MP4 -->
-<!-- Flash screen that plays on first load and every 10 minutes -->
+<!-- Flash screen that plays on first load and every 5 minutes -->
 <!-- ============================================ -->
 <div id="videoSplashScreen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 999999999; justify-content: center; align-items: center;">
-    <video id="splashVideo" style="width: 100%; height: 100%; object-fit: contain;" autoplay muted playsinline>
+    <video id="splashVideo" style="width: 100%; height: 100%; object-fit: contain;" autoplay playsinline>
         <source src="uae54.mp4" type="video/mp4">
         Your browser does not support the video tag.
     </video>
@@ -5119,11 +5119,11 @@
 
 <script>
 // ===== Video Splash Screen System =====
-// Shows uae54.mp4 on initial page load and every 10 minutes
+// Shows uae54.mp4 on initial page load and every 5 minutes
 (function() {
     'use strict';
     
-    const SPLASH_COOLDOWN = 10 * 60 * 1000; // 10 minutes in milliseconds
+    const SPLASH_COOLDOWN = 5 * 60 * 1000; // 5 minutes in milliseconds
     const STORAGE_KEY = 'lastSplashScreenTime';
     
     function shouldShowSplashScreen() {
@@ -5136,7 +5136,7 @@
         
         const timeSinceLastShown = Date.now() - parseInt(lastShownTime, 10);
         
-        // Show if more than 10 minutes have passed
+        // Show if more than 5 minutes have passed
         return timeSinceLastShown >= SPLASH_COOLDOWN;
     }
     
@@ -5149,7 +5149,7 @@
             return;
         }
         
-        console.log('🎬 Showing video splash screen (uae54.mp4)');
+        console.log('🎬 Showing video splash screen (uae54.mp4) with audio enabled');
         
         // Display the splash screen
         splashScreen.style.display = 'flex';
@@ -5157,17 +5157,43 @@
         // Update last shown time
         localStorage.setItem(STORAGE_KEY, Date.now().toString());
         
+        // Set volume to full
+        video.volume = 1.0;
+        
         // Auto-hide when video ends
         video.addEventListener('ended', function() {
             console.log('🎬 Video ended - hiding splash screen');
             hideSplashScreen();
         });
         
-        // Also try to play the video (in case autoplay failed)
-        video.play().catch(error => {
-            console.log('⚠️ Video autoplay blocked:', error);
-            // If autoplay is blocked, still try to show video with manual play
-            // The video will start when user interacts with the page
+        // Try to play the video with audio
+        // First attempt: play with audio (may be blocked by browser)
+        video.play().then(() => {
+            console.log('✅ Video playing with audio');
+        }).catch(error => {
+            console.log('⚠️ Video autoplay with audio blocked, trying muted autoplay:', error);
+            // If blocked, mute and try again
+            video.muted = true;
+            video.play().then(() => {
+                console.log('✅ Video playing muted - will unmute on user interaction');
+                // Add one-time click listener to unmute
+                const unmuteOnInteraction = function() {
+                    video.muted = false;
+                    video.volume = 1.0;
+                    console.log('🔊 Audio enabled after user interaction');
+                    // Remove listeners after first interaction
+                    document.removeEventListener('click', unmuteOnInteraction);
+                    document.removeEventListener('touchstart', unmuteOnInteraction);
+                    document.removeEventListener('keydown', unmuteOnInteraction);
+                };
+                
+                // Listen for any user interaction to unmute
+                document.addEventListener('click', unmuteOnInteraction);
+                document.addEventListener('touchstart', unmuteOnInteraction);
+                document.addEventListener('keydown', unmuteOnInteraction);
+            }).catch(err => {
+                console.log('⚠️ Video playback failed:', err);
+            });
         });
     }
     

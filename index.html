@@ -5140,6 +5140,11 @@
         return timeSinceLastShown >= SPLASH_COOLDOWN;
     }
     
+    // Web Audio API context for advanced audio control
+    let audioContext = null;
+    let sourceNode = null;
+    let gainNode = null;
+    
     function showVideoSplashScreen() {
         const splashScreen = document.getElementById('videoSplashScreen');
         const video = document.getElementById('splashVideo');
@@ -5166,13 +5171,45 @@
             hideSplashScreen();
         }, { once: true });
         
-        // Enhanced audio autoplay strategy:
-        // Video has muted attribute in HTML for reliable autoplay
-        // We unmute it IMMEDIATELY and SYNCHRONOUSLY when display is set
+        // Strategy 1: Try Web Audio API for enhanced audio control
+        try {
+            if (!audioContext && typeof AudioContext !== 'undefined') {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                console.log('🎵 Created Web Audio Context');
+            }
+            
+            if (audioContext && !sourceNode) {
+                // Create audio source from video element
+                sourceNode = audioContext.createMediaElementSource(video);
+                gainNode = audioContext.createGain();
+                
+                // Connect: video -> gain -> speakers
+                sourceNode.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Set volume to 100%
+                gainNode.gain.value = 1.0;
+                
+                console.log('🎵 Connected video audio through Web Audio API');
+            }
+            
+            // Resume audio context if suspended
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume().then(() => {
+                    console.log('🔊 Audio context resumed');
+                }).catch(err => {
+                    console.log('⚠️ Could not resume audio context:', err);
+                });
+            }
+        } catch (error) {
+            console.log('⚠️ Web Audio API not available:', error);
+        }
+        
+        // Strategy 2: Unmute immediately and synchronously
         video.muted = false;
         video.volume = 1.0;
         
-        // Start playback - video will attempt to play with audio
+        // Strategy 3: Start playback
         const playPromise = video.play();
         
         if (playPromise !== undefined) {
@@ -5186,16 +5223,30 @@
                     console.log('🔊 Audio unmuted synchronously');
                 }
                 
+                // Resume audio context again if needed
+                if (audioContext && audioContext.state === 'suspended') {
+                    audioContext.resume().then(() => {
+                        console.log('🔊 Audio context resumed after play start');
+                    });
+                }
+                
                 // Verify audio is playing
                 setTimeout(() => {
-                    if (!video.muted && video.volume > 0) {
-                        console.log('🔊 Audio is playing automatically without user interaction!');
+                    const audioActive = !video.muted && video.volume > 0;
+                    const contextActive = audioContext ? audioContext.state === 'running' : false;
+                    
+                    if (audioActive || contextActive) {
+                        console.log('🔊✨ Audio is playing automatically without user interaction!');
+                        console.log(`📊 Status: video.muted=${video.muted}, volume=${video.volume}, context=${audioContext?.state}`);
                     } else {
                         console.log('⚠️ Audio may be blocked by browser - attempting recovery');
                         video.muted = false;
                         video.volume = 1.0;
+                        if (audioContext) {
+                            audioContext.resume();
+                        }
                     }
-                }, 50);
+                }, 100);
                 
             }).catch(error => {
                 console.log('⚠️ Autoplay with audio failed, trying fallback:', error);
@@ -5209,10 +5260,12 @@
                     const enableAudio = function() {
                         video.muted = false;
                         video.volume = 1.0;
+                        if (audioContext && audioContext.state === 'suspended') {
+                            audioContext.resume().then(() => {
+                                console.log('🔊 Audio context resumed after interaction');
+                            });
+                        }
                         console.log('🔊 Audio enabled after user interaction');
-                        document.removeEventListener('click', enableAudio);
-                        document.removeEventListener('touchstart', enableAudio);
-                        document.removeEventListener('keydown', enableAudio);
                     };
                     
                     document.addEventListener('click', enableAudio, { once: true });
@@ -5227,10 +5280,21 @@
     
     function hideSplashScreen() {
         const splashScreen = document.getElementById('videoSplashScreen');
+        const video = document.getElementById('splashVideo');
+        
         if (splashScreen) {
             splashScreen.style.display = 'none';
             console.log('🎬 Video splash screen hidden');
         }
+        
+        // Pause video and reset
+        if (video) {
+            video.pause();
+            video.currentTime = 0;
+        }
+        
+        // Clean up audio context if needed (optional - we keep it for next time)
+        // Note: We don't close the audio context as it can be reused
     }
     
     // Initialize on page load

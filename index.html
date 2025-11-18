@@ -5111,7 +5111,7 @@
 <!-- Flash screen that plays on first load and every 5 minutes -->
 <!-- ============================================ -->
 <div id="videoSplashScreen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 999999999; justify-content: center; align-items: center;">
-    <video id="splashVideo" style="width: 100%; height: 100%; object-fit: contain;" autoplay playsinline>
+    <video id="splashVideo" style="width: 100%; height: 100%; object-fit: contain;" autoplay muted playsinline>
         <source src="uae540.mp4" type="video/mp4">
         Your browser does not support the video tag.
     </video>
@@ -5149,7 +5149,7 @@
             return;
         }
         
-        console.log('🎬 Showing video splash screen (uae540.mp4) with audio enabled');
+        console.log('🎬 Showing video splash screen (uae540.mp4) with audio autoplay');
         
         // Display the splash screen
         splashScreen.style.display = 'flex';
@@ -5166,33 +5166,26 @@
             hideSplashScreen();
         });
         
-        // Try to play the video with audio
-        // First attempt: play with audio (may be blocked by browser)
+        // Enhanced autoplay strategy: Start muted (for browser compatibility), then immediately unmute
+        video.muted = true; // Start muted to ensure autoplay works
+        
+        // Play the video
         video.play().then(() => {
-            console.log('✅ Video playing with audio');
+            console.log('✅ Video started playing (initially muted for autoplay compatibility)');
+            
+            // Immediately try to unmute after playback starts
+            setTimeout(() => {
+                video.muted = false;
+                video.volume = 1.0;
+                console.log('🔊 Audio automatically enabled');
+            }, 100); // Very short delay to ensure playback is stable
+            
         }).catch(error => {
-            console.log('⚠️ Video autoplay with audio blocked, trying muted autoplay:', error);
-            // If blocked, mute and try again
+            console.log('⚠️ Video autoplay failed:', error);
+            // Fallback: Try again with explicit muted state
             video.muted = true;
-            video.play().then(() => {
-                console.log('✅ Video playing muted - will unmute on user interaction');
-                // Add one-time click listener to unmute
-                const unmuteOnInteraction = function() {
-                    video.muted = false;
-                    video.volume = 1.0;
-                    console.log('🔊 Audio enabled after user interaction');
-                    // Remove listeners after first interaction
-                    document.removeEventListener('click', unmuteOnInteraction);
-                    document.removeEventListener('touchstart', unmuteOnInteraction);
-                    document.removeEventListener('keydown', unmuteOnInteraction);
-                };
-                
-                // Listen for any user interaction to unmute
-                document.addEventListener('click', unmuteOnInteraction);
-                document.addEventListener('touchstart', unmuteOnInteraction);
-                document.addEventListener('keydown', unmuteOnInteraction);
-            }).catch(err => {
-                console.log('⚠️ Video playback failed:', err);
+            video.play().catch(err => {
+                console.log('⚠️ Video playback failed completely:', err);
             });
         });
     }

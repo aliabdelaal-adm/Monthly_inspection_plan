@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Splash Screen Audio Enhancement Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .section {
+            margin: 25px 0;
+            padding: 20px;
+            border-radius: 12px;
+            background: #f8f9fa;
+        }
+        
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            padding: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .feature-list li::before {
+            content: '✅';
+            font-size: 1.2em;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 25px 0;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button.secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        button.success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+        
+        .log-container {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 12px;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 20px 0;
+        }
+        
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid #333;
+        }
+        
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+        
+        .log-success { color: #4ade80; }
+        .log-warning { color: #fbbf24; }
+        .log-error { color: #f87171; }
+        .log-info { color: #60a5fa; }
+        
+        .alert {
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            color: #856404;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            border-left: 4px solid #0dcaf0;
+            color: #055160;
+        }
+        
+        .alert-success {
+            background: #d1e7dd;
+            border-left: 4px solid #198754;
+            color: #0f5132;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            margin: 10px 0;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        code {
+            background: #f1f3f5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #e83e8c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 Splash Screen Audio Enhancement</h1>
+        <p class="subtitle">Testing video audio playback and quality improvements</p>
+        
+        <div class="section">
+            <h2>🔊 Audio Fix Implementation</h2>
+            <ul class="feature-list">
+                <li>Start muted for reliable autoplay (browsers allow this)</li>
+                <li>Immediately unmute after playback starts</li>
+                <li>Fallback to user interaction if browser blocks audio</li>
+                <li>Volume set to 100% (1.0) explicitly</li>
+                <li>Clear console logging for debugging</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>📹 Video Display Enhancements</h2>
+            <ul class="feature-list">
+                <li>Changed object-fit to <code>cover</code> for fullscreen display</li>
+                <li>Added <code>preload="auto"</code> for smoother playback</li>
+                <li>Better video positioning and scaling</li>
+                <li>Z-index: 999999999 ensures video is always on top</li>
+            </ul>
+        </div>
+
+        <div class="button-group">
+            <button onclick="testSplashScreen()">🎬 Test Video with Audio</button>
+            <button onclick="checkVideoInfo()" class="secondary">📊 Check Video Info</button>
+            <button onclick="clearLogs()" class="success">🗑️ Clear Logs</button>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">Current Video</div>
+                <div class="stat-value">3.5 MB</div>
+                <div class="stat-label">uae540.mp4</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Recommended</div>
+                <div class="stat-value">15-20 MB</div>
+                <div class="stat-label">1080p HD</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Audio Status</div>
+                <div class="stat-value" id="audioStatusStat">🔇</div>
+                <div class="stat-label" id="audioStatusLabel">Not tested</div>
+            </div>
+        </div>
+
+        <div class="log-container" id="logContainer">
+            <div class="log-info">📝 Status Log - Ready to test</div>
+        </div>
+
+        <div class="alert alert-warning">
+            <strong>⚠️ About Video Resolution:</strong><br>
+            Current video (3.5 MB) has low-medium quality. For better clarity, replace with 1080p version (15-20 MB).
+            See <code>SPLASH_VIDEO_REQUIREMENTS.md</code> for upgrade instructions.
+        </div>
+
+        <div class="section">
+            <h2>🧪 Testing Instructions</h2>
+            <ol style="padding-left: 20px; line-height: 2;">
+                <li>Click the <strong>"Test Video with Audio"</strong> button</li>
+                <li>Video will start playing (muted initially for autoplay compatibility)</li>
+                <li>Audio should unmute automatically within 100ms</li>
+                <li>If audio is blocked by browser, click anywhere on the screen</li>
+                <li>Watch the log for real-time status updates</li>
+                <li>Press <code>ESC</code> key anytime to close the video</li>
+            </ol>
+        </div>
+
+        <div class="alert alert-info">
+            <strong>💡 Browser Audio Policy:</strong><br>
+            Modern browsers block autoplay with sound by default. This implementation uses a smart strategy:
+            starts muted (allowed), then immediately unmutes (often works), with fallback to user interaction if needed.
+        </div>
+    </div>
+
+    <!-- Splash Screen Video -->
+    <div id="videoSplashScreen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 999999999; justify-content: center; align-items: center;">
+        <video id="splashVideo" style="width: 100%; height: 100%; object-fit: cover;" autoplay playsinline preload="auto">
+            <source src="uae540.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        
+        <!-- Audio Status Overlay -->
+        <div style="position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 20px 40px; border-radius: 15px; text-align: center; min-width: 300px;">
+            <div id="videoOverlayStatus" style="font-size: 1.5em; margin-bottom: 10px;">🔊 Checking audio...</div>
+            <div id="videoOverlayHint" style="font-size: 1em; color: #fbbf24;"></div>
+        </div>
+    </div>
+
+    <script>
+        const logContainer = document.getElementById('logContainer');
+        let testCount = 0;
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.className = `log-entry log-${type}`;
+            div.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(div);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+        
+        function clearLogs() {
+            logContainer.innerHTML = '<div class="log-info">📝 Logs cleared</div>';
+            log('Logs cleared by user', 'info');
+        }
+        
+        function checkVideoInfo() {
+            const video = document.getElementById('splashVideo');
+            log('=== Video Information ===', 'info');
+            log(`Source: ${video.querySelector('source').src}`, 'info');
+            log(`Autoplay: ${video.autoplay}`, 'info');
+            log(`PlayInline: ${video.playsInline}`, 'info');
+            log(`Preload: ${video.preload}`, 'info');
+            log(`Current Volume: ${video.volume}`, 'info');
+            log(`Currently Muted: ${video.muted}`, 'info');
+            log(`ReadyState: ${video.readyState} (4=HAVE_ENOUGH_DATA)`, 'info');
+            log(`NetworkState: ${video.networkState} (2=NETWORK_LOADING, 3=NETWORK_IDLE)`, 'info');
+            log('======================', 'info');
+        }
+        
+        function testSplashScreen() {
+            testCount++;
+            const splashScreen = document.getElementById('videoSplashScreen');
+            const video = document.getElementById('splashVideo');
+            const overlayStatus = document.getElementById('videoOverlayStatus');
+            const overlayHint = document.getElementById('videoOverlayHint');
+            const audioStat = document.getElementById('audioStatusStat');
+            const audioLabel = document.getElementById('audioStatusLabel');
+            
+            log(`=== Test #${testCount} Started ===`, 'info');
+            log('Initializing video splash screen...', 'info');
+            
+            // Show splash screen
+            splashScreen.style.display = 'flex';
+            overlayStatus.textContent = '🎬 Loading video...';
+            overlayHint.textContent = '';
+            
+            // Set volume to full
+            video.volume = 1.0;
+            video.muted = false;
+            
+            // Reset video to start
+            video.currentTime = 0;
+            
+            log('Video element configured (volume: 1.0, unmuted)', 'success');
+            
+            // Auto-hide when video ends
+            video.addEventListener('ended', function() {
+                log('Video playback ended naturally', 'success');
+                splashScreen.style.display = 'none';
+                overlayStatus.textContent = '✅ Video ended';
+                audioStat.textContent = '✅';
+                audioLabel.textContent = 'Completed';
+            }, { once: true });
+            
+            // Smart audio playback strategy
+            log('Attempting autoplay (starting muted for browser compatibility)...', 'info');
+            video.muted = true; // Start muted for reliable autoplay
+            
+            video.play().then(() => {
+                log('✅ Video playback started successfully!', 'success');
+                overlayStatus.textContent = '✅ Video playing';
+                
+                // Immediately try to unmute (within 100ms)
+                setTimeout(() => {
+                    video.muted = false;
+                    video.volume = 1.0;
+                    log('Attempting to unmute audio...', 'info');
+                    
+                    // Check if audio is actually playing
+                    setTimeout(() => {
+                        if (video.muted || video.volume === 0) {
+                            // Audio is still blocked
+                            log('⚠️ Audio blocked by browser autoplay policy', 'warning');
+                            log('💡 User interaction required to enable audio', 'warning');
+                            overlayStatus.textContent = '⚠️ Audio blocked';
+                            overlayHint.textContent = '👆 Click anywhere to enable audio';
+                            audioStat.textContent = '🔇';
+                            audioLabel.textContent = 'Blocked';
+                            
+                            // Add one-time interaction listener
+                            const enableAudio = function() {
+                                video.muted = false;
+                                video.volume = 1.0;
+                                log('🔊 Audio enabled after user interaction!', 'success');
+                                overlayStatus.textContent = '🔊 Audio playing!';
+                                overlayHint.textContent = '✅ Audio enabled!';
+                                audioStat.textContent = '🔊';
+                                audioLabel.textContent = 'Playing';
+                                
+                                // Remove listeners
+                                document.removeEventListener('click', enableAudio);
+                                document.removeEventListener('touchstart', enableAudio);
+                                document.removeEventListener('keydown', enableAudio);
+                            };
+                            
+                            // Listen for interactions
+                            document.addEventListener('click', enableAudio);
+                            document.addEventListener('touchstart', enableAudio);
+                            document.addEventListener('keydown', enableAudio);
+                        } else {
+                            // Audio is playing!
+                            log('🎉 Audio is playing automatically!', 'success');
+                            log('Browser allowed audio autoplay after unmute', 'success');
+                            overlayStatus.textContent = '🔊 Playing with audio!';
+                            overlayHint.textContent = '✅ Audio enabled automatically';
+                            audioStat.textContent = '🔊';
+                            audioLabel.textContent = 'Playing';
+                        }
+                    }, 100);
+                }, 50);
+                
+            }).catch(error => {
+                log(`❌ Video autoplay failed: ${error.message}`, 'error');
+                overlayStatus.textContent = '❌ Autoplay failed';
+                audioStat.textContent = '❌';
+                audioLabel.textContent = 'Failed';
+                
+                // Last resort: try with explicit mute
+                log('Retrying with explicit mute...', 'warning');
+                video.muted = true;
+                video.play().catch(err => {
+                    log(`❌ Complete playback failure: ${err.message}`, 'error');
+                });
+            });
+        }
+        
+        // ESC key to close video
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const splashScreen = document.getElementById('videoSplashScreen');
+                if (splashScreen.style.display === 'flex') {
+                    splashScreen.style.display = 'none';
+                    log('Video closed by user (ESC key)', 'info');
+                }
+            }
+        });
+        
+        // Page load
+        log('🚀 Test page loaded and ready', 'success');
+        log('Click "Test Video with Audio" to begin testing', 'info');
+    </script>
+</body>
+</html>

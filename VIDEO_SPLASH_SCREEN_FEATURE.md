@@ -3,19 +3,23 @@
 
 ## 📋 نظرة عامة / Overview
 
-تم إضافة ميزة شاشة فيديو تمهيدية تعرض فيديو uae54.mp4 (علم الإمارات) عند فتح الموقع. الفيديو يُعرض تلقائياً ويغلق تلقائياً، مع فترة انتظار 10 دقائق بين كل عرض.
+تم إضافة ميزة شاشة فيديو تمهيدية تعرض فيديو uae54.mp4 (علم الإمارات) عند فتح الموقع. الفيديو يُعرض تلقائياً ويغلق تلقائياً، مع فترة انتظار 5 دقائق بين كل عرض.
 
-A video splash screen feature has been added that displays uae54.mp4 (UAE flag video) when opening the website. The video plays automatically and closes automatically, with a 10-minute cooldown period between displays.
+A video splash screen feature has been added that displays uae54.mp4 (UAE flag video) when opening the website. The video plays automatically and closes automatically, with a 5-minute cooldown period between displays.
 
 ---
 
 ## ✨ الميزات الرئيسية / Key Features
 
-### 1. التشغيل التلقائي / Automatic Playback
+### 1. التشغيل التلقائي مع الصوت / Automatic Playback with Audio
 - ✅ الفيديو يبدأ تلقائياً عند فتح الصفحة لأول مرة
 - ✅ Video starts automatically on first page load
-- ✅ دعم autoplay مع muted و playsinline للتوافق مع المتصفحات
-- ✅ Supports autoplay with muted and playsinline for browser compatibility
+- ✅ محاولة تشغيل الصوت تلقائياً (قد يحظره المتصفح)
+- ✅ Attempts to play audio automatically (may be blocked by browser)
+- ✅ عند حظر الصوت، يبدأ بدون صوت ويُفعّل عند التفاعل
+- ✅ When audio is blocked, starts muted and unmutes on user interaction
+- ✅ دعم autoplay و playsinline للتوافق مع المتصفحات
+- ✅ Supports autoplay and playsinline for browser compatibility
 
 ### 2. الإغلاق التلقائي / Auto-Close
 - ⏱️ يغلق الفيديو تلقائياً عند انتهاء التشغيل
@@ -23,9 +27,9 @@ A video splash screen feature has been added that displays uae54.mp4 (UAE flag v
 - ⏱️ لا حاجة للتدخل اليدوي
 - ⏱️ No manual intervention required
 
-### 3. فترة الانتظار 10 دقائق / 10-Minute Cooldown
-- 🔄 الفيديو يُعرض مرة واحدة كل 10 دقائق فقط
-- 🔄 Video shows only once every 10 minutes
+### 3. فترة الانتظار 5 دقائق / 5-Minute Cooldown
+- 🔄 الفيديو يُعرض مرة واحدة كل 5 دقائق فقط
+- 🔄 Video shows only once every 5 minutes
 - 🔄 يمنع الإزعاج عند تحديث الصفحة المتكرر
 - 🔄 Prevents annoyance during frequent page refreshes
 - 🔄 يستخدم localStorage لتتبع آخر مرة تم عرض الفيديو
@@ -56,10 +60,10 @@ if (shouldShowSplashScreen()) {
 - **First visit**: Video displays immediately
 - **زيارة متكررة / Repeat visit**: يتحقق من الوقت المنقضي منذ آخر عرض
 - **Repeat visit**: Checks time elapsed since last display
-- **أقل من 10 دقائق / Less than 10 minutes**: لا يُعرض الفيديو
-- **Less than 10 minutes**: Video doesn't display
-- **10 دقائق أو أكثر / 10 minutes or more**: يُعرض الفيديو
-- **10 minutes or more**: Video displays
+- **أقل من 5 دقائق / Less than 5 minutes**: لا يُعرض الفيديو
+- **Less than 5 minutes**: Video doesn't display
+- **5 دقائق أو أكثر / 5 minutes or more**: يُعرض الفيديو
+- **5 minutes or more**: Video displays
 
 ### 3. التخزين المحلي / Local Storage
 ```javascript
@@ -128,7 +132,7 @@ video.addEventListener('ended', function() {
 (function() {
     'use strict';
     
-    const SPLASH_COOLDOWN = 10 * 60 * 1000; // 10 minutes
+    const SPLASH_COOLDOWN = 5 * 60 * 1000; // 5 minutes
     const STORAGE_KEY = 'lastSplashScreenTime';
     
     function shouldShowSplashScreen() {
@@ -249,8 +253,8 @@ http://localhost:8888/index.html
 4. Close and reopen immediately
 5. يجب أن لا يظهر الفيديو
 6. Video should NOT show
-7. انتظر 10 دقائق وأعد فتح الصفحة
-8. Wait 10 minutes and reopen
+7. انتظر 5 دقائق وأعد فتح الصفحة
+8. Wait 5 minutes and reopen
 9. يجب أن يظهر الفيديو مرة أخرى
 10. Video should show again
 
@@ -276,10 +280,10 @@ console.log(localStorage.getItem('lastSplashScreenTime'))
 ### تغيير مدة فترة الانتظار / Change Cooldown Duration
 ```javascript
 // في الكود / In the code
-const SPLASH_COOLDOWN = 10 * 60 * 1000; // 10 minutes
+const SPLASH_COOLDOWN = 5 * 60 * 1000; // 5 minutes (current setting)
 
-// للتغيير إلى 5 دقائق / To change to 5 minutes
-const SPLASH_COOLDOWN = 5 * 60 * 1000;
+// للتغيير إلى 10 دقائق / To change to 10 minutes
+const SPLASH_COOLDOWN = 10 * 60 * 1000;
 
 // للتغيير إلى ساعة / To change to 1 hour
 const SPLASH_COOLDOWN = 60 * 60 * 1000;
@@ -307,10 +311,14 @@ const SPLASH_COOLDOWN = 60 * 60 * 1000;
 
 ## 💡 ملاحظات هامة / Important Notes
 
-### 1. التشغيل التلقائي / Autoplay
+### 1. التشغيل التلقائي مع الصوت / Autoplay with Audio
 ⚠️ بعض المتصفحات تمنع التشغيل التلقائي للفيديو مع الصوت
-- **الحل / Solution**: الفيديو مكتوم (muted) لضمان التشغيل التلقائي
-- **Solution**: Video is muted to ensure autoplay works
+- **الحل الذكي / Smart Solution**: النظام يحاول تشغيل الصوت أولاً
+- **Smart Solution**: System tries to play audio first
+- إذا حُظر الصوت، يبدأ بدون صوت ويُفعّل عند أي تفاعل (نقر، لمس، ضغط مفتاح)
+- If audio is blocked, starts muted and unmutes on any interaction (click, touch, keypress)
+- **نتيجة / Result**: يعمل الصوت في معظم الحالات بعد التفاعل الأول
+- **Result**: Audio works in most cases after first interaction
 
 ### 2. حجم الفيديو / Video Size
 📦 حجم الفيديو 7.6 MB
@@ -407,10 +415,12 @@ console.log(localStorage.getItem('lastSplashScreenTime'))
 - ✅ Doesn't affect page performance after closing
 
 ### 2. تجربة المستخدم / User Experience
-- ✅ فترة انتظار معقولة (10 دقائق)
-- ✅ Reasonable cooldown (10 minutes)
+- ✅ فترة انتظار معقولة (5 دقائق)
+- ✅ Reasonable cooldown (5 minutes)
 - ✅ إغلاق تلقائي
 - ✅ Automatic closing
+- ✅ صوت يُفعّل تلقائياً عند التفاعل
+- ✅ Audio enabled automatically on interaction
 - ✅ لا يزعج المستخدمين
 - ✅ Doesn't annoy users
 
@@ -468,7 +478,8 @@ A professional and complete video splash screen feature has been developed that 
 
 - ✅ تعمل تلقائياً / Works automatically
 - ✅ تغلق تلقائياً / Closes automatically
-- ✅ فترة انتظار 10 دقائق / 10-minute cooldown
+- ✅ فترة انتظار 5 دقائق / 5-minute cooldown
+- ✅ صوت ذكي يُفعّل عند التفاعل / Smart audio enabled on interaction
 - ✅ متوافقة مع جميع الأجهزة / Compatible with all devices
 - ✅ سهلة الاستخدام والتخصيص / Easy to use and customize
 - ✅ لا تزعج المستخدمين / Doesn't annoy users

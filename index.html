@@ -5107,6 +5107,103 @@
 </head>
 <body>
 <!-- ============================================ -->
+<!-- 🎬 VIDEO SPLASH SCREEN - UAE54.MP4 -->
+<!-- Flash screen that plays on first load and every 10 minutes -->
+<!-- ============================================ -->
+<div id="videoSplashScreen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 999999999; justify-content: center; align-items: center;">
+    <video id="splashVideo" style="width: 100%; height: 100%; object-fit: contain;" autoplay muted playsinline>
+        <source src="uae54.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+</div>
+
+<script>
+// ===== Video Splash Screen System =====
+// Shows uae54.mp4 on initial page load and every 10 minutes
+(function() {
+    'use strict';
+    
+    const SPLASH_COOLDOWN = 10 * 60 * 1000; // 10 minutes in milliseconds
+    const STORAGE_KEY = 'lastSplashScreenTime';
+    
+    function shouldShowSplashScreen() {
+        const lastShownTime = localStorage.getItem(STORAGE_KEY);
+        
+        if (!lastShownTime) {
+            // First time visitor
+            return true;
+        }
+        
+        const timeSinceLastShown = Date.now() - parseInt(lastShownTime, 10);
+        
+        // Show if more than 10 minutes have passed
+        return timeSinceLastShown >= SPLASH_COOLDOWN;
+    }
+    
+    function showVideoSplashScreen() {
+        const splashScreen = document.getElementById('videoSplashScreen');
+        const video = document.getElementById('splashVideo');
+        
+        if (!splashScreen || !video) {
+            console.log('⚠️ Video splash screen elements not found');
+            return;
+        }
+        
+        console.log('🎬 Showing video splash screen (uae54.mp4)');
+        
+        // Display the splash screen
+        splashScreen.style.display = 'flex';
+        
+        // Update last shown time
+        localStorage.setItem(STORAGE_KEY, Date.now().toString());
+        
+        // Auto-hide when video ends
+        video.addEventListener('ended', function() {
+            console.log('🎬 Video ended - hiding splash screen');
+            hideSplashScreen();
+        });
+        
+        // Also try to play the video (in case autoplay failed)
+        video.play().catch(error => {
+            console.log('⚠️ Video autoplay blocked:', error);
+            // If autoplay is blocked, still try to show video with manual play
+            // The video will start when user interacts with the page
+        });
+    }
+    
+    function hideSplashScreen() {
+        const splashScreen = document.getElementById('videoSplashScreen');
+        if (splashScreen) {
+            splashScreen.style.display = 'none';
+            console.log('🎬 Video splash screen hidden');
+        }
+    }
+    
+    // Initialize on page load
+    window.addEventListener('DOMContentLoaded', function() {
+        if (shouldShowSplashScreen()) {
+            // Small delay to ensure everything is loaded
+            setTimeout(showVideoSplashScreen, 100);
+        } else {
+            const lastShownTime = localStorage.getItem(STORAGE_KEY);
+            const timeSinceLastShown = Date.now() - parseInt(lastShownTime, 10);
+            const minutesRemaining = Math.ceil((SPLASH_COOLDOWN - timeSinceLastShown) / 60000);
+            console.log(`🎬 Splash screen cooldown active. Will show again in ${minutesRemaining} minute(s)`);
+        }
+    });
+    
+    // Expose functions to window for debugging
+    window.showSplash = showVideoSplashScreen;
+    window.hideSplash = hideSplashScreen;
+    window.resetSplashCooldown = function() {
+        localStorage.removeItem(STORAGE_KEY);
+        console.log('🎬 Splash screen cooldown reset - will show on next page load');
+    };
+    
+})();
+</script>
+
+<!-- ============================================ -->
 <!-- 🚨 ENHANCED EMERGENCY DEVELOPER CONTROL PANEL 🚨 -->
 <!-- SMART, COLLAPSIBLE, FULLY FEATURED DASHBOARD -->
 <!-- ============================================ -->

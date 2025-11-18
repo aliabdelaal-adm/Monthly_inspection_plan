@@ -5110,8 +5110,8 @@
 <!-- 🎬 VIDEO SPLASH SCREEN - UAE54.MP4 -->
 <!-- Flash screen that plays on first load and every 5 minutes -->
 <!-- ============================================ -->
-<div id="videoSplashScreen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 999999999; justify-content: center; align-items: center;">
-    <video id="splashVideo" style="width: 100%; height: 100%; object-fit: cover;" autoplay playsinline preload="auto">
+<div id="videoSplashScreen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 999999999; justify-content: center; align-items: center; overflow: hidden;">
+    <video id="splashVideo" style="width: 100%; height: 100%; object-fit: cover;" autoplay muted playsinline preload="auto">
         <source src="uae540.mp4" type="video/mp4">
         Your browser does not support the video tag.
     </video>
@@ -5149,17 +5149,13 @@
             return;
         }
         
-        console.log('🎬 Showing video splash screen (uae540.mp4) with audio enabled');
+        console.log('🎬 Showing video splash screen (uae540.mp4) with automatic audio playback');
         
         // Display the splash screen
         splashScreen.style.display = 'flex';
         
         // Update last shown time
         localStorage.setItem(STORAGE_KEY, Date.now().toString());
-        
-        // Set volume to full and unmute
-        video.volume = 1.0;
-        video.muted = false;
         
         // Reset video to start
         video.currentTime = 0;
@@ -5170,47 +5166,63 @@
             hideSplashScreen();
         }, { once: true });
         
-        // Try to play the video with audio
-        // Modern approach: Start muted, then immediately try to unmute
-        video.muted = true; // Start muted for reliable autoplay
-        video.play().then(() => {
-            console.log('✅ Video started playing (muted initially for autoplay compatibility)');
-            
-            // Immediately try to unmute
-            video.muted = false;
-            video.volume = 1.0;
-            
-            // Check if audio is actually playing
-            setTimeout(() => {
-                if (video.muted || video.volume === 0) {
-                    console.log('⚠️ Audio still muted - waiting for user interaction');
-                    // Add one-time interaction listener to ensure audio plays
+        // Enhanced audio autoplay strategy:
+        // Video has muted attribute in HTML for reliable autoplay
+        // We unmute it IMMEDIATELY and SYNCHRONOUSLY when display is set
+        video.muted = false;
+        video.volume = 1.0;
+        
+        // Start playback - video will attempt to play with audio
+        const playPromise = video.play();
+        
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                // Playback started successfully
+                console.log('✅ Video playback started');
+                
+                // Double-check and force unmute immediately
+                if (video.muted) {
+                    video.muted = false;
+                    console.log('🔊 Audio unmuted synchronously');
+                }
+                
+                // Verify audio is playing
+                setTimeout(() => {
+                    if (!video.muted && video.volume > 0) {
+                        console.log('🔊 Audio is playing automatically without user interaction!');
+                    } else {
+                        console.log('⚠️ Audio may be blocked by browser - attempting recovery');
+                        video.muted = false;
+                        video.volume = 1.0;
+                    }
+                }, 50);
+                
+            }).catch(error => {
+                console.log('⚠️ Autoplay with audio failed, trying fallback:', error);
+                
+                // Fallback: ensure video is muted and try again
+                video.muted = true;
+                video.play().then(() => {
+                    console.log('✅ Video playing muted - will unmute on first interaction');
+                    
+                    // Set up one-time listener for unmute
                     const enableAudio = function() {
                         video.muted = false;
                         video.volume = 1.0;
                         console.log('🔊 Audio enabled after user interaction');
-                        // Remove listeners after first interaction
                         document.removeEventListener('click', enableAudio);
                         document.removeEventListener('touchstart', enableAudio);
                         document.removeEventListener('keydown', enableAudio);
                     };
                     
-                    // Listen for any user interaction to enable audio
-                    document.addEventListener('click', enableAudio);
-                    document.addEventListener('touchstart', enableAudio);
-                    document.addEventListener('keydown', enableAudio);
-                } else {
-                    console.log('🔊 Audio is playing successfully!');
-                }
-            }, 100);
-        }).catch(error => {
-            console.log('⚠️ Video autoplay failed:', error);
-            // Last resort: try playing with explicit mute
-            video.muted = true;
-            video.play().catch(err => {
-                console.log('❌ Video playback completely failed:', err);
+                    document.addEventListener('click', enableAudio, { once: true });
+                    document.addEventListener('touchstart', enableAudio, { once: true });
+                    document.addEventListener('keydown', enableAudio, { once: true });
+                }).catch(err => {
+                    console.log('❌ Video playback completely failed:', err);
+                });
             });
-        });
+        }
     }
     
     function hideSplashScreen() {

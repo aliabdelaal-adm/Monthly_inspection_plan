@@ -14513,6 +14513,11 @@ function renderGroupInspectionTable() {
     
     section.style.display = 'block';
     
+    // Sort inspection plans by date (oldest first)
+    const sortedData = [...groupInspectionData].sort((a, b) => {
+        return a.day.localeCompare(b.day);
+    });
+    
     let html = `
     <table class="group-inspection-table">
         <thead>
@@ -14528,7 +14533,10 @@ function renderGroupInspectionTable() {
         <tbody>
     `;
     
-    groupInspectionData.forEach((item, idx) => {
+    sortedData.forEach((item, idx) => {
+        // Get the original index in the unsorted array for edit/delete operations
+        const originalIdx = groupInspectionData.indexOf(item);
+        
         // Get area name
         const areaName = getAreaName(item.area);
         
@@ -14655,8 +14663,8 @@ function renderGroupInspectionTable() {
                 </td>
                 ${isDev ? `
                 <td style="text-align:center;">
-                    <button class="edit-btn" onclick="editGroupInspection(${idx})" style="margin:2px;">تعديل</button>
-                    <button class="delete-btn" onclick="deleteGroupInspection(${idx})" style="margin:2px;">حذف</button>
+                    <button class="edit-btn" onclick="editGroupInspection(${originalIdx})" style="margin:2px;">تعديل</button>
+                    <button class="delete-btn" onclick="deleteGroupInspection(${originalIdx})" style="margin:2px;">حذف</button>
                 </td>
                 ` : ''}
             </tr>
@@ -14680,6 +14688,11 @@ function renderShelterInspectionTable() {
         return;
     }
     
+    // Sort inspection plans by date (oldest first)
+    const sortedData = [...shelterInspectionData].sort((a, b) => {
+        return a.day.localeCompare(b.day);
+    });
+    
     let html = `
     <table class="shelter-inspection-table">
         <thead>
@@ -14694,7 +14707,7 @@ function renderShelterInspectionTable() {
         <tbody>
     `;
     
-    shelterInspectionData.forEach((item, idx) => {
+    sortedData.forEach((item, idx) => {
         // Get area name
         const areaName = getAreaName(item.area);
         

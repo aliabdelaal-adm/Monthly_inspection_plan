@@ -3,9 +3,9 @@
 
 ## 📋 نظرة عامة / Overview
 
-تم إضافة ميزة شاشة فيديو تمهيدية تعرض فيديو uae54.mp4 (علم الإمارات) عند فتح الموقع. الفيديو يُعرض تلقائياً ويغلق تلقائياً، مع فترة انتظار 5 دقائق بين كل عرض.
+تم إضافة ميزة شاشة فيديو تمهيدية تعرض فيديو uae540.mp4 (علم الإمارات) عند فتح الموقع. الفيديو يُعرض تلقائياً ويغلق تلقائياً، مع فترة انتظار 5 دقائق بين كل عرض.
 
-A video splash screen feature has been added that displays uae54.mp4 (UAE flag video) when opening the website. The video plays automatically and closes automatically, with a 5-minute cooldown period between displays.
+A video splash screen feature has been added that displays uae540.mp4 (UAE flag video) when opening the website. The video plays automatically and closes automatically, with a 5-minute cooldown period between displays.
 
 ---
 
@@ -96,7 +96,7 @@ video.addEventListener('ended', function() {
 <!-- Right after <body> tag -->
 <div id="videoSplashScreen" style="display: none; ...">
     <video id="splashVideo" autoplay muted playsinline>
-        <source src="uae54.mp4" type="video/mp4">
+        <source src="uae540.mp4" type="video/mp4">
     </video>
 </div>
 ```
@@ -112,7 +112,7 @@ video.addEventListener('ended', function() {
 - ✅ توثيق بالعربية والإنجليزية
 - ✅ Arabic and English documentation
 
-### 3. uae54.mp4
+### 3. uae540.mp4
 **الوصف / Description:**
 - 🎬 ملف فيديو علم الإمارات
 - 🎬 UAE flag video file
@@ -152,7 +152,7 @@ video.addEventListener('ended', function() {
         
         if (!splashScreen || !video) return;
         
-        console.log('🎬 Showing video splash screen (uae54.mp4)');
+        console.log('🎬 Showing video splash screen (uae540.mp4)');
         
         splashScreen.style.display = 'flex';
         localStorage.setItem(STORAGE_KEY, Date.now().toString());
@@ -217,7 +217,7 @@ video.addEventListener('ended', function() {
         autoplay
         muted
         playsinline>
-        <source src="uae54.mp4" type="video/mp4">
+        <source src="uae540.mp4" type="video/mp4">
         Your browser does not support the video tag.
     </video>
 </div>
@@ -439,7 +439,7 @@ console.log(localStorage.getItem('lastSplashScreenTime'))
 ### ملفات ذات صلة / Related Files
 - `index.html` - الصفحة الرئيسية / Main page
 - `test_video_splash_screen.html` - صفحة الاختبار / Test page
-- `uae54.mp4` - ملف الفيديو / Video file
+- `uae540.mp4` - ملف الفيديو / Video file
 - `VIDEO_SPLASH_SCREEN_FEATURE.md` - هذا الملف / This file
 
 ### وثائق إضافية / Additional Documentation
@@ -472,9 +472,9 @@ console.log(localStorage.getItem('lastSplashScreenTime'))
 
 ## 🎉 الخلاصة / Summary
 
-تم تطوير ميزة شاشة فيديو تمهيدية احترافية وكاملة تعرض فيديو علم الإمارات (uae54.mp4) عند فتح الموقع. الميزة:
+تم تطوير ميزة شاشة فيديو تمهيدية احترافية وكاملة تعرض فيديو علم الإمارات (uae540.mp4) عند فتح الموقع. الميزة:
 
-A professional and complete video splash screen feature has been developed that displays UAE flag video (uae54.mp4) when opening the website. The feature:
+A professional and complete video splash screen feature has been developed that displays UAE flag video (uae540.mp4) when opening the website. The feature:
 
 - ✅ تعمل تلقائياً / Works automatically
 - ✅ تغلق تلقائياً / Closes automatically

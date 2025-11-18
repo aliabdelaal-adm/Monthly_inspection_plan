@@ -5110,12 +5110,25 @@
 <!-- 🎬 VIDEO SPLASH SCREEN - UAE54.MP4 -->
 <!-- Flash screen that plays on first load and every 5 minutes -->
 <!-- ============================================ -->
-<div id="videoSplashScreen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 999999999; justify-content: center; align-items: center; overflow: hidden;">
+<div id="videoSplashScreen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 999999999; justify-content: center; align-items: center; overflow: hidden; cursor: pointer;">
     <video id="splashVideo" style="width: 100%; height: 100%; object-fit: cover;" autoplay muted playsinline preload="auto">
         <source src="uae540.mp4" type="video/mp4">
         Your browser does not support the video tag.
     </video>
+    <!-- Audio indicator - shows if audio is muted -->
+    <div id="audioIndicator" style="display: none; position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(255, 255, 255, 0.95); color: #333; padding: 15px 30px; border-radius: 50px; font-family: 'Cairo', Arial, sans-serif; font-size: 16px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.3); animation: pulse 2s infinite; z-index: 1000;">
+        <span style="font-size: 24px; margin-left: 10px;">🔇</span>
+        <span>المس الشاشة لتشغيل الصوت</span>
+        <span style="font-size: 24px; margin-right: 10px;">👆</span>
+    </div>
 </div>
+
+<style>
+@keyframes pulse {
+    0%, 100% { transform: translateX(-50%) scale(1); }
+    50% { transform: translateX(-50%) scale(1.05); }
+}
+</style>
 
 <script>
 // ===== Video Splash Screen System =====
@@ -5230,23 +5243,47 @@
                     });
                 }
                 
-                // Verify audio is playing
+                // Verify audio is playing and show indicator if needed
                 setTimeout(() => {
                     const audioActive = !video.muted && video.volume > 0;
                     const contextActive = audioContext ? audioContext.state === 'running' : false;
+                    const audioIndicator = document.getElementById('audioIndicator');
                     
                     if (audioActive || contextActive) {
                         console.log('🔊✨ Audio is playing automatically without user interaction!');
                         console.log(`📊 Status: video.muted=${video.muted}, volume=${video.volume}, context=${audioContext?.state}`);
-                    } else {
-                        console.log('⚠️ Audio may be blocked by browser - attempting recovery');
-                        video.muted = false;
-                        video.volume = 1.0;
-                        if (audioContext) {
-                            audioContext.resume();
+                        // Hide indicator if visible
+                        if (audioIndicator) {
+                            audioIndicator.style.display = 'none';
                         }
+                    } else {
+                        console.log('⚠️ Audio blocked by browser - showing touch indicator');
+                        // Show indicator to prompt user
+                        if (audioIndicator) {
+                            audioIndicator.style.display = 'block';
+                        }
+                        
+                        // Set up click handler on splash screen to enable audio
+                        const enableAudioOnClick = function() {
+                            video.muted = false;
+                            video.volume = 1.0;
+                            if (audioContext && audioContext.state === 'suspended') {
+                                audioContext.resume().then(() => {
+                                    console.log('🔊 Audio context resumed after click');
+                                });
+                            }
+                            console.log('🔊 Audio enabled by user click on splash screen');
+                            if (audioIndicator) {
+                                audioIndicator.style.display = 'none';
+                            }
+                            splashScreen.removeEventListener('click', enableAudioOnClick);
+                            splashScreen.removeEventListener('touchstart', enableAudioOnClick);
+                        };
+                        
+                        splashScreen.addEventListener('click', enableAudioOnClick, { once: true });
+                        splashScreen.addEventListener('touchstart', enableAudioOnClick, { once: true });
                     }
-                }, 100);
+                }, 150);
                 
             }).catch(error => {
                 console.log('⚠️ Autoplay with audio failed, trying fallback:', error);
@@ -5254,9 +5291,15 @@
                 // Fallback: ensure video is muted and try again
                 video.muted = true;
                 video.play().then(() => {
-                    console.log('✅ Video playing muted - will unmute on first interaction');
+                    console.log('✅ Video playing muted - showing touch indicator');
                     
-                    // Set up one-time listener for unmute
+                    // Show audio indicator
+                    const audioIndicator = document.getElementById('audioIndicator');
+                    if (audioIndicator) {
+                        audioIndicator.style.display = 'block';
+                    }
+                    
+                    // Set up one-time listener for unmute on splash screen
                     const enableAudio = function() {
                         video.muted = false;
                         video.volume = 1.0;
@@ -5266,11 +5309,13 @@
                             });
                         }
                         console.log('🔊 Audio enabled after user interaction');
+                        if (audioIndicator) {
+                            audioIndicator.style.display = 'none';
+                        }
                     };
                     
-                    document.addEventListener('click', enableAudio, { once: true });
-                    document.addEventListener('touchstart', enableAudio, { once: true });
-                    document.addEventListener('keydown', enableAudio, { once: true });
+                    splashScreen.addEventListener('click', enableAudio, { once: true });
+                    splashScreen.addEventListener('touchstart', enableAudio, { once: true });
                 }).catch(err => {
                     console.log('❌ Video playback completely failed:', err);
                 });
@@ -5281,10 +5326,16 @@
     function hideSplashScreen() {
         const splashScreen = document.getElementById('videoSplashScreen');
         const video = document.getElementById('splashVideo');
+        const audioIndicator = document.getElementById('audioIndicator');
         
         if (splashScreen) {
             splashScreen.style.display = 'none';
             console.log('🎬 Video splash screen hidden');
+        }
+        
+        // Hide audio indicator
+        if (audioIndicator) {
+            audioIndicator.style.display = 'none';
         }
         
         // Pause video and reset

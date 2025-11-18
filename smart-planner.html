@@ -2347,6 +2347,10 @@
                     <span>👥</span>
                     <span>تقارير التفتيش الجماعي</span>
                 </button>
+                <button class="btn btn-success" onclick="uploadGroupInspectionReport()" style="background: white; color: #28a745;">
+                    <span>📤</span>
+                    <span>رفع تقرير التفتيش الجماعي</span>
+                </button>
                 <button class="btn btn-primary" onclick="switchTab('shelterInspection')" style="background: white; color: #9c27b0;">
                     <span>🏘️</span>
                     <span>تخطيط تفتيش الملاجئ</span>
@@ -12161,6 +12165,186 @@
         // Print group inspection reports
         window.printGroupInspectionReports = function() {
             window.print();
+        };
+        
+        // Upload Group Inspection Report
+        window.uploadGroupInspectionReport = function() {
+            if (!planData || !planData.groupInspectionData || planData.groupInspectionData.length === 0) {
+                alert('⚠️ لا توجد تفتيشات جماعية حالياً');
+                return;
+            }
+            
+            // Create upload modal
+            const modal = document.createElement('div');
+            modal.id = 'uploadReportModal';
+            modal.style.cssText = `
+                display: block;
+                position: fixed;
+                z-index: 10000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                overflow: auto;
+                animation: fadeIn 0.3s ease;
+            `;
+            
+            // Build list of group inspections
+            let inspectionsHTML = '';
+            planData.groupInspectionData.forEach((item, idx) => {
+                const hasReport = item.reportUrl && item.reportUrl.trim() !== '';
+                const inspectorsList = item.inspectors.join('، ');
+                
+                inspectionsHTML += `
+                    <div style="background: ${hasReport ? '#f0f8f0' : 'white'}; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 2px solid ${hasReport ? '#4caf50' : '#e0e0e0'};">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; align-items: center;">
+                            <div>
+                                <strong style="color: #666; font-size: 0.9em;">📅 التاريخ:</strong>
+                                <div>${item.day}</div>
+                            </div>
+                            <div>
+                                <strong style="color: #666; font-size: 0.9em;">🏪 المحل:</strong>
+                                <div style="font-weight: 600;">${item.shopName}</div>
+                            </div>
+                            <div>
+                                <strong style="color: #666; font-size: 0.9em;">👥 المفتشين:</strong>
+                                <div style="font-size: 0.9em;">${inspectorsList}</div>
+                            </div>
+                            <div>
+                                ${hasReport ? 
+                                    `<div style="display: flex; flex-direction: column; gap: 5px;">
+                                        <span style="color: #4caf50; font-weight: bold; font-size: 0.9em;">✅ يوجد تقرير</span>
+                                        <button onclick="selectReportFile(${idx})" class="btn btn-sm btn-warning" style="padding: 5px 10px; font-size: 0.85em;">
+                                            تغيير التقرير
+                                        </button>
+                                    </div>` :
+                                    `<button onclick="selectReportFile(${idx})" class="btn btn-sm btn-success" style="padding: 5px 15px;">
+                                        رفع تقرير
+                                    </button>`
+                                }
+                            </div>
+                        </div>
+                        ${hasReport ? `
+                            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e0e0e0;">
+                                <a href="${item.reportUrl}" target="_blank" style="color: #667eea; text-decoration: none; font-size: 0.9em;">
+                                    🔗 ${item.reportUrl}
+                                </a>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            
+            modal.innerHTML = `
+                <div style="background: white; margin: 3% auto; padding: 30px; border-radius: 20px; max-width: 1000px; box-shadow: 0 20px 60px rgba(0,0,0,0.4);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 3px solid #28a745;">
+                        <h2 style="color: #2d3561; margin: 0; display: flex; align-items: center; gap: 10px;">
+                            <span>📤</span>
+                            <span>رفع تقارير التفتيش الجماعي</span>
+                        </h2>
+                        <button onclick="document.getElementById('uploadReportModal').remove()" style="font-size: 2em; border: none; background: none; cursor: pointer; color: #999;">×</button>
+                    </div>
+                    
+                    <div style="background: #e3f2fd; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 2px solid #90caf9;">
+                        <strong style="color: #1976d2;">💡 ملاحظات هامة:</strong>
+                        <ul style="margin: 10px 0 0 20px; color: #666;">
+                            <li>يمكنك رفع التقارير كملفات (PDF, Word, Excel, صور) أو إدخال رابط مباشر</li>
+                            <li>يتم حفظ رابط التقرير تلقائياً مع بيانات التفتيش</li>
+                            <li>يمكن تغيير التقرير في أي وقت</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="max-height: 500px; overflow-y: auto; padding-right: 10px;">
+                        ${inspectionsHTML}
+                    </div>
+                    
+                    <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid #e0e0e0; display: flex; gap: 10px; justify-content: center;">
+                        <button onclick="document.getElementById('uploadReportModal').remove()" class="btn btn-secondary">
+                            <span>✕</span>
+                            <span>إغلاق</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        };
+        
+        // Select report file for upload
+        window.selectReportFile = function(inspectionIndex) {
+            // Ask user if they want to upload a file or provide a URL
+            const choice = confirm('هل تريد رفع ملف؟\n\nاضغط "موافق" لرفع ملف\nاضغط "إلغاء" لإدخال رابط مباشر');
+            
+            if (choice) {
+                // Upload file option
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif';
+                input.onchange = async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    
+                    // Since we can't actually upload to a server without backend,
+                    // we'll create a local object URL and save it
+                    // In a real scenario, this would upload to a server and get back a URL
+                    const fileUrl = URL.createObjectURL(file);
+                    
+                    // Show confirmation with file info
+                    const confirmUpload = confirm(
+                        `📄 معلومات الملف:\n\n` +
+                        `الاسم: ${file.name}\n` +
+                        `الحجم: ${(file.size / 1024).toFixed(2)} KB\n` +
+                        `النوع: ${file.type}\n\n` +
+                        `ملاحظة: في بيئة الإنتاج، سيتم رفع الملف إلى خادم.\n` +
+                        `حالياً، سيتم حفظ رابط محلي مؤقت.\n\n` +
+                        `هل تريد المتابعة؟`
+                    );
+                    
+                    if (confirmUpload) {
+                        // Save the file URL to the inspection data
+                        planData.groupInspectionData[inspectionIndex].reportUrl = fileUrl;
+                        planData.groupInspectionData[inspectionIndex].reportFileName = file.name;
+                        planData.groupInspectionData[inspectionIndex].reportUploadDate = new Date().toISOString();
+                        
+                        // Show success message
+                        alert('✅ تم رفع التقرير بنجاح!\n\nملاحظة: في بيئة الإنتاج، سيتم رفع الملف إلى خادم دائم.');
+                        
+                        // Refresh the modal
+                        document.getElementById('uploadReportModal').remove();
+                        uploadGroupInspectionReport();
+                        
+                        // Mark data as modified
+                        dataModified = true;
+                    }
+                };
+                input.click();
+            } else {
+                // URL input option
+                const reportUrl = prompt('📎 أدخل رابط التقرير:\n\nيمكنك إدخال رابط من Google Drive, Dropbox, أو أي خدمة تخزين سحابي');
+                
+                if (reportUrl && reportUrl.trim() !== '') {
+                    // Validate URL format
+                    try {
+                        new URL(reportUrl);
+                        
+                        // Save the URL to the inspection data
+                        planData.groupInspectionData[inspectionIndex].reportUrl = reportUrl.trim();
+                        planData.groupInspectionData[inspectionIndex].reportUploadDate = new Date().toISOString();
+                        
+                        alert('✅ تم حفظ رابط التقرير بنجاح!');
+                        
+                        // Refresh the modal
+                        document.getElementById('uploadReportModal').remove();
+                        uploadGroupInspectionReport();
+                        
+                        // Mark data as modified
+                        dataModified = true;
+                    } catch (e) {
+                        alert('⚠️ الرابط غير صحيح. يرجى التأكد من صحة الرابط والمحاولة مرة أخرى.');
+                    }
+                }
+            }
         };
         
         // Bulk Edit Inspections

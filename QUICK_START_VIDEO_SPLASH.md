@@ -12,8 +12,9 @@
 **كيف تعمل؟ / How does it work?**
 1. افتح الموقع / Open the website
 2. يظهر الفيديو تلقائياً / Video appears automatically
-3. يغلق الفيديو تلقائياً بعد الانتهاء / Video closes automatically when done
-4. لن يظهر مرة أخرى لمدة 10 دقائق / Won't show again for 10 minutes
+3. الصوت يُفعّل عند أول تفاعل (نقر، لمس، مفتاح) / Audio enables on first interaction (click, touch, key)
+4. يغلق الفيديو تلقائياً بعد الانتهاء / Video closes automatically when done
+5. لن يظهر مرة أخرى لمدة 5 دقائق / Won't show again for 5 minutes
 
 **لا يتطلب أي إجراء من المستخدم!**  
 **No user action required!**
@@ -48,9 +49,9 @@ window.resetSplashCooldown()
 
 **فترة الانتظار / Cooldown Duration:**
 ```javascript
-// في index.html، السطر ~5124
-// In index.html, line ~5124
-const SPLASH_COOLDOWN = 10 * 60 * 1000; // 10 دقائق / 10 minutes
+// في index.html، السطر ~5126
+// In index.html, line ~5126
+const SPLASH_COOLDOWN = 5 * 60 * 1000; // 5 دقائق / 5 minutes (current setting)
 ```
 
 **استبدال الفيديو / Replace Video:**
@@ -120,7 +121,8 @@ location.reload()
 |-----------------|----------------|
 | **حجم الفيديو / Video size** | 7.6 MB |
 | **مدة الفيديو / Video duration** | ~38 ثانية / ~38 seconds |
-| **فترة الانتظار / Cooldown** | 10 دقائق / 10 minutes |
+| **فترة الانتظار / Cooldown** | 5 دقائق / 5 minutes |
+| **الصوت / Audio** | تلقائي عند التفاعل / Auto on interaction |
 | **التخزين / Storage** | localStorage |
 | **المفتاح / Key** | lastSplashScreenTime |
 | **Z-Index** | 999999999 |
@@ -134,7 +136,8 @@ location.reload()
 
 ✅ **ذكي / Smart**
 - لا يزعج المستخدمين / Doesn't annoy users
-- فترة انتظار 10 دقائق / 10-minute cooldown
+- فترة انتظار 5 دقائق / 5-minute cooldown
+- صوت ذكي يُفعّل عند التفاعل / Smart audio on interaction
 
 ✅ **متوافق / Compatible**
 - جميع المتصفحات / All browsers
@@ -164,7 +167,8 @@ For detailed information, see:
 
 ✅ يعمل تلقائياً / Works automatically  
 ✅ يغلق تلقائياً / Closes automatically  
-✅ فترة انتظار ذكية / Smart cooldown  
+✅ فترة انتظار ذكية (5 دقائق) / Smart cooldown (5 minutes)  
+✅ صوت ذكي يُفعّل بالتفاعل / Smart audio on interaction  
 ✅ سهل الاستخدام / Easy to use  
 ✅ موثق جيداً / Well documented
 

@@ -6,8 +6,8 @@
 ### للمستخدمين / For Users
 
 **ما هي هذه الميزة؟ / What is this feature?**
-- شاشة فيديو تمهيدية تعرض علم الإمارات (uae54.mp4) عند فتح الموقع
-- A video splash screen displaying UAE flag (uae54.mp4) when opening the website
+- شاشة فيديو تمهيدية تعرض علم الإمارات (uae540.mp4) عند فتح الموقع
+- A video splash screen displaying UAE flag (uae540.mp4) when opening the website
 
 **كيف تعمل؟ / How does it work?**
 1. افتح الموقع / Open the website
@@ -28,7 +28,7 @@
 ```
 index.html                          - الصفحة الرئيسية / Main page
 test_video_splash_screen.html       - صفحة الاختبار / Test page
-uae54.mp4                          - ملف الفيديو / Video file
+uae540.mp4                          - ملف الفيديو / Video file
 VIDEO_SPLASH_SCREEN_FEATURE.md      - التوثيق الكامل / Full documentation
 ```
 
@@ -58,7 +58,7 @@ const SPLASH_COOLDOWN = 5 * 60 * 1000; // 5 دقائق / 5 minutes (current sett
 ```html
 <!-- في index.html، السطر ~5115 -->
 <!-- In index.html, line ~5115 -->
-<source src="uae54.mp4" type="video/mp4">
+<source src="uae540.mp4" type="video/mp4">
 ```
 
 ---

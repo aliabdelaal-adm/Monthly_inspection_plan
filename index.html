@@ -5137,33 +5137,60 @@
         }
     }
     
-    // Enable audio after initial muted autoplay
-    splashVideo.addEventListener('play', function() {
-        // Unmute after a brief moment to ensure autoplay works
-        setTimeout(() => {
-            splashVideo.muted = false;
-            splashVideo.volume = 1.0; // Full volume
-        }, 100);
-    });
-    
     // Hide splash screen when video ends
     splashVideo.addEventListener('ended', function() {
         hideSplashScreen();
     });
     
-    // Fallback: Auto-play the video if it doesn't start
-    setTimeout(() => {
-        if (splashVideo.paused) {
-            splashVideo.play().catch(err => {
-                console.log('Video autoplay failed:', err);
-                // If autoplay fails, try clicking anywhere to start
-                document.addEventListener('click', function startVideo() {
-                    splashVideo.play();
-                    document.removeEventListener('click', startVideo);
-                }, { once: true });
-            });
+    // Enhanced four-tier autoplay strategy for maximum browser compatibility
+    async function attemptAutoplayWithAudio() {
+        try {
+            // Strategy 1: Try direct unmuted playback
+            splashVideo.muted = false;
+            splashVideo.volume = 1.0;
+            await splashVideo.play();
+            console.log('🎬 Video playing with audio - Strategy 1 (direct unmuted) succeeded');
+        } catch (err1) {
+            console.log('Strategy 1 failed:', err1.message);
+            
+            try {
+                // Strategy 2: Start muted, then unmute immediately
+                splashVideo.muted = true;
+                await splashVideo.play();
+                splashVideo.muted = false;
+                splashVideo.volume = 1.0;
+                console.log('🎬 Video playing with audio - Strategy 2 (muted then unmuted) succeeded');
+            } catch (err2) {
+                console.log('Strategy 2 failed:', err2.message);
+                
+                try {
+                    // Strategy 3: Play muted, pause, unmute, then replay
+                    splashVideo.muted = true;
+                    await splashVideo.play();
+                    splashVideo.pause();
+                    splashVideo.currentTime = 0;
+                    splashVideo.muted = false;
+                    splashVideo.volume = 1.0;
+                    await splashVideo.play();
+                    console.log('🎬 Video playing with audio - Strategy 3 (replay unmuted) succeeded');
+                } catch (err3) {
+                    console.log('Strategy 3 failed:', err3.message);
+                    
+                    // Strategy 4: Keep playing muted as last resort
+                    try {
+                        splashVideo.muted = true;
+                        await splashVideo.play();
+                        console.log('🎬 Video playing muted - Strategy 4 (fallback) succeeded');
+                    } catch (err4) {
+                        console.log('All autoplay strategies failed:', err4.message);
+                    }
+                }
+            }
         }
-    }, 500);
+    }
+    
+    // Start autoplay attempt immediately
+    attemptAutoplayWithAudio();
     
     // Safety fallback: remove splash screen after 30 seconds
     setTimeout(() => {
@@ -5173,7 +5200,7 @@
         }
     }, 30000);
     
-    console.log('🎬 Video splash screen initialized with autoplay');
+    console.log('🎬 Video splash screen initialized with enhanced autoplay strategy');
 })();
 </script>
 

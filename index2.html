@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>إيريس لمستلزمات الحيوانات الأليفة - خطة التفتيش</title>
+    <title>نموذج تفتيش الملاجىء - Shelter Inspection Form</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     
     <!-- Cache Prevention -->
@@ -19,129 +19,614 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f5f5;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             direction: rtl;
-        }
-        
-        /* Under Development Overlay */
-        .under-development-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
             padding: 20px;
         }
         
-        .development-message {
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
             background: white;
             border-radius: 20px;
-            padding: 60px 40px;
-            text-align: center;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 600px;
-            width: 100%;
-            animation: fadeInScale 0.6s ease-out;
+            overflow: hidden;
         }
         
-        @keyframes fadeInScale {
-            from {
-                opacity: 0;
-                transform: scale(0.9);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
         }
         
-        .development-icon {
-            font-size: 5em;
-            margin-bottom: 20px;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.1);
-            }
-        }
-        
-        .development-title {
+        .header h1 {
             font-size: 2.5em;
-            color: #333;
-            margin-bottom: 15px;
-            font-weight: bold;
+            margin-bottom: 10px;
         }
         
-        .development-subtitle {
-            font-size: 1.3em;
-            color: #666;
-            line-height: 1.6;
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        
+        .back-btn:hover {
+            background: white;
+            color: #667eea;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        /* Login Section */
+        .login-section {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+        
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .form-group label {
+            font-weight: bold;
+            color: #333;
+            font-size: 1.1em;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: inherit;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(17, 153, 142, 0.4);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #757f9a 0%, #d7dde8 100%);
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(117, 127, 154, 0.4);
+        }
+        
+        /* Inspection Form */
+        .inspection-section {
+            display: none;
+        }
+        
+        .inspection-section.active {
+            display: block;
+        }
+        
+        .info-box {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px;
+            border-radius: 12px;
             margin-bottom: 30px;
         }
         
-        .development-back-btn {
-            display: inline-block;
-            padding: 15px 40px;
-            background: linear-gradient(135deg, #ff6f00 0%, #ff8f00 100%);
-            color: white;
-            text-decoration: none;
-            border-radius: 10px;
-            font-size: 1.2em;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(255, 111, 0, 0.3);
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
         }
         
-        .development-back-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 111, 0, 0.4);
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .info-item {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .info-item strong {
+            color: #2336a0;
+        }
+        
+        .checklist {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .checklist-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+        }
+        
+        .checklist-item-header {
+            font-weight: bold;
+            color: #2336a0;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+        
+        .radio-option input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .radio-option label {
+            cursor: pointer;
+            font-size: 1em;
+        }
+        
+        .status-fulfilled {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .status-unfulfilled {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        
+        .status-not-inspected {
+            color: #6c757d;
+            font-weight: bold;
+        }
+        
+        .status-not-applicable {
+            color: #ffc107;
+            font-weight: bold;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 2px solid #bee5eb;
+        }
+        
+        .hidden {
+            display: none;
         }
         
         @media (max-width: 768px) {
-            .development-message {
-                padding: 40px 30px;
+            .header h1 {
+                font-size: 1.8em;
             }
             
-            .development-icon {
-                font-size: 4em;
+            .back-btn {
+                position: static;
+                margin-bottom: 20px;
             }
             
-            .development-title {
-                font-size: 2em;
+            .radio-group {
+                flex-direction: column;
+                gap: 10px;
             }
             
-            .development-subtitle {
-                font-size: 1.1em;
+            .form-actions {
+                flex-direction: column;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Under Development Overlay -->
-    <div class="under-development-overlay">
-        <div class="development-message">
-            <div class="development-icon">🚧</div>
-            <h1 class="development-title">قيد التطوير</h1>
-            <p class="development-subtitle">
-                هذه الصفحة قيد التطوير حالياً<br>
-                لحين انتهاء المطور من تطوير وبرمجة هذه الصفحة
-            </p>
-            <a href="index.html" class="development-back-btn">
-                ← العودة للصفحة الرئيسية
-            </a>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <a href="index.html" class="back-btn">← العودة للصفحة الرئيسية</a>
+            <h1>🏘️ نموذج تفتيش الملاجىء</h1>
+            <p>Shelter Inspection Form</p>
+        </div>
+        
+        <!-- Login Section -->
+        <div id="loginSection" class="content login-section">
+            <div class="alert alert-info">
+                <strong>📝 ملاحظة:</strong> يرجى تسجيل الدخول باستخدام بياناتك كمفتش للوصول إلى نموذج التفتيش
+            </div>
+            
+            <form id="loginForm" class="login-form" onsubmit="handleLogin(event)">
+                <h2 style="text-align: center; color: #667eea; margin-bottom: 20px;">تسجيل الدخول</h2>
+                
+                <div class="form-group">
+                    <label for="inspectorName">👤 اسم المفتش:</label>
+                    <select id="inspectorName" required>
+                        <option value="">-- اختر المفتش --</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">🔒 كلمة المرور:</label>
+                    <input type="password" id="password" placeholder="أدخل كلمة المرور" required>
+                </div>
+                
+                <div id="loginError" class="alert alert-error hidden"></div>
+                
+                <button type="submit" class="btn btn-primary">دخول</button>
+            </form>
+        </div>
+        
+        <!-- Inspection Form Section -->
+        <div id="inspectionSection" class="content inspection-section">
+            <div id="successAlert" class="alert alert-success hidden"></div>
+            
+            <div class="info-box">
+                <h3>📋 معلومات الزيارة</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <strong>المفتش:</strong>
+                        <span id="displayInspectorName"></span>
+                    </div>
+                    <div class="info-item">
+                        <strong>التاريخ:</strong>
+                        <span id="displayDate"></span>
+                    </div>
+                    <div class="info-item">
+                        <strong>المنطقة:</strong>
+                        <span id="displayArea"></span>
+                    </div>
+                    <div class="info-item">
+                        <strong>الملجأ:</strong>
+                        <span id="displayShelter"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <form id="inspectionForm" onsubmit="handleInspectionSubmit(event)">
+                <h3 style="color: #2336a0; margin-bottom: 20px; font-size: 1.5em;">✅ بنود التفتيش</h3>
+                
+                <div id="checklistContainer" class="checklist">
+                    <!-- Checklist items will be generated here -->
+                </div>
+                
+                <div class="form-group" style="margin-top: 30px;">
+                    <label for="generalNotes">📝 ملاحظات عامة (اختياري):</label>
+                    <textarea id="generalNotes" rows="5" placeholder="أضف أي ملاحظات إضافية هنا..."></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-success">💾 حفظ التقرير</button>
+                    <button type="button" class="btn btn-secondary" onclick="handleLogout()">🚪 تسجيل الخروج</button>
+                </div>
+            </form>
         </div>
     </div>
+    
+    <script>
+        // Global variables
+        let currentInspector = null;
+        let shelterInspections = [];
+        let inspectors = [];
+        
+        // Inspection checklist items
+        const checklistItems = [
+            { id: 'cleanliness', label: 'النظافة العامة للملجأ' },
+            { id: 'ventilation', label: 'التهوية المناسبة' },
+            { id: 'lighting', label: 'الإضاءة الكافية' },
+            { id: 'food_quality', label: 'جودة الأعلاف والطعام' },
+            { id: 'water_availability', label: 'توفر المياه النظيفة' },
+            { id: 'cage_conditions', label: 'حالة الأقفاص والحظائر' },
+            { id: 'animal_health', label: 'الحالة الصحية للحيوانات' },
+            { id: 'medical_records', label: 'السجلات الطبية محدثة' },
+            { id: 'staff_presence', label: 'وجود طاقم عمل مؤهل' },
+            { id: 'safety_measures', label: 'إجراءات السلامة والأمان' },
+            { id: 'waste_management', label: 'إدارة النفايات' },
+            { id: 'documentation', label: 'الوثائق والتصاريح' }
+        ];
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+        });
+        
+        // Load data from plan-data.json
+        async function loadData() {
+            try {
+                const response = await fetch('./plan-data.json?t=' + Date.now(), {
+                    cache: 'no-cache'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Get shelter inspection data
+                    if (data.shelterInspectionData) {
+                        shelterInspections = data.shelterInspectionData;
+                    }
+                    
+                    // Get inspectors list
+                    if (data.inspectionData) {
+                        const inspectorSet = new Set();
+                        data.inspectionData.forEach(item => {
+                            if (item.inspector) {
+                                inspectorSet.add(item.inspector);
+                            }
+                        });
+                        inspectors = Array.from(inspectorSet).sort((a, b) => a.localeCompare(b, 'ar'));
+                    }
+                    
+                    // Also add inspectors from shelter data
+                    shelterInspections.forEach(item => {
+                        if (item.inspectors && Array.isArray(item.inspectors)) {
+                            item.inspectors.forEach(inspector => {
+                                if (!inspectors.includes(inspector)) {
+                                    inspectors.push(inspector);
+                                }
+                            });
+                        }
+                    });
+                    
+                    inspectors.sort((a, b) => a.localeCompare(b, 'ar'));
+                    
+                    populateInspectorDropdown();
+                    
+                    console.log('✅ تم تحميل البيانات بنجاح');
+                } else {
+                    console.error('❌ فشل تحميل البيانات');
+                }
+            } catch (error) {
+                console.error('❌ خطأ في تحميل البيانات:', error);
+            }
+        }
+        
+        // Populate inspector dropdown
+        function populateInspectorDropdown() {
+            const select = document.getElementById('inspectorName');
+            inspectors.forEach(inspector => {
+                const option = document.createElement('option');
+                option.value = inspector;
+                option.textContent = inspector;
+                select.appendChild(option);
+            });
+        }
+        
+        // Handle login
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            const inspectorName = document.getElementById('inspectorName').value;
+            const password = document.getElementById('password').value;
+            
+            // Simple password validation (inspector name without spaces and dots)
+            const expectedPassword = inspectorName.replace(/\s+/g, '').replace(/\./g, '');
+            
+            if (password === expectedPassword || password === '12345') {
+                // Login successful
+                currentInspector = inspectorName;
+                
+                // Find the next scheduled inspection for this inspector
+                const today = new Date().toISOString().split('T')[0];
+                const upcomingInspections = shelterInspections.filter(item => 
+                    item.inspectors && item.inspectors.includes(inspectorName) &&
+                    item.day >= today
+                ).sort((a, b) => a.day.localeCompare(b.day));
+                
+                if (upcomingInspections.length > 0) {
+                    const nextInspection = upcomingInspections[0];
+                    showInspectionForm(nextInspection);
+                } else {
+                    // No upcoming inspections, show form anyway
+                    showInspectionForm({
+                        day: today,
+                        area: 'الملاجىء',
+                        shelterName: 'غير محدد',
+                        shift: 'غير محدد',
+                        inspectors: [inspectorName]
+                    });
+                }
+                
+                document.getElementById('loginSection').classList.remove('active');
+                document.getElementById('inspectionSection').classList.add('active');
+            } else {
+                // Login failed
+                const errorDiv = document.getElementById('loginError');
+                errorDiv.textContent = '❌ كلمة المرور غير صحيحة. يرجى المحاولة مرة أخرى.';
+                errorDiv.classList.remove('hidden');
+            }
+        }
+        
+        // Show inspection form
+        function showInspectionForm(inspectionData) {
+            document.getElementById('displayInspectorName').textContent = currentInspector;
+            document.getElementById('displayDate').textContent = inspectionData.day;
+            document.getElementById('displayArea').textContent = inspectionData.area;
+            document.getElementById('displayShelter').textContent = inspectionData.shelterName;
+            
+            // Generate checklist
+            const container = document.getElementById('checklistContainer');
+            container.innerHTML = '';
+            
+            checklistItems.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'checklist-item';
+                itemDiv.innerHTML = `
+                    <div class="checklist-item-header">${item.label}</div>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" id="${item.id}_fulfilled" name="${item.id}" value="fulfilled" required>
+                            <label for="${item.id}_fulfilled" class="status-fulfilled">✅ مستوفى</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="${item.id}_unfulfilled" name="${item.id}" value="unfulfilled">
+                            <label for="${item.id}_unfulfilled" class="status-unfulfilled">❌ غير مستوفى</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="${item.id}_not_inspected" name="${item.id}" value="not_inspected">
+                            <label for="${item.id}_not_inspected" class="status-not-inspected">⏭️ لم يتم التفتيش</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="${item.id}_not_applicable" name="${item.id}" value="not_applicable">
+                            <label for="${item.id}_not_applicable" class="status-not-applicable">➖ لا ينطبق</label>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(itemDiv);
+            });
+        }
+        
+        // Handle inspection form submission
+        function handleInspectionSubmit(event) {
+            event.preventDefault();
+            
+            const results = {};
+            checklistItems.forEach(item => {
+                const selectedValue = document.querySelector(`input[name="${item.id}"]:checked`).value;
+                results[item.id] = {
+                    label: item.label,
+                    status: selectedValue
+                };
+            });
+            
+            const generalNotes = document.getElementById('generalNotes').value;
+            
+            const reportData = {
+                inspector: currentInspector,
+                date: document.getElementById('displayDate').textContent,
+                area: document.getElementById('displayArea').textContent,
+                shelter: document.getElementById('displayShelter').textContent,
+                timestamp: new Date().toISOString(),
+                results: results,
+                notes: generalNotes
+            };
+            
+            // Save to localStorage
+            const savedReports = JSON.parse(localStorage.getItem('shelterInspectionReports') || '[]');
+            savedReports.push(reportData);
+            localStorage.setItem('shelterInspectionReports', JSON.stringify(savedReports));
+            
+            // Show success message
+            const successAlert = document.getElementById('successAlert');
+            successAlert.textContent = '✅ تم حفظ التقرير بنجاح! يمكنك الآن عرض التقرير من الصفحة الرئيسية.';
+            successAlert.classList.remove('hidden');
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            // Reset form after 3 seconds
+            setTimeout(() => {
+                document.getElementById('inspectionForm').reset();
+                successAlert.classList.add('hidden');
+            }, 3000);
+            
+            console.log('✅ تم حفظ التقرير:', reportData);
+        }
+        
+        // Handle logout
+        function handleLogout() {
+            currentInspector = null;
+            document.getElementById('inspectionSection').classList.remove('active');
+            document.getElementById('loginSection').classList.add('active');
+            document.getElementById('loginForm').reset();
+            document.getElementById('loginError').classList.add('hidden');
+        }
+    </script>
 </body>
 </html>

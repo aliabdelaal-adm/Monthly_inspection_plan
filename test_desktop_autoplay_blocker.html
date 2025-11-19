@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار حجب المتصفحات التي تمنع التشغيل التلقائي</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 900px;
+            margin: 0 auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        h2 {
+            color: #764ba2;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 18px;
+            font-weight: normal;
+        }
+        
+        .test-box {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background: #5568d3;
+        }
+        
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Audio element for testing -->
+    <audio id="testAudio" preload="auto" loop style="display:none;">
+        <source src="piano.mp3" type="audio/mpeg">
+    </audio>
+    
+    <!-- Blocking Warning Overlay (copied from main implementation) -->
+    <div id="autoplayBlockWarning" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.95);z-index:999999;align-items:center;justify-content:center;">
+        <div style="background:white;border-radius:20px;padding:40px;max-width:600px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+            <div style="font-size:80px;margin-bottom:20px;">🚫</div>
+            <h2 style="color:#dc3545;margin-bottom:20px;font-size:28px;">متصفحك يحجب تشغيل الموسيقى التلقائي</h2>
+            <h3 style="color:#6c757d;margin-bottom:30px;font-size:20px;">Your Browser Blocks Automatic Music Playback</h3>
+            <p style="color:#333;margin-bottom:25px;font-size:18px;line-height:1.8;text-align:right;">
+                هذا الموقع يتطلب تشغيل ملف الموسيقى <strong style="color:#2336a0;">piano.mp3</strong> تلقائياً للحصول على التجربة الكاملة.
+                <br><br>
+                متصفحك (Chrome أو متصفح آخر) يمنع التشغيل التلقائي للصوت.
+            </p>
+            <p style="color:#333;margin-bottom:25px;font-size:16px;line-height:1.8;text-align:left;">
+                This website requires <strong style="color:#2336a0;">piano.mp3</strong> music to play automatically for the full experience.
+                <br><br>
+                Your browser (Chrome or another browser) is blocking automatic audio playback.
+            </p>
+            <div style="background:#fff3cd;border:2px solid #ffc107;border-radius:10px;padding:20px;margin:25px 0;text-align:right;">
+                <strong style="color:#856404;font-size:18px;">📋 لتفعيل التشغيل التلقائي:</strong>
+                <ol style="text-align:right;margin:15px 0;padding-right:25px;color:#856404;line-height:2;">
+                    <li>اذهب إلى إعدادات المتصفح (Settings)</li>
+                    <li>ابحث عن "الصوت" أو "Sound" أو "Autoplay"</li>
+                    <li>قم بإضافة هذا الموقع إلى قائمة السماح</li>
+                    <li>أعد تحميل الصفحة</li>
+                </ol>
+                <strong style="color:#856404;font-size:16px;display:block;margin-top:15px;">To enable autoplay:</strong>
+                <ol style="text-align:left;margin:10px 0;padding-left:25px;color:#856404;line-height:1.8;">
+                    <li>Go to browser Settings</li>
+                    <li>Search for "Sound" or "Autoplay"</li>
+                    <li>Add this site to the allow list</li>
+                    <li>Reload the page</li>
+                </ol>
+            </div>
+            <button onclick="retryAutoplay()" style="background:#28a745;color:white;border:none;padding:15px 40px;font-size:18px;border-radius:10px;cursor:pointer;font-weight:bold;margin:10px;">
+                🔄 إعادة المحاولة / Retry
+            </button>
+            <button onclick="closeAutoplayWarning()" style="background:#6c757d;color:white;border:none;padding:15px 40px;font-size:18px;border-radius:10px;cursor:pointer;font-weight:bold;margin:10px;">
+                ❌ إغلاق / Close
+            </button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>🎵 اختبار حجب المتصفحات التي تمنع التشغيل التلقائي</h1>
+        <h2>Test Browser Autoplay Blocking for Desktop Only</h2>
+        
+        <div class="test-box">
+            <h3 style="color:#667eea;">📊 معلومات الجهاز / Device Information</h3>
+            <div id="deviceInfo" class="status info">
+                جاري فحص الجهاز... / Checking device...
+            </div>
+        </div>
+        
+        <div class="test-box">
+            <h3 style="color:#667eea;">🎵 حالة التشغيل التلقائي / Autoplay Status</h3>
+            <div id="autoplayStatus" class="status info">
+                لم يتم الاختبار بعد / Not tested yet
+            </div>
+        </div>
+        
+        <div class="test-box">
+            <h3 style="color:#667eea;">🚫 حالة شاشة الحجب / Block Screen Status</h3>
+            <div id="blockStatus" class="status info">
+                لم يتم الاختبار بعد / Not tested yet
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin: 20px 0;">
+            <button onclick="testAutoplay()">▶️ اختبر التشغيل التلقائي / Test Autoplay</button>
+            <button onclick="simulateBlockOnDesktop()">🖥️ محاكاة الحجب على كمبيوتر / Simulate Desktop Block</button>
+            <button onclick="simulateBlockOnMobile()">📱 محاكاة الحجب على موبايل / Simulate Mobile Block</button>
+            <button onclick="location.reload()">🔄 إعادة تحميل / Reload</button>
+        </div>
+        
+        <div class="test-box">
+            <h3 style="color:#667eea;">📝 سجل الاختبارات / Test Log</h3>
+            <div id="testLog" class="code-block"></div>
+        </div>
+        
+        <div class="test-box">
+            <h3 style="color:#667eea;">✅ النتيجة المتوقعة / Expected Result</h3>
+            <ul style="line-height: 2; color: #495057;">
+                <li><strong>على الكمبيوتر (Desktop):</strong> إذا تم حجب التشغيل التلقائي → يظهر تحذير بشاشة كاملة</li>
+                <li><strong>On Desktop:</strong> If autoplay is blocked → Full screen warning appears</li>
+                <li><strong>على الموبايل/التابلت:</strong> إذا تم حجب التشغيل التلقائي → لا يظهر تحذير (يبدأ بالتفاعل)</li>
+                <li><strong>On Mobile/Tablet:</strong> If autoplay is blocked → No warning (starts on interaction)</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let testLog = [];
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            testLog.push(`[${timestamp}] ${message}`);
+            document.getElementById('testLog').innerHTML = testLog.join('<br>');
+            console.log(message);
+        }
+        
+        // Device detection function (same as main implementation)
+        function isDesktopDevice() {
+            const userAgent = navigator.userAgent.toLowerCase();
+            const platform = navigator.platform.toLowerCase();
+            
+            const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile|tablet/i.test(userAgent);
+            const isLargeScreen = window.screen.width >= 1024 && window.screen.height >= 768;
+            const isDesktopPlatform = /win|mac|linux/i.test(platform) || /win|mac|linux/i.test(userAgent);
+            const isDesktop = !isMobile && (isLargeScreen || isDesktopPlatform);
+            
+            log(`🖥️ Device Detection: isDesktop=${isDesktop}, isMobile=${isMobile}, screen=${window.screen.width}x${window.screen.height}`);
+            
+            return isDesktop;
+        }
+        
+        function showAutoplayBlockWarning() {
+            if (!isDesktopDevice()) {
+                log('📱 Mobile/Tablet device - warning skipped');
+                document.getElementById('blockStatus').className = 'status warning';
+                document.getElementById('blockStatus').innerHTML = '⚠️ جهاز موبايل/تابلت - لم يتم عرض التحذير<br>Mobile/Tablet device - warning NOT shown';
+                return;
+            }
+            
+            const warning = document.getElementById('autoplayBlockWarning');
+            if (warning) {
+                warning.style.display = 'flex';
+                log('🚫 Autoplay block warning shown for desktop');
+                document.getElementById('blockStatus').className = 'status error';
+                document.getElementById('blockStatus').innerHTML = '🚫 تم عرض شاشة الحجب للكمبيوتر<br>Block screen shown for desktop';
+            }
+        }
+        
+        function closeAutoplayWarning() {
+            const warning = document.getElementById('autoplayBlockWarning');
+            if (warning) {
+                warning.style.display = 'none';
+                log('✅ Warning closed by user');
+                document.getElementById('blockStatus').className = 'status success';
+                document.getElementById('blockStatus').innerHTML = '✅ تم إغلاق التحذير<br>Warning closed';
+            }
+        }
+        
+        function retryAutoplay() {
+            log('🔄 Retrying autoplay...');
+            closeAutoplayWarning();
+            testAutoplay();
+        }
+        
+        function testAutoplay() {
+            log('▶️ Testing autoplay...');
+            const audio = document.getElementById('testAudio');
+            audio.volume = 0.1; // Low volume for testing
+            
+            const playPromise = audio.play();
+            
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    log('✅ Autoplay SUCCESS - Music started automatically');
+                    document.getElementById('autoplayStatus').className = 'status success';
+                    document.getElementById('autoplayStatus').innerHTML = '✅ التشغيل التلقائي نجح<br>Autoplay SUCCESS';
+                    closeAutoplayWarning();
+                }).catch(err => {
+                    log('⚠️ Autoplay BLOCKED by browser: ' + err.message);
+                    document.getElementById('autoplayStatus').className = 'status error';
+                    document.getElementById('autoplayStatus').innerHTML = '⚠️ التشغيل التلقائي محجوب من المتصفح<br>Autoplay BLOCKED by browser';
+                    
+                    // Show warning only on desktop
+                    if (isDesktopDevice()) {
+                        showAutoplayBlockWarning();
+                    } else {
+                        document.getElementById('blockStatus').className = 'status warning';
+                        document.getElementById('blockStatus').innerHTML = '⚠️ موبايل/تابلت - لم يتم عرض التحذير<br>Mobile/Tablet - warning NOT shown';
+                    }
+                });
+            }
+        }
+        
+        function simulateBlockOnDesktop() {
+            log('🖥️ Simulating autoplay block on DESKTOP');
+            
+            // Temporarily override device detection to return true (desktop)
+            const originalIsDesktop = isDesktopDevice;
+            window.isDesktopDevice = function() { return true; };
+            
+            document.getElementById('autoplayStatus').className = 'status error';
+            document.getElementById('autoplayStatus').innerHTML = '⚠️ محاكاة: التشغيل محجوب على كمبيوتر<br>Simulation: Blocked on desktop';
+            
+            showAutoplayBlockWarning();
+            
+            // Restore original function after 100ms
+            setTimeout(() => {
+                window.isDesktopDevice = originalIsDesktop;
+            }, 100);
+        }
+        
+        function simulateBlockOnMobile() {
+            log('📱 Simulating autoplay block on MOBILE/TABLET');
+            
+            // Temporarily override device detection to return false (mobile)
+            const originalIsDesktop = isDesktopDevice;
+            window.isDesktopDevice = function() { return false; };
+            
+            document.getElementById('autoplayStatus').className = 'status error';
+            document.getElementById('autoplayStatus').innerHTML = '⚠️ محاكاة: التشغيل محجوب على موبايل<br>Simulation: Blocked on mobile';
+            
+            if (isDesktopDevice()) {
+                showAutoplayBlockWarning();
+            } else {
+                log('📱 Mobile device - no warning shown (correct behavior)');
+                document.getElementById('blockStatus').className = 'status success';
+                document.getElementById('blockStatus').innerHTML = '✅ موبايل/تابلت - لم يتم عرض التحذير (سلوك صحيح)<br>Mobile/Tablet - no warning (correct behavior)';
+            }
+            
+            // Restore original function after 100ms
+            setTimeout(() => {
+                window.isDesktopDevice = originalIsDesktop;
+            }, 100);
+        }
+        
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            log('🚀 Test page loaded');
+            
+            const isDesktop = isDesktopDevice();
+            const deviceType = isDesktop ? 'كمبيوتر / Desktop' : 'موبايل/تابلت / Mobile/Tablet';
+            
+            document.getElementById('deviceInfo').innerHTML = `
+                <strong>نوع الجهاز / Device Type:</strong> ${deviceType}<br>
+                <strong>المتصفح / Browser:</strong> ${navigator.userAgent}<br>
+                <strong>حجم الشاشة / Screen Size:</strong> ${window.screen.width}x${window.screen.height}<br>
+                <strong>Platform:</strong> ${navigator.platform}
+            `;
+            
+            log(`Device detected as: ${deviceType}`);
+            
+            // Auto-test after 1 second
+            setTimeout(() => {
+                log('🔄 Running automatic test...');
+                testAutoplay();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

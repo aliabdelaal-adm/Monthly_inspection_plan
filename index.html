@@ -5717,6 +5717,47 @@
     متصفحك لا يدعم تشغيل الملفات الصوتية.
 </audio>
 
+<!-- Browser Autoplay Blocking Warning Overlay (Desktop Only) -->
+<div id="autoplayBlockWarning" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.95);z-index:999999;align-items:center;justify-content:center;">
+    <div style="background:white;border-radius:20px;padding:40px;max-width:600px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+        <div style="font-size:80px;margin-bottom:20px;">🚫</div>
+        <h2 style="color:#dc3545;margin-bottom:20px;font-size:28px;">متصفحك يحجب تشغيل الموسيقى التلقائي</h2>
+        <h3 style="color:#6c757d;margin-bottom:30px;font-size:20px;">Your Browser Blocks Automatic Music Playback</h3>
+        <p style="color:#333;margin-bottom:25px;font-size:18px;line-height:1.8;text-align:right;">
+            هذا الموقع يتطلب تشغيل ملف الموسيقى <strong style="color:#2336a0;">piano.mp3</strong> تلقائياً للحصول على التجربة الكاملة.
+            <br><br>
+            متصفحك (Chrome أو متصفح آخر) يمنع التشغيل التلقائي للصوت.
+        </p>
+        <p style="color:#333;margin-bottom:25px;font-size:16px;line-height:1.8;text-align:left;">
+            This website requires <strong style="color:#2336a0;">piano.mp3</strong> music to play automatically for the full experience.
+            <br><br>
+            Your browser (Chrome or another browser) is blocking automatic audio playback.
+        </p>
+        <div style="background:#fff3cd;border:2px solid #ffc107;border-radius:10px;padding:20px;margin:25px 0;text-align:right;">
+            <strong style="color:#856404;font-size:18px;">📋 لتفعيل التشغيل التلقائي:</strong>
+            <ol style="text-align:right;margin:15px 0;padding-right:25px;color:#856404;line-height:2;">
+                <li>اذهب إلى إعدادات المتصفح (Settings)</li>
+                <li>ابحث عن "الصوت" أو "Sound" أو "Autoplay"</li>
+                <li>قم بإضافة هذا الموقع إلى قائمة السماح</li>
+                <li>أعد تحميل الصفحة</li>
+            </ol>
+            <strong style="color:#856404;font-size:16px;display:block;margin-top:15px;">To enable autoplay:</strong>
+            <ol style="text-align:left;margin:10px 0;padding-left:25px;color:#856404;line-height:1.8;">
+                <li>Go to browser Settings</li>
+                <li>Search for "Sound" or "Autoplay"</li>
+                <li>Add this site to the allow list</li>
+                <li>Reload the page</li>
+            </ol>
+        </div>
+        <button onclick="retryAutoplay()" style="background:#28a745;color:white;border:none;padding:15px 40px;font-size:18px;border-radius:10px;cursor:pointer;font-weight:bold;margin:10px;">
+            🔄 إعادة المحاولة / Retry
+        </button>
+        <button onclick="closeAutoplayWarning()" style="background:#6c757d;color:white;border:none;padding:15px 40px;font-size:18px;border-radius:10px;cursor:pointer;font-weight:bold;margin:10px;">
+            ❌ إغلاق / Close
+        </button>
+    </div>
+</div>
+
 <!-- Animated Background Shapes -->
 <div class="bg-shape cloud cloud-1"></div>
 <div class="bg-shape cloud cloud-2"></div>
@@ -28817,6 +28858,68 @@ let backgroundMusicPlaying = false;
 let lastKnownDataHash = null;
 let isMonitoringActive = false;
 
+// ===== 🚫 Browser Autoplay Detection & Blocking System (Desktop Only) =====
+// Detect if device is desktop/laptop computer (not mobile/tablet)
+function isDesktopDevice() {
+    const userAgent = navigator.userAgent.toLowerCase();
+    const platform = navigator.platform.toLowerCase();
+    
+    // Check if it's explicitly NOT a mobile device
+    const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile|tablet/i.test(userAgent);
+    
+    // Check screen size - desktops typically have larger screens
+    const isLargeScreen = window.screen.width >= 1024 && window.screen.height >= 768;
+    
+    // Check for desktop platforms
+    const isDesktopPlatform = /win|mac|linux/i.test(platform) || /win|mac|linux/i.test(userAgent);
+    
+    // Device is desktop if: NOT mobile AND (large screen OR desktop platform)
+    const isDesktop = !isMobile && (isLargeScreen || isDesktopPlatform);
+    
+    console.log('🖥️ Device Detection:', {
+        isMobile: isMobile,
+        isLargeScreen: isLargeScreen,
+        isDesktopPlatform: isDesktopPlatform,
+        isDesktop: isDesktop,
+        userAgent: userAgent,
+        platform: platform,
+        screenSize: `${window.screen.width}x${window.screen.height}`
+    });
+    
+    return isDesktop;
+}
+
+// Show autoplay blocking warning (only on desktop)
+function showAutoplayBlockWarning() {
+    // Only show warning on desktop devices
+    if (!isDesktopDevice()) {
+        console.log('📱 Mobile/Tablet device detected - autoplay warning skipped');
+        return;
+    }
+    
+    const warning = document.getElementById('autoplayBlockWarning');
+    if (warning) {
+        warning.style.display = 'flex';
+        console.log('🚫 Showing autoplay block warning for desktop browser');
+    }
+}
+
+// Close autoplay warning
+function closeAutoplayWarning() {
+    const warning = document.getElementById('autoplayBlockWarning');
+    if (warning) {
+        warning.style.display = 'none';
+        console.log('✅ Autoplay warning closed by user');
+    }
+}
+
+// Retry autoplay
+function retryAutoplay() {
+    console.log('🔄 Retrying autoplay...');
+    closeAutoplayWarning();
+    autoStartBackgroundMusic();
+}
+
 // Calculate hash of data for change detection
 function calculateDataHash(data) {
     return JSON.stringify(data).split('').reduce((a, b) => {
@@ -28942,6 +29045,14 @@ function autoStartBackgroundMusic() {
         }).catch(err => {
             console.log('⚠️ Auto-play blocked by browser. Waiting for user interaction...');
             
+            // Show blocking warning ONLY for desktop devices
+            if (isDesktopDevice()) {
+                console.log('🖥️ Desktop device detected - showing autoplay block warning');
+                showAutoplayBlockWarning();
+            } else {
+                console.log('📱 Mobile/Tablet device - will start music on user interaction without warning');
+            }
+            
             // Setup one-time interaction handler to start music
             // The { once: true } option automatically removes the listener after first execution
             const startOnInteraction = function() {
@@ -28967,6 +29078,8 @@ function autoStartBackgroundMusic() {
                 
                 audio.play().then(() => {
                     backgroundMusicPlaying = true;
+                    // Close warning if it was showing
+                    closeAutoplayWarning();
                     console.log('🎵 Background music (piano.mp3) started after user interaction');
                     console.log('🎵 Music will play continuously in the background');
                     console.log('🎚️ Extended volume control enabled (-100% to +100%)');

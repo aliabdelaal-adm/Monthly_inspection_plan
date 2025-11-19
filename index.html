@@ -27047,19 +27047,26 @@ async function loadGroupInspectionReports() {
         statusDiv.textContent = '⏳ جاري تحميل التقارير...';
         statusDiv.style.color = '#666';
         
-        // تحميل ملف files.json
-        const response = await fetch('files.json?t=' + Date.now());
+        // تحميل ملف files.json مع منع التخزين المؤقت
+        const response = await fetch('files.json?t=' + Date.now(), {
+            cache: 'no-cache',
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            }
+        });
         
         if (!response.ok) {
-            throw new Error('فشل في تحميل قائمة الملفات');
+            throw new Error(`فشل في تحميل قائمة الملفات (HTTP ${response.status})`);
         }
         
         const filesData = await response.json();
         
-        // تصفية التقارير الخاصة بالتفتيش الجماعي
-        const groupReports = filesData.files.filter(f => 
-            f.category === 'group_inspection_reports' && f.visible === true
-        );
+        // تصفية التقارير الخاصة بالتفتيش الجماعي وترتيبها حسب تاريخ الرفع (الأحدث أولاً)
+        const groupReports = filesData.files
+            .filter(f => f.category === 'group_inspection_reports' && f.visible === true)
+            .sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
         
         if (groupReports.length === 0) {
             listDiv.innerHTML = `
@@ -27076,7 +27083,9 @@ async function loadGroupInspectionReports() {
                 const uploadDate = new Date(report.uploadDate).toLocaleDateString('ar-EG', {
                     year: 'numeric',
                     month: 'long',
-                    day: 'numeric'
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
                 });
                 
                 const fileIcon = getFileIcon(report.type);
@@ -27126,7 +27135,7 @@ async function loadGroupInspectionReports() {
             listDiv.innerHTML = reportsHTML;
         }
         
-        statusDiv.textContent = `✅ تم تحميل ${groupReports.length} تقرير`;
+        statusDiv.textContent = `✅ تم تحميل ${groupReports.length} تقرير بنجاح`;
         statusDiv.style.color = '#28a745';
         
         setTimeout(() => {
@@ -27138,8 +27147,12 @@ async function loadGroupInspectionReports() {
         listDiv.innerHTML = `
             <div style="text-align: center; color: #dc3545; padding: 40px 0;">
                 <div style="font-size: 3em; margin-bottom: 15px;">⚠️</div>
-                <p style="font-size: 1.1em; margin: 0;">خطأ في تحميل التقارير</p>
-                <p style="font-size: 0.9em; margin-top: 10px;">${error.message}</p>
+                <p style="font-size: 1.1em; margin: 0; font-weight: bold;">خطأ في تحميل التقارير</p>
+                <p style="font-size: 0.9em; margin-top: 10px; color: #666;">${error.message}</p>
+                <button onclick="loadGroupInspectionReports()" 
+                    style="margin-top: 15px; background: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                    🔄 إعادة المحاولة
+                </button>
             </div>
         `;
         statusDiv.textContent = '❌ فشل في تحميل التقارير';
@@ -27198,51 +27211,92 @@ async function uploadGroupInspectionReport() {
     
     try {
         uploadBtn.disabled = true;
-        statusDiv.textContent = '⏳ جاري رفع التقرير...';
+        statusDiv.textContent = '⏳ جاري التحقق من التوكن...';
         statusDiv.style.color = '#666';
+        
+        // الحصول على التوكن
+        let token = localStorage.getItem('devToken') || localStorage.getItem('githubToken');
+        
+        if (!token && (isDev || window.isDev)) {
+            const defaultToken = "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";
+            localStorage.setItem("devToken", defaultToken);
+            token = defaultToken;
+        }
+        
+        if (!token) {
+            statusDiv.textContent = '❌ خطأ: لا يوجد توكن متاح. يرجى تسجيل الخروج ثم تسجيل الدخول مرة أخرى';
+            statusDiv.style.color = '#dc3545';
+            uploadBtn.disabled = false;
+            return;
+        }
+        
+        statusDiv.textContent = '⏳ جاري قراءة الملف...';
         
         // قراءة الملف كـ base64
         const reader = new FileReader();
         reader.onload = async function(e) {
             const content = e.target.result.split(',')[1];
-            const fileName = file.name;
+            // تنظيف اسم الملف من الأحرف الخاصة
+            const fileName = file.name.replace(/[<>:"/\\|?*]/g, '_');
             const filePath = `files/group_inspection_reports/${fileName}`;
             const repo = 'aliabdelaal-adm/Monthly_inspection_plan';
             
-            // الحصول على التوكن
-            let token = localStorage.getItem('devToken') || localStorage.getItem('githubToken');
-            
-            if (!token && (isDev || window.isDev)) {
-                const defaultToken = "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";
-                localStorage.setItem("devToken", defaultToken);
-                token = defaultToken;
-            }
-            
-            if (!token) {
-                statusDiv.textContent = '❌ حدث خطأ: لا يوجد توكن متاح. يرجى تسجيل الخروج ثم تسجيل الدخول مرة أخرى';
-                statusDiv.style.color = '#dc3545';
-                uploadBtn.disabled = false;
-                return;
-            }
-            
             try {
+                statusDiv.textContent = '⏳ جاري التحقق من وجود الملف...';
+                
+                // التحقق من وجود الملف للحصول على SHA إذا كان موجوداً
+                let existingFileSha = null;
+                try {
+                    const checkRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+                    
+                    if (checkRes.ok) {
+                        const existingFile = await checkRes.json();
+                        existingFileSha = existingFile.sha;
+                        statusDiv.textContent = '⚠️ الملف موجود مسبقاً، سيتم تحديثه...';
+                    }
+                } catch (checkError) {
+                    // الملف غير موجود، سيتم إنشاؤه
+                    console.log('File does not exist, will create new:', checkError.message);
+                }
+                
+                statusDiv.textContent = '⏳ جاري رفع التقرير إلى GitHub...';
+                
+                // إعداد بيانات الرفع
+                const uploadData = {
+                    message: `رفع تقرير تفتيش جماعي: ${title}`,
+                    content: content,
+                    branch: 'main'
+                };
+                
+                // إضافة SHA إذا كان الملف موجوداً
+                if (existingFileSha) {
+                    uploadData.sha = existingFileSha;
+                }
+                
                 // رفع الملف إلى GitHub
                 const uploadRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
                     method: 'PUT',
                     headers: {
                         'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/vnd.github.v3+json'
                     },
-                    body: JSON.stringify({
-                        message: `رفع تقرير تفتيش جماعي: ${title}`,
-                        content: content
-                    })
+                    body: JSON.stringify(uploadData)
                 });
                 
-                if (uploadRes.status === 201) {
+                if (uploadRes.status === 201 || uploadRes.status === 200) {
+                    statusDiv.textContent = '⏳ جاري تحديث سجل التقارير...';
+                    
                     // تحديث ملف files.json
                     await updateGroupReportsRegistry(fileName, filePath, file.size, title, description, token);
-                    statusDiv.textContent = '✅ تم رفع التقرير بنجاح!';
+                    
+                    statusDiv.textContent = '✅ تم رفع التقرير بنجاح وسيظهر فوراً!';
                     statusDiv.style.color = '#28a745';
                     
                     // إعادة تعيين النموذج
@@ -27250,27 +27304,63 @@ async function uploadGroupInspectionReport() {
                     titleInput.value = '';
                     descriptionInput.value = '';
                     
-                    // تحديث قائمة التقارير
-                    setTimeout(() => loadGroupInspectionReports(), 1000);
+                    // تحديث قائمة التقارير فوراً بدون تأخير
+                    await loadGroupInspectionReports();
+                    
+                    // إخفاء رسالة النجاح بعد 5 ثوان
+                    setTimeout(() => {
+                        statusDiv.textContent = '';
+                    }, 5000);
                 } else {
                     const err = await uploadRes.json().catch(() => ({ message: `HTTP ${uploadRes.status}` }));
-                    statusDiv.textContent = '❌ خطأ في رفع التقرير: ' + (err.message || 'تحقق من التوكن أو الصلاحيات');
+                    let errorMsg = '❌ خطأ في رفع التقرير: ';
+                    
+                    if (uploadRes.status === 401 || uploadRes.status === 403) {
+                        errorMsg += 'التوكن غير صالح أو منتهي الصلاحية. يرجى تسجيل الخروج وتسجيل الدخول مرة أخرى';
+                    } else if (uploadRes.status === 404) {
+                        errorMsg += 'المسار غير موجود في المستودع';
+                    } else if (uploadRes.status === 409) {
+                        errorMsg += 'تعارض في الملف. حاول مرة أخرى';
+                    } else if (uploadRes.status === 422) {
+                        errorMsg += err.message || 'البيانات غير صالحة. تحقق من الملف والعنوان';
+                    } else {
+                        errorMsg += err.message || `كود الخطأ: ${uploadRes.status}`;
+                    }
+                    
+                    statusDiv.textContent = errorMsg;
                     statusDiv.style.color = '#dc3545';
+                    console.error('Upload error:', err);
                 }
             } catch (error) {
-                statusDiv.textContent = '❌ خطأ في رفع التقرير: ' + error.message;
+                let errorMsg = '❌ خطأ في رفع التقرير: ';
+                
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    errorMsg += 'فشل الاتصال بالإنترنت. تحقق من اتصالك وحاول مرة أخرى';
+                } else {
+                    errorMsg += error.message;
+                }
+                
+                statusDiv.textContent = errorMsg;
                 statusDiv.style.color = '#dc3545';
+                console.error('Upload error:', error);
             } finally {
                 uploadBtn.disabled = false;
             }
         };
         
+        reader.onerror = function() {
+            statusDiv.textContent = '❌ خطأ في قراءة الملف. حاول مرة أخرى';
+            statusDiv.style.color = '#dc3545';
+            uploadBtn.disabled = false;
+        };
+        
         reader.readAsDataURL(file);
         
     } catch (error) {
-        statusDiv.textContent = '❌ خطأ في قراءة الملف: ' + error.message;
+        statusDiv.textContent = '❌ خطأ غير متوقع: ' + error.message;
         statusDiv.style.color = '#dc3545';
         uploadBtn.disabled = false;
+        console.error('Unexpected error:', error);
     }
 }
 
@@ -27279,10 +27369,11 @@ async function updateGroupReportsRegistry(fileName, filePath, fileSize, title, d
         const repo = 'aliabdelaal-adm/Monthly_inspection_plan';
         
         // تحميل ملف files.json الحالي
-        const res = await fetch(`https://api.github.com/repos/${repo}/contents/files.json`, {
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/files.json?t=${Date.now()}`, {
             headers: {
                 'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/vnd.github.v3+json'
             }
         });
         
@@ -27293,11 +27384,15 @@ async function updateGroupReportsRegistry(fileName, filePath, fileSize, title, d
             const file = await res.json();
             filesData = JSON.parse(decodeURIComponent(escape(atob(file.content))));
             currentSha = file.sha;
+        } else {
+            throw new Error('فشل في تحميل ملف files.json');
         }
         
-        // إضافة التقرير الجديد
-        const newReport = {
-            id: Date.now().toString(),
+        // البحث عن تقرير موجود بنفس المسار وتحديثه أو إضافة تقرير جديد
+        const existingReportIndex = filesData.files.findIndex(f => f.path === filePath);
+        
+        const reportData = {
+            id: existingReportIndex >= 0 ? filesData.files[existingReportIndex].id : Date.now().toString(),
             name: fileName,
             path: filePath,
             category: 'group_inspection_reports',
@@ -27309,7 +27404,16 @@ async function updateGroupReportsRegistry(fileName, filePath, fileSize, title, d
             visible: true
         };
         
-        filesData.files.push(newReport);
+        if (existingReportIndex >= 0) {
+            // تحديث التقرير الموجود
+            filesData.files[existingReportIndex] = reportData;
+            console.log('Updated existing report in registry');
+        } else {
+            // إضافة التقرير الجديد
+            filesData.files.push(reportData);
+            console.log('Added new report to registry');
+        }
+        
         filesData.lastUpdate = new Date().toISOString();
         
         // التأكد من وجود فئة تقارير التفتيش الجماعي
@@ -27330,21 +27434,29 @@ async function updateGroupReportsRegistry(fileName, filePath, fileSize, title, d
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/vnd.github.v3+json'
             },
             body: JSON.stringify({
-                message: `تحديث سجل التقارير - إضافة ${title}`,
+                message: `تحديث سجل التقارير - ${existingReportIndex >= 0 ? 'تحديث' : 'إضافة'} ${title}`,
                 content: content,
-                sha: currentSha
+                sha: currentSha,
+                branch: 'main'
             })
         });
         
         if (!updateRes.ok) {
-            console.error('خطأ في تحديث سجل التقارير');
+            const errData = await updateRes.json().catch(() => ({}));
+            console.error('خطأ في تحديث سجل التقارير:', updateRes.status, errData);
+            throw new Error(`فشل تحديث سجل التقارير: ${updateRes.status}`);
         }
+        
+        console.log('Registry updated successfully');
+        return true;
         
     } catch (error) {
         console.error('خطأ في تحديث سجل التقارير:', error);
+        throw error;
     }
 }
 
@@ -27450,8 +27562,8 @@ async function deleteGroupReport(reportId, reportName, filePath) {
                 statusDiv.textContent = '✅ تم حذف التقرير بنجاح';
                 statusDiv.style.color = '#28a745';
                 
-                // تحديث قائمة التقارير
-                setTimeout(() => loadGroupInspectionReports(), 1000);
+                // تحديث قائمة التقارير فوراً
+                await loadGroupInspectionReports();
             } else {
                 statusDiv.textContent = '❌ خطأ في حذف التقرير';
                 statusDiv.style.color = '#dc3545';

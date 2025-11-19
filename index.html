@@ -4816,7 +4816,7 @@
             z-index: 2;
         }
 
-        /* Developer Splash Screen Animations */
+        /* Developer Animations */
         @keyframes pulse {
             0%, 100% {
                 transform: scale(1);
@@ -5106,104 +5106,6 @@
     
 </head>
 <body>
-<!-- ============================================ -->
-<!-- 🎬 VIDEO SPLASH SCREEN - AUTO PLAY WITH AUDIO -->
-<!-- ============================================ -->
-<div id="videoSplashScreen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-     background: #000; z-index: 999999999; display: flex; align-items: center; justify-content: center;">
-    <video id="splashVideo" style="width: 100%; height: 100%; object-fit: contain;" 
-           autoplay muted playsinline preload="auto">
-        <source src="uae545.mp4" type="video/mp4">
-        Your browser does not support the video tag.
-    </video>
-</div>
-
-<script>
-(function() {
-    'use strict';
-    
-    const splashScreen = document.getElementById('videoSplashScreen');
-    const splashVideo = document.getElementById('splashVideo');
-    
-    // Function to hide splash screen
-    function hideSplashScreen() {
-        if (splashScreen) {
-            splashScreen.style.transition = 'opacity 0.5s ease-out';
-            splashScreen.style.opacity = '0';
-            setTimeout(() => {
-                splashScreen.style.display = 'none';
-                splashScreen.remove();
-            }, 500);
-        }
-    }
-    
-    // Hide splash screen when video ends
-    splashVideo.addEventListener('ended', function() {
-        hideSplashScreen();
-    });
-    
-    // Enhanced four-tier autoplay strategy for maximum browser compatibility
-    async function attemptAutoplayWithAudio() {
-        try {
-            // Strategy 1: Try direct unmuted playback
-            splashVideo.muted = false;
-            splashVideo.volume = 1.0;
-            await splashVideo.play();
-            console.log('🎬 Video playing with audio - Strategy 1 (direct unmuted) succeeded');
-        } catch (err1) {
-            console.log('Strategy 1 failed:', err1.message);
-            
-            try {
-                // Strategy 2: Start muted, then unmute immediately
-                splashVideo.muted = true;
-                await splashVideo.play();
-                splashVideo.muted = false;
-                splashVideo.volume = 1.0;
-                console.log('🎬 Video playing with audio - Strategy 2 (muted then unmuted) succeeded');
-            } catch (err2) {
-                console.log('Strategy 2 failed:', err2.message);
-                
-                try {
-                    // Strategy 3: Play muted, pause, unmute, then replay
-                    splashVideo.muted = true;
-                    await splashVideo.play();
-                    splashVideo.pause();
-                    splashVideo.currentTime = 0;
-                    splashVideo.muted = false;
-                    splashVideo.volume = 1.0;
-                    await splashVideo.play();
-                    console.log('🎬 Video playing with audio - Strategy 3 (replay unmuted) succeeded');
-                } catch (err3) {
-                    console.log('Strategy 3 failed:', err3.message);
-                    
-                    // Strategy 4: Keep playing muted as last resort
-                    try {
-                        splashVideo.muted = true;
-                        await splashVideo.play();
-                        console.log('🎬 Video playing muted - Strategy 4 (fallback) succeeded');
-                    } catch (err4) {
-                        console.log('All autoplay strategies failed:', err4.message);
-                    }
-                }
-            }
-        }
-    }
-    
-    // Start autoplay attempt immediately
-    attemptAutoplayWithAudio();
-    
-    // Safety fallback: remove splash screen after 30 seconds
-    setTimeout(() => {
-        if (splashScreen && splashScreen.style.display !== 'none') {
-            console.warn('Splash screen timeout - removing');
-            hideSplashScreen();
-        }
-    }, 30000);
-    
-    console.log('🎬 Video splash screen initialized with enhanced autoplay strategy');
-})();
-</script>
-
 <!-- ============================================ -->
 <!-- 🚨 ENHANCED EMERGENCY DEVELOPER CONTROL PANEL 🚨 -->
 <!-- SMART, COLLAPSIBLE, FULLY FEATURED DASHBOARD -->
@@ -28497,8 +28399,8 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// ===== Developer Splash Screen System =====
-// This system monitors for file changes and shows a splash screen with music
+// ===== Developer Monitoring System =====
+// This system monitors for file changes
 
 // ===== 🎵 نظام الموسيقى الخلفية للشاشة الرئيسية =====
 // Background Music System for Main Screen

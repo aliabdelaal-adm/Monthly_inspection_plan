@@ -8490,6 +8490,61 @@ console.log('Smart distribution functions initialized');
     </div>
 </div>
 
+<!-- Shelter Visit Report Modal -->
+<div id="shelterVisitReportModal" class="modal-overlay" style="display:none;">
+    <div class="modal-content" style="max-width: 98%; width: 1600px; max-height: 95vh; overflow-y: auto;">
+        <button class="close-btn" onclick="closeShelterVisitReportModal()">×</button>
+        <div class="stats-title">🏘️ تقرير زيارة الملاجىء - عرض النتائج الإجمالية والتفصيلية</div>
+        
+        <!-- Feature Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin: 20px 0;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                <div style="font-size: 2em; margin-bottom: 5px;">📊</div>
+                <div style="font-weight: bold;">نتائج شاملة</div>
+                <div style="font-size: 0.85em; opacity: 0.9;">إحصائيات وتحليلات</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                <div style="font-size: 2em; margin-bottom: 5px;">✅</div>
+                <div style="font-weight: bold;">نسبة الامتثال</div>
+                <div style="font-size: 0.85em; opacity: 0.9;">مؤشر الأداء</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                <div style="font-size: 2em; margin-bottom: 5px;">🏘️</div>
+                <div style="font-weight: bold;">الملاجىء</div>
+                <div style="font-size: 0.85em; opacity: 0.9;">جميع المواقع</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                <div style="font-size: 2em; margin-bottom: 5px;">👥</div>
+                <div style="font-weight: bold;">المفتشين</div>
+                <div style="font-size: 0.85em; opacity: 0.9;">فريق التفتيش</div>
+            </div>
+        </div>
+        
+        <!-- Content Area -->
+        <div id="shelterReportContentArea" style="margin-top: 20px;">
+            <div style="text-align: center; color: #6c757d; padding: 60px 20px;">
+                <div style="font-size: 4em; margin-bottom: 20px;">⏳</div>
+                <p style="font-size: 1.3em; margin: 0; font-weight: 600;">جاري تحميل التقارير...</p>
+            </div>
+        </div>
+        
+        <!-- Info Note -->
+        <div style="margin-top: 30px; padding: 15px; background: linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%); 
+                    border-radius: 10px; border-right: 4px solid #2196f3;">
+            <h4 style="margin: 0 0 10px 0; color: #1976d2; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.2em;">💡</span>
+                <span>ملاحظات هامة</span>
+            </h4>
+            <div style="color: #1565c0; font-size: 0.95em; line-height: 1.8;">
+                <div>✅ التقارير يتم حفظها تلقائياً بعد ملء نموذج التفتيش</div>
+                <div>✅ يمكن لجميع المستخدمين عرض التقارير (للعرض فقط)</div>
+                <div>✅ النموذج يتطلب تسجيل دخول المفتش لملء البيانات</div>
+                <div>✅ التقارير تحتوي على تفاصيل كاملة لكل زيارة تفتيش</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
 .smart-planner-tab {
     background: white;
@@ -27546,8 +27601,225 @@ function closeGroupInspectionReportsModal() {
 
 // New function: Show Shelter Visit Report Modal
 function showShelterVisitReportModal() {
-    alert('تقرير زيارة الملاجىء: هذه الميزة قيد التطوير');
-    console.log('📊 Shelter Visit Report Modal opened');
+    const modal = document.getElementById('shelterVisitReportModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        loadShelterVisitReports();
+        console.log('📊 Shelter Visit Report Modal opened');
+    }
+}
+
+function closeShelterVisitReportModal() {
+    const modal = document.getElementById('shelterVisitReportModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function loadShelterVisitReports() {
+    const contentArea = document.getElementById('shelterReportContentArea');
+    
+    // Load saved reports from localStorage
+    const savedReports = JSON.parse(localStorage.getItem('shelterInspectionReports') || '[]');
+    
+    if (savedReports.length === 0) {
+        contentArea.innerHTML = `
+            <div style="text-align: center; color: #6c757d; padding: 60px 20px;">
+                <div style="font-size: 4em; margin-bottom: 20px;">📋</div>
+                <p style="font-size: 1.3em; margin: 0; font-weight: 600;">لا توجد تقارير تفتيش حتى الآن</p>
+                <p style="font-size: 1em; margin-top: 10px;">سيتم عرض التقارير هنا بعد قيام المفتشين بملء نموذج التفتيش</p>
+                <a href="index2.html" style="display: inline-block; margin-top: 20px; padding: 12px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 10px; font-weight: 600;">
+                    🏘️ الذهاب إلى نموذج التفتيش
+                </a>
+            </div>
+        `;
+        return;
+    }
+    
+    // Sort reports by date (newest first)
+    savedReports.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    // Generate summary statistics
+    const totalReports = savedReports.length;
+    const inspectors = [...new Set(savedReports.map(r => r.inspector))];
+    const shelters = [...new Set(savedReports.map(r => r.shelter))];
+    
+    // Calculate overall compliance
+    let totalItems = 0;
+    let fulfilledItems = 0;
+    
+    savedReports.forEach(report => {
+        Object.values(report.results).forEach(result => {
+            totalItems++;
+            if (result.status === 'fulfilled') {
+                fulfilledItems++;
+            }
+        });
+    });
+    
+    const complianceRate = totalItems > 0 ? ((fulfilledItems / totalItems) * 100).toFixed(1) : 0;
+    
+    // Build HTML
+    let html = `
+        <!-- Summary Statistics -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; text-align: center;">
+                <div style="font-size: 2.5em; margin-bottom: 5px;">${totalReports}</div>
+                <div style="font-size: 1.1em; opacity: 0.9;">إجمالي التقارير</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; padding: 20px; border-radius: 12px; text-align: center;">
+                <div style="font-size: 2.5em; margin-bottom: 5px;">${complianceRate}%</div>
+                <div style="font-size: 1.1em; opacity: 0.9;">نسبة الامتثال</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; padding: 20px; border-radius: 12px; text-align: center;">
+                <div style="font-size: 2.5em; margin-bottom: 5px;">${inspectors.length}</div>
+                <div style="font-size: 1.1em; opacity: 0.9;">عدد المفتشين</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 20px; border-radius: 12px; text-align: center;">
+                <div style="font-size: 2.5em; margin-bottom: 5px;">${shelters.length}</div>
+                <div style="font-size: 1.1em; opacity: 0.9;">الملاجىء المفتشة</div>
+            </div>
+        </div>
+        
+        <!-- Reports List -->
+        <div style="margin-top: 30px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="color: #2336a0; margin: 0; font-size: 1.5em;">📋 التقارير التفصيلية</h3>
+                <a href="index2.html" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
+                    ➕ إضافة تقرير جديد
+                </a>
+            </div>
+    `;
+    
+    // Generate report cards
+    savedReports.forEach((report, index) => {
+        const reportDate = new Date(report.timestamp);
+        const formattedDate = reportDate.toLocaleDateString('ar-EG', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        const formattedTime = reportDate.toLocaleTimeString('ar-EG', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        // Calculate report statistics
+        const results = Object.values(report.results);
+        const fulfilled = results.filter(r => r.status === 'fulfilled').length;
+        const unfulfilled = results.filter(r => r.status === 'unfulfilled').length;
+        const notInspected = results.filter(r => r.status === 'not_inspected').length;
+        const notApplicable = results.filter(r => r.status === 'not_applicable').length;
+        const reportCompliance = ((fulfilled / results.length) * 100).toFixed(1);
+        
+        html += `
+            <div style="background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                    <div>
+                        <h4 style="color: #667eea; margin: 0 0 10px 0; font-size: 1.3em;">
+                            التقرير #${totalReports - index}
+                        </h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; font-size: 0.95em;">
+                            <div><strong>المفتش:</strong> ${report.inspector}</div>
+                            <div><strong>التاريخ:</strong> ${report.date}</div>
+                            <div><strong>المنطقة:</strong> ${report.area}</div>
+                            <div><strong>الملجأ:</strong> ${report.shelter}</div>
+                        </div>
+                        <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                            <strong>وقت الإرسال:</strong> ${formattedDate} - ${formattedTime}
+                        </div>
+                    </div>
+                    <div style="background: ${reportCompliance >= 80 ? 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)' : reportCompliance >= 60 ? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' : 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'}; color: white; padding: 15px; border-radius: 10px; text-align: center; min-width: 100px;">
+                        <div style="font-size: 2em; font-weight: bold;">${reportCompliance}%</div>
+                        <div style="font-size: 0.9em;">الامتثال</div>
+                    </div>
+                </div>
+                
+                <!-- Report Summary -->
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 15px 0; padding: 15px; background: white; border-radius: 8px;">
+                    <div style="text-align: center;">
+                        <div style="color: #28a745; font-size: 1.8em; font-weight: bold;">${fulfilled}</div>
+                        <div style="font-size: 0.9em; color: #6c757d;">✅ مستوفى</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="color: #dc3545; font-size: 1.8em; font-weight: bold;">${unfulfilled}</div>
+                        <div style="font-size: 0.9em; color: #6c757d;">❌ غير مستوفى</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="color: #6c757d; font-size: 1.8em; font-weight: bold;">${notInspected}</div>
+                        <div style="font-size: 0.9em; color: #6c757d;">⏭️ لم يتم</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="color: #ffc107; font-size: 1.8em; font-weight: bold;">${notApplicable}</div>
+                        <div style="font-size: 0.9em; color: #6c757d;">➖ لا ينطبق</div>
+                    </div>
+                </div>
+                
+                <!-- Detailed Results -->
+                <details style="margin-top: 15px;">
+                    <summary style="cursor: pointer; font-weight: bold; color: #2336a0; padding: 10px; background: white; border-radius: 8px;">
+                        🔍 عرض التفاصيل الكاملة
+                    </summary>
+                    <div style="margin-top: 15px; padding: 15px; background: white; border-radius: 8px;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #e9ecef;">
+                                    <th style="padding: 10px; text-align: right; border-bottom: 2px solid #ddd;">البند</th>
+                                    <th style="padding: 10px; text-align: center; border-bottom: 2px solid #ddd; width: 150px;">الحالة</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+        `;
+        
+        Object.entries(report.results).forEach(([key, value]) => {
+            let statusBadge = '';
+            switch (value.status) {
+                case 'fulfilled':
+                    statusBadge = '<span style="color: #28a745; font-weight: bold;">✅ مستوفى</span>';
+                    break;
+                case 'unfulfilled':
+                    statusBadge = '<span style="color: #dc3545; font-weight: bold;">❌ غير مستوفى</span>';
+                    break;
+                case 'not_inspected':
+                    statusBadge = '<span style="color: #6c757d; font-weight: bold;">⏭️ لم يتم التفتيش</span>';
+                    break;
+                case 'not_applicable':
+                    statusBadge = '<span style="color: #ffc107; font-weight: bold;">➖ لا ينطبق</span>';
+                    break;
+            }
+            
+            html += `
+                <tr style="border-bottom: 1px solid #e9ecef;">
+                    <td style="padding: 10px;">${value.label}</td>
+                    <td style="padding: 10px; text-align: center;">${statusBadge}</td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                            </tbody>
+                        </table>
+        `;
+        
+        if (report.notes && report.notes.trim()) {
+            html += `
+                        <div style="margin-top: 15px; padding: 15px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px;">
+                            <strong style="color: #856404;">📝 ملاحظات:</strong>
+                            <p style="margin: 10px 0 0 0; color: #856404;">${report.notes}</p>
+                        </div>
+            `;
+        }
+        
+        html += `
+                    </div>
+                </details>
+            </div>
+        `;
+    });
+    
+    html += `</div>`;
+    
+    contentArea.innerHTML = html;
 }
 
 // New function: Show Monthly Inspection Plan Modal  

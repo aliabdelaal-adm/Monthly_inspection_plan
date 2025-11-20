@@ -501,24 +501,22 @@
         
         .bell-modal.show {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
+            background: rgba(0, 0, 0, 0.8);
         }
         
         .bell-bubble {
             background: #fff;
-            border-radius: 20px;
-            padding: 25px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 70vh;
+            border-radius: 0;
+            padding: 30px;
+            width: 100%;
+            height: 100vh;
             overflow-y: auto;
-            box-shadow: 
-                0 20px 60px rgba(0,0,0,0.3),
-                0 0 0 1px rgba(255,255,255,0.1);
+            box-shadow: none;
             position: relative;
-            transform: scale(0.8);
-            animation: bubbleAppear 0.3s ease forwards;
+            transform: scale(1);
+            animation: slideInFromTop 0.3s ease forwards;
         }
         
         @keyframes fadeIn {
@@ -537,27 +535,32 @@
             }
         }
         
+        @keyframes slideInFromTop {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
         .bell-bubble::before {
-            content: '';
-            position: absolute;
-            top: -15px;
-            left: 50px;
-            width: 0;
-            height: 0;
-            border-left: 15px solid transparent;
-            border-right: 15px solid transparent;
-            border-bottom: 15px solid #fff;
+            content: none; /* Removed triangle for full screen mode */
         }
         
         .bell-bubble h3 {
-            margin: 0 0 20px 0;
+            margin: 0 0 30px 0;
             color: #234085;
-            font-size: 1.4em;
+            font-size: 2em;
             text-align: center;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 15px;
+            padding: 20px 0;
+            border-bottom: 3px solid #e0e3ea;
         }
         
         .bell-bubble h3::before {
@@ -587,21 +590,28 @@
         
         .bell-bubble-actions {
             display: flex;
-            gap: 10px;
+            gap: 15px;
             justify-content: center;
-            margin-top: 20px;
+            margin-top: 30px;
+            padding: 20px 0;
             flex-wrap: wrap;
+            border-top: 2px solid #e0e3ea;
+            position: sticky;
+            bottom: 0;
+            background: white;
+            z-index: 10;
         }
         
         .bell-action-btn {
-            padding: 12px 24px;
+            padding: 15px 30px;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
-            font-size: 1em;
+            font-size: 1.1em;
             font-weight: bold;
             transition: all 0.3s;
-            min-width: 100px;
+            min-width: 140px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         
         .bell-save-btn {
@@ -621,6 +631,16 @@
         
         .bell-clear-btn:hover {
             background: #e0a800;
+            transform: translateY(-2px);
+        }
+        
+        .bell-back-btn {
+            background: #007bff;
+            color: white;
+        }
+        
+        .bell-back-btn:hover {
+            background: #0056b3;
             transform: translateY(-2px);
         }
         
@@ -7004,6 +7024,7 @@
             <button class="bell-action-btn bell-save-btn" id="bellSaveBtn">💾 حفظ جميع التغييرات</button>
             <button class="bell-action-btn bell-clear-btn" id="bellClearBtn">🗑️ مسح الكل</button>
             <button class="bell-action-btn bell-export-btn" id="bellExportBtn" style="background:#dc3545;display:none;">📤 حفظ نهائي</button>
+            <button class="bell-action-btn bell-back-btn" id="bellBackBtn">🔄 العودة للإشعارات</button>
             <button class="bell-action-btn bell-close-btn" id="bellCloseBtn">✖️ إغلاق</button>
         </div>
     </div>
@@ -17518,6 +17539,11 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(function() {
             saveToExternalFile();
         }, 500);
+    });
+    document.getElementById('bellBackBtn').addEventListener('click', function() {
+        // Refresh/reload the notifications list
+        displayNotificationsList();
+        playClickSound();
     });
     document.getElementById('bellCloseBtn').addEventListener('click', hideBellModal);
     

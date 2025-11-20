@@ -29863,6 +29863,12 @@ async function loadGroupInspectionReports() {
                                 </div>
                             </div>
                             <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                                <button onclick="viewGroupReport('${report.path}', '${report.name}', '${report.type}')" 
+                                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(102,126,234,0.3); transition: all 0.3s ease;"
+                                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(102,126,234,0.4)';"
+                                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(102,126,234,0.3)';">
+                                    👁️ عرض
+                                </button>
                                 <button onclick="downloadGroupReport('${report.path}', '${report.name}')" 
                                     style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(40,167,69,0.3); transition: all 0.3s ease;"
                                     onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(40,167,69,0.4)';"
@@ -30255,6 +30261,71 @@ async function updateGroupReportsRegistry(fileName, filePath, fileSize, title, d
     } catch (error) {
         console.error('خطأ في تحديث سجل التقارير:', error);
         throw error;
+    }
+}
+
+async function viewGroupReport(filePath, fileName, fileType) {
+    const statusDiv = document.getElementById('groupReportsLoadingStatus');
+    
+    try {
+        statusDiv.textContent = '⏳ جاري تحميل التقرير للعرض...';
+        statusDiv.style.color = '#666';
+        
+        let fileUrl;
+        
+        // محاولة الحصول على URL الملف
+        try {
+            const testResponse = await fetch(`./${filePath}`, { method: 'HEAD' });
+            if (testResponse.ok) {
+                // الملف موجود محلياً
+                fileUrl = `./${filePath}`;
+            } else {
+                throw new Error('Local file not found');
+            }
+        } catch (localError) {
+            // إذا فشل التحميل المحلي، استخدم رابط GitHub
+            const repo = 'aliabdelaal-adm/Monthly_inspection_plan';
+            fileUrl = `https://raw.githubusercontent.com/${repo}/main/${filePath}`;
+        }
+        
+        // التحقق من نوع الملف وفتحه بالطريقة المناسبة
+        const lowerFileType = fileType.toLowerCase();
+        
+        if (lowerFileType === 'pdf') {
+            // فتح PDF في تبويب جديد
+            window.open(fileUrl, '_blank', 'noopener,noreferrer');
+            statusDiv.textContent = '✅ تم فتح التقرير في تبويب جديد';
+            statusDiv.style.color = '#28a745';
+        } else if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(lowerFileType)) {
+            // عرض الصور في تبويب جديد
+            window.open(fileUrl, '_blank', 'noopener,noreferrer');
+            statusDiv.textContent = '✅ تم فتح الصورة في تبويب جديد';
+            statusDiv.style.color = '#28a745';
+        } else if (['xlsx', 'xls', 'docx', 'doc', 'pptx', 'ppt'].includes(lowerFileType)) {
+            // استخدام Office Online Viewer لملفات Office
+            const viewerUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(fileUrl)}`;
+            window.open(viewerUrl, '_blank', 'noopener,noreferrer');
+            statusDiv.textContent = '✅ تم فتح التقرير في عارض Office';
+            statusDiv.style.color = '#28a745';
+        } else {
+            // للملفات الأخرى، افتحها في تبويب جديد (سيتم تحميلها أو عرضها حسب المتصفح)
+            window.open(fileUrl, '_blank', 'noopener,noreferrer');
+            statusDiv.textContent = '✅ تم فتح الملف في تبويب جديد';
+            statusDiv.style.color = '#28a745';
+        }
+        
+        setTimeout(() => {
+            statusDiv.textContent = '';
+        }, 3000);
+        
+    } catch (error) {
+        console.error('خطأ في عرض التقرير:', error);
+        statusDiv.textContent = '❌ فشل في عرض التقرير - يرجى استخدام زر التحميل';
+        statusDiv.style.color = '#dc3545';
+        
+        setTimeout(() => {
+            statusDiv.textContent = '';
+        }, 5000);
     }
 }
 

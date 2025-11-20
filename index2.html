@@ -1236,7 +1236,8 @@
                 return;
             }
             
-            // Collect inspection data
+            // Collect inspection data - partial completion is allowed
+            // Only filled items are collected, unfilled items are omitted
             const inspectionResults = {};
             const checklistItems = [
                 'cleanliness', 'ventilation', 'lighting', 'food_quality',
@@ -1245,20 +1246,12 @@
                 'waste_management', 'documentation'
             ];
             
-            let allFieldsFilled = true;
             checklistItems.forEach(item => {
                 const selectedRadio = document.querySelector(`input[name="item_${item}"]:checked`);
                 if (selectedRadio) {
                     inspectionResults[item] = selectedRadio.value;
-                } else {
-                    allFieldsFilled = false;
                 }
             });
-            
-            if (!allFieldsFilled) {
-                showError('⚠️ يرجى ملء جميع بنود التفتيش');
-                return;
-            }
             
             const notes = document.getElementById('shelterNotes').value;
             const violations = document.getElementById('shelterViolations').value;

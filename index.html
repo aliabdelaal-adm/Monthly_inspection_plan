@@ -8544,6 +8544,182 @@ console.log('Smart distribution functions initialized');
     </div>
 </div>
 
+<!-- Shelter Inspection Form Modal -->
+<div id="shelterInspectionFormModal" class="modal-overlay" style="display:none;">
+    <div class="modal-content" style="max-width: 800px; max-height: 95vh; overflow-y: auto;">
+        <button class="close-btn" onclick="closeShelterInspectionForm()">×</button>
+        <div class="stats-title">📝 نموذج تفتيش الملجأ</div>
+        
+        <!-- Inspection Details -->
+        <div id="shelterInspectionDetails" style="background: linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%); padding: 15px; border-radius: 10px; margin: 20px 0;">
+            <!-- Will be filled dynamically -->
+        </div>
+        
+        <!-- Inspector Authentication -->
+        <div style="margin: 20px 0;">
+            <h3 style="color: #2196f3; margin-bottom: 15px;">🔐 تسجيل دخول المفتش</h3>
+            <div style="background: white; padding: 20px; border-radius: 10px; border: 2px solid #e0e0e0;">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">اسم المفتش</label>
+                    <input type="text" id="shelterInspectorUsername" class="smart-planner-input" placeholder="أدخل اسم المفتش" readonly style="background: #f5f5f5;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">كلمة المرور</label>
+                    <div style="position: relative;">
+                        <input type="password" id="shelterInspectorPassword" class="smart-planner-input" placeholder="أدخل كلمة المرور الخاصة بك">
+                        <button onclick="togglePasswordVisibility()" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; font-size: 1.2em;" title="إظهار/إخفاء كلمة المرور">👁️</button>
+                    </div>
+                </div>
+                <div style="text-align: left;">
+                    <button onclick="showForgotPasswordModal()" style="background: transparent; border: none; color: #2196f3; text-decoration: underline; cursor: pointer; font-size: 0.9em; padding: 5px;">
+                        🔑 نسيت كلمة المرور؟
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Inspection Form Fields -->
+        <div style="margin: 20px 0;">
+            <h3 style="color: #2196f3; margin-bottom: 15px;">📋 بيانات التفتيش</h3>
+            <div style="background: white; padding: 20px; border-radius: 10px; border: 2px solid #e0e0e0;">
+                
+                <!-- Overall Status -->
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">حالة الملجأ العامة</label>
+                    <select id="shelterOverallStatus" class="smart-planner-input">
+                        <option value="">اختر الحالة...</option>
+                        <option value="ممتاز">ممتاز ✅</option>
+                        <option value="جيد">جيد ✔️</option>
+                        <option value="مقبول">مقبول ⚠️</option>
+                        <option value="يحتاج تحسين">يحتاج تحسين ⚠️</option>
+                        <option value="غير مطابق">غير مطابق ❌</option>
+                    </select>
+                </div>
+                
+                <!-- Cleanliness -->
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">النظافة</label>
+                    <select id="shelterCleanliness" class="smart-planner-input">
+                        <option value="">اختر...</option>
+                        <option value="ممتاز">ممتاز ✅</option>
+                        <option value="جيد">جيد ✔️</option>
+                        <option value="مقبول">مقبول ⚠️</option>
+                        <option value="سيء">سيء ❌</option>
+                    </select>
+                </div>
+                
+                <!-- Animal Welfare -->
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">رعاية الحيوانات</label>
+                    <select id="shelterAnimalWelfare" class="smart-planner-input">
+                        <option value="">اختر...</option>
+                        <option value="ممتاز">ممتاز ✅</option>
+                        <option value="جيد">جيد ✔️</option>
+                        <option value="مقبول">مقبول ⚠️</option>
+                        <option value="سيء">سيء ❌</option>
+                    </select>
+                </div>
+                
+                <!-- License Status -->
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">حالة الترخيص</label>
+                    <select id="shelterLicenseStatus" class="smart-planner-input">
+                        <option value="">اختر...</option>
+                        <option value="ساري">ساري ✅</option>
+                        <option value="منتهي">منتهي ❌</option>
+                        <option value="قيد التجديد">قيد التجديد ⏳</option>
+                        <option value="لا يوجد">لا يوجد ❌</option>
+                    </select>
+                </div>
+                
+                <!-- Notes -->
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">ملاحظات</label>
+                    <textarea id="shelterNotes" class="smart-planner-input" rows="4" placeholder="أضف أي ملاحظات أو مخالفات..."></textarea>
+                </div>
+                
+                <!-- Violations -->
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">المخالفات المرصودة</label>
+                    <textarea id="shelterViolations" class="smart-planner-input" rows="3" placeholder="قم بإدراج أي مخالفات تم رصدها..."></textarea>
+                </div>
+                
+                <!-- Recommendations -->
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">التوصيات</label>
+                    <textarea id="shelterRecommendations" class="smart-planner-input" rows="3" placeholder="التوصيات والإجراءات المطلوبة..."></textarea>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Photo Capture Section -->
+        <div style="margin: 20px 0;">
+            <h3 style="color: #2196f3; margin-bottom: 15px;">📷 صور التفتيش</h3>
+            <div style="background: white; padding: 20px; border-radius: 10px; border: 2px solid #e0e0e0;">
+                <div style="margin-bottom: 15px;">
+                    <button onclick="capturePhoto()" style="width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1em; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <span style="font-size: 1.5em;">📸</span>
+                        <span>التقاط صورة من الكاميرا</span>
+                    </button>
+                    <input type="file" id="shelterPhotoInput" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoCapture(event)" multiple>
+                </div>
+                
+                <div id="shelterPhotosPreview" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 15px;">
+                    <!-- Photos will be displayed here -->
+                </div>
+                
+                <div style="margin-top: 10px; color: #666; font-size: 0.9em; text-align: center;">
+                    💡 يمكنك التقاط عدة صور للملجأ
+                </div>
+            </div>
+        </div>
+        
+        <!-- Submit Button -->
+        <div style="margin: 20px 0; text-align: center;">
+            <button onclick="submitShelterInspection()" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; padding: 15px 40px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 12px rgba(40,167,69,0.3);">
+                💾 حفظ التفتيش
+            </button>
+        </div>
+        
+        <!-- Info Note -->
+        <div style="padding: 15px; background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-radius: 10px; border-right: 4px solid #ff9800;">
+            <div style="color: #e65100; font-size: 0.95em; line-height: 1.8;">
+                <div>⚠️ يجب إدخال كلمة المرور الصحيحة لحفظ التفتيش</div>
+                <div>📸 الصور ستُحفظ مع بيانات التفتيش</div>
+                <div>💾 سيتم حفظ التفتيش تلقائياً في النظام</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Forgot Password Modal -->
+<div id="forgotPasswordModal" class="modal-overlay" style="display:none;">
+    <div class="modal-content" style="max-width: 500px;">
+        <button class="close-btn" onclick="closeForgotPasswordModal()">×</button>
+        <div class="stats-title">🔑 استعادة كلمة المرور</div>
+        
+        <div style="padding: 20px; text-align: center;">
+            <div style="font-size: 3em; margin-bottom: 20px;">🔒</div>
+            <p style="font-size: 1.1em; color: #666; margin-bottom: 20px;">
+                لاستعادة كلمة المرور، يرجى التواصل مع المشرف أو مدير النظام
+            </p>
+            
+            <div style="background: linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%); padding: 20px; border-radius: 10px; margin: 20px 0;">
+                <div style="font-weight: 600; margin-bottom: 10px; color: #1976d2;">طرق التواصل:</div>
+                <div style="color: #555; line-height: 2;">
+                    <div>📞 الهاتف: [رقم المشرف]</div>
+                    <div>📧 البريد الإلكتروني: [بريد المشرف]</div>
+                    <div>💬 واتساب: [رقم الواتساب]</div>
+                </div>
+            </div>
+            
+            <button onclick="closeForgotPasswordModal()" style="background: #2196f3; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 10px;">
+                حسناً
+            </button>
+        </div>
+    </div>
+</div>
+
 <style>
 .smart-planner-tab {
     background: white;
@@ -15303,6 +15479,7 @@ function renderShelterInspectionTable() {
                 <th>المناوبة</th>
                 <th>المنطقة</th>
                 <th>الملجأ</th>
+                <th>إجراءات</th>
             </tr>
         </thead>
         <tbody>
@@ -15413,6 +15590,18 @@ function renderShelterInspectionTable() {
                             </ul>
                         </div>
                     </div>
+                </td>
+                <td style="text-align: center;">
+                    ${sortedInspectors.map((inspector, inspectorIdx) => {
+                        return sheltersArray.map((shelter, shelterIdx) => `
+                            <button 
+                                onclick="openShelterInspectionForm('${shelter.replace(/'/g, "\\'")}', '${inspector.replace(/'/g, "\\'")}', '${item.day}', '${item.shift}', '${areaName.replace(/'/g, "\\'")}')"
+                                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85em; margin: 2px; white-space: nowrap; box-shadow: 0 2px 5px rgba(0,0,0,0.2);"
+                                title="فتح نموذج التفتيش للمفتش ${inspector} - ${shelter}">
+                                📝 نموذج التفتيش
+                            </button>
+                        `).join('');
+                    }).join('')}
                 </td>
             </tr>
         `;
@@ -27819,6 +28008,193 @@ function loadShelterVisitReports() {
     html += `</div>`;
     
     contentArea.innerHTML = html;
+}
+
+// Shelter Inspection Form Functions
+let shelterInspectionPhotos = []; // Array to store captured photos
+let currentShelterInspection = null; // Store current inspection details
+
+function openShelterInspectionForm(shelterName, inspector, date, shift, area) {
+    const modal = document.getElementById('shelterInspectionFormModal');
+    if (!modal) return;
+    
+    // Store current inspection details
+    currentShelterInspection = {
+        shelterName: shelterName,
+        inspector: inspector,
+        date: date,
+        shift: shift,
+        area: area
+    };
+    
+    // Reset form
+    document.getElementById('shelterInspectorUsername').value = inspector;
+    document.getElementById('shelterInspectorPassword').value = '';
+    document.getElementById('shelterOverallStatus').value = '';
+    document.getElementById('shelterCleanliness').value = '';
+    document.getElementById('shelterAnimalWelfare').value = '';
+    document.getElementById('shelterLicenseStatus').value = '';
+    document.getElementById('shelterNotes').value = '';
+    document.getElementById('shelterViolations').value = '';
+    document.getElementById('shelterRecommendations').value = '';
+    
+    // Reset photos
+    shelterInspectionPhotos = [];
+    document.getElementById('shelterPhotosPreview').innerHTML = '';
+    
+    // Fill inspection details
+    const detailsDiv = document.getElementById('shelterInspectionDetails');
+    detailsDiv.innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <div><strong>الملجأ:</strong> ${shelterName}</div>
+            <div><strong>المفتش:</strong> ${inspector}</div>
+            <div><strong>التاريخ:</strong> ${date}</div>
+            <div><strong>المناوبة:</strong> ${shift}</div>
+            <div><strong>المنطقة:</strong> ${area}</div>
+        </div>
+    `;
+    
+    modal.style.display = 'flex';
+}
+
+function closeShelterInspectionForm() {
+    const modal = document.getElementById('shelterInspectionFormModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+    currentShelterInspection = null;
+    shelterInspectionPhotos = [];
+}
+
+function togglePasswordVisibility() {
+    const passwordInput = document.getElementById('shelterInspectorPassword');
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+    } else {
+        passwordInput.type = 'password';
+    }
+}
+
+function showForgotPasswordModal() {
+    const modal = document.getElementById('forgotPasswordModal');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+function closeForgotPasswordModal() {
+    const modal = document.getElementById('forgotPasswordModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function capturePhoto() {
+    const input = document.getElementById('shelterPhotoInput');
+    if (input) {
+        input.click();
+    }
+}
+
+function handlePhotoCapture(event) {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+    
+    Array.from(files).forEach(file => {
+        if (!file.type.startsWith('image/')) {
+            alert('⚠️ يرجى اختيار ملفات صور فقط');
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const photoData = {
+                data: e.target.result,
+                name: file.name,
+                timestamp: new Date().toISOString()
+            };
+            
+            shelterInspectionPhotos.push(photoData);
+            displayPhotos();
+        };
+        reader.readAsDataURL(file);
+    });
+    
+    // Reset input to allow selecting the same file again
+    event.target.value = '';
+}
+
+function displayPhotos() {
+    const previewDiv = document.getElementById('shelterPhotosPreview');
+    if (!previewDiv) return;
+    
+    previewDiv.innerHTML = shelterInspectionPhotos.map((photo, index) => `
+        <div style="position: relative; border: 2px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+            <img src="${photo.data}" style="width: 100%; height: 150px; object-fit: cover;">
+            <button onclick="removePhoto(${index})" style="position: absolute; top: 5px; left: 5px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.3);" title="حذف الصورة">×</button>
+            <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); color: white; padding: 5px; font-size: 0.8em; text-align: center;">
+                صورة ${index + 1}
+            </div>
+        </div>
+    `).join('');
+}
+
+function removePhoto(index) {
+    shelterInspectionPhotos.splice(index, 1);
+    displayPhotos();
+}
+
+async function submitShelterInspection() {
+    // Validate password
+    const password = document.getElementById('shelterInspectorPassword').value.trim();
+    if (!password) {
+        alert('⚠️ يرجى إدخال كلمة المرور');
+        return;
+    }
+    
+    // Validate form fields
+    const overallStatus = document.getElementById('shelterOverallStatus').value;
+    const cleanliness = document.getElementById('shelterCleanliness').value;
+    const animalWelfare = document.getElementById('shelterAnimalWelfare').value;
+    const licenseStatus = document.getElementById('shelterLicenseStatus').value;
+    
+    if (!overallStatus || !cleanliness || !animalWelfare || !licenseStatus) {
+        alert('⚠️ يرجى ملء جميع الحقول المطلوبة');
+        return;
+    }
+    
+    // Create inspection report
+    const report = {
+        ...currentShelterInspection,
+        password: password, // In a real system, this should be hashed
+        overallStatus: overallStatus,
+        cleanliness: cleanliness,
+        animalWelfare: animalWelfare,
+        licenseStatus: licenseStatus,
+        notes: document.getElementById('shelterNotes').value,
+        violations: document.getElementById('shelterViolations').value,
+        recommendations: document.getElementById('shelterRecommendations').value,
+        photos: shelterInspectionPhotos,
+        timestamp: new Date().toISOString(),
+        submittedBy: currentShelterInspection.inspector
+    };
+    
+    // Save to localStorage
+    const savedReports = JSON.parse(localStorage.getItem('shelterInspectionReports') || '[]');
+    savedReports.push(report);
+    localStorage.setItem('shelterInspectionReports', JSON.stringify(savedReports));
+    
+    // Show success message
+    alert(`✅ تم حفظ التفتيش بنجاح!\n\n📊 الملجأ: ${currentShelterInspection.shelterName}\n👤 المفتش: ${currentShelterInspection.inspector}\n📸 عدد الصور: ${shelterInspectionPhotos.length}`);
+    
+    // Close form
+    closeShelterInspectionForm();
+    
+    // Optionally refresh the shelter visit report modal if it's open
+    const reportModal = document.getElementById('shelterVisitReportModal');
+    if (reportModal && reportModal.style.display === 'flex') {
+        loadShelterVisitReports();
+    }
 }
 
 // New function: Show Monthly Inspection Plan Modal  

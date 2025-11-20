@@ -30278,25 +30278,21 @@ async function viewGroupReport(filePath, fileName, fileType) {
         statusDiv.textContent = '⏳ جاري تحميل التقرير للعرض...';
         statusDiv.style.color = '#666';
         
-        let fileUrl;
-        
-        // محاولة الحصول على URL الملف
-        try {
-            const testResponse = await fetch(`./${filePath}`, { method: 'HEAD' });
-            if (testResponse.ok) {
-                // الملف موجود محلياً
-                fileUrl = `./${filePath}`;
-            } else {
-                throw new Error('Local file not found');
-            }
-        } catch (localError) {
-            // إذا فشل التحميل المحلي، استخدم رابط GitHub
-            const repo = 'aliabdelaal-adm/Monthly_inspection_plan';
-            fileUrl = `https://raw.githubusercontent.com/${repo}/main/${filePath}`;
-        }
-        
         // التحقق من نوع الملف وفتحه بالطريقة المناسبة
         const lowerFileType = fileType.toLowerCase();
+        
+        // بناء URL الكامل للملف
+        let fileUrl;
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        
+        if (isLocalhost) {
+            // في حالة التطوير المحلي، استخدم المسار النسبي
+            fileUrl = `./${filePath}`;
+        } else {
+            // في حالة GitHub Pages أو الاستضافة، استخدم URL الكامل
+            const baseUrl = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '');
+            fileUrl = `${baseUrl}/${filePath}`;
+        }
         
         if (lowerFileType === 'pdf') {
             // فتح PDF في تبويب جديد
@@ -30310,10 +30306,18 @@ async function viewGroupReport(filePath, fileName, fileType) {
             statusDiv.style.color = '#28a745';
         } else if (['xlsx', 'xls', 'docx', 'doc', 'pptx', 'ppt'].includes(lowerFileType)) {
             // استخدام Office Online Viewer لملفات Office
+            // يجب استخدام URL كامل ومباشر للملف
             const viewerUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(fileUrl)}`;
-            window.open(viewerUrl, '_blank', 'noopener,noreferrer');
-            statusDiv.textContent = '✅ تم فتح التقرير في عارض Office';
-            statusDiv.style.color = '#28a745';
+            const newWindow = window.open(viewerUrl, '_blank', 'noopener,noreferrer');
+            
+            if (newWindow) {
+                statusDiv.textContent = '✅ تم فتح التقرير في عارض Office';
+                statusDiv.style.color = '#28a745';
+            } else {
+                // إذا فشل فتح النافذة (بسبب حظر النوافذ المنبثقة)
+                statusDiv.innerHTML = `⚠️ تم حظر النافذة المنبثقة. <a href="${viewerUrl}" target="_blank" style="color: #667eea; text-decoration: underline;">اضغط هنا لفتح التقرير</a>`;
+                statusDiv.style.color = '#ff9800';
+            }
         } else {
             // للملفات الأخرى، افتحها في تبويب جديد (سيتم تحميلها أو عرضها حسب المتصفح)
             window.open(fileUrl, '_blank', 'noopener,noreferrer');

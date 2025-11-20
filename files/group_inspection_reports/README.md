@@ -11,6 +11,7 @@
 - PDF
 - Excel (.xlsx, .xls)
 - Word (.docx, .doc)
+- PowerPoint (.pptx, .ppt)
 
 ## الحد الأقصى لحجم الملف:
 25 ميجابايت

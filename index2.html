@@ -1236,6 +1236,30 @@
                 return;
             }
             
+            // Define item labels for proper display
+            const itemLabels = {
+                'cleanliness': 'النظافة العامة للملجأ',
+                'ventilation': 'التهوية المناسبة',
+                'lighting': 'الإضاءة الكافية',
+                'food_quality': 'جودة الأعلاف والطعام',
+                'water_availability': 'توفر المياه النظيفة',
+                'cage_conditions': 'حالة الأقفاص والحظائر',
+                'animal_health': 'الحالة الصحية للحيوانات',
+                'medical_records': 'السجلات الطبية محدثة',
+                'staff_presence': 'وجود طاقم عمل مؤهل',
+                'safety_measures': 'إجراءات السلامة والأمان',
+                'waste_management': 'إدارة النفايات',
+                'documentation': 'الوثائق والتصاريح'
+            };
+            
+            // Map status values to internal keys
+            const statusMap = {
+                'مستوفى': 'fulfilled',
+                'غير مستوفى': 'unfulfilled',
+                'لم يتم التفتيش': 'not_inspected',
+                'لا ينطبق': 'not_applicable'
+            };
+            
             // Collect inspection data - partial completion is allowed
             // Only filled items are collected, unfilled items are omitted
             const inspectionResults = {};
@@ -1249,7 +1273,12 @@
             checklistItems.forEach(item => {
                 const selectedRadio = document.querySelector(`input[name="item_${item}"]:checked`);
                 if (selectedRadio) {
-                    inspectionResults[item] = selectedRadio.value;
+                    const arabicValue = selectedRadio.value;
+                    inspectionResults[item] = {
+                        status: statusMap[arabicValue] || 'not_inspected',
+                        label: itemLabels[item] || item,
+                        value: arabicValue
+                    };
                 }
             });
             

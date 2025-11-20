@@ -5955,8 +5955,9 @@
                 document.getElementById('showHighPriorityBtn').style.display = 'none';
                 document.getElementById('showAllShopsBtn').style.display = 'none';
                 if (selectAllAreaBtn) selectAllAreaBtn.style.display = 'none';
+                // ALWAYS show search box when inspector is selected (for wide-scale search)
                 if (searchBox) {
-                    searchBox.style.display = 'none';
+                    searchBox.style.display = inspector ? 'block' : 'none';
                 }
                 return;
             }
@@ -6017,6 +6018,11 @@
             
             // Display shops
             displayShops(sortedShops);
+            
+            // ALWAYS show search box when inspector and area are selected (for wide-scale search)
+            if (searchBox && inspector) {
+                searchBox.style.display = 'block';
+            }
         }
         
         // NEW FEATURE: Display monthly shops for selected inspector
@@ -6583,42 +6589,141 @@
         // Filter shops in new inspection based on search term
         function filterInspectionShops() {
             const searchTerm = document.getElementById('inspectionShopSearch').value.toLowerCase().trim();
-            const shopCards = document.querySelectorAll('#shopsListContainer .shop-card');
+            const inspector = document.getElementById('inspectorSelect').value;
+            const container = document.getElementById('shopsListContainer');
             
             if (!searchTerm) {
-                // Show all shops if search is empty
-                shopCards.forEach(card => {
-                    card.style.display = '';
-                });
+                // If search is empty, restore the default view
+                updateAvailableShops();
                 return;
             }
             
-            // Filter shop cards based on search term
-            shopCards.forEach(card => {
-                const shopName = card.querySelector('.shop-name').textContent.toLowerCase();
+            if (!inspector) {
+                container.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">يرجى اختيار المفتش أولاً</p>';
+                return;
+            }
+            
+            // WIDE-SCALE SEARCH: Search across ALL shops in ALL areas without restrictions
+            if (!planData || !planData.shops || !planData.areas) {
+                container.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">لا توجد بيانات متاحة</p>';
+                return;
+            }
+            
+            // Get ALL shops from ALL areas
+            const allShops = planData.shops.map(shop => ({
+                name: shop.name,
+                areaId: shop.areaId,
+                areaName: planData.areas.find(a => a.id === shop.areaId)?.name || 'غير محدد'
+            }));
+            
+            // Filter shops based on search term
+            const matchedShops = allShops.filter(shop => {
+                const shopName = shop.name.toLowerCase();
                 
                 // Try to get additional details from shopsDetails if available
                 let shopDetails = '';
-                const originalShopName = card.querySelector('.shop-name').textContent;
-                if (shopsDetails && shopsDetails[originalShopName]) {
-                    const shop = shopsDetails[originalShopName];
+                if (shopsDetails && shopsDetails[shop.name]) {
+                    const details = shopsDetails[shop.name];
                     shopDetails = [
-                        shop.nameEn || '',
-                        shop.licenseNo || '',
-                        shop.admCode || '',
-                        shop.activity || '',
-                        shop.address || ''
+                        details.nameEn || '',
+                        details.licenseNo || '',
+                        details.admCode || '',
+                        details.activity || '',
+                        details.address || ''
                     ].join(' ').toLowerCase();
                 }
                 
-                // Check if search term matches shop name or details
-                const searchableText = shopName + ' ' + shopDetails;
-                if (searchableText.includes(searchTerm)) {
-                    card.style.display = '';
-                } else {
-                    card.style.display = 'none';
-                }
+                // Check if search term matches shop name, details, or area name
+                const searchableText = shopName + ' ' + shopDetails + ' ' + shop.areaName.toLowerCase();
+                return searchableText.includes(searchTerm);
             });
+            
+            // Display the matched shops
+            if (matchedShops.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; background: #fff3cd; border-radius: 10px; border: 2px solid #ffc107;">
+                        <p style="font-size: 1.2em; margin-bottom: 10px;">🔍 لم يتم العثور على محلات</p>
+                        <p style="color: #856404;">حاول البحث بكلمات مختلفة أو تأكد من كتابة الاسم بشكل صحيح</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Display search results grouped by area
+            const todayStr = new Date().toISOString().split('T')[0];
+            const shopsByArea = {};
+            
+            matchedShops.forEach(shop => {
+                if (!shopsByArea[shop.areaName]) {
+                    shopsByArea[shop.areaName] = [];
+                }
+                shopsByArea[shop.areaName].push(shop.name);
+            });
+            
+            let html = `
+                <div style="background: #e8f5e9; padding: 15px; border-radius: 10px; margin-bottom: 20px; border-right: 4px solid #4caf50;">
+                    <p style="margin: 0; color: #2e7d32; font-weight: 600;">
+                        ✅ تم العثور على ${matchedShops.length} محل في ${Object.keys(shopsByArea).length} منطقة
+                    </p>
+                    <p style="margin: 5px 0 0 0; color: #558b2f; font-size: 0.9em;">
+                        📌 البحث شامل لجميع المحلات في جميع المناطق بدون أي قيود
+                    </p>
+                </div>
+            `;
+            
+            const sortedAreas = Object.keys(shopsByArea).sort();
+            
+            sortedAreas.forEach(areaName => {
+                const shops = shopsByArea[areaName];
+                
+                html += `
+                    <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 15px; border-right: 4px solid #667eea;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <h4 style="margin: 0; color: #2d3561; font-size: 1.1em;">📍 ${escapeHtml(areaName)}</h4>
+                            <span style="background: #667eea; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.9em;">
+                                ${shops.length} محل
+                            </span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px;">
+                `;
+                
+                shops.forEach(shopName => {
+                    const priority = calculateShopPriority(shopName, inspector, todayStr);
+                    const priorityColor = priority.level === 'very-high' ? '#ff6b6b' : 
+                                         priority.level === 'high' ? '#ffa500' : 
+                                         priority.level === 'medium' ? '#4ecdc4' : '#95e1d3';
+                    
+                    const priorityText = priority.level === 'very-high' ? '🔴 قصوى' : 
+                                        priority.level === 'high' ? '🟠 عالية' : 
+                                        priority.level === 'medium' ? '🟡 متوسطة' : '🟢 عادية';
+                    
+                    const isSelected = selectedShops.includes(shopName);
+                    const selectedClass = isSelected ? 'selected' : '';
+                    const checkIcon = isSelected ? '✅' : '';
+                    
+                    html += `
+                        <div class="shop-card ${selectedClass}" 
+                             style="background: white; padding: 12px; border-radius: 8px; 
+                                    border-right: 3px solid ${priorityColor}; cursor: pointer; 
+                                    transition: all 0.3s ease;"
+                             onclick="toggleShop('${escapeHtml(shopName)}')">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 6px;">
+                                <div class="shop-name" style="font-weight: 600; color: #2d3561; flex: 1;">${escapeHtml(shopName)}</div>
+                                ${checkIcon ? `<span style="font-size: 1.2em;">${checkIcon}</span>` : ''}
+                            </div>
+                            <div style="font-size: 0.85em; color: #666; margin-bottom: 4px;">${priorityText}</div>
+                            <div style="font-size: 0.8em; color: #999;">📍 ${escapeHtml(areaName)}</div>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
         }
         
         // Update selected shops display

@@ -8618,7 +8618,13 @@ console.log('Smart distribution functions initialized');
                         </div>
                     </div>
                 </div>
-                <div style="text-align: left; margin-top: 10px;">
+                <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
+                    <button onclick="verifyPassword()" class="forgot-password-link" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                        ✅ التحقق من كلمة المرور
+                    </button>
+                    <button onclick="showChangePasswordForm()" class="forgot-password-link" style="padding: 10px 20px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                        🔄 تغيير كلمة المرور
+                    </button>
                     <button onclick="showForgotPasswordModal()" class="forgot-password-link">
                         🔑 نسيت كلمة المرور؟
                     </button>
@@ -28924,8 +28930,50 @@ function loadShelterVisitReports() {
         if (report.notes && report.notes.trim()) {
             html += `
                         <div style="margin-top: 15px; padding: 15px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px;">
-                            <strong style="color: #856404;">📝 ملاحظات:</strong>
-                            <p style="margin: 10px 0 0 0; color: #856404;">${report.notes}</p>
+                            <strong style="color: #856404;">📝 ملاحظات عامة:</strong>
+                            <p style="margin: 10px 0 0 0; color: #856404; white-space: pre-wrap;">${report.notes}</p>
+                        </div>
+            `;
+        }
+        
+        if (report.violations && report.violations.trim()) {
+            html += `
+                        <div style="margin-top: 15px; padding: 15px; background: #f8d7da; border: 1px solid #dc3545; border-radius: 8px;">
+                            <strong style="color: #721c24;">⚠️ المخالفات المرصودة:</strong>
+                            <p style="margin: 10px 0 0 0; color: #721c24; white-space: pre-wrap;">${report.violations}</p>
+                        </div>
+            `;
+        }
+        
+        if (report.recommendations && report.recommendations.trim()) {
+            html += `
+                        <div style="margin-top: 15px; padding: 15px; background: #d1ecf1; border: 1px solid #17a2b8; border-radius: 8px;">
+                            <strong style="color: #0c5460;">💡 التوصيات:</strong>
+                            <p style="margin: 10px 0 0 0; color: #0c5460; white-space: pre-wrap;">${report.recommendations}</p>
+                        </div>
+            `;
+        }
+        
+        if (report.photos && report.photos.length > 0) {
+            html += `
+                        <div style="margin-top: 15px; padding: 15px; background: #e7f3ff; border: 1px solid #2196f3; border-radius: 8px;">
+                            <strong style="color: #0d47a1;">📷 صور التفتيش (${report.photos.length}):</strong>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+            `;
+            
+            report.photos.forEach((photo, photoIndex) => {
+                html += `
+                                <div style="position: relative; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+                                    <img src="${photo}" alt="صورة التفتيش ${photoIndex + 1}" style="width: 100%; height: 200px; object-fit: cover; cursor: pointer;" onclick="window.open('${photo}', '_blank')">
+                                    <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); color: white; padding: 5px; text-align: center; font-size: 0.85em;">
+                                        صورة ${photoIndex + 1}
+                                    </div>
+                                </div>
+                `;
+            });
+            
+            html += `
+                            </div>
                         </div>
             `;
         }
@@ -29007,6 +29055,75 @@ function togglePasswordVisibility() {
     }
 }
 
+// Generate default password from username
+function generateDefaultPassword(username) {
+    return username.replace(/\s+/g, '').replace(/\./g, '').replace(/،/g, '');
+}
+
+// Check if password is valid for the given username
+function isValidPassword(password, username) {
+    const expectedPassword = generateDefaultPassword(username);
+    const passwordData = JSON.parse(localStorage.getItem('inspectorPasswords') || '{}');
+    const storedPassword = passwordData[username];
+    
+    return password === expectedPassword || 
+           password === '12345' || 
+           (storedPassword && password === storedPassword);
+}
+
+// Verify password and show change password option
+function verifyPassword() {
+    const password = document.getElementById('shelterInspectorPassword').value;
+    const username = document.getElementById('shelterInspectorUsername').value;
+    
+    if (!password) {
+        alert('⚠️ يرجى إدخال كلمة المرور');
+        return;
+    }
+    
+    // Validate password using helper function
+    if (isValidPassword(password, username)) {
+        alert('✅ تم التحقق من كلمة المرور بنجاح!\n\nيمكنك الآن استخدام زر "تغيير كلمة المرور" إذا أردت تغييرها.');
+    } else {
+        alert('❌ كلمة المرور غير صحيحة. يرجى المحاولة مرة أخرى');
+    }
+}
+
+// Show change password form
+function showChangePasswordForm() {
+    const password = document.getElementById('shelterInspectorPassword').value;
+    const username = document.getElementById('shelterInspectorUsername').value;
+    
+    if (!password || !isValidPassword(password, username)) {
+        alert('⚠️ يجب التحقق من كلمة المرور الحالية أولاً');
+        return;
+    }
+    
+    const newPassword = prompt('أدخل كلمة المرور الجديدة (4 أحرف على الأقل):');
+    if (!newPassword) return;
+    
+    if (newPassword.length < 4) {
+        alert('⚠️ كلمة المرور يجب أن تكون 4 أحرف على الأقل');
+        return;
+    }
+    
+    const confirmPassword = prompt('أعد إدخال كلمة المرور الجديدة:');
+    if (newPassword !== confirmPassword) {
+        alert('❌ كلمات المرور غير متطابقة. يرجى المحاولة مرة أخرى');
+        return;
+    }
+    
+    // Save new password to localStorage
+    const passwordData = JSON.parse(localStorage.getItem('inspectorPasswords') || '{}');
+    passwordData[username] = newPassword;
+    localStorage.setItem('inspectorPasswords', JSON.stringify(passwordData));
+    
+    // Update the password field
+    document.getElementById('shelterInspectorPassword').value = newPassword;
+    
+    alert('✅ تم تغيير كلمة المرور بنجاح!\nيمكنك الآن استخدام كلمة المرور الجديدة عند حفظ التفتيش');
+}
+
 function showForgotPasswordModal() {
     const modal = document.getElementById('forgotPasswordModal');
     if (modal) {
@@ -29079,10 +29196,42 @@ function removePhoto(index) {
 async function submitShelterInspection() {
     // Validate password
     const password = document.getElementById('shelterInspectorPassword').value.trim();
+    const username = document.getElementById('shelterInspectorUsername').value;
+    
     if (!password) {
         alert('⚠️ يرجى إدخال كلمة المرور');
         return;
     }
+    
+    // Validate password using helper function
+    if (!isValidPassword(password, username)) {
+        alert('❌ كلمة المرور غير صحيحة');
+        return;
+    }
+    
+    // Define item labels for proper display
+    const itemLabels = {
+        'cleanliness': 'النظافة العامة للملجأ',
+        'ventilation': 'التهوية المناسبة',
+        'lighting': 'الإضاءة الكافية',
+        'food_quality': 'جودة الأعلاف والطعام',
+        'water_availability': 'توفر المياه النظيفة',
+        'cage_conditions': 'حالة الأقفاص والحظائر',
+        'animal_health': 'الحالة الصحية للحيوانات',
+        'medical_records': 'السجلات الطبية محدثة',
+        'staff_presence': 'وجود طاقم عمل مؤهل',
+        'safety_measures': 'إجراءات السلامة والأمان',
+        'waste_management': 'إدارة النفايات',
+        'documentation': 'الوثائق والتصاريح'
+    };
+    
+    // Map status values to internal keys
+    const statusMap = {
+        'مستوفى': 'fulfilled',
+        'غير مستوفى': 'unfulfilled',
+        'لم يتم التفتيش': 'not_inspected',
+        'لا ينطبق': 'not_applicable'
+    };
     
     // Collect checklist data
     const checklistItems = [
@@ -29100,21 +29249,31 @@ async function submitShelterInspection() {
         const radioName = 'item_' + itemName;
         const selected = document.querySelector(`input[name="${radioName}"]:checked`);
         if (selected) {
-            checklistResults[itemName] = selected.value;
+            const arabicValue = selected.value;
+            checklistResults[itemName] = {
+                status: statusMap[arabicValue] || 'not_inspected',
+                label: itemLabels[itemName] || itemName,
+                value: arabicValue
+            };
         }
     });
     
-    // Create inspection report
+    // Extract photo data URLs from objects
+    const photoDataUrls = shelterInspectionPhotos.map(photo => photo.data || photo);
+    
+    // Create inspection report with standardized structure
     const report = {
-        ...currentShelterInspection,
-        password: password, // In a real system, this should be hashed
-        checklistResults: checklistResults,
+        inspector: currentShelterInspection.inspector,
+        date: currentShelterInspection.day,
+        shift: currentShelterInspection.shift || 'غير محدد',
+        area: currentShelterInspection.area,
+        shelter: currentShelterInspection.shelterName,
+        timestamp: new Date().toISOString(),
+        results: checklistResults,
         notes: document.getElementById('shelterNotes').value,
         violations: document.getElementById('shelterViolations').value,
         recommendations: document.getElementById('shelterRecommendations').value,
-        photos: shelterInspectionPhotos,
-        timestamp: new Date().toISOString(),
-        submittedBy: currentShelterInspection.inspector
+        photos: photoDataUrls
     };
     
     // Save to localStorage

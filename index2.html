@@ -1034,6 +1034,22 @@
             }
         }
         
+        // Generate default password from username
+        function generateDefaultPassword(username) {
+            return username.replace(/\s+/g, '').replace(/\./g, '').replace(/،/g, '');
+        }
+        
+        // Check if password is valid for the given username
+        function isValidPassword(password, username) {
+            const expectedPassword = generateDefaultPassword(username);
+            const passwordData = JSON.parse(localStorage.getItem('inspectorPasswords') || '{}');
+            const storedPassword = passwordData[username];
+            
+            return password === expectedPassword || 
+                   password === '12345' || 
+                   (storedPassword && password === storedPassword);
+        }
+        
         // Verify password
         function verifyPassword() {
             const password = document.getElementById('shelterInspectorPassword').value;
@@ -1047,10 +1063,8 @@
                 return;
             }
             
-            // Validate password
-            const expectedPassword = username.replace(/\s+/g, '').replace(/\./g, '').replace(/،/g, '');
-            
-            if (password === expectedPassword || password === '12345') {
+            // Validate password using helper function
+            if (isValidPassword(password, username)) {
                 statusDiv.className = 'password-status-success';
                 statusDiv.innerHTML = `
                     ✅ تم التحقق من كلمة المرور بنجاح!<br>
@@ -1114,6 +1128,7 @@
                 return;
             }
             
+            // Note: Minimum password length kept at 4 for compatibility with existing system
             if (newPassword.length < 4) {
                 statusDiv.className = 'password-status-error';
                 statusDiv.innerHTML = '⚠️ كلمة المرور يجب أن تكون 4 أحرف على الأقل';
@@ -1122,6 +1137,8 @@
             }
             
             // Save new password to localStorage
+            // Note: Passwords stored in localStorage for offline functionality
+            // In production, consider server-side authentication with proper encryption
             const passwordData = JSON.parse(localStorage.getItem('inspectorPasswords') || '{}');
             passwordData[username] = newPassword;
             localStorage.setItem('inspectorPasswords', JSON.stringify(passwordData));
@@ -1208,23 +1225,13 @@
             const password = document.getElementById('shelterInspectorPassword').value;
             const username = document.getElementById('shelterInspectorUsername').value;
             
-            // Validate password
-            const expectedPassword = username.replace(/\s+/g, '').replace(/\./g, '').replace(/،/g, '');
-            
             if (!password) {
                 showError('⚠️ يرجى إدخال كلمة المرور');
                 return;
             }
             
-            // Check if password matches default or stored custom password
-            const passwordData = JSON.parse(localStorage.getItem('inspectorPasswords') || '{}');
-            const storedPassword = passwordData[username];
-            
-            const isPasswordValid = password === expectedPassword || 
-                                   password === '12345' || 
-                                   (storedPassword && password === storedPassword);
-            
-            if (!isPasswordValid) {
+            // Validate password using helper function
+            if (!isValidPassword(password, username)) {
                 showError('❌ كلمة المرور غير صحيحة');
                 return;
             }

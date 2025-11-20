@@ -28637,6 +28637,40 @@ async function uploadGroupInspectionReport() {
             return;
         }
         
+        // التحقق من صلاحية التوكن أولاً
+        const repo = 'aliabdelaal-adm/Monthly_inspection_plan';
+        try {
+            const testRes = await fetch(`https://api.github.com/repos/${repo}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/vnd.github.v3+json'
+                },
+                mode: 'cors',
+                credentials: 'omit'
+            });
+            
+            if (!testRes.ok) {
+                if (testRes.status === 401 || testRes.status === 403) {
+                    statusDiv.textContent = '❌ التوكن غير صالح أو منتهي الصلاحية. يرجى تسجيل الخروج وتسجيل الدخول مرة أخرى';
+                    statusDiv.style.color = '#dc3545';
+                    uploadBtn.disabled = false;
+                    localStorage.removeItem('devToken');
+                    localStorage.removeItem('githubToken');
+                    return;
+                } else {
+                    throw new Error(`فشل في التحقق من التوكن: ${testRes.status}`);
+                }
+            }
+        } catch (testError) {
+            statusDiv.textContent = '❌ خطأ في الاتصال بخادم GitHub. يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى';
+            statusDiv.style.color = '#dc3545';
+            uploadBtn.disabled = false;
+            console.error('Token validation error:', testError);
+            return;
+        }
+        
         statusDiv.textContent = '⏳ جاري قراءة الملف...';
         
         // قراءة الملف كـ base64
@@ -28659,7 +28693,9 @@ async function uploadGroupInspectionReport() {
                         headers: {
                             'Authorization': `Bearer ${token}`,
                             'Accept': 'application/vnd.github.v3+json'
-                        }
+                        },
+                        mode: 'cors',
+                        credentials: 'omit'
                     });
                     
                     if (checkRes.ok) {
@@ -28694,7 +28730,9 @@ async function uploadGroupInspectionReport() {
                         'Content-Type': 'application/json',
                         'Accept': 'application/vnd.github.v3+json'
                     },
-                    body: JSON.stringify(uploadData)
+                    body: JSON.stringify(uploadData),
+                    mode: 'cors',
+                    credentials: 'omit'
                 });
                 
                 if (uploadRes.status === 201 || uploadRes.status === 200) {
@@ -28741,8 +28779,10 @@ async function uploadGroupInspectionReport() {
             } catch (error) {
                 let errorMsg = '❌ خطأ في رفع التقرير: ';
                 
-                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-                    errorMsg += 'فشل الاتصال بالإنترنت. تحقق من اتصالك وحاول مرة أخرى';
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.message.includes('fetch')) {
+                    errorMsg += 'خطأ في الاتصال بخادم GitHub. يرجى التحقق من:\n1. اتصالك بالإنترنت\n2. أن GitHub متاح\n3. المحاولة مرة أخرى بعد قليل';
+                } else if (error.message.includes('CORS')) {
+                    errorMsg += 'خطأ في إعدادات الأمان. يرجى المحاولة مرة أخرى';
                 } else {
                     errorMsg += error.message;
                 }
@@ -28781,7 +28821,9 @@ async function updateGroupReportsRegistry(fileName, filePath, fileSize, title, d
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
                 'Accept': 'application/vnd.github.v3+json'
-            }
+            },
+            mode: 'cors',
+            credentials: 'omit'
         });
         
         let filesData = { files: [], categories: [], lastUpdate: new Date().toISOString() };
@@ -28849,7 +28891,9 @@ async function updateGroupReportsRegistry(fileName, filePath, fileSize, title, d
                 content: content,
                 sha: currentSha,
                 branch: 'main'
-            })
+            }),
+            mode: 'cors',
+            credentials: 'omit'
         });
         
         if (!updateRes.ok) {

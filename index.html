@@ -8569,151 +8569,778 @@ console.log('Smart distribution functions initialized');
 
 <!-- Shelter Inspection Form Modal -->
 <div id="shelterInspectionFormModal" class="modal-overlay" style="display:none;">
-    <div class="modal-content" style="max-width: 800px; max-height: 95vh; overflow-y: auto;">
-        <button class="close-btn" onclick="closeShelterInspectionForm()">×</button>
-        <div class="stats-title">📝 نموذج تفتيش الملجأ</div>
-        
-        <!-- Inspection Details -->
-        <div id="shelterInspectionDetails" style="background: linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%); padding: 15px; border-radius: 10px; margin: 20px 0;">
-            <!-- Will be filled dynamically -->
+    <div class="shelter-inspection-fullscreen-modal">
+        <!-- Header with Return Button -->
+        <div class="shelter-inspection-header">
+            <button class="shelter-return-home-btn" onclick="closeShelterInspectionForm()" title="العودة للصفحة الرئيسية">
+                ← العودة للرئيسية
+            </button>
+            <h1 class="shelter-inspection-title">🏘️ نموذج تفتيش الملاجئ</h1>
+            <p class="shelter-inspection-subtitle">Shelter Inspection Form</p>
         </div>
         
-        <!-- Inspector Authentication -->
-        <div style="margin: 20px 0;">
-            <h3 style="color: #2196f3; margin-bottom: 15px;">🔐 تسجيل دخول المفتش</h3>
-            <div style="background: white; padding: 20px; border-radius: 10px; border: 2px solid #e0e0e0;">
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">اسم المفتش</label>
-                    <input type="text" id="shelterInspectorUsername" class="smart-planner-input" placeholder="أدخل اسم المفتش" readonly style="background: #f5f5f5;">
+        <!-- Scrollable Content -->
+        <div class="shelter-inspection-content">
+            <!-- Inspection Details Card -->
+            <div class="shelter-details-card">
+                <h3 class="section-header">📋 معلومات الزيارة</h3>
+                <div id="shelterInspectionDetails" class="shelter-details-grid">
+                    <!-- Will be filled dynamically -->
                 </div>
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">كلمة المرور</label>
-                    <div style="position: relative;">
-                        <input type="password" id="shelterInspectorPassword" class="smart-planner-input" placeholder="أدخل كلمة المرور الخاصة بك">
-                        <button onclick="togglePasswordVisibility()" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; font-size: 1.2em;" title="إظهار/إخفاء كلمة المرور">👁️</button>
+            </div>
+            
+            <!-- Inspector Authentication Card -->
+            <div class="shelter-form-card">
+                <h3 class="section-header">🔐 تسجيل دخول المفتش</h3>
+                <div class="form-grid">
+                    <div class="form-group-shelter">
+                        <label class="form-label-shelter">اسم المفتش</label>
+                        <input type="text" id="shelterInspectorUsername" class="form-input-shelter" placeholder="أدخل اسم المفتش" readonly>
+                    </div>
+                    <div class="form-group-shelter">
+                        <label class="form-label-shelter">كلمة المرور</label>
+                        <div style="position: relative;">
+                            <input type="password" id="shelterInspectorPassword" class="form-input-shelter" placeholder="أدخل كلمة المرور الخاصة بك">
+                            <button onclick="togglePasswordVisibility()" class="password-toggle-btn" title="إظهار/إخفاء كلمة المرور">👁️</button>
+                        </div>
                     </div>
                 </div>
-                <div style="text-align: left;">
-                    <button onclick="showForgotPasswordModal()" style="background: transparent; border: none; color: #2196f3; text-decoration: underline; cursor: pointer; font-size: 0.9em; padding: 5px;">
+                <div style="text-align: left; margin-top: 10px;">
+                    <button onclick="showForgotPasswordModal()" class="forgot-password-link">
                         🔑 نسيت كلمة المرور؟
                     </button>
                 </div>
             </div>
-        </div>
-        
-        <!-- Inspection Form Fields -->
-        <div style="margin: 20px 0;">
-            <h3 style="color: #2196f3; margin-bottom: 15px;">📋 بيانات التفتيش</h3>
-            <div style="background: white; padding: 20px; border-radius: 10px; border: 2px solid #e0e0e0;">
-                
-                <!-- Overall Status -->
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">حالة الملجأ العامة</label>
-                    <select id="shelterOverallStatus" class="smart-planner-input">
-                        <option value="">اختر الحالة...</option>
-                        <option value="ممتاز">ممتاز ✅</option>
-                        <option value="جيد">جيد ✔️</option>
-                        <option value="مقبول">مقبول ⚠️</option>
-                        <option value="يحتاج تحسين">يحتاج تحسين ⚠️</option>
-                        <option value="غير مطابق">غير مطابق ❌</option>
-                    </select>
-                </div>
-                
-                <!-- Cleanliness -->
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">النظافة</label>
-                    <select id="shelterCleanliness" class="smart-planner-input">
-                        <option value="">اختر...</option>
-                        <option value="ممتاز">ممتاز ✅</option>
-                        <option value="جيد">جيد ✔️</option>
-                        <option value="مقبول">مقبول ⚠️</option>
-                        <option value="سيء">سيء ❌</option>
-                    </select>
-                </div>
-                
-                <!-- Animal Welfare -->
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">رعاية الحيوانات</label>
-                    <select id="shelterAnimalWelfare" class="smart-planner-input">
-                        <option value="">اختر...</option>
-                        <option value="ممتاز">ممتاز ✅</option>
-                        <option value="جيد">جيد ✔️</option>
-                        <option value="مقبول">مقبول ⚠️</option>
-                        <option value="سيء">سيء ❌</option>
-                    </select>
-                </div>
-                
-                <!-- License Status -->
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">حالة الترخيص</label>
-                    <select id="shelterLicenseStatus" class="smart-planner-input">
-                        <option value="">اختر...</option>
-                        <option value="ساري">ساري ✅</option>
-                        <option value="منتهي">منتهي ❌</option>
-                        <option value="قيد التجديد">قيد التجديد ⏳</option>
-                        <option value="لا يوجد">لا يوجد ❌</option>
-                    </select>
-                </div>
-                
-                <!-- Notes -->
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">ملاحظات</label>
-                    <textarea id="shelterNotes" class="smart-planner-input" rows="4" placeholder="أضف أي ملاحظات أو مخالفات..."></textarea>
-                </div>
-                
-                <!-- Violations -->
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">المخالفات المرصودة</label>
-                    <textarea id="shelterViolations" class="smart-planner-input" rows="3" placeholder="قم بإدراج أي مخالفات تم رصدها..."></textarea>
-                </div>
-                
-                <!-- Recommendations -->
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">التوصيات</label>
-                    <textarea id="shelterRecommendations" class="smart-planner-input" rows="3" placeholder="التوصيات والإجراءات المطلوبة..."></textarea>
+            
+            <!-- Detailed Inspection Checklist -->
+            <div class="shelter-form-card">
+                <h3 class="section-header">✅ بنود التفتيش التفصيلية</h3>
+                <div class="checklist-container">
+                    <!-- Cleanliness -->
+                    <div class="checklist-item-card">
+                        <div class="checklist-item-header">النظافة العامة للملجأ</div>
+                        <div class="radio-group-shelter">
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_cleanliness" value="مستوفى" required>
+                                <span class="radio-label fulfilled">✅ مستوفى</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_cleanliness" value="غير مستوفى">
+                                <span class="radio-label unfulfilled">❌ غير مستوفى</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_cleanliness" value="لم يتم التفتيش">
+                                <span class="radio-label not-inspected">⏭️ لم يتم التفتيش</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_cleanliness" value="لا ينطبق">
+                                <span class="radio-label not-applicable">➖ لا ينطبق</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Ventilation -->
+                    <div class="checklist-item-card">
+                        <div class="checklist-item-header">التهوية المناسبة</div>
+                        <div class="radio-group-shelter">
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_ventilation" value="مستوفى" required>
+                                <span class="radio-label fulfilled">✅ مستوفى</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_ventilation" value="غير مستوفى">
+                                <span class="radio-label unfulfilled">❌ غير مستوفى</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_ventilation" value="لم يتم التفتيش">
+                                <span class="radio-label not-inspected">⏭️ لم يتم التفتيش</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_ventilation" value="لا ينطبق">
+                                <span class="radio-label not-applicable">➖ لا ينطبق</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Lighting -->
+                    <div class="checklist-item-card">
+                        <div class="checklist-item-header">الإضاءة الكافية</div>
+                        <div class="radio-group-shelter">
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_lighting" value="مستوفى" required>
+                                <span class="radio-label fulfilled">✅ مستوفى</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_lighting" value="غير مستوفى">
+                                <span class="radio-label unfulfilled">❌ غير مستوفى</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_lighting" value="لم يتم التفتيش">
+                                <span class="radio-label not-inspected">⏭️ لم يتم التفتيش</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_lighting" value="لا ينطبق">
+                                <span class="radio-label not-applicable">➖ لا ينطبق</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Food Quality -->
+                    <div class="checklist-item-card">
+                        <div class="checklist-item-header">جودة الأعلاف والطعام</div>
+                        <div class="radio-group-shelter">
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_food_quality" value="مستوفى" required>
+                                <span class="radio-label fulfilled">✅ مستوفى</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_food_quality" value="غير مستوفى">
+                                <span class="radio-label unfulfilled">❌ غير مستوفى</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_food_quality" value="لم يتم التفتيش">
+                                <span class="radio-label not-inspected">⏭️ لم يتم التفتيش</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_food_quality" value="لا ينطبق">
+                                <span class="radio-label not-applicable">➖ لا ينطبق</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Water Availability -->
+                    <div class="checklist-item-card">
+                        <div class="checklist-item-header">توفر المياه النظيفة</div>
+                        <div class="radio-group-shelter">
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_water_availability" value="مستوفى" required>
+                                <span class="radio-label fulfilled">✅ مستوفى</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_water_availability" value="غير مستوفى">
+                                <span class="radio-label unfulfilled">❌ غير مستوفى</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_water_availability" value="لم يتم التفتيش">
+                                <span class="radio-label not-inspected">⏭️ لم يتم التفتيش</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_water_availability" value="لا ينطبق">
+                                <span class="radio-label not-applicable">➖ لا ينطبق</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Cage Conditions -->
+                    <div class="checklist-item-card">
+                        <div class="checklist-item-header">حالة الأقفاص والحظائر</div>
+                        <div class="radio-group-shelter">
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_cage_conditions" value="مستوفى" required>
+                                <span class="radio-label fulfilled">✅ مستوفى</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_cage_conditions" value="غير مستوفى">
+                                <span class="radio-label unfulfilled">❌ غير مستوفى</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_cage_conditions" value="لم يتم التفتيش">
+                                <span class="radio-label not-inspected">⏭️ لم يتم التفتيش</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_cage_conditions" value="لا ينطبق">
+                                <span class="radio-label not-applicable">➖ لا ينطبق</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Animal Health -->
+                    <div class="checklist-item-card">
+                        <div class="checklist-item-header">الحالة الصحية للحيوانات</div>
+                        <div class="radio-group-shelter">
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_animal_health" value="مستوفى" required>
+                                <span class="radio-label fulfilled">✅ مستوفى</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_animal_health" value="غير مستوفى">
+                                <span class="radio-label unfulfilled">❌ غير مستوفى</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_animal_health" value="لم يتم التفتيش">
+                                <span class="radio-label not-inspected">⏭️ لم يتم التفتيش</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_animal_health" value="لا ينطبق">
+                                <span class="radio-label not-applicable">➖ لا ينطبق</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Medical Records -->
+                    <div class="checklist-item-card">
+                        <div class="checklist-item-header">السجلات الطبية محدثة</div>
+                        <div class="radio-group-shelter">
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_medical_records" value="مستوفى" required>
+                                <span class="radio-label fulfilled">✅ مستوفى</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_medical_records" value="غير مستوفى">
+                                <span class="radio-label unfulfilled">❌ غير مستوفى</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_medical_records" value="لم يتم التفتيش">
+                                <span class="radio-label not-inspected">⏭️ لم يتم التفتيش</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_medical_records" value="لا ينطبق">
+                                <span class="radio-label not-applicable">➖ لا ينطبق</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Staff Presence -->
+                    <div class="checklist-item-card">
+                        <div class="checklist-item-header">وجود طاقم عمل مؤهل</div>
+                        <div class="radio-group-shelter">
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_staff_presence" value="مستوفى" required>
+                                <span class="radio-label fulfilled">✅ مستوفى</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_staff_presence" value="غير مستوفى">
+                                <span class="radio-label unfulfilled">❌ غير مستوفى</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_staff_presence" value="لم يتم التفتيش">
+                                <span class="radio-label not-inspected">⏭️ لم يتم التفتيش</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_staff_presence" value="لا ينطبق">
+                                <span class="radio-label not-applicable">➖ لا ينطبق</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Safety Measures -->
+                    <div class="checklist-item-card">
+                        <div class="checklist-item-header">إجراءات السلامة والأمان</div>
+                        <div class="radio-group-shelter">
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_safety_measures" value="مستوفى" required>
+                                <span class="radio-label fulfilled">✅ مستوفى</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_safety_measures" value="غير مستوفى">
+                                <span class="radio-label unfulfilled">❌ غير مستوفى</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_safety_measures" value="لم يتم التفتيش">
+                                <span class="radio-label not-inspected">⏭️ لم يتم التفتيش</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_safety_measures" value="لا ينطبق">
+                                <span class="radio-label not-applicable">➖ لا ينطبق</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Waste Management -->
+                    <div class="checklist-item-card">
+                        <div class="checklist-item-header">إدارة النفايات</div>
+                        <div class="radio-group-shelter">
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_waste_management" value="مستوفى" required>
+                                <span class="radio-label fulfilled">✅ مستوفى</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_waste_management" value="غير مستوفى">
+                                <span class="radio-label unfulfilled">❌ غير مستوفى</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_waste_management" value="لم يتم التفتيش">
+                                <span class="radio-label not-inspected">⏭️ لم يتم التفتيش</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_waste_management" value="لا ينطبق">
+                                <span class="radio-label not-applicable">➖ لا ينطبق</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Documentation -->
+                    <div class="checklist-item-card">
+                        <div class="checklist-item-header">الوثائق والتصاريح</div>
+                        <div class="radio-group-shelter">
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_documentation" value="مستوفى" required>
+                                <span class="radio-label fulfilled">✅ مستوفى</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_documentation" value="غير مستوفى">
+                                <span class="radio-label unfulfilled">❌ غير مستوفى</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_documentation" value="لم يتم التفتيش">
+                                <span class="radio-label not-inspected">⏭️ لم يتم التفتيش</span>
+                            </label>
+                            <label class="radio-option-shelter">
+                                <input type="radio" name="item_documentation" value="لا ينطبق">
+                                <span class="radio-label not-applicable">➖ لا ينطبق</span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- Photo Capture Section -->
-        <div style="margin: 20px 0;">
-            <h3 style="color: #2196f3; margin-bottom: 15px;">📷 صور التفتيش</h3>
-            <div style="background: white; padding: 20px; border-radius: 10px; border: 2px solid #e0e0e0;">
-                <div style="margin-bottom: 15px;">
-                    <button onclick="capturePhoto()" style="width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1em; display: flex; align-items: center; justify-content: center; gap: 10px;">
-                        <span style="font-size: 1.5em;">📸</span>
-                        <span>التقاط صورة من الكاميرا</span>
-                    </button>
-                    <input type="file" id="shelterPhotoInput" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoCapture(event)" multiple>
+            
+            <!-- Additional Notes -->
+            <div class="shelter-form-card">
+                <h3 class="section-header">📝 ملاحظات إضافية</h3>
+                <div class="form-group-shelter">
+                    <label class="form-label-shelter">ملاحظات عامة</label>
+                    <textarea id="shelterNotes" class="form-textarea-shelter" rows="4" placeholder="أضف أي ملاحظات عامة..."></textarea>
                 </div>
+                <div class="form-group-shelter">
+                    <label class="form-label-shelter">المخالفات المرصودة</label>
+                    <textarea id="shelterViolations" class="form-textarea-shelter" rows="3" placeholder="قم بإدراج أي مخالفات تم رصدها..."></textarea>
+                </div>
+                <div class="form-group-shelter">
+                    <label class="form-label-shelter">التوصيات</label>
+                    <textarea id="shelterRecommendations" class="form-textarea-shelter" rows="3" placeholder="التوصيات والإجراءات المطلوبة..."></textarea>
+                </div>
+            </div>
+            
+            <!-- Photo Capture Section -->
+            <div class="shelter-form-card">
+                <h3 class="section-header">📷 صور التفتيش</h3>
+                <button onclick="capturePhoto()" class="capture-photo-btn">
+                    <span style="font-size: 1.5em;">📸</span>
+                    <span>التقاط صورة من الكاميرا</span>
+                </button>
+                <input type="file" id="shelterPhotoInput" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoCapture(event)" multiple>
                 
-                <div id="shelterPhotosPreview" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 15px;">
+                <div id="shelterPhotosPreview" class="photos-preview-grid">
                     <!-- Photos will be displayed here -->
                 </div>
                 
-                <div style="margin-top: 10px; color: #666; font-size: 0.9em; text-align: center;">
+                <div class="photo-hint">
                     💡 يمكنك التقاط عدة صور للملجأ
                 </div>
             </div>
-        </div>
-        
-        <!-- Submit Button -->
-        <div style="margin: 20px 0; text-align: center;">
-            <button onclick="submitShelterInspection()" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; padding: 15px 40px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 12px rgba(40,167,69,0.3);">
-                💾 حفظ التفتيش
-            </button>
-        </div>
-        
-        <!-- Info Note -->
-        <div style="padding: 15px; background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-radius: 10px; border-right: 4px solid #ff9800;">
-            <div style="color: #e65100; font-size: 0.95em; line-height: 1.8;">
-                <div>⚠️ يجب إدخال كلمة المرور الصحيحة لحفظ التفتيش</div>
-                <div>📸 الصور ستُحفظ مع بيانات التفتيش</div>
-                <div>💾 سيتم حفظ التفتيش تلقائياً في النظام</div>
+            
+            <!-- Submit Section -->
+            <div class="submit-section">
+                <button onclick="submitShelterInspection()" class="submit-btn">
+                    💾 حفظ التفتيش
+                </button>
+                
+                <div class="info-note">
+                    <div>⚠️ يجب إدخال كلمة المرور الصحيحة لحفظ التفتيش</div>
+                    <div>📸 الصور ستُحفظ مع بيانات التفتيش</div>
+                    <div>💾 سيتم حفظ التفتيش تلقائياً في النظام</div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+/* Fullscreen Shelter Inspection Modal Styles */
+.shelter-inspection-fullscreen-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    z-index: 10001;
+    overflow-y: auto;
+    overflow-x: hidden;
+    direction: rtl;
+}
+
+.shelter-inspection-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px 40px;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+.shelter-return-home-btn {
+    position: absolute;
+    top: 50%;
+    left: 30px;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 2px solid white;
+    padding: 12px 24px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.shelter-return-home-btn:hover {
+    background: white;
+    color: #667eea;
+    transform: translateY(-50%) scale(1.05);
+}
+
+.shelter-inspection-title {
+    font-size: 2.5em;
+    margin: 0 0 10px 0;
+    font-weight: 700;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+}
+
+.shelter-inspection-subtitle {
+    font-size: 1.2em;
+    margin: 0;
+    opacity: 0.9;
+}
+
+.shelter-inspection-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 40px 30px;
+}
+
+.shelter-details-card,
+.shelter-form-card {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 25px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.shelter-details-card:hover,
+.shelter-form-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+}
+
+.section-header {
+    color: #667eea;
+    font-size: 1.8em;
+    margin: 0 0 25px 0;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 3px solid #667eea;
+    padding-bottom: 15px;
+}
+
+.shelter-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    padding: 20px;
+    background: linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%);
+    border-radius: 15px;
+}
+
+.shelter-details-grid > div {
+    font-size: 1.1em;
+}
+
+.shelter-details-grid strong {
+    color: #2336a0;
+    font-weight: 700;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.form-group-shelter {
+    margin-bottom: 20px;
+}
+
+.form-label-shelter {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 700;
+    color: #333;
+    font-size: 1.1em;
+}
+
+.form-input-shelter,
+.form-textarea-shelter {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    font-size: 1em;
+    font-family: inherit;
+    transition: all 0.3s ease;
+    background: #f9f9f9;
+}
+
+.form-input-shelter:focus,
+.form-textarea-shelter:focus {
+    outline: none;
+    border-color: #667eea;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+.form-input-shelter[readonly] {
+    background: #f5f5f5;
+    cursor: not-allowed;
+}
+
+.password-toggle-btn {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1.3em;
+    padding: 5px;
+    transition: transform 0.2s ease;
+}
+
+.password-toggle-btn:hover {
+    transform: translateY(-50%) scale(1.2);
+}
+
+.forgot-password-link {
+    background: transparent;
+    border: none;
+    color: #667eea;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 0.95em;
+    padding: 5px 10px;
+    transition: color 0.3s ease;
+}
+
+.forgot-password-link:hover {
+    color: #764ba2;
+}
+
+.checklist-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 20px;
+}
+
+.checklist-item-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 20px;
+    border-radius: 15px;
+    border: 2px solid #e0e0e0;
+    transition: all 0.3s ease;
+}
+
+.checklist-item-card:hover {
+    border-color: #667eea;
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+}
+
+.checklist-item-header {
+    font-weight: 700;
+    color: #2336a0;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+}
+
+.radio-group-shelter {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+}
+
+.radio-option-shelter {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: white;
+    border: 2px solid #e0e0e0;
+    transition: all 0.3s ease;
+}
+
+.radio-option-shelter:hover {
+    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.radio-option-shelter input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    margin-left: 8px;
+    cursor: pointer;
+}
+
+.radio-option-shelter input[type="radio"]:checked + .radio-label {
+    font-weight: 700;
+}
+
+.radio-label {
+    cursor: pointer;
+    font-size: 1em;
+}
+
+.radio-label.fulfilled {
+    color: #28a745;
+}
+
+.radio-label.unfulfilled {
+    color: #dc3545;
+}
+
+.radio-label.not-inspected {
+    color: #6c757d;
+}
+
+.radio-label.not-applicable {
+    color: #ffc107;
+}
+
+.capture-photo-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 18px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1.1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.capture-photo-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.photos-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.photo-hint {
+    margin-top: 15px;
+    color: #666;
+    font-size: 0.95em;
+    text-align: center;
+    font-style: italic;
+}
+
+.submit-section {
+    text-align: center;
+    margin-top: 40px;
+}
+
+.submit-btn {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    border: none;
+    padding: 20px 60px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 1.3em;
+    box-shadow: 0 6px 20px rgba(40,167,69,0.4);
+    transition: all 0.3s ease;
+}
+
+.submit-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(40,167,69,0.5);
+}
+
+.info-note {
+    padding: 20px;
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    border-radius: 15px;
+    border-right: 5px solid #ff9800;
+    margin-top: 25px;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.info-note > div {
+    color: #e65100;
+    font-size: 1em;
+    line-height: 2;
+    font-weight: 500;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .shelter-inspection-header {
+        padding: 20px;
+    }
+    
+    .shelter-return-home-btn {
+        position: static;
+        transform: none;
+        margin-bottom: 15px;
+        display: block;
+    }
+    
+    .shelter-inspection-title {
+        font-size: 1.8em;
+    }
+    
+    .shelter-inspection-subtitle {
+        font-size: 1em;
+    }
+    
+    .shelter-inspection-content {
+        padding: 20px 15px;
+    }
+    
+    .shelter-details-card,
+    .shelter-form-card {
+        padding: 20px;
+    }
+    
+    .section-header {
+        font-size: 1.4em;
+    }
+    
+    .checklist-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .radio-group-shelter {
+        grid-template-columns: 1fr;
+    }
+    
+    .submit-btn {
+        padding: 15px 40px;
+        font-size: 1.1em;
+    }
+}
+</style>
 
 <!-- Forgot Password Modal -->
 <div id="forgotPasswordModal" class="modal-overlay" style="display:none;">
@@ -15502,7 +16129,7 @@ function renderShelterInspectionTable() {
                 <th>المناوبة</th>
                 <th>المنطقة</th>
                 <th>الملجأ</th>
-                <th>إجراءات</th>
+                <th>الإجراءات</th>
             </tr>
         </thead>
         <tbody>
@@ -28322,13 +28949,15 @@ function openShelterInspectionForm(shelterName, inspector, date, shift, area) {
     // Reset form
     document.getElementById('shelterInspectorUsername').value = inspector;
     document.getElementById('shelterInspectorPassword').value = '';
-    document.getElementById('shelterOverallStatus').value = '';
-    document.getElementById('shelterCleanliness').value = '';
-    document.getElementById('shelterAnimalWelfare').value = '';
-    document.getElementById('shelterLicenseStatus').value = '';
     document.getElementById('shelterNotes').value = '';
     document.getElementById('shelterViolations').value = '';
     document.getElementById('shelterRecommendations').value = '';
+    
+    // Reset all radio buttons
+    const radioButtons = modal.querySelectorAll('input[type="radio"]');
+    radioButtons.forEach(radio => {
+        radio.checked = false;
+    });
     
     // Reset photos
     shelterInspectionPhotos = [];
@@ -28337,16 +28966,14 @@ function openShelterInspectionForm(shelterName, inspector, date, shift, area) {
     // Fill inspection details
     const detailsDiv = document.getElementById('shelterInspectionDetails');
     detailsDiv.innerHTML = `
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-            <div><strong>الملجأ:</strong> ${shelterName}</div>
-            <div><strong>المفتش:</strong> ${inspector}</div>
-            <div><strong>التاريخ:</strong> ${date}</div>
-            <div><strong>المناوبة:</strong> ${shift}</div>
-            <div><strong>المنطقة:</strong> ${area}</div>
-        </div>
+        <div><strong>الملجأ:</strong> ${shelterName}</div>
+        <div><strong>المفتش:</strong> ${inspector}</div>
+        <div><strong>التاريخ:</strong> ${date}</div>
+        <div><strong>المناوبة:</strong> ${shift}</div>
+        <div><strong>المنطقة:</strong> ${area}</div>
     `;
     
-    modal.style.display = 'flex';
+    modal.style.display = 'block';
 }
 
 function closeShelterInspectionForm() {
@@ -28444,14 +29071,29 @@ async function submitShelterInspection() {
         return;
     }
     
-    // Validate form fields
-    const overallStatus = document.getElementById('shelterOverallStatus').value;
-    const cleanliness = document.getElementById('shelterCleanliness').value;
-    const animalWelfare = document.getElementById('shelterAnimalWelfare').value;
-    const licenseStatus = document.getElementById('shelterLicenseStatus').value;
+    // Collect checklist data
+    const checklistItems = [
+        'cleanliness', 'ventilation', 'lighting', 'food_quality', 
+        'water_availability', 'cage_conditions', 'animal_health', 
+        'medical_records', 'staff_presence', 'safety_measures', 
+        'waste_management', 'documentation'
+    ];
     
-    if (!overallStatus || !cleanliness || !animalWelfare || !licenseStatus) {
-        alert('⚠️ يرجى ملء جميع الحقول المطلوبة');
+    const checklistResults = {};
+    let allItemsCompleted = true;
+    
+    checklistItems.forEach(itemName => {
+        const radioName = 'item_' + itemName;
+        const selected = document.querySelector(`input[name="${radioName}"]:checked`);
+        if (selected) {
+            checklistResults[itemName] = selected.value;
+        } else {
+            allItemsCompleted = false;
+        }
+    });
+    
+    if (!allItemsCompleted) {
+        alert('⚠️ يرجى اختيار حالة لجميع بنود التفتيش');
         return;
     }
     
@@ -28459,10 +29101,7 @@ async function submitShelterInspection() {
     const report = {
         ...currentShelterInspection,
         password: password, // In a real system, this should be hashed
-        overallStatus: overallStatus,
-        cleanliness: cleanliness,
-        animalWelfare: animalWelfare,
-        licenseStatus: licenseStatus,
+        checklistResults: checklistResults,
         notes: document.getElementById('shelterNotes').value,
         violations: document.getElementById('shelterViolations').value,
         recommendations: document.getElementById('shelterRecommendations').value,
@@ -28476,8 +29115,12 @@ async function submitShelterInspection() {
     savedReports.push(report);
     localStorage.setItem('shelterInspectionReports', JSON.stringify(savedReports));
     
+    // Calculate summary statistics
+    const fulfilledCount = Object.values(checklistResults).filter(v => v === 'مستوفى').length;
+    const unfulfilledCount = Object.values(checklistResults).filter(v => v === 'غير مستوفى').length;
+    
     // Show success message
-    alert(`✅ تم حفظ التفتيش بنجاح!\n\n📊 الملجأ: ${currentShelterInspection.shelterName}\n👤 المفتش: ${currentShelterInspection.inspector}\n📸 عدد الصور: ${shelterInspectionPhotos.length}`);
+    alert(`✅ تم حفظ التفتيش بنجاح!\n\n📊 الملجأ: ${currentShelterInspection.shelterName}\n👤 المفتش: ${currentShelterInspection.inspector}\n✅ مستوفى: ${fulfilledCount} بند\n❌ غير مستوفى: ${unfulfilledCount} بند\n📸 عدد الصور: ${shelterInspectionPhotos.length}`);
     
     // Close form
     closeShelterInspectionForm();

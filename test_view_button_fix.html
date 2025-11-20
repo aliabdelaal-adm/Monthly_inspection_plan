@@ -374,13 +374,15 @@
     if (isLocalhost) {
         fileUrl = \`./\${filePath}\`;
     } else {
+        // Remove filename from pathname to get directory
         const baseUrl = window.location.origin 
-                      + window.location.pathname.replace(/\\/[^\\/]*$/, '');
+                      + window.location.pathname.replace(/\/[^\/]*$/, '');
         fileUrl = \`\${baseUrl}/\${filePath}\`;
     }
     
-    // للملفات Office: استخدام Office Online Viewer
-    if (['xlsx', 'xls', 'docx', 'doc', 'pptx', 'ppt'].includes(fileType)) {
+    // Office file types supported by Office Online Viewer
+    const officeFileTypes = ['xlsx', 'xls', 'docx', 'doc', 'pptx', 'ppt'];
+    if (officeFileTypes.includes(fileType.toLowerCase())) {
         const viewerUrl = 
             \`https://view.officeapps.live.com/op/view.aspx?src=\${encodeURIComponent(fileUrl)}\`;
         window.open(viewerUrl, '_blank', 'noopener,noreferrer');

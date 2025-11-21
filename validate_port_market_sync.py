@@ -95,12 +95,15 @@ def validate_sync():
     if missing_licenses:
         errors.append(f"Found {len(missing_licenses)} missing Port Market shops by license")
         print(f"  ✗ FAIL: {len(missing_licenses)} licensed shops missing")
+        
+        # Create license-to-name mapping for efficient lookup
+        license_to_name = {data.get('licenseNo'): name 
+                          for name, data in shops_details.items() 
+                          if data.get('licenseNo')}
+        
         for license in list(missing_licenses)[:5]:
-            # Find shop name with this license
-            for name, data in shops_details.items():
-                if data.get('licenseNo') == license:
-                    print(f"    - License {license}: {name}")
-                    break
+            shop_name = license_to_name.get(license, 'Unknown')
+            print(f"    - License {license}: {shop_name}")
     else:
         print("  ✓ PASS: All licensed shops are present")
     print()
@@ -119,15 +122,17 @@ def validate_sync():
     
     # Test 5: Check for duplicate ADM codes
     print("Test 5: Duplicate ADM codes")
+    from collections import Counter
     adm_codes = [shop.get('admCode', '') for shop in plan_data['shops'] if shop.get('admCode')]
-    duplicate_adm = [code for code in adm_codes if adm_codes.count(code) > 1]
+    adm_counter = Counter(adm_codes)
+    duplicate_adm = [code for code, count in adm_counter.items() if count > 1]
     
     if not duplicate_adm:
         print(f"  ✓ PASS: All {len(adm_codes)} ADM codes are unique")
     else:
-        warnings.append(f"Found {len(set(duplicate_adm))} duplicate ADM codes")
+        warnings.append(f"Found {len(duplicate_adm)} duplicate ADM codes")
         print(f"  ⚠ WARNING: Duplicate ADM codes found")
-        for code in list(set(duplicate_adm))[:5]:
+        for code in duplicate_adm[:5]:
             print(f"    - {code}")
     print()
     

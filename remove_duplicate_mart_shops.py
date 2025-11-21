@@ -15,7 +15,8 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 PORT_MARKET_NAME = "سوق الميناء"
 
 # Original shop IDs that should be kept (from before the sync)
-ORIGINAL_PORT_MARKET_IDS = [
+# Using set for O(1) lookup performance
+ORIGINAL_PORT_MARKET_IDS = {
     "shop_1762462290355",  # جرين لندز
     "shop_1762462290356",  # معرض الطيور الاليفه
     "shop_1762462290357",  # عصافير الخليج
@@ -30,7 +31,7 @@ ORIGINAL_PORT_MARKET_IDS = [
     "shop_1762462290380",  # زون تايم لطيور الزينة
     "shop_1762462290381",  # الجود للأدوية البيطرية
     "shop_1762465496058",  # محل بيتش فيليج (not in shops_details, likely correct)
-]
+}
 
 def main():
     print("=" * 70)

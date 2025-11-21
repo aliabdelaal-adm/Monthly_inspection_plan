@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- Version 1.0.0 - Group Inspection Reports -->
+<!-- Last Updated: 2025-11-21 -->
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -757,7 +759,7 @@
                 const reader = new FileReader();
                 
                 reader.onload = function(e) {
-                    const photoId = Date.now() + '_' + i;
+                    const photoId = Date.now() + '_' + i + '_' + Math.random().toString(36).substring(2, 9);
                     inspectionPhotos.push({
                         itemId: itemId,
                         photoId: photoId,
@@ -766,6 +768,7 @@
                     
                     const photoItem = document.createElement('div');
                     photoItem.className = 'photo-preview-item';
+                    photoItem.setAttribute('data-photo-id', photoId);
                     photoItem.innerHTML = `
                         <img src="${e.target.result}" alt="صورة">
                         <button class="photo-remove-btn" onclick="removePhoto('${itemId}', '${photoId}')">×</button>
@@ -780,14 +783,9 @@
         function removePhoto(itemId, photoId) {
             inspectionPhotos = inspectionPhotos.filter(p => p.photoId !== photoId);
             const previewContainer = document.getElementById(`photos_preview_${itemId}`);
-            const photoElements = previewContainer.getElementsByClassName('photo-preview-item');
-            
-            for (let i = photoElements.length - 1; i >= 0; i--) {
-                const btn = photoElements[i].querySelector('.photo-remove-btn');
-                if (btn && btn.getAttribute('onclick').includes(photoId)) {
-                    photoElements[i].remove();
-                    break;
-                }
+            const photoElement = previewContainer.querySelector(`[data-photo-id="${photoId}"]`);
+            if (photoElement) {
+                photoElement.remove();
             }
         }
         
@@ -825,12 +823,20 @@
         
         function submitInspectionReport() {
             // Validate facility details
-            const jobTitle = document.getElementById('jobTitle').value;
-            const phoneNumber = document.getElementById('phoneNumber').value;
+            const jobTitle = document.getElementById('jobTitle').value.trim();
+            const phoneNumber = document.getElementById('phoneNumber').value.trim();
             const agreeToReport = document.getElementById('agreeToReport').checked;
             
-            if (!jobTitle || !phoneNumber) {
-                alert('⚠️ يرجى إدخال بيانات مسؤل المنشأة');
+            // Validate job title
+            if (!jobTitle || jobTitle.length < 2 || jobTitle.length > 100) {
+                alert('⚠️ يرجى إدخال المسمى الوظيفي (2-100 حرف)');
+                return;
+            }
+            
+            // Validate phone number (basic UAE format)
+            const phoneRegex = /^[0-9+\-\s()]{7,20}$/;
+            if (!phoneNumber || !phoneRegex.test(phoneNumber)) {
+                alert('⚠️ يرجى إدخال رقم هاتف صحيح');
                 return;
             }
             
@@ -870,16 +876,25 @@
                 });
             });
             
-            // Save to localStorage
-            const savedReports = JSON.parse(localStorage.getItem('groupInspectionReports') || '[]');
-            savedReports.push(inspectionData);
-            localStorage.setItem('groupInspectionReports', JSON.stringify(savedReports));
-            
-            // Show success message
-            alert('✅ تم حفظ التقرير بنجاح!');
-            
-            // Redirect back to main page
-            window.location.href = 'index.html';
+            // Save to localStorage with error handling
+            try {
+                const savedReports = JSON.parse(localStorage.getItem('groupInspectionReports') || '[]');
+                savedReports.push(inspectionData);
+                localStorage.setItem('groupInspectionReports', JSON.stringify(savedReports));
+                
+                // Show success message
+                alert('✅ تم حفظ التقرير بنجاح!');
+                
+                // Redirect back to main page
+                window.location.href = 'index.html';
+            } catch (error) {
+                console.error('Error saving report:', error);
+                if (error.name === 'QuotaExceededError') {
+                    alert('⚠️ المساحة التخزينية ممتلئة. يرجى حذف بعض التقارير القديمة.');
+                } else {
+                    alert('⚠️ حدث خطأ أثناء حفظ التقرير. يرجى المحاولة مرة أخرى.');
+                }
+            }
         }
         
         // Initialize page on load

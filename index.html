@@ -9975,6 +9975,15 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         const newReportSaved = sessionStorage.getItem('newShelterReportSaved');
         const lastReportCount = sessionStorage.getItem('lastShelterReportCount');
+        const modalWasOpen = sessionStorage.getItem('shelterReportModalWasOpen');
+        
+        // If the modal was open before a page reload (e.g., due to cache prevention), reopen it
+        if (modalWasOpen === 'true' && newReportSaved !== 'true') {
+            console.log('📊 Reopening shelter report modal after page reload');
+            showShelterVisitReportModal();
+            return; // Don't show notification banner if just reopening
+        }
+        
         if (newReportSaved === 'true') {
             console.log('🎉 Detected new shelter report saved! Total reports:', lastReportCount);
             
@@ -28984,6 +28993,9 @@ function showShelterVisitReportModal() {
     if (modal) {
         modal.style.display = 'flex';
         
+        // Set flag to remember modal was open (persists across page reloads)
+        sessionStorage.setItem('shelterReportModalWasOpen', 'true');
+        
         // Force reload of reports to ensure latest data is shown
         loadShelterVisitReports();
         
@@ -29014,11 +29026,19 @@ function closeShelterVisitReportModal() {
     const modal = document.getElementById('shelterVisitReportModal');
     if (modal) {
         modal.style.display = 'none';
+        // Clear the flag when user explicitly closes the modal
+        sessionStorage.removeItem('shelterReportModalWasOpen');
+        console.log('📊 Shelter Visit Report Modal closed');
     }
 }
 
 function loadShelterVisitReports() {
     const contentArea = document.getElementById('shelterReportContentArea');
+    
+    if (!contentArea) {
+        console.error('❌ shelterReportContentArea element not found!');
+        return;
+    }
     
     // Load saved reports from localStorage with error handling
     let savedReports = [];
@@ -29027,6 +29047,15 @@ function loadShelterVisitReports() {
         console.log('📊 Loading shelter reports from localStorage:', storedData ? `Found ${storedData.length} characters` : 'No data found');
         savedReports = JSON.parse(storedData || '[]');
         console.log('📊 Parsed shelter reports:', savedReports.length, 'reports found');
+        
+        // Verify data integrity
+        if (savedReports.length > 0) {
+            console.log('✅ Reports data is present and valid');
+            // Log first report to verify structure
+            console.log('📋 First report:', savedReports[0]);
+        } else {
+            console.log('ℹ️ No shelter reports found in localStorage');
+        }
     } catch (error) {
         console.error('❌ Error loading shelter reports from localStorage:', error);
         savedReports = [];

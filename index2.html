@@ -1304,20 +1304,28 @@
                 photos: capturedPhotos
             };
             
-            // Save to localStorage
+            // Save to localStorage with verification
             const savedReports = JSON.parse(localStorage.getItem('shelterInspectionReports') || '[]');
             savedReports.push(reportData);
             localStorage.setItem('shelterInspectionReports', JSON.stringify(savedReports));
             
-            // Show success message
-            showSuccess('✅ تم حفظ التفتيش بنجاح! يمكنك الآن العودة للصفحة الرئيسية لعرض التقرير.');
+            // Verify data was saved correctly
+            const verifyData = localStorage.getItem('shelterInspectionReports');
+            const verifyParsed = JSON.parse(verifyData || '[]');
+            console.log('✅ تم حفظ التفتيش بنجاح! عدد التقارير المحفوظة:', verifyParsed.length);
+            console.log('✅ البيانات المحفوظة:', reportData);
             
-            // Reset form after 3 seconds
+            // Show success message with report count
+            showSuccess(`✅ تم حفظ التفتيش بنجاح!\n\nإجمالي التقارير المحفوظة: ${verifyParsed.length}\n\nيمكنك الآن العودة للصفحة الرئيسية لعرض التقرير.`);
+            
+            // Set flag to indicate a new report was saved
+            sessionStorage.setItem('newShelterReportSaved', 'true');
+            sessionStorage.setItem('lastShelterReportCount', verifyParsed.length.toString());
+            
+            // Reset form and redirect after 2 seconds
             setTimeout(() => {
                 window.location.href = 'index.html';
             }, 2000);
-            
-            console.log('✅ تم حفظ التفتيش:', reportData);
         }
         
         // Show success message

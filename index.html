@@ -548,6 +548,28 @@
             }
         }
         
+        @keyframes slideInDown {
+            from {
+                transform: translate(-50%, -100%);
+                opacity: 0;
+            }
+            to {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOutUp {
+            from {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+            to {
+                transform: translate(-50%, -100%);
+                opacity: 0;
+            }
+        }
+        
         .bell-bubble::before {
             content: none; /* Removed triangle for full screen mode */
         }
@@ -9993,6 +10015,68 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof startMaintenanceStatusChecker === 'function') {
         startMaintenanceStatusChecker();
     }
+    
+    // Check if user just saved a new shelter report and show notification
+    setTimeout(() => {
+        const newReportSaved = sessionStorage.getItem('newShelterReportSaved');
+        const lastReportCount = sessionStorage.getItem('lastShelterReportCount');
+        const modalWasOpen = sessionStorage.getItem('shelterReportModalWasOpen');
+        
+        // If the modal was open before a page reload (e.g., due to cache prevention), reopen it
+        if (modalWasOpen === 'true' && newReportSaved !== 'true') {
+            console.log('📊 Reopening shelter report modal after page reload');
+            showShelterVisitReportModal();
+            return; // Don't show notification banner if just reopening
+        }
+        
+        if (newReportSaved === 'true') {
+            console.log('🎉 Detected new shelter report saved! Total reports:', lastReportCount);
+            
+            // Show a success notification banner
+            const banner = document.createElement('div');
+            banner.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+                color: white;
+                padding: 20px 30px;
+                border-radius: 12px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                z-index: 10000;
+                font-size: 1.2em;
+                font-weight: 600;
+                text-align: center;
+                animation: slideInDown 0.5s ease-out;
+                cursor: pointer;
+                max-width: 90%;
+            `;
+            banner.innerHTML = `
+                ✅ تم حفظ التقرير بنجاح!<br>
+                <span style="font-size: 0.9em; opacity: 0.9;">إجمالي التقارير: ${lastReportCount}</span><br>
+                <span style="font-size: 0.8em; opacity: 0.8; margin-top: 5px; display: block;">اضغط هنا أو على أيقونة "تقارير زيارة الملاجىء" لعرض التقارير</span>
+            `;
+            document.body.appendChild(banner);
+            
+            // Make banner clickable to open the modal
+            banner.addEventListener('click', () => {
+                banner.remove();
+                showShelterVisitReportModal();
+            });
+            
+            // Auto-remove banner after 8 seconds
+            setTimeout(() => {
+                if (banner.parentNode) {
+                    banner.style.animation = 'slideOutUp 0.5s ease-out';
+                    setTimeout(() => banner.remove(), 500);
+                }
+            }, 8000);
+            
+            // Don't clear the session storage flags yet - let the modal clear them
+            // This way if user clicks the button before auto-remove, we still detect it
+        }
+    }, 500);
 });
 
 // Initialize audio elements with proper error handling and Safari compatibility
@@ -28969,6 +29053,11 @@ function showShelterVisitReportModal() {
     const modal = document.getElementById('shelterVisitReportModal');
     if (modal) {
         modal.style.display = 'flex';
+        
+        // Set flag to remember modal was open (persists across page reloads)
+        sessionStorage.setItem('shelterReportModalWasOpen', 'true');
+        
+        // Force reload of reports to ensure latest data is shown
         loadShelterVisitReports();
         
         // Show developer-only buttons if developer is logged in
@@ -28981,6 +29070,16 @@ function showShelterVisitReportModal() {
         }
         
         console.log('📊 Shelter Visit Report Modal opened');
+        
+        // Check if user just saved a new report
+        const newReportSaved = sessionStorage.getItem('newShelterReportSaved');
+        const lastReportCount = sessionStorage.getItem('lastShelterReportCount');
+        if (newReportSaved === 'true') {
+            console.log('🎉 New shelter report detected! Count:', lastReportCount);
+            // Clear the flag
+            sessionStorage.removeItem('newShelterReportSaved');
+            sessionStorage.removeItem('lastShelterReportCount');
+        }
     }
 }
 
@@ -28988,14 +29087,40 @@ function closeShelterVisitReportModal() {
     const modal = document.getElementById('shelterVisitReportModal');
     if (modal) {
         modal.style.display = 'none';
+        // Clear the flag when user explicitly closes the modal
+        sessionStorage.removeItem('shelterReportModalWasOpen');
+        console.log('📊 Shelter Visit Report Modal closed');
     }
 }
 
 function loadShelterVisitReports() {
     const contentArea = document.getElementById('shelterReportContentArea');
     
-    // Load saved reports from localStorage
-    const savedReports = JSON.parse(localStorage.getItem('shelterInspectionReports') || '[]');
+    if (!contentArea) {
+        console.error('❌ shelterReportContentArea element not found!');
+        return;
+    }
+    
+    // Load saved reports from localStorage with error handling
+    let savedReports = [];
+    try {
+        const storedData = localStorage.getItem('shelterInspectionReports');
+        console.log('📊 Loading shelter reports from localStorage:', storedData ? `Found ${storedData.length} characters` : 'No data found');
+        savedReports = JSON.parse(storedData || '[]');
+        console.log('📊 Parsed shelter reports:', savedReports.length, 'reports found');
+        
+        // Verify data integrity
+        if (savedReports.length > 0) {
+            console.log('✅ Reports data is present and valid');
+            // Log first report to verify structure
+            console.log('📋 First report:', savedReports[0]);
+        } else {
+            console.log('ℹ️ No shelter reports found in localStorage');
+        }
+    } catch (error) {
+        console.error('❌ Error loading shelter reports from localStorage:', error);
+        savedReports = [];
+    }
     
     if (savedReports.length === 0) {
         contentArea.innerHTML = `

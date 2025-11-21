@@ -2542,28 +2542,33 @@
         
         /* Column widths for group inspection table */
         .group-inspection-table th:nth-child(1), .group-inspection-table td:nth-child(1) { /* المفتشين */
-            width: 20%;
-            min-width: 130px;
+            width: 18%;
+            min-width: 120px;
         }
         .group-inspection-table th:nth-child(2), .group-inspection-table td:nth-child(2) { /* التاريخ */
-            width: 18%;
-            min-width: 145px;
+            width: 16%;
+            min-width: 135px;
             white-space: nowrap;
         }
         .group-inspection-table th:nth-child(3), .group-inspection-table td:nth-child(3) { /* المناوبة */
-            width: 15%;
-            min-width: 105px;
+            width: 13%;
+            min-width: 95px;
         }
         .group-inspection-table th:nth-child(4), .group-inspection-table td:nth-child(4) { /* المنطقة */
-            width: 24%;
-            min-width: 170px;
+            width: 20%;
+            min-width: 150px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
         .group-inspection-table th:nth-child(5), .group-inspection-table td:nth-child(5) { /* المحلات */
-            width: 23%;
-            min-width: 130px;
+            width: 18%;
+            min-width: 120px;
+        }
+        .group-inspection-table th:nth-child(6), .group-inspection-table td:nth-child(6) { /* التقارير */
+            width: 15%;
+            min-width: 120px;
+            text-align: center;
         }
         
         .group-inspection-table td {
@@ -3366,18 +3371,18 @@
             
             /* Optimized column widths for mobile - fit all content on screen with single-line text */
             .group-inspection-table th:nth-child(1), .group-inspection-table td:nth-child(1) { /* المفتشين */
-                width: 26%;
+                width: 22%;
                 min-width: unset;
-                font-size: 0.62em;
+                font-size: 0.60em;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
                 line-height: 1.3;
             }
             .group-inspection-table th:nth-child(2), .group-inspection-table td:nth-child(2) { /* التاريخ */
-                width: 22%;
+                width: 18%;
                 min-width: unset;
-                font-size: 0.65em;
+                font-size: 0.63em;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
@@ -3385,16 +3390,16 @@
                 line-height: 1.25;
             }
             .group-inspection-table th:nth-child(3), .group-inspection-table td:nth-child(3) { /* المناوبة */
-                width: 14%;
+                width: 12%;
                 min-width: unset;
-                font-size: 0.68em;
+                font-size: 0.66em;
                 white-space: nowrap;
                 text-align: center;
             }
             .group-inspection-table th:nth-child(4), .group-inspection-table td:nth-child(4) { /* المنطقة */
-                width: 24%;
+                width: 20%;
                 min-width: unset;
-                font-size: 0.64em;
+                font-size: 0.62em;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
@@ -3403,7 +3408,13 @@
             .group-inspection-table th:nth-child(5), .group-inspection-table td:nth-child(5) { /* المحلات */
                 width: 14%;
                 min-width: unset;
-                font-size: 0.65em;
+                font-size: 0.63em;
+            }
+            .group-inspection-table th:nth-child(6), .group-inspection-table td:nth-child(6) { /* التقارير */
+                width: 14%;
+                min-width: unset;
+                font-size: 0.63em;
+                text-align: center;
             }
 
             /* Mobile responsive styles for shelter inspection table - matching plan-table */
@@ -16146,6 +16157,7 @@ function renderGroupInspectionTable() {
                 <th>المناوبة</th>
                 <th>المنطقة</th>
                 <th>المحلات</th>
+                <th>التقارير</th>
                 ${isDev ? '<th>تعديل/حذف</th>' : ''}
             </tr>
         </thead>
@@ -16275,6 +16287,14 @@ function renderGroupInspectionTable() {
                             </ul>
                         </div>
                     </div>
+                </td>
+                <td style="text-align: center;">
+                    <button 
+                        onclick="openGroupInspectionReport('${encodeURIComponent(sortedInspectors.join(','))}', '${item.day}', '${item.shift}', '${areaName.replace(/'/g, "\\'")}', '${encodeURIComponent(shopsArray.join(','))}')"
+                        style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85em; margin: 2px; white-space: nowrap; box-shadow: 0 2px 5px rgba(0,0,0,0.2);"
+                        title="فتح تقرير التفتيش الجماعى">
+                        📝 تقرير التفتيش
+                    </button>
                 </td>
                 ${isDev ? `
                 <td style="text-align:center;">
@@ -16548,6 +16568,13 @@ function deleteGroupInspection(idx) {
     saveInspectionData();
     renderGroupInspectionTable();
     renderShelterInspectionTable();
+}
+
+// Open Group Inspection Report
+function openGroupInspectionReport(inspectors, date, shift, area, shops) {
+    // Redirect to index13.html with parameters
+    const url = `index13.html?inspectors=${inspectors}&date=${encodeURIComponent(date)}&shift=${encodeURIComponent(shift)}&area=${encodeURIComponent(area)}&shops=${shops}`;
+    window.open(url, '_blank');
 }
 
 // Upload Group Inspection Report
@@ -30797,28 +30824,34 @@ async function loadGroupInspectionReports() {
         statusDiv.textContent = '⏳ جاري تحميل التقارير...';
         statusDiv.style.color = '#666';
         
-        // تحميل ملف files.json مع منع التخزين المؤقت
-        const response = await fetch('files.json?t=' + Date.now(), {
-            cache: 'no-cache',
-            headers: {
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache',
-                'Expires': '0'
-            }
-        });
+        // Load saved reports from localStorage (from index13.html)
+        const savedReports = JSON.parse(localStorage.getItem('groupInspectionReports') || '[]');
         
-        if (!response.ok) {
-            throw new Error(`فشل في تحميل قائمة الملفات (HTTP ${response.status})`);
+        // تحميل ملف files.json مع منع التخزين المؤقت
+        let groupReports = [];
+        try {
+            const response = await fetch('files.json?t=' + Date.now(), {
+                cache: 'no-cache',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
+            });
+            
+            if (response.ok) {
+                const filesData = await response.json();
+                
+                // تصفية التقارير الخاصة بالتفتيش الجماعي وترتيبها حسب تاريخ الرفع (الأحدث أولاً)
+                groupReports = filesData.files
+                    .filter(f => f.category === 'group_inspection_reports' && f.visible === true)
+                    .sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
+            }
+        } catch (error) {
+            console.warn('Unable to load files.json, showing only local reports:', error);
         }
         
-        const filesData = await response.json();
-        
-        // تصفية التقارير الخاصة بالتفتيش الجماعي وترتيبها حسب تاريخ الرفع (الأحدث أولاً)
-        const groupReports = filesData.files
-            .filter(f => f.category === 'group_inspection_reports' && f.visible === true)
-            .sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
-        
-        if (groupReports.length === 0) {
+        if (groupReports.length === 0 && savedReports.length === 0) {
             listDiv.innerHTML = `
                 <div style="text-align: center; color: #666; padding: 60px 0;">
                     <div style="font-size: 4em; margin-bottom: 20px;">📑</div>
@@ -30828,6 +30861,67 @@ async function loadGroupInspectionReports() {
             `;
         } else {
             let reportsHTML = '<div style="display: grid; gap: 15px;">';
+            
+            // Display saved reports from index13.html first
+            savedReports.forEach((report, index) => {
+                const reportDate = new Date(report.timestamp).toLocaleDateString('ar-EG', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                const fulfilledCount = report.items.filter(item => item.value === 'مستوفى').length;
+                const unfulfilledCount = report.items.filter(item => item.value === 'غير مستوفى').length;
+                const totalItems = report.items.length;
+                
+                reportsHTML += `
+                    <div style="background: linear-gradient(135deg, #fff5e6 0%, #ffe8cc 100%); padding: 20px; border-radius: 10px; border: 2px solid #ff9800; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(255,152,0,0.2);" 
+                         onmouseover="this.style.borderColor='#f57c00'; this.style.boxShadow='0 4px 15px rgba(255,152,0,0.3)';" 
+                         onmouseout="this.style.borderColor='#ff9800'; this.style.boxShadow='0 2px 8px rgba(255,152,0,0.2)';">
+                        <div style="display: flex; justify-content: space-between; align-items: start; gap: 15px; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 250px;">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                    <span style="font-size: 2em;">📝</span>
+                                    <h4 style="margin: 0; color: #e65100; font-size: 1.15em;">تقرير التفتيش - ${report.area}</h4>
+                                </div>
+                                <div style="color: #666; font-size: 0.95em; margin-bottom: 8px;">
+                                    <strong>المفتشين:</strong> ${report.inspectors.join('، ')}
+                                </div>
+                                <div style="color: #666; font-size: 0.95em; margin-bottom: 8px;">
+                                    <strong>التاريخ:</strong> ${report.date} - ${report.shift}
+                                </div>
+                                <div style="color: #666; font-size: 0.95em; margin-bottom: 8px;">
+                                    <strong>المحلات:</strong> ${report.shops.join('، ')}
+                                </div>
+                                <div style="color: #666; font-size: 0.9em; display: flex; gap: 15px; flex-wrap: wrap; margin-top: 10px;">
+                                    <span style="background: #4caf50; color: white; padding: 4px 12px; border-radius: 6px;">✅ مستوفى: ${fulfilledCount}</span>
+                                    <span style="background: #f44336; color: white; padding: 4px 12px; border-radius: 6px;">❌ غير مستوفى: ${unfulfilledCount}</span>
+                                    <span style="background: #667eea; color: white; padding: 4px 12px; border-radius: 6px;">📊 الإجمالي: ${totalItems}</span>
+                                </div>
+                                <div style="color: #999; font-size: 0.85em; margin-top: 8px;">
+                                    📅 ${reportDate}
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                                <button onclick="viewSavedGroupReport(${index})" 
+                                    style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(255,152,0,0.3); transition: all 0.3s ease;"
+                                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(255,152,0,0.4)';"
+                                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(255,152,0,0.3)';">
+                                    👁️ عرض التقرير
+                                </button>
+                                <button onclick="deleteSavedGroupReport(${index})" 
+                                    style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(220,53,69,0.3); transition: all 0.3s ease;"
+                                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(220,53,69,0.4)';"
+                                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(220,53,69,0.3)';">
+                                    🗑️ حذف
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
             
             groupReports.forEach(report => {
                 const uploadDate = new Date(report.uploadDate).toLocaleDateString('ar-EG', {
@@ -30891,7 +30985,8 @@ async function loadGroupInspectionReports() {
             listDiv.innerHTML = reportsHTML;
         }
         
-        statusDiv.textContent = `✅ تم تحميل ${groupReports.length} تقرير بنجاح`;
+        const totalReports = groupReports.length + savedReports.length;
+        statusDiv.textContent = `✅ تم تحميل ${totalReports} تقرير بنجاح (${savedReports.length} تقرير محلي، ${groupReports.length} تقرير مرفوع)`;
         statusDiv.style.color = '#28a745';
         
         setTimeout(() => {
@@ -30914,6 +31009,126 @@ async function loadGroupInspectionReports() {
         statusDiv.textContent = '❌ فشل في تحميل التقارير';
         statusDiv.style.color = '#dc3545';
     }
+}
+
+// View saved group inspection report
+function viewSavedGroupReport(index) {
+    const savedReports = JSON.parse(localStorage.getItem('groupInspectionReports') || '[]');
+    const report = savedReports[index];
+    
+    if (!report) {
+        alert('⚠️ التقرير غير موجود');
+        return;
+    }
+    
+    // Create a modal to display the report
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 20px; overflow-y: auto;';
+    
+    const fulfilledCount = report.items.filter(item => item.value === 'مستوفى').length;
+    const unfulfilledCount = report.items.filter(item => item.value === 'غير مستوفى').length;
+    const notInspectedCount = report.items.filter(item => item.value === 'لم يتم التفتيش').length;
+    const notApplicableCount = report.items.filter(item => item.value === 'لا ينطبق').length;
+    
+    let itemsHTML = '';
+    report.items.forEach((item, idx) => {
+        const statusColor = item.value === 'مستوفى' ? '#4caf50' : 
+                           item.value === 'غير مستوفى' ? '#f44336' : 
+                           item.value === 'لم يتم التفتيش' ? '#ff9800' : '#9e9e9e';
+        itemsHTML += `
+            <div style="background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; border-right: 4px solid ${statusColor};">
+                <div style="display: flex; justify-content: space-between; align-items: start; gap: 10px;">
+                    <div style="flex: 1;">
+                        <strong style="color: #234085;">${idx + 1}. ${item.label}</strong>
+                        <div style="margin-top: 8px; padding: 6px 12px; background: ${statusColor}; color: white; border-radius: 6px; display: inline-block; font-weight: 600;">
+                            ${item.value || 'لم يتم الإجابة'}
+                        </div>
+                        ${item.comment ? `<div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 6px; color: #666;"><strong>التعليق:</strong> ${item.comment}</div>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    modal.innerHTML = `
+        <div style="background: white; border-radius: 20px; max-width: 1200px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+            <div style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: white; padding: 30px; border-radius: 20px 20px 0 0; position: sticky; top: 0; z-index: 1;">
+                <h2 style="margin: 0; font-size: 2em;">📝 تقرير التفتيش الجماعى</h2>
+                <button onclick="this.closest('.modal-overlay, div[style*=fixed]').remove()" style="position: absolute; top: 20px; left: 20px; background: rgba(255,255,255,0.2); border: 2px solid white; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 1.5em; display: flex; align-items: center; justify-content: center;">×</button>
+            </div>
+            <div style="padding: 30px;">
+                <div style="background: linear-gradient(135deg, #fff5e6 0%, #ffe8cc 100%); padding: 20px; border-radius: 12px; margin-bottom: 30px; border: 2px solid #ff9800;">
+                    <h3 style="color: #e65100; margin-bottom: 15px;">تفاصيل عملية التفتيش</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                        <div style="background: white; padding: 12px; border-radius: 8px; border-right: 4px solid #ff9800;">
+                            <strong style="color: #e65100;">المفتشين:</strong> ${report.inspectors.join('، ')}
+                        </div>
+                        <div style="background: white; padding: 12px; border-radius: 8px; border-right: 4px solid #ff9800;">
+                            <strong style="color: #e65100;">التاريخ:</strong> ${report.date}
+                        </div>
+                        <div style="background: white; padding: 12px; border-radius: 8px; border-right: 4px solid #ff9800;">
+                            <strong style="color: #e65100;">المناوبة:</strong> ${report.shift}
+                        </div>
+                        <div style="background: white; padding: 12px; border-radius: 8px; border-right: 4px solid #ff9800;">
+                            <strong style="color: #e65100;">المنطقة:</strong> ${report.area}
+                        </div>
+                        <div style="background: white; padding: 12px; border-radius: 8px; border-right: 4px solid #ff9800;">
+                            <strong style="color: #e65100;">المحلات:</strong> ${report.shops.join('، ')}
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
+                    <div style="background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 0.9em; opacity: 0.95;">مستوفى</div>
+                        <div style="font-size: 2.5em; font-weight: bold; margin: 10px 0;">${fulfilledCount}</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 0.9em; opacity: 0.95;">غير مستوفى</div>
+                        <div style="font-size: 2.5em; font-weight: bold; margin: 10px 0;">${unfulfilledCount}</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 0.9em; opacity: 0.95;">لم يتم التفتيش</div>
+                        <div style="font-size: 2.5em; font-weight: bold; margin: 10px 0;">${notInspectedCount}</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #9e9e9e 0%, #757575 100%); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 0.9em; opacity: 0.95;">لا ينطبق</div>
+                        <div style="font-size: 2.5em; font-weight: bold; margin: 10px 0;">${notApplicableCount}</div>
+                    </div>
+                </div>
+                
+                ${report.facilityDetails ? `
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 30px;">
+                    <h3 style="color: #234085; margin-bottom: 15px;">بيانات مسؤل المنشأة</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                        <div><strong>المسمى الوظيفي:</strong> ${report.facilityDetails.jobTitle}</div>
+                        <div><strong>رقم الهاتف:</strong> ${report.facilityDetails.phoneNumber}</div>
+                        <div><strong>الموافقة على التقرير:</strong> ${report.facilityDetails.agreed ? '✅ نعم' : '❌ لا'}</div>
+                    </div>
+                </div>
+                ` : ''}
+                
+                <h3 style="color: #234085; margin-bottom: 20px;">بنود التفتيش</h3>
+                ${itemsHTML}
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+// Delete saved group inspection report
+function deleteSavedGroupReport(index) {
+    if (!confirm('هل تريد حذف هذا التقرير نهائياً؟')) return;
+    
+    const savedReports = JSON.parse(localStorage.getItem('groupInspectionReports') || '[]');
+    savedReports.splice(index, 1);
+    localStorage.setItem('groupInspectionReports', JSON.stringify(savedReports));
+    
+    // Reload the reports list
+    loadGroupInspectionReports();
+    
+    alert('✅ تم حذف التقرير بنجاح');
 }
 
 function getFileIcon(fileType) {

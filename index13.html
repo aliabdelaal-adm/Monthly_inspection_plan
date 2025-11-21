@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تقارير التفتيش الجماعى</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    
+    <!-- Cache Prevention -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            direction: rtl;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        
+        .back-btn:hover {
+            background: white;
+            color: #ff9800;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .inspection-details {
+            background: linear-gradient(135deg, #fff5e6 0%, #ffe8cc 100%);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border: 2px solid #ff9800;
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.2);
+        }
+        
+        .inspection-details h2 {
+            color: #e65100;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .detail-item {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #ff9800;
+        }
+        
+        .detail-item strong {
+            color: #e65100;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .form-section {
+            margin-bottom: 30px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .form-section h3 {
+            color: #234085;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .checklist-item {
+            background: white;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .checklist-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        .checklist-item-header {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #234085;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .item-number {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        
+        .radio-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .radio-option {
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .radio-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        .radio-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.95em;
+            min-height: 50px;
+            text-align: center;
+        }
+        
+        .radio-option input[type="radio"]:checked + .radio-label {
+            border-width: 3px;
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .radio-label.fulfilled {
+            background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+            color: #2e7d32;
+            border-color: #4caf50;
+        }
+        
+        .radio-option input[type="radio"]:checked + .radio-label.fulfilled {
+            background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+            color: white;
+        }
+        
+        .radio-label.unfulfilled {
+            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+            color: #c62828;
+            border-color: #f44336;
+        }
+        
+        .radio-option input[type="radio"]:checked + .radio-label.unfulfilled {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            color: white;
+        }
+        
+        .radio-label.not-inspected {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            color: #ef6c00;
+            border-color: #ff9800;
+        }
+        
+        .radio-option input[type="radio"]:checked + .radio-label.not-inspected {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+            color: white;
+        }
+        
+        .radio-label.not-applicable {
+            background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+            color: #757575;
+            border-color: #9e9e9e;
+        }
+        
+        .radio-option input[type="radio"]:checked + .radio-label.not-applicable {
+            background: linear-gradient(135deg, #9e9e9e 0%, #757575 100%);
+            color: white;
+        }
+        
+        .comment-section {
+            margin-top: 15px;
+        }
+        
+        .comment-label {
+            font-weight: 600;
+            color: #234085;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .comment-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 1em;
+            resize: vertical;
+            min-height: 80px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .comment-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .photo-upload-section {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px dashed #ddd;
+        }
+        
+        .photo-upload-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .photo-upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .photos-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .photo-preview-item {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .photo-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .photo-remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(244, 67, 54, 0.9);
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .photo-remove-btn:hover {
+            background: #d32f2f;
+            transform: scale(1.1);
+        }
+        
+        .facility-details-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .facility-form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #234085;
+            margin-bottom: 8px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #234085;
+        }
+        
+        .checkbox-label input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+        
+        .submit-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .submit-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(40, 167, 69, 0.4);
+        }
+        
+        .progress-indicator {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #667eea;
+        }
+        
+        .progress-bar {
+            height: 30px;
+            background: #e9ecef;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .stat-card.success {
+            background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+        }
+        
+        .stat-card.danger {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+        }
+        
+        .stat-card.warning {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+        }
+        
+        .stat-card.info {
+            background: linear-gradient(135deg, #9e9e9e 0%, #757575 100%);
+        }
+        
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .stat-label {
+            font-size: 1em;
+            opacity: 0.95;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .header p {
+                font-size: 1em;
+            }
+            
+            .content {
+                padding: 15px;
+            }
+            
+            .radio-group {
+                grid-template-columns: 1fr;
+            }
+            
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .facility-form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="index.html" class="back-btn">↩ الرجوع للرئيسية</a>
+            <h1>📝 تقرير التفتيش الجماعى</h1>
+            <p>نموذج تفتيش شامل للمحلات</p>
+        </div>
+        
+        <div class="content">
+            <!-- Inspection Details -->
+            <div class="inspection-details">
+                <h2>تفاصيل عملية التفتيش</h2>
+                <div class="details-grid" id="inspectionDetailsGrid">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+            
+            <!-- Progress Summary -->
+            <div class="stats-summary" id="statsSummary" style="display: none;">
+                <div class="stat-card success">
+                    <div class="stat-label">مستوفى</div>
+                    <div class="stat-value" id="fulfilledCount">0</div>
+                </div>
+                <div class="stat-card danger">
+                    <div class="stat-label">غير مستوفى</div>
+                    <div class="stat-value" id="unfulfilledCount">0</div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-label">لم يتم التفتيش</div>
+                    <div class="stat-value" id="notInspectedCount">0</div>
+                </div>
+                <div class="stat-card info">
+                    <div class="stat-label">لا ينطبق</div>
+                    <div class="stat-value" id="notApplicableCount">0</div>
+                </div>
+            </div>
+            
+            <!-- Facility Details Section -->
+            <div class="form-section">
+                <h3>📋 بيانات مسؤل المنشأة</h3>
+                <div class="facility-details-section">
+                    <div class="facility-form-grid">
+                        <div>
+                            <label class="form-label">المسمى الوظيفي</label>
+                            <input type="text" class="form-input" id="jobTitle" placeholder="أدخل المسمى الوظيفي">
+                        </div>
+                        <div>
+                            <label class="form-label">رقم الهاتف</label>
+                            <input type="tel" class="form-input" id="phoneNumber" placeholder="أدخل رقم الهاتف">
+                        </div>
+                    </div>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="agreeToReport">
+                            <span>✅ أوافق على تقرير التفتيش</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Inspection Checklist -->
+            <div class="form-section">
+                <h3>✅ بنود التفتيش</h3>
+                <div id="checklistContainer">
+                    <!-- Checklist items will be populated by JavaScript -->
+                </div>
+            </div>
+            
+            <!-- Progress Indicator -->
+            <div class="progress-indicator">
+                <strong style="color: #234085;">نسبة الإنجاز:</strong>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%;">0%</div>
+                </div>
+            </div>
+            
+            <!-- Submit Section -->
+            <div class="submit-section">
+                <button class="submit-btn" onclick="submitInspectionReport()">
+                    💾 حفظ التقرير
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const inspectors = urlParams.get('inspectors') ? decodeURIComponent(urlParams.get('inspectors')).split(',') : [];
+        const date = urlParams.get('date') || '';
+        const shift = urlParams.get('shift') || '';
+        const area = urlParams.get('area') || '';
+        const shops = urlParams.get('shops') ? decodeURIComponent(urlParams.get('shops')).split(',') : [];
+        
+        // Inspection checklist items based on the provided images
+        const checklistItems = [
+            { id: 'item_1', label: 'بنود الرقابة على المنشآت غير الغذائية الخاضعة للرقابة الصحية', category: 'general' },
+            { id: 'item_2', label: 'المحل نظيف من الداخل وكافة إجراءات الصيانة مستوفية داخل المحل', category: 'cleanliness' },
+            { id: 'item_3', label: 'وجود حشرات أو قوارض داخل المنشأة', category: 'pests' },
+            { id: 'item_4', label: 'موقع الرصد', category: 'location' },
+            { id: 'item_5', label: 'المخالفات المتكررة', category: 'violations' },
+            { id: 'item_6', label: 'منشآت خاضعة للرقابة البيطرية', category: 'veterinary' },
+            { id: 'item_7', label: 'منشآت الحيوانات الأليفة', category: 'pets' },
+            { id: 'item_8', label: 'النظافة العامة للمحل', category: 'general_cleanliness' },
+            { id: 'item_9', label: 'التهوية المناسبة', category: 'ventilation' },
+            { id: 'item_10', label: 'الإضاءة الكافية', category: 'lighting' },
+            { id: 'item_11', label: 'جودة الأعلاف والطعام', category: 'food_quality' },
+            { id: 'item_12', label: 'توفر المياه النظيفة', category: 'water' },
+            { id: 'item_13', label: 'حالة الأقفاص والحظائر', category: 'cages' },
+            { id: 'item_14', label: 'الحالة الصحية للحيوانات', category: 'animal_health' },
+            { id: 'item_15', label: 'السجلات الطبية محدثة', category: 'medical_records' },
+            { id: 'item_16', label: 'وجود طاقم عمل مؤهل', category: 'staff' },
+            { id: 'item_17', label: 'توفر معدات الطوارئ', category: 'emergency' },
+            { id: 'item_18', label: 'الالتزام بمعايير السلامة', category: 'safety' },
+            { id: 'item_19', label: 'وجود تراخيص سارية', category: 'licenses' },
+            { id: 'item_20', label: 'التخلص السليم من النفايات', category: 'waste' },
+            { id: 'item_21', label: 'عزل الحيوانات المريضة', category: 'isolation' },
+            { id: 'item_22', label: 'توفر برنامج وقائي صحي', category: 'health_program' },
+            { id: 'item_23', label: 'مستوى الرائحة مقبول', category: 'smell' },
+            { id: 'item_24', label: 'توفر أدوات التنظيف', category: 'cleaning_tools' },
+            { id: 'item_25', label: 'الالتزام بالكثافة المناسبة للحيوانات', category: 'density' }
+        ];
+        
+        // Storage for inspection photos
+        let inspectionPhotos = [];
+        
+        // Initialize page
+        function initializePage() {
+            // Display inspection details
+            displayInspectionDetails();
+            
+            // Generate checklist items
+            generateChecklistItems();
+            
+            // Show stats summary
+            document.getElementById('statsSummary').style.display = 'grid';
+        }
+        
+        function displayInspectionDetails() {
+            const detailsGrid = document.getElementById('inspectionDetailsGrid');
+            detailsGrid.innerHTML = `
+                <div class="detail-item">
+                    <strong>المفتشين:</strong>
+                    ${inspectors.join('، ') || 'غير محدد'}
+                </div>
+                <div class="detail-item">
+                    <strong>التاريخ:</strong>
+                    ${date || 'غير محدد'}
+                </div>
+                <div class="detail-item">
+                    <strong>المناوبة:</strong>
+                    ${shift || 'غير محدد'}
+                </div>
+                <div class="detail-item">
+                    <strong>المنطقة:</strong>
+                    ${area || 'غير محدد'}
+                </div>
+                <div class="detail-item">
+                    <strong>عدد المحلات:</strong>
+                    ${shops.length || 0}
+                </div>
+                <div class="detail-item">
+                    <strong>المحلات:</strong>
+                    ${shops.join('، ') || 'غير محدد'}
+                </div>
+            `;
+        }
+        
+        function generateChecklistItems() {
+            const container = document.getElementById('checklistContainer');
+            let html = '';
+            
+            checklistItems.forEach((item, index) => {
+                html += `
+                    <div class="checklist-item">
+                        <div class="checklist-item-header">
+                            <span class="item-number">${index + 1}</span>
+                            <span>${item.label}</span>
+                        </div>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="${item.id}" value="مستوفى" onchange="updateProgress()">
+                                <span class="radio-label fulfilled">✅ مستوفى</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="${item.id}" value="غير مستوفى" onchange="updateProgress()">
+                                <span class="radio-label unfulfilled">❌ غير مستوفى</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="${item.id}" value="لم يتم التفتيش" onchange="updateProgress()">
+                                <span class="radio-label not-inspected">⏭️ لم يتم التفتيش</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="${item.id}" value="لا ينطبق" onchange="updateProgress()">
+                                <span class="radio-label not-applicable">➖ لا ينطبق</span>
+                            </label>
+                        </div>
+                        <div class="comment-section">
+                            <label class="comment-label">إضافة تعليق أو ملاحظة:</label>
+                            <textarea class="comment-input" id="comment_${item.id}" placeholder="أدخل تعليقك أو ملاحظتك هنا..."></textarea>
+                        </div>
+                        <div class="photo-upload-section">
+                            <input type="file" id="photo_${item.id}" accept="image/*" multiple style="display: none;" onchange="handlePhotoUpload('${item.id}')">
+                            <button class="photo-upload-btn" onclick="document.getElementById('photo_${item.id}').click()">
+                                📷 إضافة صورة
+                            </button>
+                            <div class="photos-preview" id="photos_preview_${item.id}"></div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function handlePhotoUpload(itemId) {
+            const fileInput = document.getElementById(`photo_${itemId}`);
+            const files = fileInput.files;
+            const previewContainer = document.getElementById(`photos_preview_${itemId}`);
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const photoId = Date.now() + '_' + i;
+                    inspectionPhotos.push({
+                        itemId: itemId,
+                        photoId: photoId,
+                        data: e.target.result
+                    });
+                    
+                    const photoItem = document.createElement('div');
+                    photoItem.className = 'photo-preview-item';
+                    photoItem.innerHTML = `
+                        <img src="${e.target.result}" alt="صورة">
+                        <button class="photo-remove-btn" onclick="removePhoto('${itemId}', '${photoId}')">×</button>
+                    `;
+                    previewContainer.appendChild(photoItem);
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        function removePhoto(itemId, photoId) {
+            inspectionPhotos = inspectionPhotos.filter(p => p.photoId !== photoId);
+            const previewContainer = document.getElementById(`photos_preview_${itemId}`);
+            const photoElements = previewContainer.getElementsByClassName('photo-preview-item');
+            
+            for (let i = photoElements.length - 1; i >= 0; i--) {
+                const btn = photoElements[i].querySelector('.photo-remove-btn');
+                if (btn && btn.getAttribute('onclick').includes(photoId)) {
+                    photoElements[i].remove();
+                    break;
+                }
+            }
+        }
+        
+        function updateProgress() {
+            let fulfilled = 0;
+            let unfulfilled = 0;
+            let notInspected = 0;
+            let notApplicable = 0;
+            let totalAnswered = 0;
+            
+            checklistItems.forEach(item => {
+                const selected = document.querySelector(`input[name="${item.id}"]:checked`);
+                if (selected) {
+                    totalAnswered++;
+                    const value = selected.value;
+                    if (value === 'مستوفى') fulfilled++;
+                    else if (value === 'غير مستوفى') unfulfilled++;
+                    else if (value === 'لم يتم التفتيش') notInspected++;
+                    else if (value === 'لا ينطبق') notApplicable++;
+                }
+            });
+            
+            // Update stats
+            document.getElementById('fulfilledCount').textContent = fulfilled;
+            document.getElementById('unfulfilledCount').textContent = unfulfilled;
+            document.getElementById('notInspectedCount').textContent = notInspected;
+            document.getElementById('notApplicableCount').textContent = notApplicable;
+            
+            // Update progress bar
+            const progress = (totalAnswered / checklistItems.length) * 100;
+            const progressFill = document.getElementById('progressFill');
+            progressFill.style.width = progress + '%';
+            progressFill.textContent = Math.round(progress) + '%';
+        }
+        
+        function submitInspectionReport() {
+            // Validate facility details
+            const jobTitle = document.getElementById('jobTitle').value;
+            const phoneNumber = document.getElementById('phoneNumber').value;
+            const agreeToReport = document.getElementById('agreeToReport').checked;
+            
+            if (!jobTitle || !phoneNumber) {
+                alert('⚠️ يرجى إدخال بيانات مسؤل المنشأة');
+                return;
+            }
+            
+            if (!agreeToReport) {
+                alert('⚠️ يرجى الموافقة على تقرير التفتيش');
+                return;
+            }
+            
+            // Collect all inspection data
+            const inspectionData = {
+                inspectors: inspectors,
+                date: date,
+                shift: shift,
+                area: area,
+                shops: shops,
+                facilityDetails: {
+                    jobTitle: jobTitle,
+                    phoneNumber: phoneNumber,
+                    agreed: agreeToReport
+                },
+                items: [],
+                photos: inspectionPhotos,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Collect checklist items data
+            checklistItems.forEach(item => {
+                const selected = document.querySelector(`input[name="${item.id}"]:checked`);
+                const comment = document.getElementById(`comment_${item.id}`).value;
+                
+                inspectionData.items.push({
+                    id: item.id,
+                    label: item.label,
+                    category: item.category,
+                    value: selected ? selected.value : null,
+                    comment: comment
+                });
+            });
+            
+            // Save to localStorage
+            const savedReports = JSON.parse(localStorage.getItem('groupInspectionReports') || '[]');
+            savedReports.push(inspectionData);
+            localStorage.setItem('groupInspectionReports', JSON.stringify(savedReports));
+            
+            // Show success message
+            alert('✅ تم حفظ التقرير بنجاح!');
+            
+            // Redirect back to main page
+            window.location.href = 'index.html';
+        }
+        
+        // Initialize page on load
+        window.onload = initializePage;
+    </script>
+</body>
+</html>

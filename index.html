@@ -16075,6 +16075,42 @@ function toggleInspectorSort() {
     renderPlanTable(); // Re-render the table with new sorting
 }
 
+/**
+ * Utility function to filter upcoming inspections (today and future dates)
+ * @param {Array} inspectionData - Array of inspection objects with 'day' property in 'YYYY-MM-DD' format
+ * @returns {Array} Filtered array containing only inspections scheduled for today or future dates
+ */
+function filterUpcomingInspections(inspectionData) {
+    if (!inspectionData || inspectionData.length === 0) {
+        return [];
+    }
+    
+    // Get current date (without time) for comparison
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Filter to show only upcoming inspections (today and future dates)
+    return inspectionData.filter(item => {
+        // Skip items without a day field
+        if (!item.day) return false;
+        
+        // Parse date (expects YYYY-MM-DD format used throughout the application)
+        const inspectionDate = new Date(item.day);
+        
+        // Validate that the date is valid
+        if (isNaN(inspectionDate.getTime())) {
+            console.warn('Invalid date format in inspection data:', item.day);
+            return false;
+        }
+        
+        // Normalize to midnight for date-only comparison
+        inspectionDate.setHours(0, 0, 0, 0);
+        
+        // Include today and future dates
+        return inspectionDate >= today;
+    });
+}
+
 // Render Group Inspection Table
 function renderGroupInspectionTable() {
     const container = document.getElementById('groupInspectionTableContainer');
@@ -16085,10 +16121,19 @@ function renderGroupInspectionTable() {
         return;
     }
     
+    // Filter to show only upcoming inspections (today and future dates)
+    const upcomingInspections = filterUpcomingInspections(groupInspectionData);
+    
+    // Hide section if no upcoming inspections
+    if (upcomingInspections.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+    
     section.style.display = 'block';
     
     // Sort inspection plans by date (oldest first)
-    const sortedData = [...groupInspectionData].sort((a, b) => {
+    const sortedData = [...upcomingInspections].sort((a, b) => {
         return a.day.localeCompare(b.day);
     });
     
@@ -16250,16 +16295,25 @@ function renderShelterInspectionTable() {
     const container = document.getElementById('shelterInspectionTableContainer');
     const section = document.getElementById('shelterInspectionSection');
     
-    // Show the shelter inspection section if there is data
-    if (shelterInspectionData && shelterInspectionData.length > 0) {
-        section.style.display = 'block';
-    } else {
+    // Check if there is data
+    if (!shelterInspectionData || shelterInspectionData.length === 0) {
         section.style.display = 'none';
         return;
     }
     
+    // Filter to show only upcoming inspections (today and future dates)
+    const upcomingInspections = filterUpcomingInspections(shelterInspectionData);
+    
+    // Hide section if no upcoming inspections
+    if (upcomingInspections.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+    
+    section.style.display = 'block';
+    
     // Sort inspection plans by date (oldest first)
-    const sortedData = [...shelterInspectionData].sort((a, b) => {
+    const sortedData = [...upcomingInspections].sort((a, b) => {
         return a.day.localeCompare(b.day);
     });
     

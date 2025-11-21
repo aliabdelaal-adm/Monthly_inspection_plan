@@ -75,6 +75,27 @@
             color: #ff9800;
         }
         
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        
+        .close-btn:hover {
+            background: white;
+            color: #ff9800;
+        }
+        
         .content {
             padding: 30px;
         }
@@ -537,9 +558,9 @@
 <body>
     <div class="container">
         <div class="header">
+            <a href="index.html" class="close-btn">✖ إغلاق</a>
             <a href="index.html" class="back-btn">↩ الرجوع للرئيسية</a>
             <h1>📝 تقرير التفتيش الجماعى</h1>
-            <p>نموذج تفتيش شامل للمحلات</p>
         </div>
         
         <div class="content">
@@ -571,32 +592,9 @@
                 </div>
             </div>
             
-            <!-- Facility Details Section -->
-            <div class="form-section">
-                <h3>📋 بيانات مسؤل المنشأة</h3>
-                <div class="facility-details-section">
-                    <div class="facility-form-grid">
-                        <div>
-                            <label class="form-label">المسمى الوظيفي</label>
-                            <input type="text" class="form-input" id="jobTitle" placeholder="أدخل المسمى الوظيفي">
-                        </div>
-                        <div>
-                            <label class="form-label">رقم الهاتف</label>
-                            <input type="tel" class="form-input" id="phoneNumber" placeholder="أدخل رقم الهاتف">
-                        </div>
-                    </div>
-                    <div class="checkbox-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="agreeToReport">
-                            <span>✅ أوافق على تقرير التفتيش</span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-            
             <!-- Inspection Checklist -->
             <div class="form-section">
-                <h3>✅ بنود التفتيش</h3>
+                <h3>✅ بنود التقرير</h3>
                 <div id="checklistContainer">
                     <!-- Checklist items will be populated by JavaScript -->
                 </div>
@@ -628,33 +626,12 @@
         const area = urlParams.get('area') || '';
         const shops = urlParams.get('shops') ? decodeURIComponent(urlParams.get('shops')).split(',') : [];
         
-        // Inspection checklist items based on the provided images
+        // Inspection checklist items based on requirements
         const checklistItems = [
             { id: 'item_1', label: 'بنود الرقابة على المنشآت غير الغذائية الخاضعة للرقابة الصحية', category: 'general' },
-            { id: 'item_2', label: 'المحل نظيف من الداخل وكافة إجراءات الصيانة مستوفية داخل المحل', category: 'cleanliness' },
-            { id: 'item_3', label: 'وجود حشرات أو قوارض داخل المنشأة', category: 'pests' },
-            { id: 'item_4', label: 'موقع الرصد', category: 'location' },
-            { id: 'item_5', label: 'المخالفات المتكررة', category: 'violations' },
-            { id: 'item_6', label: 'منشآت خاضعة للرقابة البيطرية', category: 'veterinary' },
-            { id: 'item_7', label: 'منشآت الحيوانات الأليفة', category: 'pets' },
-            { id: 'item_8', label: 'النظافة العامة للمحل', category: 'general_cleanliness' },
-            { id: 'item_9', label: 'التهوية المناسبة', category: 'ventilation' },
-            { id: 'item_10', label: 'الإضاءة الكافية', category: 'lighting' },
-            { id: 'item_11', label: 'جودة الأعلاف والطعام', category: 'food_quality' },
-            { id: 'item_12', label: 'توفر المياه النظيفة', category: 'water' },
-            { id: 'item_13', label: 'حالة الأقفاص والحظائر', category: 'cages' },
-            { id: 'item_14', label: 'الحالة الصحية للحيوانات', category: 'animal_health' },
-            { id: 'item_15', label: 'السجلات الطبية محدثة', category: 'medical_records' },
-            { id: 'item_16', label: 'وجود طاقم عمل مؤهل', category: 'staff' },
-            { id: 'item_17', label: 'توفر معدات الطوارئ', category: 'emergency' },
-            { id: 'item_18', label: 'الالتزام بمعايير السلامة', category: 'safety' },
-            { id: 'item_19', label: 'وجود تراخيص سارية', category: 'licenses' },
-            { id: 'item_20', label: 'التخلص السليم من النفايات', category: 'waste' },
-            { id: 'item_21', label: 'عزل الحيوانات المريضة', category: 'isolation' },
-            { id: 'item_22', label: 'توفر برنامج وقائي صحي', category: 'health_program' },
-            { id: 'item_23', label: 'مستوى الرائحة مقبول', category: 'smell' },
-            { id: 'item_24', label: 'توفر أدوات التنظيف', category: 'cleaning_tools' },
-            { id: 'item_25', label: 'الالتزام بالكثافة المناسبة للحيوانات', category: 'density' }
+            { id: 'item_2', label: 'بنود الرقابة على المنشآت الخاضعة للرقابة البيطرية', category: 'veterinary' },
+            { id: 'item_3', label: 'بنود الرقابة على منشآت الحيوانات الأليفة', category: 'pets' },
+            { id: 'item_4', label: 'بنود الرقابة على الحيوانات', category: 'animal_control' }
         ];
         
         // Storage for inspection photos
@@ -822,29 +799,6 @@
         }
         
         function submitInspectionReport() {
-            // Validate facility details
-            const jobTitle = document.getElementById('jobTitle').value.trim();
-            const phoneNumber = document.getElementById('phoneNumber').value.trim();
-            const agreeToReport = document.getElementById('agreeToReport').checked;
-            
-            // Validate job title
-            if (!jobTitle || jobTitle.length < 2 || jobTitle.length > 100) {
-                alert('⚠️ يرجى إدخال المسمى الوظيفي (2-100 حرف)');
-                return;
-            }
-            
-            // Validate phone number (basic UAE format)
-            const phoneRegex = /^[0-9+\-\s()]{7,20}$/;
-            if (!phoneNumber || !phoneRegex.test(phoneNumber)) {
-                alert('⚠️ يرجى إدخال رقم هاتف صحيح');
-                return;
-            }
-            
-            if (!agreeToReport) {
-                alert('⚠️ يرجى الموافقة على تقرير التفتيش');
-                return;
-            }
-            
             // Collect all inspection data
             const inspectionData = {
                 inspectors: inspectors,
@@ -852,11 +806,6 @@
                 shift: shift,
                 area: area,
                 shops: shops,
-                facilityDetails: {
-                    jobTitle: jobTitle,
-                    phoneNumber: phoneNumber,
-                    agreed: agreeToReport
-                },
                 items: [],
                 photos: inspectionPhotos,
                 timestamp: new Date().toISOString()

@@ -8644,17 +8644,15 @@ console.log('Smart distribution functions initialized');
                         </div>
                     </div>
                 </div>
-                <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
-                    <button onclick="verifyPassword()" class="forgot-password-link" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                        ✅ التحقق من كلمة المرور
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; gap: 15px; flex-wrap: wrap;">
+                    <button onclick="verifyPassword()" class="verify-password-btn" title="تحقق من كلمة المرور">
+                        ✅ دخول
                     </button>
-                    <button onclick="showChangePasswordForm()" class="forgot-password-link" style="padding: 10px 20px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                        🔄 تغيير كلمة المرور
-                    </button>
-                    <button onclick="showForgotPasswordModal()" class="forgot-password-link">
+                    <button onclick="alert('لاستعادة كلمة المرور، يرجى التواصل مع المشرف أو مدير النظام')" class="forgot-password-link">
                         🔑 نسيت كلمة المرور؟
                     </button>
                 </div>
+                <div id="passwordVerificationStatus" style="margin-top: 15px; display: none;"></div>
             </div>
             
             <!-- Detailed Inspection Checklist -->
@@ -9178,6 +9176,63 @@ console.log('Smart distribution functions initialized');
     color: #764ba2;
 }
 
+.verify-password-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1.1em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.verify-password-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.password-status-success {
+    padding: 15px;
+    background: #d4edda;
+    color: #155724;
+    border: 2px solid #c3e6cb;
+    border-radius: 10px;
+    font-size: 1em;
+    font-weight: 600;
+}
+
+.password-status-error {
+    padding: 15px;
+    background: #f8d7da;
+    color: #721c24;
+    border: 2px solid #f5c6cb;
+    border-radius: 10px;
+    font-size: 1em;
+    font-weight: 600;
+}
+
+.change-password-btn {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 600;
+    margin-top: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3);
+}
+
+.change-password-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+}
+
 .checklist-container {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
@@ -9383,6 +9438,11 @@ console.log('Smart distribution functions initialized');
     .submit-btn {
         padding: 15px 40px;
         font-size: 1.1em;
+    }
+    
+    .verify-password-btn {
+        width: 100%;
+        margin-bottom: 10px;
     }
 }
 </style>
@@ -29461,45 +29521,91 @@ function isValidPassword(password, username) {
 function verifyPassword() {
     const password = document.getElementById('shelterInspectorPassword').value;
     const username = document.getElementById('shelterInspectorUsername').value;
+    const statusDiv = document.getElementById('passwordVerificationStatus');
     
     if (!password) {
-        alert('⚠️ يرجى إدخال كلمة المرور');
+        statusDiv.className = 'password-status-error';
+        statusDiv.innerHTML = '⚠️ يرجى إدخال كلمة المرور';
+        statusDiv.style.display = 'block';
         return;
     }
     
     // Validate password using helper function
     if (isValidPassword(password, username)) {
-        alert('✅ تم التحقق من كلمة المرور بنجاح!\n\nيمكنك الآن استخدام زر "تغيير كلمة المرور" إذا أردت تغييرها.');
+        statusDiv.className = 'password-status-success';
+        statusDiv.innerHTML = `
+            ✅ تم التحقق من كلمة المرور بنجاح!<br>
+            <button onclick="showChangePasswordForm()" class="change-password-btn">
+                🔄 تغيير كلمة المرور
+            </button>
+        `;
+        statusDiv.style.display = 'block';
     } else {
-        alert('❌ كلمة المرور غير صحيحة. يرجى المحاولة مرة أخرى');
+        statusDiv.className = 'password-status-error';
+        statusDiv.innerHTML = '❌ كلمة المرور غير صحيحة. يرجى المحاولة مرة أخرى';
+        statusDiv.style.display = 'block';
     }
 }
 
 // Show change password form
 function showChangePasswordForm() {
-    const password = document.getElementById('shelterInspectorPassword').value;
+    const statusDiv = document.getElementById('passwordVerificationStatus');
+    statusDiv.className = 'password-status-success';
+    statusDiv.innerHTML = `
+        <div style="margin-bottom: 15px;">
+            <strong>تغيير كلمة المرور</strong>
+        </div>
+        <div style="margin-bottom: 10px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: 600;">كلمة المرور الجديدة:</label>
+            <input type="password" id="newPassword" class="form-input-shelter" placeholder="أدخل كلمة المرور الجديدة" style="margin-bottom: 10px;">
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: 600;">تأكيد كلمة المرور الجديدة:</label>
+            <input type="password" id="confirmNewPassword" class="form-input-shelter" placeholder="أعد إدخال كلمة المرور الجديدة">
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="changePassword()" class="change-password-btn">
+                💾 حفظ كلمة المرور الجديدة
+            </button>
+            <button onclick="cancelChangePassword()" class="forgot-password-link" style="padding: 10px 20px;">
+                ❌ إلغاء
+            </button>
+        </div>
+    `;
+}
+
+// Change password
+function changePassword() {
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmNewPassword').value;
     const username = document.getElementById('shelterInspectorUsername').value;
+    const statusDiv = document.getElementById('passwordVerificationStatus');
     
-    if (!password || !isValidPassword(password, username)) {
-        alert('⚠️ يجب التحقق من كلمة المرور الحالية أولاً');
+    if (!newPassword || !confirmPassword) {
+        statusDiv.className = 'password-status-error';
+        statusDiv.innerHTML = '⚠️ يرجى ملء جميع الحقول';
+        statusDiv.style.display = 'block';
         return;
     }
     
-    const newPassword = prompt('أدخل كلمة المرور الجديدة (4 أحرف على الأقل):');
-    if (!newPassword) return;
-    
-    if (newPassword.length < 4) {
-        alert('⚠️ كلمة المرور يجب أن تكون 4 أحرف على الأقل');
-        return;
-    }
-    
-    const confirmPassword = prompt('أعد إدخال كلمة المرور الجديدة:');
     if (newPassword !== confirmPassword) {
-        alert('❌ كلمات المرور غير متطابقة. يرجى المحاولة مرة أخرى');
+        statusDiv.className = 'password-status-error';
+        statusDiv.innerHTML = '❌ كلمات المرور غير متطابقة. يرجى المحاولة مرة أخرى';
+        statusDiv.style.display = 'block';
+        return;
+    }
+    
+    // Note: Minimum password length kept at 4 for compatibility with existing system
+    if (newPassword.length < 4) {
+        statusDiv.className = 'password-status-error';
+        statusDiv.innerHTML = '⚠️ كلمة المرور يجب أن تكون 4 أحرف على الأقل';
+        statusDiv.style.display = 'block';
         return;
     }
     
     // Save new password to localStorage
+    // Note: Passwords stored in localStorage for offline functionality
+    // In production, consider server-side authentication with proper encryption
     const passwordData = JSON.parse(localStorage.getItem('inspectorPasswords') || '{}');
     passwordData[username] = newPassword;
     localStorage.setItem('inspectorPasswords', JSON.stringify(passwordData));
@@ -29507,7 +29613,25 @@ function showChangePasswordForm() {
     // Update the password field
     document.getElementById('shelterInspectorPassword').value = newPassword;
     
-    alert('✅ تم تغيير كلمة المرور بنجاح!\nيمكنك الآن استخدام كلمة المرور الجديدة عند حفظ التفتيش');
+    // Show success message
+    statusDiv.className = 'password-status-success';
+    statusDiv.innerHTML = `
+        ✅ تم تغيير كلمة المرور بنجاح!<br>
+        <small style="font-size: 0.9em; opacity: 0.9;">يمكنك الآن استخدام كلمة المرور الجديدة عند حفظ التفتيش</small>
+    `;
+    statusDiv.style.display = 'block';
+}
+
+// Cancel change password
+function cancelChangePassword() {
+    const statusDiv = document.getElementById('passwordVerificationStatus');
+    statusDiv.className = 'password-status-success';
+    statusDiv.innerHTML = `
+        ✅ تم التحقق من كلمة المرور بنجاح!<br>
+        <button onclick="showChangePasswordForm()" class="change-password-btn">
+            🔄 تغيير كلمة المرور
+        </button>
+    `;
 }
 
 function showForgotPasswordModal() {

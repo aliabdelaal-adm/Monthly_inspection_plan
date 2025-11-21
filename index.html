@@ -16075,6 +16075,28 @@ function toggleInspectorSort() {
     renderPlanTable(); // Re-render the table with new sorting
 }
 
+// Utility function to filter upcoming inspections (today and future dates)
+function filterUpcomingInspections(inspectionData) {
+    if (!inspectionData || inspectionData.length === 0) {
+        return [];
+    }
+    
+    // Get current date (without time) for comparison
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Filter to show only upcoming inspections (today and future dates)
+    return inspectionData.filter(item => {
+        if (!item.day) return false;
+        
+        const inspectionDate = new Date(item.day);
+        inspectionDate.setHours(0, 0, 0, 0);
+        
+        // Include today and future dates
+        return inspectionDate >= today;
+    });
+}
+
 // Render Group Inspection Table
 function renderGroupInspectionTable() {
     const container = document.getElementById('groupInspectionTableContainer');
@@ -16085,20 +16107,8 @@ function renderGroupInspectionTable() {
         return;
     }
     
-    // Get current date (without time) for comparison
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
     // Filter to show only upcoming inspections (today and future dates)
-    const upcomingInspections = groupInspectionData.filter(item => {
-        if (!item.day) return false;
-        
-        const inspectionDate = new Date(item.day);
-        inspectionDate.setHours(0, 0, 0, 0);
-        
-        // Include today and future dates
-        return inspectionDate >= today;
-    });
+    const upcomingInspections = filterUpcomingInspections(groupInspectionData);
     
     // Hide section if no upcoming inspections
     if (upcomingInspections.length === 0) {
@@ -16277,20 +16287,8 @@ function renderShelterInspectionTable() {
         return;
     }
     
-    // Get current date (without time) for comparison
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
     // Filter to show only upcoming inspections (today and future dates)
-    const upcomingInspections = shelterInspectionData.filter(item => {
-        if (!item.day) return false;
-        
-        const inspectionDate = new Date(item.day);
-        inspectionDate.setHours(0, 0, 0, 0);
-        
-        // Include today and future dates
-        return inspectionDate >= today;
-    });
+    const upcomingInspections = filterUpcomingInspections(shelterInspectionData);
     
     // Hide section if no upcoming inspections
     if (upcomingInspections.length === 0) {

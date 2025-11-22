@@ -4657,6 +4657,18 @@
             background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
         }
         
+        .edit-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .download-btn {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+        
+        .upload-btn {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+        
         .volume-control {
             background: white;
             padding: 15px;
@@ -6708,6 +6720,25 @@
                 </div>
             </div>
             
+            <!-- Inspection Sub-Items Management -->
+            <div class="control-section">
+                <h4>📋 إدارة بنود التفتيش الفرعية</h4>
+                <div class="control-info" style="margin-bottom: 15px;">
+                    <small>إدارة البنود الفرعية التي تظهر في تقرير التفتيش الجماعي عند اختيار "غير مستوفى"</small>
+                </div>
+                <div class="control-buttons">
+                    <button class="smart-btn edit-btn" onclick="openInspectionSubItemsManager()">
+                        ✏️ تحرير البنود الفرعية
+                    </button>
+                    <button class="smart-btn download-btn" onclick="downloadInspectionSubItems()">
+                        📥 تنزيل البنود
+                    </button>
+                    <button class="smart-btn upload-btn" onclick="uploadInspectionSubItems()">
+                        📤 رفع البنود
+                    </button>
+                </div>
+            </div>
+            
             <!-- Quick Actions -->
             <div class="control-section">
                 <h4>⚡ إجراءات سريعة</h4>
@@ -6727,6 +6758,37 @@
     <button id="smartControlToggle" class="smart-control-toggle" onclick="toggleSmartControlPanel()" title="لوحة التحكم الذكية">
         🎛️
     </button>
+    
+    <!-- Inspection Sub-Items Manager Modal -->
+    <div id="inspectionSubItemsManagerModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 20000; backdrop-filter: blur(5px);">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 20px; max-width: 900px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px 30px; border-radius: 20px 20px 0 0; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1;">
+                <h2 style="margin: 0; font-size: 1.8em;">📋 إدارة بنود التفتيش الفرعية</h2>
+                <button onclick="closeInspectionSubItemsManager()" style="background: rgba(255,255,255,0.2); border: 2px solid white; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 1.5em; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;">×</button>
+            </div>
+            
+            <div style="padding: 30px;">
+                <div style="margin-bottom: 25px; padding: 20px; background: #e3f2fd; border-radius: 12px; border-right: 4px solid #2196f3;">
+                    <p style="margin: 0; color: #1976d2; font-size: 1em;">
+                        ℹ️ هنا يمكنك إدارة البنود الفرعية التي تظهر للمفتشين عند اختيار "غير مستوفى" في تقرير التفتيش الجماعي. يمكنك إضافة أو تعديل أو حذف البنود لكل فئة رئيسية.
+                    </p>
+                </div>
+                
+                <div id="subItemsManagerContent">
+                    <!-- Content will be populated dynamically -->
+                </div>
+                
+                <div style="margin-top: 30px; display: flex; gap: 15px; justify-content: flex-end; border-top: 2px solid #f0f0f0; padding-top: 20px;">
+                    <button onclick="closeInspectionSubItemsManager()" style="background: #e0e0e0; color: #666; border: none; padding: 12px 30px; border-radius: 10px; cursor: pointer; font-size: 1.1em; font-weight: 600; transition: all 0.3s ease;">
+                        إلغاء
+                    </button>
+                    <button onclick="saveInspectionSubItems()" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; padding: 12px 30px; border-radius: 10px; cursor: pointer; font-size: 1.1em; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);">
+                        💾 حفظ التغييرات
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     
     <!-- Linear Volume Indicator (Developer Only) - Phone-style volume control -->
     <div id="linearVolumeIndicator">
@@ -12317,6 +12379,296 @@ function smartTestControls() {
     // Show results
     alert('نتائج الاختبار:\n\n' + testResults.join('\n'));
     console.log('Test results:', testResults);
+}
+
+// Inspection Sub-Items Management Functions
+async function openInspectionSubItemsManager() {
+    const modal = document.getElementById('inspectionSubItemsManagerModal');
+    const content = document.getElementById('subItemsManagerContent');
+    
+    // Load current sub-items
+    try {
+        const response = await fetch('inspection-subitems.json');
+        let subItems = {};
+        
+        if (response.ok) {
+            subItems = await response.json();
+        } else {
+            // Default structure if file doesn't exist
+            subItems = {
+                "item_1": {
+                    "name": "بنود الرقابة على المنشآت غير الغذائية الخاضعة للرقابة الصحية",
+                    "subitems": ["نظافة المنشأة", "التهوية المناسبة", "الإضاءة الكافية", "إدارة النفايات", "الوثائق والتصاريح"]
+                },
+                "item_2": {
+                    "name": "بنود الرقابة على المنشآت الخاضعة للرقابة البيطرية",
+                    "subitems": ["المعدات الطبية البيطرية", "النظافة والتعقيم", "السجلات الطبية", "تخزين الأدوية البيطرية", "الكوادر المؤهلة"]
+                },
+                "item_3": {
+                    "name": "بنود الرقابة على منشآت الحيوانات الأليفة",
+                    "subitems": ["حالة الأقفاص والحظائر", "توفر المياه النظيفة", "جودة الأعلاف والطعام", "الحالة الصحية للحيوانات", "المساحات المناسبة"]
+                },
+                "item_4": {
+                    "name": "بنود الرقابة على الحيوانات",
+                    "subitems": ["الحالة الصحية العامة", "التطعيمات والوثائق", "علامات سوء المعاملة", "الرعاية الطبية", "ظروف المعيشة"]
+                }
+            };
+        }
+        
+        // Store in window for later use
+        window.currentInspectionSubItems = subItems;
+        
+        // Render UI
+        let html = '';
+        Object.keys(subItems).forEach(itemId => {
+            const item = subItems[itemId];
+            html += `
+                <div style="background: #f8f9fa; border: 2px solid #dee2e6; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                    <h3 style="color: #495057; margin: 0 0 15px 0; font-size: 1.3em;">
+                        ${item.name}
+                    </h3>
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #495057;">
+                            البنود الفرعية (سطر لكل بند):
+                        </label>
+                        <textarea 
+                            id="subitems_${itemId}" 
+                            style="width: 100%; min-height: 120px; padding: 12px; border: 2px solid #ced4da; border-radius: 8px; font-family: inherit; font-size: 1em; resize: vertical;"
+                            placeholder="اكتب كل بند في سطر منفصل..."
+                        >${item.subitems.join('\n')}</textarea>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="addSampleSubItems('${itemId}')" style="background: #17a2b8; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
+                            ➕ إضافة عينات
+                        </button>
+                        <button onclick="clearSubItems('${itemId}')" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
+                            🗑️ مسح الكل
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        
+        content.innerHTML = html;
+        modal.style.display = 'block';
+    } catch (error) {
+        console.error('Error loading inspection sub-items:', error);
+        alert('حدث خطأ أثناء تحميل البنود الفرعية');
+    }
+}
+
+function closeInspectionSubItemsManager() {
+    const modal = document.getElementById('inspectionSubItemsManagerModal');
+    modal.style.display = 'none';
+}
+
+function addSampleSubItems(itemId) {
+    const textarea = document.getElementById(`subitems_${itemId}`);
+    if (textarea) {
+        const currentValue = textarea.value.trim();
+        const samples = {
+            'item_1': ['وجود صناديق القمامة', 'نظافة الأرضيات', 'نظافة الجدران', 'توفر مواد التنظيف'],
+            'item_2': ['صلاحية الأدوية', 'وجود عيادة بيطرية', 'معدات الفحص', 'سجلات التطعيم'],
+            'item_3': ['حجم القفص المناسب', 'نظافة الأقفاص', 'وجود مكان للنوم', 'وجود ألعاب'],
+            'item_4': ['وجود علامات مرض', 'وجود إصابات', 'السلوك الطبيعي', 'وزن الحيوان']
+        };
+        
+        if (samples[itemId]) {
+            const newValue = currentValue ? currentValue + '\n' + samples[itemId].join('\n') : samples[itemId].join('\n');
+            textarea.value = newValue;
+        }
+    }
+}
+
+function clearSubItems(itemId) {
+    const textarea = document.getElementById(`subitems_${itemId}`);
+    if (textarea && confirm('هل أنت متأكد من مسح جميع البنود الفرعية لهذا القسم؟')) {
+        textarea.value = '';
+    }
+}
+
+async function saveInspectionSubItems() {
+    if (!window.currentInspectionSubItems) {
+        alert('لا توجد بيانات للحفظ');
+        return;
+    }
+    
+    // Collect data from textareas
+    const updatedSubItems = {};
+    Object.keys(window.currentInspectionSubItems).forEach(itemId => {
+        const textarea = document.getElementById(`subitems_${itemId}`);
+        if (textarea) {
+            const lines = textarea.value.split('\n')
+                .map(line => line.trim())
+                .filter(line => line.length > 0);
+            
+            updatedSubItems[itemId] = {
+                name: window.currentInspectionSubItems[itemId].name,
+                subitems: lines
+            };
+        }
+    });
+    
+    // Save to GitHub
+    try {
+        const token = getGitHubToken();
+        if (!token) {
+            alert('يرجى تسجيل الدخول كمطور أولاً');
+            return;
+        }
+        
+        const repo = 'aliabdelaal-adm/Monthly_inspection_plan';
+        const filePath = 'inspection-subitems.json';
+        const content = JSON.stringify(updatedSubItems, null, 2);
+        const base64Content = btoa(unescape(encodeURIComponent(content)));
+        
+        // Get current file SHA
+        let sha = null;
+        try {
+            const getResponse = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (getResponse.ok) {
+                const fileData = await getResponse.json();
+                sha = fileData.sha;
+            }
+        } catch (e) {
+            console.log('File does not exist yet, will create new');
+        }
+        
+        // Save file
+        const requestBody = {
+            message: 'تحديث بنود التفتيش الفرعية',
+            content: base64Content
+        };
+        
+        if (sha) {
+            requestBody.sha = sha;
+        }
+        
+        const saveResponse = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        });
+        
+        if (saveResponse.ok) {
+            alert('✅ تم حفظ التغييرات بنجاح!');
+            closeInspectionSubItemsManager();
+        } else {
+            const error = await saveResponse.json();
+            throw new Error(error.message || 'فشل الحفظ');
+        }
+    } catch (error) {
+        console.error('Error saving sub-items:', error);
+        alert('❌ حدث خطأ أثناء حفظ التغييرات: ' + error.message);
+    }
+}
+
+function downloadInspectionSubItems() {
+    fetch('inspection-subitems.json')
+        .then(response => response.json())
+        .then(data => {
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'inspection-subitems.json';
+            link.click();
+            URL.revokeObjectURL(url);
+        })
+        .catch(error => {
+            console.error('Error downloading sub-items:', error);
+            alert('حدث خطأ أثناء تنزيل البنود');
+        });
+}
+
+function uploadInspectionSubItems() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        try {
+            const text = await file.text();
+            const data = JSON.parse(text);
+            
+            // Validate structure
+            if (!data || typeof data !== 'object') {
+                throw new Error('صيغة الملف غير صحيحة');
+            }
+            
+            // Save to GitHub
+            const token = getGitHubToken();
+            if (!token) {
+                alert('يرجى تسجيل الدخول كمطور أولاً');
+                return;
+            }
+            
+            const repo = 'aliabdelaal-adm/Monthly_inspection_plan';
+            const filePath = 'inspection-subitems.json';
+            const content = JSON.stringify(data, null, 2);
+            const base64Content = btoa(unescape(encodeURIComponent(content)));
+            
+            // Get current file SHA
+            let sha = null;
+            try {
+                const getResponse = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (getResponse.ok) {
+                    const fileData = await getResponse.json();
+                    sha = fileData.sha;
+                }
+            } catch (error) {
+                console.log('File does not exist yet, will create new');
+            }
+            
+            // Save file
+            const requestBody = {
+                message: 'رفع بنود التفتيش الفرعية من ملف',
+                content: base64Content
+            };
+            
+            if (sha) {
+                requestBody.sha = sha;
+            }
+            
+            const saveResponse = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            });
+            
+            if (saveResponse.ok) {
+                alert('✅ تم رفع الملف وحفظه بنجاح!');
+            } else {
+                const error = await saveResponse.json();
+                throw new Error(error.message || 'فشل الرفع');
+            }
+        } catch (error) {
+            console.error('Error uploading file:', error);
+            alert('❌ حدث خطأ: ' + error.message);
+        }
+    };
+    
+    input.click();
 }
 
 // Initialize on page load

@@ -15426,6 +15426,9 @@ function fillAreasDropdowns() {
 // Store selected shops for custom dropdown
 let customSelectedShops = [];
 
+// IMPORTANT: This function shows ALL shops in the selected area WITHOUT any filtering
+// It ignores duplicate prevention rules to allow adding new inspections freely
+// This prevents issues where shops don't appear due to previous assignments (especially for Al-Wathba South area)
 function fillShopsDropdowns(selectedAreaId = null) {
     const shopsSelect = document.getElementById('formShops');
     const customShopsContent = document.getElementById('customShopsContent');
@@ -15455,7 +15458,8 @@ function fillShopsDropdowns(selectedAreaId = null) {
         }
         
         if (selectedAreaIdValue && selectedAreaName) {
-            // First, add shops from the selected area
+            // First, add ALL shops from the selected area
+            // NO FILTERING APPLIED - Shows all shops regardless of previous assignments
             const selectedAreaShops = shopsData.filter(shop => {
                 return shop.areaId === selectedAreaIdValue;
             });

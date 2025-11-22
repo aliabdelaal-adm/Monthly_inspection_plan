@@ -18903,6 +18903,9 @@
         }
         
         // Update group form shops dropdown based on selected area
+        // IMPORTANT: This function shows ALL shops in the selected area WITHOUT any filtering
+        // It ignores duplicate prevention rules to allow adding new inspections freely
+        // This prevents issues where shops don't appear due to previous assignments
         function updateGroupFormShops() {
             const areaSelect = document.getElementById('smartGroupFormArea');
             const shopSelect = document.getElementById('smartGroupFormShopName');
@@ -18927,7 +18930,9 @@
                 }
             }
             
-            // Get all shops for the selected area
+            // Get ALL shops for the selected area (including Al-Wathba South "الوثبة جنوب")
+            // NO FILTERING APPLIED - Shows all shops regardless of previous assignments
+            // This ensures shops always appear to allow adding new inspections
             if (planData && planData.shops) {
                 const areaShops = planData.shops.filter(shop => shop.area === areaName);
                 
@@ -18953,6 +18958,8 @@
         }
         
         // Update shelter form shelters dropdown based on selected area
+        // IMPORTANT: This function shows ALL shelters in the selected area WITHOUT any filtering
+        // It ignores duplicate prevention rules to allow adding new inspection plans freely
         function updateShelterFormShelters() {
             const areaSelect = document.getElementById('smartShelterFormArea');
             const shelterSelect = document.getElementById('smartShelterFormShelterName');
@@ -18977,7 +18984,8 @@
                 }
             }
             
-            // Get all shops for the selected area (treating shops as shelters in this context)
+            // Get ALL shops for the selected area (treating shops as shelters in this context)
+            // NO FILTERING APPLIED - Shows all shelters regardless of previous assignments
             if (planData && planData.shops) {
                 const areaShelters = planData.shops.filter(shop => shop.area === areaName);
                 

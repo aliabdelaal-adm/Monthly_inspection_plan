@@ -462,6 +462,215 @@
                 grid-template-columns: 1fr 1fr;
             }
         }
+        
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e3f2fd 100%);
+            padding: 25px 30px;
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #2196f3;
+        }
+        
+        .modal-close-btn {
+            background: transparent;
+            border: none;
+            font-size: 2em;
+            cursor: pointer;
+            color: #666;
+            transition: color 0.3s ease;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        
+        .modal-close-btn:hover {
+            color: #d32f2f;
+            background: rgba(211, 47, 47, 0.1);
+        }
+        
+        .modal-body {
+            padding: 30px;
+        }
+        
+        .modal-footer {
+            padding: 20px 30px;
+            border-top: 2px solid #f0f0f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+        
+        .modal-btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-btn-cancel {
+            background: #e0e0e0;
+            color: #666;
+        }
+        
+        .modal-btn-cancel:hover {
+            background: #d0d0d0;
+        }
+        
+        .modal-btn-confirm {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+        
+        .modal-btn-confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        }
+        
+        /* Sub-items checkbox list */
+        #subItemsCheckboxList {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .subitem-checkbox-label {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .subitem-checkbox-label:hover {
+            background: #fff5e6;
+            border-color: #ff9800;
+        }
+        
+        .subitem-checkbox-label input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-left: 12px;
+            cursor: pointer;
+        }
+        
+        .subitem-checkbox-label.checked {
+            background: #fff3e0;
+            border-color: #ff9800;
+        }
+        
+        /* Actions list */
+        .actions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .action-option {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border: 3px solid #e0e0e0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .action-option:hover {
+            background: #fff;
+            border-color: #2196f3;
+            transform: translateX(-5px);
+        }
+        
+        .action-option input[type="radio"] {
+            width: 22px;
+            height: 22px;
+            margin-left: 15px;
+            cursor: pointer;
+        }
+        
+        .action-label {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .action-option input[type="radio"]:checked + .action-label {
+            color: #2196f3;
+        }
+        
+        @media (max-width: 768px) {
+            .modal-content {
+                width: 95%;
+                max-height: 95vh;
+            }
+            
+            .modal-header {
+                padding: 20px;
+            }
+            
+            .modal-body {
+                padding: 20px;
+            }
+            
+            .modal-footer {
+                padding: 15px 20px;
+                flex-direction: column;
+            }
+            
+            .modal-btn {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -578,6 +787,115 @@
         </div>
     </div>
     
+    <!-- Unfulfilled Items Modal -->
+    <div id="unfulfilledItemsModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="margin: 0; color: #d32f2f;">❌ البنود غير المستوفية</h2>
+                <button class="modal-close-btn" onclick="closeUnfulfilledItemsModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 20px; color: #666;">يرجى تحديد أو كتابة البنود الفرعية غير المستوفية:</p>
+                
+                <!-- Predefined sub-items checkboxes -->
+                <div id="subItemsCheckboxList" style="margin-bottom: 20px;">
+                    <!-- Will be populated dynamically -->
+                </div>
+                
+                <!-- Manual text entry -->
+                <div style="margin-top: 20px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #333;">
+                        أو أضف بنود أخرى يدوياً:
+                    </label>
+                    <textarea 
+                        id="manualUnfulfilledItems" 
+                        style="width: 100%; min-height: 100px; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-family: inherit; font-size: 1em; resize: vertical;"
+                        placeholder="اكتب البنود غير المستوفية هنا (سطر لكل بند)..."
+                    ></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-cancel" onclick="cancelUnfulfilledItems()">إلغاء</button>
+                <button class="modal-btn modal-btn-confirm" onclick="confirmUnfulfilledItems()">تأكيد</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Actions Modal -->
+    <div id="actionsModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="margin: 0; color: #f57c00;">⚖️ الإجراء المتخذ</h2>
+                <button class="modal-close-btn" onclick="closeActionsModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 20px; color: #666;">يرجى اختيار الإجراء المناسب:</p>
+                
+                <div class="actions-list">
+                    <label class="action-option">
+                        <input type="radio" name="actionType" value="توعية">
+                        <span class="action-label">🔵 توعية</span>
+                    </label>
+                    <label class="action-option">
+                        <input type="radio" name="actionType" value="إنذار">
+                        <span class="action-label">🟡 إنذار</span>
+                    </label>
+                    <label class="action-option">
+                        <input type="radio" name="actionType" value="إخطار">
+                        <span class="action-label">🟠 إخطار</span>
+                    </label>
+                    <label class="action-option">
+                        <input type="radio" name="actionType" value="مخالفة">
+                        <span class="action-label">🔴 مخالفة</span>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-cancel" onclick="cancelAction()">إلغاء</button>
+                <button class="modal-btn modal-btn-confirm" onclick="confirmAction()">تأكيد</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Deadline Modal (shown when إنذار is selected) -->
+    <div id="deadlineModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="margin: 0; color: #ff9800;">📅 مهلة الإجراء</h2>
+                <button class="modal-close-btn" onclick="closeDeadlineModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 20px; color: #666;">يرجى تحديد المدة الزمنية المناسبة لتصحيح المخالفة:</p>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #333;">
+                        تاريخ انتهاء المهلة:
+                    </label>
+                    <input 
+                        type="date" 
+                        id="deadlineDate" 
+                        style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-family: inherit; font-size: 1em;"
+                    >
+                </div>
+                
+                <div>
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #333;">
+                        ملاحظات إضافية (اختياري):
+                    </label>
+                    <textarea 
+                        id="deadlineNotes" 
+                        style="width: 100%; min-height: 80px; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-family: inherit; font-size: 1em; resize: vertical;"
+                        placeholder="أضف أي ملاحظات إضافية عن المهلة..."
+                    ></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-cancel" onclick="cancelDeadline()">إلغاء</button>
+                <button class="modal-btn modal-btn-confirm" onclick="confirmDeadline()">تأكيد</button>
+            </div>
+        </div>
+    </div>
+    
     <script>
         // Get URL parameters
         const urlParams = new URLSearchParams(window.location.search);
@@ -598,8 +916,69 @@
         // Storage for inspection photos
         let inspectionPhotos = [];
         
+        // Storage for unfulfilled items and actions
+        let unfulfilledItemsData = {};
+        
+        // Storage for inspection sub-items
+        let inspectionSubItems = {};
+        
+        // Load inspection sub-items from JSON file
+        async function loadInspectionSubItems() {
+            try {
+                const response = await fetch('inspection-subitems.json');
+                if (response.ok) {
+                    inspectionSubItems = await response.json();
+                } else {
+                    console.warn('Could not load inspection sub-items, using defaults');
+                    // Fallback to default sub-items
+                    inspectionSubItems = {
+                        "item_1": {
+                            "name": "بنود الرقابة على المنشآت غير الغذائية الخاضعة للرقابة الصحية",
+                            "subitems": ["نظافة المنشأة", "التهوية المناسبة", "الإضاءة الكافية", "إدارة النفايات", "الوثائق والتصاريح"]
+                        },
+                        "item_2": {
+                            "name": "بنود الرقابة على المنشآت الخاضعة للرقابة البيطرية",
+                            "subitems": ["المعدات الطبية البيطرية", "النظافة والتعقيم", "السجلات الطبية", "تخزين الأدوية البيطرية", "الكوادر المؤهلة"]
+                        },
+                        "item_3": {
+                            "name": "بنود الرقابة على منشآت الحيوانات الأليفة",
+                            "subitems": ["حالة الأقفاص والحظائر", "توفر المياه النظيفة", "جودة الأعلاف والطعام", "الحالة الصحية للحيوانات", "المساحات المناسبة"]
+                        },
+                        "item_4": {
+                            "name": "بنود الرقابة على الحيوانات",
+                            "subitems": ["الحالة الصحية العامة", "التطعيمات والوثائق", "علامات سوء المعاملة", "الرعاية الطبية", "ظروف المعيشة"]
+                        }
+                    };
+                }
+            } catch (error) {
+                console.error('Error loading inspection sub-items:', error);
+                // Use default fallback
+                inspectionSubItems = {
+                    "item_1": {
+                        "name": "بنود الرقابة على المنشآت غير الغذائية الخاضعة للرقابة الصحية",
+                        "subitems": ["نظافة المنشأة", "التهوية المناسبة", "الإضاءة الكافية", "إدارة النفايات", "الوثائق والتصاريح"]
+                    },
+                    "item_2": {
+                        "name": "بنود الرقابة على المنشآت الخاضعة للرقابة البيطرية",
+                        "subitems": ["المعدات الطبية البيطرية", "النظافة والتعقيم", "السجلات الطبية", "تخزين الأدوية البيطرية", "الكوادر المؤهلة"]
+                    },
+                    "item_3": {
+                        "name": "بنود الرقابة على منشآت الحيوانات الأليفة",
+                        "subitems": ["حالة الأقفاص والحظائر", "توفر المياه النظيفة", "جودة الأعلاف والطعام", "الحالة الصحية للحيوانات", "المساحات المناسبة"]
+                    },
+                    "item_4": {
+                        "name": "بنود الرقابة على الحيوانات",
+                        "subitems": ["الحالة الصحية العامة", "التطعيمات والوثائق", "علامات سوء المعاملة", "الرعاية الطبية", "ظروف المعيشة"]
+                    }
+                };
+            }
+        }
+        
         // Initialize page
-        function initializePage() {
+        async function initializePage() {
+            // Load inspection sub-items first
+            await loadInspectionSubItems();
+            
             // Display inspection details
             displayInspectionDetails();
             
@@ -646,7 +1025,7 @@
                                 <span class="radio-label fulfilled">✅ مستوفى</span>
                             </label>
                             <label class="radio-option">
-                                <input type="radio" name="${item.id}" value="غير مستوفى">
+                                <input type="radio" name="${item.id}" value="غير مستوفى" data-item-id="${item.id}">
                                 <span class="radio-label unfulfilled">❌ غير مستوفى</span>
                             </label>
                             <label class="radio-option">
@@ -663,6 +1042,16 @@
             });
             
             container.innerHTML = html;
+            
+            // Add event listeners to "غير مستوفى" radio buttons
+            document.querySelectorAll('input[type="radio"][value="غير مستوفى"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.checked) {
+                        const itemId = this.getAttribute('data-item-id');
+                        openUnfulfilledItemsModal(itemId);
+                    }
+                });
+            });
         }
         
         function togglePasswordVisibility() {
@@ -777,6 +1166,255 @@
             displayPhotos();
         }
         
+        // Variables to track current item being processed
+        let currentProcessingItemId = null;
+        
+        // Open unfulfilled items modal
+        function openUnfulfilledItemsModal(itemId) {
+            currentProcessingItemId = itemId;
+            const modal = document.getElementById('unfulfilledItemsModal');
+            const subItemsList = document.getElementById('subItemsCheckboxList');
+            const manualTextarea = document.getElementById('manualUnfulfilledItems');
+            
+            // Clear previous data
+            subItemsList.innerHTML = '';
+            manualTextarea.value = '';
+            
+            // Get sub-items for this item
+            const itemData = inspectionSubItems[itemId];
+            if (itemData && itemData.subitems && itemData.subitems.length > 0) {
+                itemData.subitems.forEach((subitem, index) => {
+                    const label = document.createElement('label');
+                    label.className = 'subitem-checkbox-label';
+                    label.innerHTML = `
+                        <input type="checkbox" value="${subitem}" id="subitem_${itemId}_${index}">
+                        <span>${subitem}</span>
+                    `;
+                    
+                    // Add change event to toggle checked class
+                    const checkbox = label.querySelector('input[type="checkbox"]');
+                    checkbox.addEventListener('change', function() {
+                        if (this.checked) {
+                            label.classList.add('checked');
+                        } else {
+                            label.classList.remove('checked');
+                        }
+                    });
+                    
+                    subItemsList.appendChild(label);
+                });
+            } else {
+                subItemsList.innerHTML = '<p style="color: #999; font-style: italic;">لا توجد بنود فرعية محددة مسبقاً. يرجى الكتابة يدوياً أدناه.</p>';
+            }
+            
+            // Load previously saved data if exists
+            if (unfulfilledItemsData[itemId]) {
+                const savedData = unfulfilledItemsData[itemId];
+                
+                // Check saved checkboxes
+                if (savedData.selectedSubItems) {
+                    savedData.selectedSubItems.forEach(subitemValue => {
+                        const checkbox = document.querySelector(`#subItemsCheckboxList input[value="${subitemValue}"]`);
+                        if (checkbox) {
+                            checkbox.checked = true;
+                            checkbox.parentElement.classList.add('checked');
+                        }
+                    });
+                }
+                
+                // Set manual text
+                if (savedData.manualItems) {
+                    manualTextarea.value = savedData.manualItems;
+                }
+            }
+            
+            modal.style.display = 'flex';
+        }
+        
+        // Close unfulfilled items modal
+        function closeUnfulfilledItemsModal() {
+            const modal = document.getElementById('unfulfilledItemsModal');
+            modal.style.display = 'none';
+            currentProcessingItemId = null;
+        }
+        
+        // Cancel unfulfilled items - revert radio selection
+        function cancelUnfulfilledItems() {
+            if (currentProcessingItemId) {
+                // Uncheck the "غير مستوفى" radio button
+                const radio = document.querySelector(`input[name="${currentProcessingItemId}"][value="غير مستوفى"]`);
+                if (radio) {
+                    radio.checked = false;
+                }
+                
+                // Clear any saved data for this item
+                delete unfulfilledItemsData[currentProcessingItemId];
+            }
+            closeUnfulfilledItemsModal();
+        }
+        
+        // Confirm unfulfilled items and proceed to actions modal
+        function confirmUnfulfilledItems() {
+            if (!currentProcessingItemId) return;
+            
+            // Collect selected checkboxes
+            const selectedSubItems = [];
+            document.querySelectorAll('#subItemsCheckboxList input[type="checkbox"]:checked').forEach(checkbox => {
+                selectedSubItems.push(checkbox.value);
+            });
+            
+            // Get manual text
+            const manualItems = document.getElementById('manualUnfulfilledItems').value.trim();
+            
+            // Validate that at least something is selected or written
+            if (selectedSubItems.length === 0 && !manualItems) {
+                alert('⚠️ يرجى تحديد أو كتابة بند واحد على الأقل من البنود غير المستوفية');
+                return;
+            }
+            
+            // Save data
+            if (!unfulfilledItemsData[currentProcessingItemId]) {
+                unfulfilledItemsData[currentProcessingItemId] = {};
+            }
+            unfulfilledItemsData[currentProcessingItemId].selectedSubItems = selectedSubItems;
+            unfulfilledItemsData[currentProcessingItemId].manualItems = manualItems;
+            
+            // Close this modal and open actions modal
+            closeUnfulfilledItemsModal();
+            openActionsModal(currentProcessingItemId);
+        }
+        
+        // Open actions modal
+        function openActionsModal(itemId) {
+            const modal = document.getElementById('actionsModal');
+            
+            // Clear previous selection
+            document.querySelectorAll('input[name="actionType"]').forEach(radio => {
+                radio.checked = false;
+            });
+            
+            // Load previously saved action if exists
+            if (unfulfilledItemsData[itemId] && unfulfilledItemsData[itemId].action) {
+                const savedAction = unfulfilledItemsData[itemId].action;
+                const radio = document.querySelector(`input[name="actionType"][value="${savedAction}"]`);
+                if (radio) {
+                    radio.checked = true;
+                }
+            }
+            
+            modal.style.display = 'flex';
+        }
+        
+        // Close actions modal
+        function closeActionsModal() {
+            const modal = document.getElementById('actionsModal');
+            modal.style.display = 'none';
+        }
+        
+        // Cancel action - go back to unfulfilled items modal
+        function cancelAction() {
+            closeActionsModal();
+            if (currentProcessingItemId) {
+                openUnfulfilledItemsModal(currentProcessingItemId);
+            }
+        }
+        
+        // Confirm action
+        function confirmAction() {
+            if (!currentProcessingItemId) return;
+            
+            // Get selected action
+            const selectedAction = document.querySelector('input[name="actionType"]:checked');
+            if (!selectedAction) {
+                alert('⚠️ يرجى اختيار إجراء');
+                return;
+            }
+            
+            const actionValue = selectedAction.value;
+            
+            // Save action
+            if (!unfulfilledItemsData[currentProcessingItemId]) {
+                unfulfilledItemsData[currentProcessingItemId] = {};
+            }
+            unfulfilledItemsData[currentProcessingItemId].action = actionValue;
+            
+            closeActionsModal();
+            
+            // If action is "إنذار", open deadline modal
+            if (actionValue === 'إنذار') {
+                openDeadlineModal(currentProcessingItemId);
+            } else {
+                // All done, reset current processing item
+                currentProcessingItemId = null;
+            }
+        }
+        
+        // Open deadline modal
+        function openDeadlineModal(itemId) {
+            const modal = document.getElementById('deadlineModal');
+            const dateInput = document.getElementById('deadlineDate');
+            const notesInput = document.getElementById('deadlineNotes');
+            
+            // Set minimum date to today
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.min = today;
+            
+            // Clear previous data
+            dateInput.value = '';
+            notesInput.value = '';
+            
+            // Load previously saved deadline if exists
+            if (unfulfilledItemsData[itemId] && unfulfilledItemsData[itemId].deadline) {
+                const savedDeadline = unfulfilledItemsData[itemId].deadline;
+                dateInput.value = savedDeadline.date || '';
+                notesInput.value = savedDeadline.notes || '';
+            }
+            
+            modal.style.display = 'flex';
+        }
+        
+        // Close deadline modal
+        function closeDeadlineModal() {
+            const modal = document.getElementById('deadlineModal');
+            modal.style.display = 'none';
+        }
+        
+        // Cancel deadline - go back to actions modal
+        function cancelDeadline() {
+            closeDeadlineModal();
+            if (currentProcessingItemId) {
+                openActionsModal(currentProcessingItemId);
+            }
+        }
+        
+        // Confirm deadline
+        function confirmDeadline() {
+            if (!currentProcessingItemId) return;
+            
+            const dateValue = document.getElementById('deadlineDate').value;
+            const notesValue = document.getElementById('deadlineNotes').value.trim();
+            
+            // Validate that date is selected
+            if (!dateValue) {
+                alert('⚠️ يرجى تحديد تاريخ انتهاء المهلة');
+                return;
+            }
+            
+            // Save deadline data
+            if (!unfulfilledItemsData[currentProcessingItemId]) {
+                unfulfilledItemsData[currentProcessingItemId] = {};
+            }
+            unfulfilledItemsData[currentProcessingItemId].deadline = {
+                date: dateValue,
+                notes: notesValue
+            };
+            
+            closeDeadlineModal();
+            
+            // All done, reset current processing item
+            currentProcessingItemId = null;
+        }
+        
         function submitInspectionReport() {
             // Validate password
             const password = document.getElementById('inspectorPassword').value.trim();
@@ -802,11 +1440,18 @@
             const checklistData = [];
             checklistItems.forEach(item => {
                 const selected = document.querySelector(`input[name="${item.id}"]:checked`);
-                checklistData.push({
+                const itemData = {
                     id: item.id,
                     label: item.label,
                     value: selected ? selected.value : null
-                });
+                };
+                
+                // If item is "غير مستوفى", include the detailed unfulfilled items data
+                if (selected && selected.value === 'غير مستوفى' && unfulfilledItemsData[item.id]) {
+                    itemData.unfulfilledDetails = unfulfilledItemsData[item.id];
+                }
+                
+                checklistData.push(itemData);
             });
             
             // Create inspection report object

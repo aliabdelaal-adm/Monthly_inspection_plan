@@ -13157,13 +13157,13 @@
                                         <strong style="color: #856404;">تفاصيل عدم الاستيفاء:</strong>
                                         <div style="margin-top: 8px; padding: 8px; background: white; border: 2px solid #ddd; border-radius: 8px; font-size: 0.9em; color: #666;">
                                             ${typeof item.unfulfilledDetails === 'object' ? 
-                                                (item.unfulfilledDetails.selectedSubItems ? 
-                                                    '<div><strong>البنود المحددة:</strong> ' + item.unfulfilledDetails.selectedSubItems.join('، ') + '</div>' : '') +
+                                                (item.unfulfilledDetails.selectedSubItems && Array.isArray(item.unfulfilledDetails.selectedSubItems) ? 
+                                                    '<div><strong>البنود المحددة:</strong> ' + item.unfulfilledDetails.selectedSubItems.map(s => String(s).replace(/</g, '&lt;').replace(/>/g, '&gt;')).join('، ') + '</div>' : '') +
                                                 (item.unfulfilledDetails.manualItems ? 
-                                                    '<div style="margin-top: 5px;"><strong>بنود إضافية:</strong> ' + item.unfulfilledDetails.manualItems + '</div>' : '') +
+                                                    '<div style="margin-top: 5px;"><strong>بنود إضافية:</strong> ' + String(item.unfulfilledDetails.manualItems).replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div>' : '') +
                                                 (item.unfulfilledDetails.action ? 
-                                                    '<div style="margin-top: 5px;"><strong>الإجراء:</strong> ' + item.unfulfilledDetails.action + '</div>' : '')
-                                                : item.unfulfilledDetails
+                                                    '<div style="margin-top: 5px;"><strong>الإجراء:</strong> ' + String(item.unfulfilledDetails.action).replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div>' : '')
+                                                : String(item.unfulfilledDetails).replace(/</g, '&lt;').replace(/>/g, '&gt;')
                                             }
                                         </div>
                                     </div>
@@ -13317,9 +13317,13 @@
             if (!confirm('هل أنت متأكد من حذف هذا البند؟')) return;
             
             const container = document.getElementById('checklistItemsContainer');
-            if (!container || !container.children[index]) return;
+            if (!container) return;
             
-            container.children[index].remove();
+            // Find the item by looking for the input with this index
+            const itemToRemove = container.querySelector(`#item_label_${index}`)?.closest('div[style*="background: #f8f9fa"]');
+            if (itemToRemove) {
+                itemToRemove.remove();
+            }
         };
         
         // Save edited report back to GitHub

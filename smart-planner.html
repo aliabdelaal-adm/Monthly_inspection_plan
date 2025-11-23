@@ -4367,6 +4367,7 @@
         let mapSelectedShops = [];
         let infoWindow = null;
         let isMapInitialized = false;
+        let newShopsAddedFromMap = []; // Track new shops added from map clicks
         
         // Get map configuration from loaded config
         const MAP_CONFIG = window.GOOGLE_MAPS_CONFIG ? window.GOOGLE_MAPS_CONFIG.mapConfig : {
@@ -4725,12 +4726,393 @@
                 
                 infoWindow = new google.maps.InfoWindow();
                 
+                // Initialize Places Service for discovering new shops
+                window.placesService = new google.maps.places.PlacesService(map);
+                
+                // Add click listener to map for direct shop addition
+                map.addListener('click', async (event) => {
+                    await handleMapClickForShopAddition(event);
+                });
+                
                 // Load shop markers (async)
                 await loadShopMarkers();
             } catch (error) {
                 console.error('Error creating map:', error);
                 alert('⚠️ حدث خطأ في إنشاء الخريطة. يرجى المحاولة مرة أخرى.');
             }
+        }
+        
+        // Handle map click for direct shop addition
+        async function handleMapClickForShopAddition(event) {
+            const latLng = event.latLng;
+            
+            // Show loading indicator
+            const loadingMarker = new google.maps.Marker({
+                position: latLng,
+                map: map,
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 10,
+                    fillColor: '#667eea',
+                    fillOpacity: 0.6,
+                    strokeColor: 'white',
+                    strokeWeight: 2
+                },
+                animation: google.maps.Animation.BOUNCE
+            });
+            
+            try {
+                // Search for nearby places (pet shops, stores, etc.)
+                const request = {
+                    location: latLng,
+                    radius: 50, // Search within 50 meters
+                    type: ['pet_store', 'store', 'establishment']
+                };
+                
+                const nearbyPlaces = await new Promise((resolve, reject) => {
+                    window.placesService.nearbySearch(request, (results, status) => {
+                        if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
+                            resolve(results);
+                        } else {
+                            resolve([]);
+                        }
+                    });
+                });
+                
+                // Remove loading marker
+                loadingMarker.setMap(null);
+                
+                if (nearbyPlaces.length === 0) {
+                    // No shops found, show option to add custom shop
+                    showAddCustomShopDialog(latLng);
+                } else if (nearbyPlaces.length === 1) {
+                    // Single shop found, get details and show
+                    await showShopDetailsForAddition(nearbyPlaces[0], latLng);
+                } else {
+                    // Multiple shops found, let user choose
+                    showShopSelectionDialog(nearbyPlaces, latLng);
+                }
+            } catch (error) {
+                loadingMarker.setMap(null);
+                console.error('Error handling map click:', error);
+                alert('⚠️ حدث خطأ في البحث عن المحلات. حاول النقر مرة أخرى.');
+            }
+        }
+        
+        // Show dialog to select from multiple shops
+        function showShopSelectionDialog(places, latLng) {
+            // Validate coordinates
+            const lat = parseFloat(latLng.lat());
+            const lng = parseFloat(latLng.lng());
+            
+            if (isNaN(lat) || isNaN(lng)) {
+                console.error('Invalid coordinates:', lat, lng);
+                alert('⚠️ إحداثيات غير صالحة');
+                return;
+            }
+            
+            const content = `
+                <div style="font-family: Cairo, Arial; direction: rtl; text-align: right; padding: 15px; min-width: 300px; max-width: 400px;">
+                    <h3 style="margin: 0 0 15px 0; color: #2d3561;">🏪 اختر المحل المطلوب</h3>
+                    <p style="margin-bottom: 10px; color: #666;">تم العثور على ${places.length} محلات في هذا الموقع:</p>
+                    <div style="max-height: 300px; overflow-y: auto;">
+                        ${places.map((place, index) => `
+                            <div onclick="selectPlaceForAddition('${escapeJs(place.place_id)}', ${lat}, ${lng})" 
+                                 style="padding: 12px; margin: 8px 0; background: #f8f9fa; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;"
+                                 onmouseover="this.style.borderColor='#667eea'; this.style.background='#e8eaf6';"
+                                 onmouseout="this.style.borderColor='transparent'; this.style.background='#f8f9fa';">
+                                <div style="font-weight: 600; color: #2d3561; margin-bottom: 4px;">
+                                    ${escapeHtml(place.name)}
+                                </div>
+                                <div style="font-size: 0.85em; color: #666;">
+                                    ${escapeHtml(place.vicinity || 'لا يوجد عنوان')}
+                                </div>
+                                ${place.rating ? `
+                                    <div style="font-size: 0.8em; color: #ffc107; margin-top: 4px;">
+                                        ⭐ ${parseFloat(place.rating).toFixed(1)} ${place.user_ratings_total ? `(${parseInt(place.user_ratings_total)})` : ''}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button onclick="closeInfoWindow()" style="margin-top: 15px; padding: 10px 20px; background: #dc3545; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Cairo; font-weight: 600;">
+                        ❌ إلغاء
+                    </button>
+                </div>
+            `;
+            
+            infoWindow.setContent(content);
+            infoWindow.setPosition(latLng);
+            infoWindow.open(map);
+        }
+        
+        // Close info window helper
+        function closeInfoWindow() {
+            if (infoWindow) {
+                infoWindow.close();
+            }
+        }
+        
+        // Select a place and show details
+        async function selectPlaceForAddition(placeId, lat, lng) {
+            closeInfoWindow();
+            
+            // Show loading
+            const loadingContent = `
+                <div style="font-family: Cairo, Arial; direction: rtl; text-align: center; padding: 20px;">
+                    <div style="font-size: 2em; margin-bottom: 10px;">⏳</div>
+                    <div>جاري تحميل تفاصيل المحل...</div>
+                </div>
+            `;
+            infoWindow.setContent(loadingContent);
+            infoWindow.setPosition({lat, lng});
+            infoWindow.open(map);
+            
+            try {
+                const request = {
+                    placeId: placeId,
+                    fields: ['name', 'formatted_address', 'formatted_phone_number', 'website', 'url', 'geometry', 'types', 'rating', 'user_ratings_total']
+                };
+                
+                const placeDetails = await new Promise((resolve, reject) => {
+                    window.placesService.getDetails(request, (place, status) => {
+                        if (status === google.maps.places.PlacesServiceStatus.OK && place) {
+                            resolve(place);
+                        } else {
+                            reject(new Error('Failed to get place details'));
+                        }
+                    });
+                });
+                
+                showShopDetailsForAddition(placeDetails, {lat, lng});
+            } catch (error) {
+                console.error('Error getting place details:', error);
+                alert('⚠️ فشل تحميل تفاصيل المحل. حاول مرة أخرى.');
+                closeInfoWindow();
+            }
+        }
+        
+        // Show shop details and allow direct addition
+        async function showShopDetailsForAddition(place, latLng) {
+            const position = place.geometry ? place.geometry.location : latLng;
+            let lat = typeof position.lat === 'function' ? position.lat() : position.lat;
+            let lng = typeof position.lng === 'function' ? position.lng() : position.lng;
+            
+            // Validate and sanitize coordinates
+            lat = parseFloat(lat);
+            lng = parseFloat(lng);
+            
+            if (isNaN(lat) || isNaN(lng)) {
+                console.error('Invalid coordinates:', lat, lng);
+                alert('⚠️ إحداثيات غير صالحة');
+                return;
+            }
+            
+            const googleMapsLink = place.url || `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+            
+            const content = `
+                <div style="font-family: Cairo, Arial; direction: rtl; text-align: right; padding: 15px; min-width: 350px; max-width: 450px;">
+                    <h3 style="margin: 0 0 15px 0; color: #2d3561; border-bottom: 2px solid #667eea; padding-bottom: 10px;">
+                        🏪 إضافة محل جديد
+                    </h3>
+                    
+                    <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                        <div style="margin-bottom: 10px;">
+                            <strong style="color: #2d3561;">الاسم:</strong>
+                            <div style="margin-top: 5px;">
+                                <input type="text" id="newShopName" value="${escapeHtml(place.name || '')}" 
+                                       style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-family: Cairo;">
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 10px;">
+                            <strong style="color: #2d3561;">العنوان:</strong>
+                            <div style="margin-top: 5px;">
+                                <input type="text" id="newShopAddress" value="${escapeHtml(place.formatted_address || place.vicinity || '')}" 
+                                       style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-family: Cairo;">
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 10px;">
+                            <strong style="color: #2d3561;">رقم الهاتف:</strong>
+                            <div style="margin-top: 5px;">
+                                <input type="text" id="newShopPhone" value="${escapeHtml(place.formatted_phone_number || '')}" 
+                                       style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-family: Cairo;">
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 10px;">
+                            <strong style="color: #2d3561;">المنطقة:</strong>
+                            <div style="margin-top: 5px;">
+                                <select id="newShopArea" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-family: Cairo;">
+                                    <option value="">اختر المنطقة...</option>
+                                    ${getAreasForDropdown()}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 10px;">
+                            <strong style="color: #2d3561;">رقم الترخيص:</strong>
+                            <div style="margin-top: 5px;">
+                                <input type="text" id="newShopLicense" value="" placeholder="اختياري" 
+                                       style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-family: Cairo;">
+                            </div>
+                        </div>
+                        
+                        ${place.rating ? `
+                            <div style="margin-bottom: 10px; padding: 8px; background: white; border-radius: 5px;">
+                                <strong style="color: #2d3561;">التقييم:</strong>
+                                <span style="color: #ffc107;">⭐ ${parseFloat(place.rating).toFixed(1)}</span>
+                                ${place.user_ratings_total ? `<span style="color: #666; font-size: 0.9em;"> (${parseInt(place.user_ratings_total)} تقييم)</span>` : ''}
+                            </div>
+                        ` : ''}
+                        
+                        <div style="font-size: 0.85em; color: #666; margin-top: 8px;">
+                            📍 الإحداثيات: ${lat.toFixed(6)}, ${lng.toFixed(6)}
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button onclick="addNewShopDirectly('${lat}', '${lng}', '${googleMapsLink.replace(/'/g, "\\'")}')" 
+                                style="flex: 1; padding: 12px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Cairo; font-weight: 600; font-size: 1em;">
+                            ✅ إضافة للتفتيش مباشرة
+                        </button>
+                        <button onclick="closeInfoWindow()" 
+                                style="padding: 12px 20px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Cairo; font-weight: 600;">
+                            ❌ إلغاء
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            infoWindow.setContent(content);
+            infoWindow.setPosition({lat, lng});
+            infoWindow.open(map);
+        }
+        
+        // Get areas for dropdown
+        function getAreasForDropdown() {
+            if (!shopsDetails) return '<option value="">لا توجد مناطق</option>';
+            
+            const areas = [...new Set(Object.values(shopsDetails)
+                .filter(shop => shop && shop.area)
+                .map(shop => shop.area))].sort();
+            
+            return areas.map(area => `<option value="${escapeHtml(area)}">${escapeHtml(area)}</option>`).join('');
+        }
+        
+        // Add new shop directly to inspection
+        async function addNewShopDirectly(lat, lng, googleMapsLink) {
+            const name = document.getElementById('newShopName')?.value?.trim();
+            const address = document.getElementById('newShopAddress')?.value?.trim();
+            const phone = document.getElementById('newShopPhone')?.value?.trim();
+            const area = document.getElementById('newShopArea')?.value;
+            const license = document.getElementById('newShopLicense')?.value?.trim();
+            
+            if (!name) {
+                alert('⚠️ يرجى إدخال اسم المحل');
+                return;
+            }
+            
+            if (!area) {
+                alert('⚠️ يرجى اختيار المنطقة');
+                return;
+            }
+            
+            const inspector = document.getElementById('mapInspectorSelect')?.value;
+            const date = document.getElementById('mapInspectionDate')?.value;
+            
+            if (!inspector || !date) {
+                alert('⚠️ يرجى اختيار المفتش والتاريخ أولاً من الأعلى');
+                closeInfoWindow();
+                return;
+            }
+            
+            try {
+                // Generate unique shop ID
+                const timestamp = Date.now();
+                const shopId = `shop_${timestamp}`;
+                
+                // Generate ADM code (auto-increment from existing)
+                const existingCodes = Object.values(shopsDetails || {})
+                    .map(s => s.admCode)
+                    .filter(code => code && code.startsWith('ADM'))
+                    .map(code => parseInt(code.replace('ADM', '')))
+                    .filter(num => !isNaN(num));
+                
+                const nextCodeNum = existingCodes.length > 0 ? Math.max(...existingCodes) + 1 : 1;
+                const admCode = `ADM${String(nextCodeNum).padStart(4, '0')}`;
+                
+                // Create new shop object
+                const newShop = {
+                    nameAr: name,
+                    nameEn: '',
+                    licenseNo: license || '',
+                    locationMap: googleMapsLink,
+                    admCode: admCode,
+                    address: address || '',
+                    contact: phone || '',
+                    activity: '',
+                    area: area,
+                    areaId: findAreaId(area)
+                };
+                
+                // Add to shops details
+                shopsDetails[name] = newShop;
+                
+                // Track new shop for saving
+                if (!newShopsAddedFromMap.includes(name)) {
+                    newShopsAddedFromMap.push(name);
+                }
+                
+                // Add to map selection
+                if (!mapSelectedShops.includes(name)) {
+                    mapSelectedShops.push(name);
+                }
+                
+                // Close info window
+                closeInfoWindow();
+                
+                // Reload map markers to show the new shop
+                await loadShopMarkers();
+                
+                // Update UI
+                updateMapSelection();
+                
+                // Show success message
+                alert(`✅ تمت إضافة المحل "${name}" بنجاح!\n\nكود ADM: ${admCode}\nالمنطقة: ${area}\n\nالمحل مختار ومجهز للحفظ.\n\nملاحظة: سيتم حفظ بيانات المحل الجديد عند النقر على "حفظ التفتيش مباشرة" أو "تطبيق الاختيار".`);
+                
+                console.log('✅ New shop added:', newShop);
+            } catch (error) {
+                console.error('Error adding new shop:', error);
+                alert('⚠️ حدث خطأ أثناء إضافة المحل. حاول مرة أخرى.');
+            }
+        }
+        
+        // Find area ID by area name
+        function findAreaId(areaName) {
+            if (!shopsDetails) return '';
+            
+            const shop = Object.values(shopsDetails).find(s => s && s.area === areaName);
+            return shop?.areaId || '';
+        }
+        
+        // Show dialog to add custom shop (when no shop found at click location)
+        function showAddCustomShopDialog(latLng) {
+            const lat = latLng.lat();
+            const lng = latLng.lng();
+            const googleMapsLink = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+            
+            // Create a simple place object for the custom location
+            const customPlace = {
+                name: '',
+                formatted_address: '',
+                formatted_phone_number: '',
+                url: googleMapsLink,
+                geometry: { location: latLng }
+            };
+            
+            showShopDetailsForAddition(customPlace, latLng);
         }
         
         // Load shop markers on the map (async version with geocoding support and batch processing)
@@ -5570,7 +5952,7 @@
         }
         
         // Apply map selection to main form
-        function applyMapSelection() {
+        async function applyMapSelection() {
             if (mapSelectedShops.length === 0) {
                 alert('⚠️ يرجى اختيار محل واحد على الأقل');
                 return;
@@ -5583,6 +5965,19 @@
             if (!inspector || !date) {
                 alert('⚠️ يرجى اختيار المفتش والتاريخ');
                 return;
+            }
+            
+            // If new shops were added, save them first
+            if (newShopsAddedFromMap.length > 0) {
+                try {
+                    const shopNames = newShopsAddedFromMap.join(', ');
+                    await saveShopsDetailsToGitHub(`إضافة محلات جديدة من الخريطة: ${shopNames}`);
+                    alert(`✅ تم حفظ ${newShopsAddedFromMap.length} محل جديد بنجاح!`);
+                    console.log('✅ Saved new shops to shops_details.json:', newShopsAddedFromMap);
+                    newShopsAddedFromMap = [];
+                } catch (error) {
+                    alert('❌ حدث خطأ في حفظ المحلات الجديدة: ' + error.message + '\n\nسيتم تطبيق الاختيار لكن المحلات الجديدة لن يتم حفظها بشكل دائم.');
+                }
             }
             
             // Fill the main form
@@ -5643,10 +6038,19 @@
             
             // Save to GitHub
             try {
+                // First, save shops_details.json if new shops were added
+                if (newShopsAddedFromMap.length > 0) {
+                    const shopNames = newShopsAddedFromMap.join(', ');
+                    await saveShopsDetailsToGitHub(`إضافة محلات جديدة من الخريطة: ${shopNames}`);
+                    console.log('✅ Saved new shops to shops_details.json:', newShopsAddedFromMap);
+                }
+                
+                // Then save the inspection plan
                 await savePlanDataToGitHub(`إضافة تفتيش جديد من الخريطة - ${inspector} - ${date}`);
                 
                 // Show success and close modal
-                alert('✅ تم حفظ التفتيش بنجاح من الخريطة!');
+                alert('✅ تم حفظ التفتيش بنجاح من الخريطة!' + 
+                      (newShopsAddedFromMap.length > 0 ? `\n\n✅ تم حفظ ${newShopsAddedFromMap.length} محل جديد أيضاً` : ''));
                 closeMapModal();
                 
                 // Refresh displays
@@ -5654,8 +6058,9 @@
                 updateCalendar();
                 updateInspectorStats();
                 
-                // Clear map selection
+                // Clear map selection and new shops tracking
                 mapSelectedShops = [];
+                newShopsAddedFromMap = [];
             } catch (error) {
                 alert('❌ حدث خطأ في حفظ التفتيش: ' + error.message);
             }
@@ -7968,6 +8373,55 @@
             
             if (!updateRes.ok) {
                 throw new Error('فشل تحديث ملف plan-data.json');
+            }
+        }
+        
+        // Save shops details to GitHub
+        async function saveShopsDetailsToGitHub(commitMessage = null) {
+            if (!shopsDetails) {
+                throw new Error('لا توجد بيانات محلات للحفظ');
+            }
+            
+            // Get current file SHA
+            const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/shops_details.json`, {
+                headers: {
+                    'Authorization': `Bearer ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+            
+            if (!getRes.ok) {
+                throw new Error('فشل الحصول على ملف shops_details.json');
+            }
+            
+            const file = await getRes.json();
+            const sha = file.sha;
+            
+            // Prepare content
+            const content = btoa(unescape(encodeURIComponent(JSON.stringify(shopsDetails, null, 2))));
+            
+            // Default commit message if not provided
+            if (!commitMessage) {
+                commitMessage = 'تحديث بيانات المحلات - إضافة محل جديد من الخريطة';
+            }
+            
+            // Update file
+            const updateRes = await fetch(`https://api.github.com/repos/${repo}/contents/shops_details.json`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: commitMessage,
+                    content: content,
+                    sha: sha
+                })
+            });
+            
+            if (!updateRes.ok) {
+                throw new Error('فشل تحديث ملف shops_details.json');
             }
         }
         

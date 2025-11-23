@@ -6213,9 +6213,16 @@
             <option value="supervisor">المشرف</option>
             <option value="developer">المطور</option>
         </select>
-        <input type="text" id="supervisorUsername" placeholder="اسم المستخدم للمشرف" style="display:none;">
+        <select id="supervisorSelect" style="display:none;padding:7px 15px;border:2px solid #ff9800;border-radius:6px;font-size:1em;background:#fff;">
+            <option value="">-- اختر المشرف --</option>
+            <option value="raef">د. رئيف وليد أرناؤوط</option>
+            <option value="khadija">خديجة المنصورى</option>
+            <option value="alaa">د. علاء الجهمانى</option>
+        </select>
         <input type="password" id="supervisorPassword" placeholder="كلمة السر للمشرف" style="display:none;">
         <button id="supervisorLoginBtn" style="display:none;background:#ff9800;color:#fff;border:none;padding:7px 20px;border-radius:6px;font-size:1em;cursor:pointer;">دخول المشرف</button>
+        <button id="changePasswordBtn" style="display:none;background:#9c27b0;color:#fff;border:none;padding:7px 20px;border-radius:6px;font-size:1em;cursor:pointer;">تغيير كلمة المرور</button>
+        <button id="supervisorLogoutBtn" style="display:none;background:#d32f2f;color:#fff;border:none;padding:7px 20px;border-radius:6px;font-size:1em;cursor:pointer;">تسجيل الخروج</button>
         <input type="password" id="devPassword" placeholder="كلمة سر المطور" style="display:none;">
         <button id="devLoginBtn" style="display:none;background:#198754;color:#fff;border:none;padding:7px 20px;border-radius:6px;font-size:1em;cursor:pointer;">دخول المطور</button>
         <button id="devLogoutBtn" style="display:none;background:#d32f2f;color:#fff;border:none;padding:7px 20px;border-radius:6px;font-size:1em;cursor:pointer;">إغلاق المطور</button>
@@ -15948,18 +15955,32 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById("supervisorError").innerText = "";
         
         // Hide all login fields first
-        document.getElementById("supervisorUsername").style.display = "none";
+        document.getElementById("supervisorSelect").style.display = "none";
         document.getElementById("supervisorPassword").style.display = "none";
         document.getElementById("supervisorLoginBtn").style.display = "none";
+        document.getElementById("changePasswordBtn").style.display = "none";
+        document.getElementById("supervisorLogoutBtn").style.display = "none";
         document.getElementById("devPassword").style.display = "none";
         document.getElementById("devLoginBtn").style.display = "none";
         document.getElementById("devLogoutBtn").style.display = "none";
         
         if(role === "supervisor") {
-            // Show supervisor login form
-            document.getElementById("supervisorUsername").style.display = "inline-block";
-            document.getElementById("supervisorPassword").style.display = "inline-block";
-            document.getElementById("supervisorLoginBtn").style.display = "inline-block";
+            // Check if supervisor is already logged in
+            const isSupLoggedIn = localStorage.getItem('isSupervisorLoggedIn') === 'true';
+            
+            if (isSupLoggedIn) {
+                // Supervisor is already logged in
+                const supervisorName = localStorage.getItem('supervisorName');
+                document.getElementById("supervisorError").innerText = "✅ مرحباً " + supervisorName;
+                document.getElementById("supervisorError").style.color = "#198754";
+                document.getElementById("changePasswordBtn").style.display = "inline-block";
+                document.getElementById("supervisorLogoutBtn").style.display = "inline-block";
+            } else {
+                // Show supervisor login form
+                document.getElementById("supervisorSelect").style.display = "inline-block";
+                document.getElementById("supervisorPassword").style.display = "inline-block";
+                document.getElementById("supervisorLoginBtn").style.display = "inline-block";
+            }
             document.getElementById("devSection").style.display = "none";
             document.getElementById("systemServicesContainer").style.display = "none";
             const fileLibraryBtn = document.getElementById("fileLibraryBtn");
@@ -16265,16 +16286,102 @@ document.getElementById("devLogoutBtn").onclick = async function() {
 
 // معالج تسجيل دخول المشرف
 document.getElementById("supervisorLoginBtn").onclick = function() {
-    const username = document.getElementById("supervisorUsername").value.trim();
+    const supervisorId = document.getElementById("supervisorSelect").value;
     const password = document.getElementById("supervisorPassword").value.trim();
-    const SUPERVISOR_USERNAME = "admin";
-    const SUPERVISOR_PASSWORD = "admin123";
     
-    if (username === SUPERVISOR_USERNAME && password === SUPERVISOR_PASSWORD) {
+    if (!supervisorId) {
+        document.getElementById("supervisorError").innerText = "يرجى اختيار المشرف أولاً!";
+        return;
+    }
+    
+    // Supervisor credentials with admin numbers
+    const supervisors = {
+        'raef': { name: 'د. رئيف وليد أرناؤوط', adminNum: '1001', password: 'adm@1001' },
+        'khadija': { name: 'خديجة المنصورى', adminNum: '1002', password: 'adm@1002' },
+        'alaa': { name: 'د. علاء الجهمانى', adminNum: '1003', password: 'adm@1003' }
+    };
+    
+    // Get custom password from localStorage or use default
+    const customPasswordKey = 'supervisor_' + supervisorId + '_password';
+    const storedPassword = localStorage.getItem(customPasswordKey);
+    const correctPassword = storedPassword || supervisors[supervisorId].password;
+    
+    if (password === correctPassword) {
+        // Save login state
+        localStorage.setItem('isSupervisorLoggedIn', 'true');
+        localStorage.setItem('supervisorId', supervisorId);
+        localStorage.setItem('supervisorName', supervisors[supervisorId].name);
+        
         // Redirect to supervisor dashboard
-        window.location.href = "index3.html";
+        window.location.href = "index14.html";
     } else {
-        document.getElementById("supervisorError").innerText = "اسم المستخدم أو كلمة السر غير صحيحة!";
+        document.getElementById("supervisorError").innerText = "كلمة السر غير صحيحة!";
+    }
+};
+
+// معالج تغيير كلمة مرور المشرف
+document.getElementById("changePasswordBtn").onclick = function() {
+    const supervisorId = localStorage.getItem('supervisorId');
+    const supervisorName = localStorage.getItem('supervisorName');
+    
+    if (!supervisorId) {
+        alert('خطأ: لم يتم تسجيل الدخول');
+        return;
+    }
+    
+    const oldPassword = prompt('أدخل كلمة السر الحالية:');
+    if (!oldPassword) return;
+    
+    const customPasswordKey = 'supervisor_' + supervisorId + '_password';
+    const storedPassword = localStorage.getItem(customPasswordKey);
+    
+    // Default passwords
+    const supervisors = {
+        'raef': { password: 'adm@1001' },
+        'khadija': { password: 'adm@1002' },
+        'alaa': { password: 'adm@1003' }
+    };
+    
+    const correctPassword = storedPassword || supervisors[supervisorId].password;
+    
+    if (oldPassword !== correctPassword) {
+        alert('❌ كلمة السر الحالية غير صحيحة!');
+        return;
+    }
+    
+    const newPassword = prompt('أدخل كلمة السر الجديدة:');
+    if (!newPassword || newPassword.length < 6) {
+        alert('❌ كلمة السر الجديدة يجب أن تكون 6 أحرف على الأقل!');
+        return;
+    }
+    
+    const confirmPassword = prompt('أكد كلمة السر الجديدة:');
+    if (newPassword !== confirmPassword) {
+        alert('❌ كلمة السر غير متطابقة!');
+        return;
+    }
+    
+    // Save new password
+    localStorage.setItem(customPasswordKey, newPassword);
+    alert('✅ تم تغيير كلمة السر بنجاح!\n\nالمشرف: ' + supervisorName);
+};
+
+// معالج تسجيل خروج المشرف
+document.getElementById("supervisorLogoutBtn").onclick = function() {
+    if (confirm('هل تريد تسجيل الخروج؟')) {
+        localStorage.removeItem('isSupervisorLoggedIn');
+        localStorage.removeItem('supervisorId');
+        localStorage.removeItem('supervisorName');
+        document.getElementById("loginRole").value = "";
+        document.getElementById("supervisorSelect").value = "";
+        document.getElementById("supervisorPassword").value = "";
+        document.getElementById("supervisorError").innerText = "";
+        document.getElementById("supervisorSelect").style.display = "none";
+        document.getElementById("supervisorPassword").style.display = "none";
+        document.getElementById("supervisorLoginBtn").style.display = "none";
+        document.getElementById("changePasswordBtn").style.display = "none";
+        document.getElementById("supervisorLogoutBtn").style.display = "none";
+        alert('✅ تم تسجيل الخروج بنجاح');
     }
 };
 

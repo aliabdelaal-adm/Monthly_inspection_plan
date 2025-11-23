@@ -8933,7 +8933,19 @@ console.log('Smart distribution functions initialized');
             </button>
         </div>
         
-        <!-- Developer-Only Export Buttons -->
+        <!-- Action Buttons -->
+        <div style="margin: 20px 0; display: flex; flex-wrap: wrap; gap: 15px; justify-content: center;">
+            <button onclick="toggleShelterReportsView()" style="padding: 15px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 1.1em; display: flex; align-items: center; gap: 10px; transition: all 0.3s; box-shadow: 0 4px 15px rgba(102,126,234,0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(102,126,234,0.4)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(102,126,234,0.3)';">
+                <span style="font-size: 1.3em;">📋</span>
+                <span>عرض التقارير</span>
+            </button>
+            <button onclick="downloadShelterReports()" style="padding: 15px 30px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 1.1em; display: flex; align-items: center; gap: 10px; transition: all 0.3s; box-shadow: 0 4px 15px rgba(17,153,142,0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(17,153,142,0.4)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(17,153,142,0.3)';">
+                <span style="font-size: 1.3em;">📥</span>
+                <span>تحميل التقارير</span>
+            </button>
+        </div>
+        
+        <!-- Developer-Only Export Buttons (Hidden by default) -->
         <div id="shelterReportDeveloperActions" class="developer-only-icon" style="display: none; margin: 20px 0; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; box-shadow: 0 4px 15px rgba(102,126,234,0.3);">
             <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center;">
                 <button onclick="exportShelterReportsToExcel()" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1em; display: flex; align-items: center; gap: 8px; transition: all 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
@@ -8956,30 +8968,6 @@ console.log('Smart distribution functions initialized');
                     <span style="font-size: 1.2em;">💾</span>
                     <span>حفظ البيانات</span>
                 </button>
-            </div>
-        </div>
-        
-        <!-- Feature Cards -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin: 20px 0;">
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 10px; text-align: center;">
-                <div style="font-size: 2em; margin-bottom: 5px;">📊</div>
-                <div style="font-weight: bold;">نتائج شاملة</div>
-                <div style="font-size: 0.85em; opacity: 0.9;">إحصائيات وتحليلات</div>
-            </div>
-            <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; padding: 15px; border-radius: 10px; text-align: center;">
-                <div style="font-size: 2em; margin-bottom: 5px;">✅</div>
-                <div style="font-weight: bold;">نسبة الامتثال</div>
-                <div style="font-size: 0.85em; opacity: 0.9;">مؤشر الأداء</div>
-            </div>
-            <div style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; padding: 15px; border-radius: 10px; text-align: center;">
-                <div style="font-size: 2em; margin-bottom: 5px;">🏘️</div>
-                <div style="font-weight: bold;">الملاجىء</div>
-                <div style="font-size: 0.85em; opacity: 0.9;">جميع المواقع</div>
-            </div>
-            <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 15px; border-radius: 10px; text-align: center;">
-                <div style="font-size: 2em; margin-bottom: 5px;">👥</div>
-                <div style="font-weight: bold;">المفتشين</div>
-                <div style="font-size: 0.85em; opacity: 0.9;">فريق التفتيش</div>
             </div>
         </div>
         
@@ -9045,9 +9033,10 @@ console.log('Smart distribution functions initialized');
     <div class="shelter-inspection-fullscreen-modal">
         <!-- Header with Return Button -->
         <div class="shelter-inspection-header">
-            <button class="shelter-return-home-btn" onclick="closeShelterInspectionForm()" title="العودة للصفحة الرئيسية">
+            <button class="shelter-return-home-btn" onclick="window.location.href='index.html'" title="العودة للصفحة الرئيسية">
                 ← العودة للرئيسية
             </button>
+            <button class="shelter-close-btn" onclick="closeShelterInspectionForm()" title="إغلاق">×</button>
             <h1 class="shelter-inspection-title">🏘️ تقرير زيارة الملاجئ</h1>
             <p class="shelter-inspection-subtitle">Shelter Visit Report</p>
         </div>
@@ -9470,6 +9459,39 @@ console.log('Smart distribution functions initialized');
     transform: translateY(-50%) scale(1.05);
 }
 
+.shelter-close-btn {
+    position: absolute;
+    top: 50%;
+    right: 30px;
+    transform: translateY(-50%);
+    background: rgba(220, 53, 69, 0.9);
+    color: white;
+    border: none;
+    padding: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.8em;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+    z-index: 101;
+}
+
+.shelter-close-btn:hover {
+    background: #c82333;
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 6px 16px rgba(220, 53, 69, 0.5);
+}
+
+.shelter-close-btn:active {
+    transform: translateY(-50%) scale(0.98);
+}
+
 .shelter-inspection-title {
     font-size: 2.5em;
     margin: 0 0 10px 0;
@@ -9831,13 +9853,38 @@ console.log('Smart distribution functions initialized');
 @media (max-width: 768px) {
     .shelter-inspection-header {
         padding: 20px;
+        padding-top: 70px;
     }
     
     .shelter-return-home-btn {
-        position: static;
+        position: absolute;
+        top: 15px;
+        left: 15px;
         transform: none;
-        margin-bottom: 15px;
-        display: block;
+        padding: 10px 20px;
+        font-size: 0.9em;
+    }
+    
+    .shelter-return-home-btn:hover {
+        transform: scale(1.05);
+    }
+    
+    .shelter-close-btn {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        transform: none;
+        width: 38px;
+        height: 38px;
+        font-size: 1.6em;
+    }
+    
+    .shelter-close-btn:hover {
+        transform: scale(1.1);
+    }
+    
+    .shelter-close-btn:active {
+        transform: scale(0.98);
     }
     
     .shelter-inspection-title {
@@ -29882,215 +29929,68 @@ function loadShelterVisitReports() {
     
     const complianceRate = totalItems > 0 ? ((fulfilledItems / totalItems) * 100).toFixed(1) : 0;
     
-    // Build HTML
+    // Build HTML - Display as compact organized cards
     let html = `
-        <!-- Summary Statistics -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; text-align: center;">
-                <div style="font-size: 2.5em; margin-bottom: 5px;">${totalReports}</div>
-                <div style="font-size: 1.1em; opacity: 0.9;">إجمالي التقارير</div>
-            </div>
-            <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; padding: 20px; border-radius: 12px; text-align: center;">
-                <div style="font-size: 2.5em; margin-bottom: 5px;">${complianceRate}%</div>
-                <div style="font-size: 1.1em; opacity: 0.9;">نسبة الامتثال</div>
-            </div>
-            <div style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; padding: 20px; border-radius: 12px; text-align: center;">
-                <div style="font-size: 2.5em; margin-bottom: 5px;">${inspectors.length}</div>
-                <div style="font-size: 1.1em; opacity: 0.9;">عدد المفتشين</div>
-            </div>
-            <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 20px; border-radius: 12px; text-align: center;">
-                <div style="font-size: 2.5em; margin-bottom: 5px;">${shelters.length}</div>
-                <div style="font-size: 1.1em; opacity: 0.9;">الملاجىء المفتشة</div>
-            </div>
-        </div>
-        
-        <!-- Reports List -->
-        <div style="margin-top: 30px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="color: #2336a0; margin: 0; font-size: 1.5em;">📋 التقارير التفصيلية</h3>
-                <a href="index2.html" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
-                    ➕ إضافة تقرير جديد
-                </a>
-            </div>
+        <!-- Reports Grid - Compact View -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-top: 20px;">
     `;
     
-    // Generate report cards
+    // Generate compact report cards
     savedReports.forEach((report, index) => {
         const reportDate = new Date(report.timestamp);
         const formattedDate = reportDate.toLocaleDateString('ar-EG', {
             year: 'numeric',
-            month: 'long',
+            month: 'short',
             day: 'numeric'
-        });
-        const formattedTime = reportDate.toLocaleTimeString('ar-EG', {
-            hour: '2-digit',
-            minute: '2-digit'
         });
         
         // Calculate report statistics
         const results = Object.values(report.results);
         const fulfilled = results.filter(r => r.status === 'fulfilled').length;
-        const unfulfilled = results.filter(r => r.status === 'unfulfilled').length;
-        const notInspected = results.filter(r => r.status === 'not_inspected').length;
-        const notApplicable = results.filter(r => r.status === 'not_applicable').length;
-        const reportCompliance = ((fulfilled / results.length) * 100).toFixed(1);
+        const reportCompliance = ((fulfilled / results.length) * 100).toFixed(0);
         
         html += `
-            <div style="background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
-                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
-                    <div>
-                        <h4 style="color: #667eea; margin: 0 0 10px 0; font-size: 1.3em;">
-                            التقرير #${totalReports - index}
-                        </h4>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; font-size: 0.95em;">
-                            <div><strong>المفتش:</strong> ${report.inspector}</div>
-                            <div><strong>التاريخ:</strong> ${report.date}</div>
-                            <div><strong>المنطقة:</strong> ${report.area}</div>
-                            <div><strong>الملجأ:</strong> ${report.shelter}</div>
-                        </div>
-                        <div style="margin-top: 8px; font-size: 0.9em; color: #6c757d;">
-                            <strong>وقت الإرسال:</strong> ${formattedDate} - ${formattedTime}
+            <div style="background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%); border: 2px solid #e9ecef; border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.3s; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" 
+                 onclick="showDetailedShelterReport(${index})"
+                 onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 6px 20px rgba(102,126,234,0.3)'; this.style.borderColor='#667eea';"
+                 onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'; this.style.borderColor='#e9ecef';">
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <div style="font-size: 2.5em; margin-bottom: 5px;">📄</div>
+                    <h4 style="color: #667eea; margin: 0 0 5px 0; font-size: 1.2em; font-weight: 700;">
+                        التقرير #${totalReports - index}
+                    </h4>
+                </div>
+                
+                <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px;">
+                        <div style="background: ${reportCompliance >= 80 ? 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)' : reportCompliance >= 60 ? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' : 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'}; color: white; padding: 10px 20px; border-radius: 8px; text-align: center; font-size: 1.8em; font-weight: bold;">
+                            ${reportCompliance}%
                         </div>
                     </div>
-                    <div style="display: flex; flex-direction: column; gap: 10px; align-items: center;">
-                        <div style="background: ${reportCompliance >= 80 ? 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)' : reportCompliance >= 60 ? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' : 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'}; color: white; padding: 15px; border-radius: 10px; text-align: center; min-width: 100px;">
-                            <div style="font-size: 2em; font-weight: bold;">${reportCompliance}%</div>
-                            <div style="font-size: 0.9em;">الامتثال</div>
-                        </div>
-                        <!-- Developer-Only Actions -->
-                        <div class="developer-only-icon" style="display: none; flex-direction: column; gap: 5px;">
-                            <button onclick="editShelterReport(${index})" style="padding: 8px 15px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9em; white-space: nowrap;" title="تعديل التقرير">
-                                ✏️ تعديل
-                            </button>
-                            <button onclick="deleteShelterReport(${index})" style="padding: 8px 15px; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9em; white-space: nowrap;" title="حذف التقرير">
-                                🗑️ حذف
-                            </button>
-                        </div>
+                    <div style="text-align: center; font-size: 0.85em; color: #6c757d; font-weight: 600;">نسبة الامتثال</div>
+                </div>
+                
+                <div style="font-size: 0.9em; color: #495057; line-height: 1.8;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <span style="color: #667eea; font-weight: bold;">👤</span>
+                        <span style="font-weight: 600;">${report.inspector}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <span style="color: #667eea; font-weight: bold;">🏘️</span>
+                        <span style="font-weight: 600;">${report.shelter}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <span style="color: #667eea; font-weight: bold;">📍</span>
+                        <span>${report.area}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="color: #667eea; font-weight: bold;">📅</span>
+                        <span>${formattedDate}</span>
                     </div>
                 </div>
                 
-                <!-- Report Summary -->
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 15px 0; padding: 15px; background: white; border-radius: 8px;">
-                    <div style="text-align: center;">
-                        <div style="color: #28a745; font-size: 1.8em; font-weight: bold;">${fulfilled}</div>
-                        <div style="font-size: 0.9em; color: #6c757d;">✅ مستوفى</div>
-                    </div>
-                    <div style="text-align: center;">
-                        <div style="color: #dc3545; font-size: 1.8em; font-weight: bold;">${unfulfilled}</div>
-                        <div style="font-size: 0.9em; color: #6c757d;">❌ غير مستوفى</div>
-                    </div>
-                    <div style="text-align: center;">
-                        <div style="color: #6c757d; font-size: 1.8em; font-weight: bold;">${notInspected}</div>
-                        <div style="font-size: 0.9em; color: #6c757d;">⏭️ لم يتم</div>
-                    </div>
-                    <div style="text-align: center;">
-                        <div style="color: #ffc107; font-size: 1.8em; font-weight: bold;">${notApplicable}</div>
-                        <div style="font-size: 0.9em; color: #6c757d;">➖ لا ينطبق</div>
-                    </div>
-                </div>
-                
-                <!-- View Details Button -->
-                <div style="margin-top: 15px; text-align: center;">
-                    <button onclick="showDetailedShelterReport(${index})" style="padding: 12px 30px; background: linear-gradient(135deg, #2336a0 0%, #667eea 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 1.1em; display: inline-flex; align-items: center; gap: 10px; transition: all 0.3s; box-shadow: 0 4px 15px rgba(35,54,160,0.3);" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                        <span style="font-size: 1.3em;">🔍</span>
-                        <span>عرض التفاصيل الكاملة</span>
-                    </button>
-                </div>
-                <div id="reportDetailsContent${index}" style="display: none;">
-                    <div style="margin-top: 15px; padding: 15px; background: white; border-radius: 8px;">
-                        <table style="width: 100%; border-collapse: collapse;">
-                            <thead>
-                                <tr style="background: #e9ecef;">
-                                    <th style="padding: 10px; text-align: right; border-bottom: 2px solid #ddd;">البند</th>
-                                    <th style="padding: 10px; text-align: center; border-bottom: 2px solid #ddd; width: 150px;">الحالة</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-        `;
-        
-        Object.entries(report.results).forEach(([key, value]) => {
-            let statusBadge = '';
-            switch (value.status) {
-                case 'fulfilled':
-                    statusBadge = '<span style="color: #28a745; font-weight: bold;">✅ مستوفى</span>';
-                    break;
-                case 'unfulfilled':
-                    statusBadge = '<span style="color: #dc3545; font-weight: bold;">❌ غير مستوفى</span>';
-                    break;
-                case 'not_inspected':
-                    statusBadge = '<span style="color: #6c757d; font-weight: bold;">⏭️ لم يتم التفتيش</span>';
-                    break;
-                case 'not_applicable':
-                    statusBadge = '<span style="color: #ffc107; font-weight: bold;">➖ لا ينطبق</span>';
-                    break;
-            }
-            
-            html += `
-                <tr style="border-bottom: 1px solid #e9ecef;">
-                    <td style="padding: 10px;">${value.label}</td>
-                    <td style="padding: 10px; text-align: center;">${statusBadge}</td>
-                </tr>
-            `;
-        });
-        
-        html += `
-                            </tbody>
-                        </table>
-        `;
-        
-        if (report.notes && report.notes.trim()) {
-            html += `
-                        <div style="margin-top: 15px; padding: 15px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px;">
-                            <strong style="color: #856404;">📝 ملاحظات عامة:</strong>
-                            <p style="margin: 10px 0 0 0; color: #856404; white-space: pre-wrap;">${report.notes}</p>
-                        </div>
-            `;
-        }
-        
-        if (report.violations && report.violations.trim()) {
-            html += `
-                        <div style="margin-top: 15px; padding: 15px; background: #f8d7da; border: 1px solid #dc3545; border-radius: 8px;">
-                            <strong style="color: #721c24;">⚠️ المخالفات المرصودة:</strong>
-                            <p style="margin: 10px 0 0 0; color: #721c24; white-space: pre-wrap;">${report.violations}</p>
-                        </div>
-            `;
-        }
-        
-        if (report.recommendations && report.recommendations.trim()) {
-            html += `
-                        <div style="margin-top: 15px; padding: 15px; background: #d1ecf1; border: 1px solid #17a2b8; border-radius: 8px;">
-                            <strong style="color: #0c5460;">💡 التوصيات:</strong>
-                            <p style="margin: 10px 0 0 0; color: #0c5460; white-space: pre-wrap;">${report.recommendations}</p>
-                        </div>
-            `;
-        }
-        
-        if (report.photos && report.photos.length > 0) {
-            html += `
-                        <div style="margin-top: 15px; padding: 15px; background: #e7f3ff; border: 1px solid #2196f3; border-radius: 8px;">
-                            <strong style="color: #0d47a1;">📷 صور التفتيش (${report.photos.length}):</strong>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
-            `;
-            
-            report.photos.forEach((photo, photoIndex) => {
-                html += `
-                                <div style="position: relative; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
-                                    <img src="${photo}" alt="صورة التفتيش ${photoIndex + 1}" style="width: 100%; height: 200px; object-fit: cover; cursor: pointer;" onclick="window.open('${photo}', '_blank')">
-                                    <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); color: white; padding: 5px; text-align: center; font-size: 0.85em;">
-                                        صورة ${photoIndex + 1}
-                                    </div>
-                                </div>
-                `;
-            });
-            
-            html += `
-                            </div>
-                        </div>
-            `;
-        }
-        
-        html += `
-                    </div>
+                <div style="margin-top: 15px; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px; text-align: center; font-weight: 600; font-size: 0.95em;">
+                    🔍 اضغط لعرض التفاصيل الكاملة
                 </div>
             </div>
         `;
@@ -30099,6 +29999,31 @@ function loadShelterVisitReports() {
     html += `</div>`;
     
     contentArea.innerHTML = html;
+}
+
+// Toggle Shelter Reports View
+function toggleShelterReportsView() {
+    const contentArea = document.getElementById('shelterReportContentArea');
+    if (contentArea) {
+        if (contentArea.style.display === 'none') {
+            contentArea.style.display = 'block';
+        } else {
+            contentArea.style.display = 'none';
+        }
+    }
+}
+
+// Download Shelter Reports
+function downloadShelterReports() {
+    const savedReports = JSON.parse(localStorage.getItem('shelterInspectionReports') || '[]');
+    
+    if (savedReports.length === 0) {
+        alert('⚠️ لا توجد تقارير للتحميل');
+        return;
+    }
+    
+    // Export as CSV
+    exportShelterReportsToCSV();
 }
 
 // Developer-Only: Shelter Report Management Functions

@@ -2586,6 +2586,10 @@
                         <span>🔍</span>
                         <span>تشخيص الخرائط</span>
                     </button>
+                    <button class="btn" onclick="openSmartPetShopDiscovery()" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); color: white; padding: 12px 20px; box-shadow: 0 5px 15px rgba(255,107,107,0.3);">
+                        <span>🐾</span>
+                        <span>اكتشاف محلات ذكية</span>
+                    </button>
                 </div>
                 <button class="btn btn-success" onclick="saveInspection()" id="saveBtn" disabled>
                     <span>💾</span>
@@ -18176,6 +18180,107 @@
         </div>
     </div>
     
+    <!-- Smart Pet Shop Discovery Modal -->
+    <div id="smartPetShopModal" class="modal" style="display: none; z-index: 3000;">
+        <div class="modal-content" style="max-width: 1000px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h2>🐾 اكتشاف محلات الحيوانات الأليفة ذكياً</h2>
+                <span class="modal-close" onclick="closeSmartPetShopModal()">&times;</span>
+            </div>
+            
+            <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                <h3 style="color: #2d3561; margin-bottom: 15px;">📍 كيفية الاستخدام:</h3>
+                <ol style="margin: 0; padding-right: 20px; line-height: 1.8;">
+                    <li>انقر على زر "فتح خرائط جوجل" أدناه</li>
+                    <li>سيتم فتح خرائط جوجل تلقائياً مع البحث عن محلات الحيوانات الأليفة</li>
+                    <li>انسخ اسم المحل والموقع من خرائط جوجل</li>
+                    <li>الصق المعلومات في النموذج أدناه</li>
+                    <li>انقر على "إضافة إلى خطة التفتيش" لإضافة المحل تلقائياً</li>
+                </ol>
+            </div>
+            
+            <div style="text-align: center; margin-bottom: 30px;">
+                <button onclick="openGoogleMapsSearch()" class="btn btn-primary" style="font-size: 1.2em; padding: 18px 40px;">
+                    <span>🗺️</span>
+                    <span>فتح خرائط جوجل للبحث</span>
+                </button>
+            </div>
+            
+            <div style="background: white; padding: 25px; border-radius: 10px; border: 2px solid #667eea;">
+                <h3 style="color: #2d3561; margin-bottom: 20px; text-align: center;">✏️ إضافة محل إلى خطة التفتيش</h3>
+                
+                <form id="smartPetShopForm" onsubmit="addPetShopToInspection(event)">
+                    <div class="form-group">
+                        <label class="form-label">اسم المحل *</label>
+                        <input type="text" id="petShopName" class="form-control" required 
+                               placeholder="مثال: محل الطيور الجميلة، متجر أسماك الزينة">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">المنطقة *</label>
+                        <select id="petShopArea" class="form-control" required>
+                            <option value="">اختر المنطقة</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">العنوان / الموقع</label>
+                        <input type="text" id="petShopAddress" class="form-control" 
+                               placeholder="مثال: شارع الشيخ زايد، بالقرب من مول أبوظبي">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">رابط خرائط جوجل (اختياري)</label>
+                        <input type="url" id="petShopMapLink" class="form-control" 
+                               placeholder="https://maps.google.com/...">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">رقم الهاتف (اختياري)</label>
+                        <input type="tel" id="petShopPhone" class="form-control" 
+                               placeholder="+971 2 123 4567">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">الأولوية</label>
+                        <select id="petShopPriority" class="form-control">
+                            <option value="normal">عادية</option>
+                            <option value="medium">متوسطة</option>
+                            <option value="high">عالية</option>
+                            <option value="very-high">عالية جداً</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">ملاحظات</label>
+                        <textarea id="petShopNotes" class="form-control" rows="3" 
+                                  placeholder="أي معلومات إضافية عن المحل"></textarea>
+                    </div>
+                    
+                    <div style="display: flex; gap: 15px; justify-content: center; margin-top: 25px;">
+                        <button type="submit" class="btn btn-success" style="font-size: 1.1em; padding: 15px 30px;">
+                            <span>✅</span>
+                            <span>إضافة إلى خطة التفتيش</span>
+                        </button>
+                        <button type="button" onclick="resetPetShopForm()" class="btn btn-warning">
+                            <span>🔄</span>
+                            <span>إعادة تعيين</span>
+                        </button>
+                    </div>
+                </form>
+                
+                <div id="petShopStatus" class="status-message" style="margin-top: 20px;"></div>
+            </div>
+            
+            <div style="margin-top: 30px; text-align: center;">
+                <button onclick="closeSmartPetShopModal()" class="btn btn-danger">
+                    <span>✖️</span>
+                    <span>إغلاق</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    
     <!-- MediaPipe Hands Library -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
@@ -19555,6 +19660,251 @@
         
         // ========================================
         // End of Shelter Inspection Management
+        // ========================================
+        
+        // ========================================
+        // Smart Pet Shop Discovery Functions
+        // ========================================
+        
+        /**
+         * Open the Smart Pet Shop Discovery modal
+         */
+        function openSmartPetShopDiscovery() {
+            const modal = document.getElementById('smartPetShopModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                modal.style.alignItems = 'center';
+                modal.style.justifyContent = 'center';
+                
+                // Populate area dropdown
+                populatePetShopAreaDropdown();
+            }
+        }
+        
+        /**
+         * Close the Smart Pet Shop Discovery modal
+         */
+        function closeSmartPetShopModal() {
+            const modal = document.getElementById('smartPetShopModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+        
+        /**
+         * Populate the area dropdown in pet shop form
+         */
+        function populatePetShopAreaDropdown() {
+            const areaSelect = document.getElementById('petShopArea');
+            if (!areaSelect || !planData || !planData.areas) return;
+            
+            areaSelect.innerHTML = '<option value="">اختر المنطقة</option>';
+            
+            planData.areas.forEach(area => {
+                const option = document.createElement('option');
+                option.value = area.name;
+                option.textContent = area.name;
+                areaSelect.appendChild(option);
+            });
+        }
+        
+        /**
+         * Open Google Maps with pet shop search
+         * This opens Google Maps in a new tab with a search for pet shops, bird shops, and aquarium shops
+         */
+        function openGoogleMapsSearch() {
+            // Abu Dhabi coordinates as default center
+            const lat = 24.4539;
+            const lng = 54.3773;
+            
+            // Search query for pet shops, bird shops, and aquarium shops in Arabic and English
+            // Using multiple search terms to get comprehensive results
+            const searchTerms = [
+                'pet shop',
+                'pets',
+                'pet',
+                'محل حيوانات',
+                'محلات الحيوانات الأليفة',
+                'محل طيور',
+                'bird shop',
+                'aquarium',
+                'fish shop',
+                'محل أسماك',
+                'أسماك الزينة'
+            ];
+            
+            // Create a combined search query
+            const searchQuery = searchTerms.join(' OR ');
+            
+            // Google Maps search URL with the query
+            const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(searchQuery)}/@${lat},${lng},12z`;
+            
+            // Open in new tab
+            window.open(mapsUrl, '_blank');
+            
+            // Show helper message
+            showPetShopStatus(
+                '✅ تم فتح خرائط جوجل!\n\n' +
+                'نصائح:\n' +
+                '1. ابحث عن "pet shop" أو "محل حيوانات" أو "محل طيور"\n' +
+                '2. انقر على أي محل لعرض التفاصيل\n' +
+                '3. انسخ الاسم والموقع\n' +
+                '4. الصق المعلومات في النموذج أدناه',
+                'info'
+            );
+        }
+        
+        /**
+         * Add pet shop to inspection plan
+         */
+        async function addPetShopToInspection(event) {
+            event.preventDefault();
+            
+            if (!githubToken) {
+                showPetShopStatus('⚠️ يجب تسجيل الدخول أولاً للحفظ على GitHub', 'error');
+                return;
+            }
+            
+            // Get form values
+            const shopName = document.getElementById('petShopName').value.trim();
+            const area = document.getElementById('petShopArea').value;
+            const address = document.getElementById('petShopAddress').value.trim();
+            const mapLink = document.getElementById('petShopMapLink').value.trim();
+            const phone = document.getElementById('petShopPhone').value.trim();
+            const priority = document.getElementById('petShopPriority').value;
+            const notes = document.getElementById('petShopNotes').value.trim();
+            
+            if (!shopName || !area) {
+                showPetShopStatus('⚠️ يرجى تعبئة الاسم والمنطقة على الأقل', 'error');
+                return;
+            }
+            
+            // Check if shop already exists
+            if (planData.shops) {
+                const existingShop = planData.shops.find(s => 
+                    s.name.toLowerCase() === shopName.toLowerCase() && 
+                    s.area === area
+                );
+                
+                if (existingShop) {
+                    const confirmOverwrite = confirm(
+                        `المحل "${shopName}" موجود بالفعل في المنطقة "${area}".\n\n` +
+                        `هل تريد تحديث معلوماته؟`
+                    );
+                    
+                    if (!confirmOverwrite) {
+                        return;
+                    }
+                }
+            }
+            
+            // Create new shop object
+            const newShop = {
+                name: shopName,
+                area: area,
+                address: address || '',
+                mapLink: mapLink || '',
+                phone: phone || '',
+                priority: priority,
+                notes: notes || '',
+                lastInspectionDate: null,
+                addedVia: 'smart-discovery',
+                addedDate: new Date().toISOString()
+            };
+            
+            try {
+                // Initialize shops array if it doesn't exist
+                if (!planData.shops) {
+                    planData.shops = [];
+                }
+                
+                // Check if updating existing shop or adding new
+                const existingIndex = planData.shops.findIndex(s => 
+                    s.name.toLowerCase() === shopName.toLowerCase() && 
+                    s.area === area
+                );
+                
+                if (existingIndex !== -1) {
+                    // Update existing shop
+                    planData.shops[existingIndex] = {
+                        ...planData.shops[existingIndex],
+                        ...newShop
+                    };
+                    showPetShopStatus('✅ تم تحديث معلومات المحل بنجاح!', 'success');
+                } else {
+                    // Add new shop
+                    planData.shops.push(newShop);
+                    showPetShopStatus('✅ تم إضافة المحل الجديد بنجاح!', 'success');
+                }
+                
+                // Save to GitHub
+                await savePlanDataToGitHub();
+                
+                // Reset form
+                resetPetShopForm();
+                
+                // Refresh shops list if on shops tab
+                if (typeof renderShopsTable === 'function') {
+                    renderShopsTable();
+                }
+                
+                // Show success message with next steps
+                setTimeout(() => {
+                    showPetShopStatus(
+                        '✅ تم الحفظ بنجاح!\n\n' +
+                        'الخطوات التالية:\n' +
+                        '1. يمكنك إضافة المزيد من المحلات\n' +
+                        '2. أو الذهاب إلى تبويب "إضافة تفتيش" لجدولة التفتيش\n' +
+                        '3. المحل الجديد متاح الآن في قائمة المحلات',
+                        'success'
+                    );
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Error adding pet shop:', error);
+                showPetShopStatus('❌ حدث خطأ أثناء الحفظ: ' + error.message, 'error');
+            }
+        }
+        
+        /**
+         * Reset pet shop form
+         */
+        function resetPetShopForm() {
+            const form = document.getElementById('smartPetShopForm');
+            if (form) {
+                form.reset();
+            }
+        }
+        
+        /**
+         * Show status message for pet shop operations
+         */
+        function showPetShopStatus(message, type) {
+            const statusDiv = document.getElementById('petShopStatus');
+            if (!statusDiv) return;
+            
+            statusDiv.textContent = message;
+            statusDiv.className = 'status-message show ' + type;
+            statusDiv.style.display = 'block';
+            
+            // Auto-hide after 8 seconds for long messages
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 8000);
+        }
+        
+        /**
+         * Close modal when clicking outside
+         */
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('smartPetShopModal');
+            if (event.target === modal) {
+                closeSmartPetShopModal();
+            }
+        });
+        
+        // ========================================
+        // End of Smart Pet Shop Discovery
         // ========================================
     </script>
 </body>

@@ -2351,6 +2351,10 @@
                     <span>📤</span>
                     <span>رفع تقرير التفتيش الجماعي</span>
                 </button>
+                <button class="btn btn-info" onclick="loadAndEditGroupInspectionReport()" style="background: white; color: #2196f3;">
+                    <span>📝</span>
+                    <span>تحميل وتحرير تقرير التفتيش الجماعي</span>
+                </button>
                 <button class="btn btn-primary" onclick="switchTab('shelterInspection')" style="background: white; color: #9c27b0;">
                     <span>🏘️</span>
                     <span>تخطيط تفتيش الملاجئ</span>
@@ -12907,6 +12911,547 @@
                         alert('⚠️ الرابط غير صحيح. يرجى التأكد من صحة الرابط والمحاولة مرة أخرى.');
                     }
                 }
+            }
+        };
+        
+        // Load and Edit Group Inspection Report from GitHub
+        window.loadAndEditGroupInspectionReport = async function() {
+            // Show loading message
+            const loadingDiv = document.createElement('div');
+            loadingDiv.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: white;
+                padding: 30px;
+                border-radius: 15px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+                z-index: 10000;
+                text-align: center;
+            `;
+            loadingDiv.innerHTML = '<div style="font-size: 1.2em; color: #667eea;">⏳ جاري تحميل التقارير من GitHub...</div>';
+            document.body.appendChild(loadingDiv);
+            
+            try {
+                // Fetch group inspection reports from GitHub
+                const GITHUB_REPO = 'aliabdelaal-adm/Monthly_inspection_plan';
+                const GITHUB_TOKEN = localStorage.getItem('developerToken') || '';
+                
+                // Fetch files.json to get list of reports
+                const filesResponse = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/files.json?t=${Date.now()}`, {
+                    headers: {
+                        'Authorization': `Bearer ${GITHUB_TOKEN}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (!filesResponse.ok) {
+                    throw new Error('فشل تحميل قائمة الملفات من GitHub');
+                }
+                
+                const filesData = await filesResponse.json();
+                const filesContent = JSON.parse(atob(filesData.content));
+                
+                // Filter group inspection reports
+                const groupReports = filesContent.files.filter(file => 
+                    file.category === 'group_inspection_reports' && file.visible !== false
+                );
+                
+                if (groupReports.length === 0) {
+                    alert('⚠️ لا توجد تقارير تفتيش جماعي في GitHub حالياً');
+                    document.body.removeChild(loadingDiv);
+                    return;
+                }
+                
+                // Remove loading message
+                document.body.removeChild(loadingDiv);
+                
+                // Create selection modal
+                const modal = document.createElement('div');
+                modal.id = 'loadReportModal';
+                modal.style.cssText = `
+                    display: block;
+                    position: fixed;
+                    z-index: 10000;
+                    left: 0;
+                    top: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0,0,0,0.8);
+                    overflow: auto;
+                    animation: fadeIn 0.3s ease;
+                `;
+                
+                // Build reports list
+                let reportsHTML = '';
+                groupReports.forEach((report, idx) => {
+                    const uploadDate = new Date(report.uploadDate).toLocaleString('ar-EG');
+                    reportsHTML += `
+                        <div style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 2px solid #e0e0e0; cursor: pointer; transition: all 0.3s ease;" 
+                             onmouseover="this.style.borderColor='#2196f3'; this.style.transform='translateY(-2px)'" 
+                             onmouseout="this.style.borderColor='#e0e0e0'; this.style.transform='translateY(0)'"
+                             onclick="loadReportForEditing('${report.path}', '${report.name}')">
+                            <div style="display: grid; grid-template-columns: 1fr auto; gap: 15px; align-items: center;">
+                                <div>
+                                    <div style="font-weight: 600; color: #2d3561; margin-bottom: 5px;">
+                                        📄 ${report.name}
+                                    </div>
+                                    <div style="font-size: 0.9em; color: #666;">
+                                        📝 ${report.description || 'تقرير تفتيش جماعي'}
+                                    </div>
+                                    <div style="font-size: 0.85em; color: #999; margin-top: 5px;">
+                                        👤 ${report.uploader || 'غير محدد'} | 📅 ${uploadDate}
+                                    </div>
+                                </div>
+                                <div>
+                                    <button onclick="event.stopPropagation(); loadReportForEditing('${report.path}', '${report.name}')" 
+                                            class="btn btn-sm btn-primary" 
+                                            style="padding: 8px 20px; white-space: nowrap;">
+                                        📝 تحرير
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                modal.innerHTML = `
+                    <div style="background: white; margin: 3% auto; padding: 30px; border-radius: 20px; max-width: 900px; box-shadow: 0 20px 60px rgba(0,0,0,0.4);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 3px solid #2196f3;">
+                            <h2 style="color: #2d3561; margin: 0; display: flex; align-items: center; gap: 10px;">
+                                <span>📝</span>
+                                <span>تحميل وتحرير تقرير التفتيش الجماعي</span>
+                                <span style="background: #2196f3; color: white; padding: 4px 12px; border-radius: 15px; font-size: 0.7em;">${groupReports.length} تقرير</span>
+                            </h2>
+                            <button onclick="document.getElementById('loadReportModal').remove()" style="font-size: 2em; border: none; background: none; cursor: pointer; color: #999;">×</button>
+                        </div>
+                        
+                        <div style="background: #e3f2fd; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 2px solid #90caf9;">
+                            <strong style="color: #1976d2;">💡 تعليمات:</strong>
+                            <ul style="margin: 10px 0 0 20px; color: #666;">
+                                <li>اختر تقرير لتحميله وتحريره</li>
+                                <li>يمكنك تعديل جميع بنود التقرير</li>
+                                <li>يمكنك إضافة أو حذف بنود التفتيش</li>
+                                <li>بعد التعديل، احفظ التقرير مرة أخرى في GitHub</li>
+                            </ul>
+                        </div>
+                        
+                        <div style="max-height: 500px; overflow-y: auto; padding-right: 10px;">
+                            ${reportsHTML}
+                        </div>
+                        
+                        <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid #e0e0e0; text-align: center;">
+                            <button onclick="document.getElementById('loadReportModal').remove()" class="btn btn-secondary">
+                                <span>✕</span>
+                                <span>إغلاق</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+            } catch (error) {
+                console.error('Error loading reports:', error);
+                document.body.removeChild(loadingDiv);
+                alert('❌ حدث خطأ أثناء تحميل التقارير من GitHub:\n\n' + error.message + '\n\nالرجاء التحقق من:\n1. اتصالك بالإنترنت\n2. إعدادات رمز الوصول في لوحة المطور');
+            }
+        };
+        
+        // Load specific report for editing
+        window.loadReportForEditing = async function(reportPath, reportName) {
+            // Close the selection modal
+            const modal = document.getElementById('loadReportModal');
+            if (modal) modal.remove();
+            
+            // Show loading message
+            const loadingDiv = document.createElement('div');
+            loadingDiv.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: white;
+                padding: 30px;
+                border-radius: 15px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+                z-index: 10000;
+                text-align: center;
+            `;
+            loadingDiv.innerHTML = '<div style="font-size: 1.2em; color: #667eea;">⏳ جاري تحميل التقرير...</div>';
+            document.body.appendChild(loadingDiv);
+            
+            try {
+                const GITHUB_REPO = 'aliabdelaal-adm/Monthly_inspection_plan';
+                const GITHUB_TOKEN = localStorage.getItem('developerToken') || '';
+                
+                // Fetch the report content
+                const reportResponse = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${reportPath}?t=${Date.now()}`, {
+                    headers: {
+                        'Authorization': `Bearer ${GITHUB_TOKEN}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (!reportResponse.ok) {
+                    throw new Error('فشل تحميل التقرير');
+                }
+                
+                const reportData = await reportResponse.json();
+                const reportContent = JSON.parse(atob(reportData.content));
+                
+                // Remove loading message
+                document.body.removeChild(loadingDiv);
+                
+                // Create editing modal
+                const editModal = document.createElement('div');
+                editModal.id = 'editReportModal';
+                editModal.style.cssText = `
+                    display: block;
+                    position: fixed;
+                    z-index: 10000;
+                    left: 0;
+                    top: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0,0,0,0.8);
+                    overflow: auto;
+                    animation: fadeIn 0.3s ease;
+                `;
+                
+                // Build checklist items for editing
+                let checklistHTML = '';
+                if (reportContent.checklist && Array.isArray(reportContent.checklist)) {
+                    reportContent.checklist.forEach((item, idx) => {
+                        checklistHTML += `
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 2px solid #e0e0e0;">
+                                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                                    <div style="flex: 1;">
+                                        <label style="display: block; font-weight: 600; color: #2d3561; margin-bottom: 8px;">
+                                            البند ${idx + 1}:
+                                        </label>
+                                        <input type="text" id="item_label_${idx}" value="${item.label || ''}" 
+                                               style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 1em;">
+                                    </div>
+                                    <button onclick="removeChecklistItem(${idx})" 
+                                            style="margin-right: 10px; padding: 8px 15px; background: #dc3545; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                                        🗑️ حذف
+                                    </button>
+                                </div>
+                                
+                                <div style="margin-top: 10px;">
+                                    <label style="display: block; font-weight: 600; color: #2d3561; margin-bottom: 8px;">
+                                        الحالة:
+                                    </label>
+                                    <select id="item_value_${idx}" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px;">
+                                        <option value="مستوفى" ${item.value === 'مستوفى' ? 'selected' : ''}>✅ مستوفى</option>
+                                        <option value="غير مستوفى" ${item.value === 'غير مستوفى' ? 'selected' : ''}>❌ غير مستوفى</option>
+                                        <option value="لم يتم التفتيش" ${item.value === 'لم يتم التفتيش' ? 'selected' : ''}>⏭️ لم يتم التفتيش</option>
+                                        <option value="لا ينطبق" ${item.value === 'لا ينطبق' ? 'selected' : ''}>➖ لا ينطبق</option>
+                                    </select>
+                                </div>
+                                
+                                ${item.unfulfilledDetails ? `
+                                    <div style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 8px;">
+                                        <strong style="color: #856404;">تفاصيل عدم الاستيفاء:</strong>
+                                        <div style="margin-top: 8px; padding: 8px; background: white; border: 2px solid #ddd; border-radius: 8px; font-size: 0.9em; color: #666;">
+                                            ${typeof item.unfulfilledDetails === 'object' ? 
+                                                (item.unfulfilledDetails.selectedSubItems && Array.isArray(item.unfulfilledDetails.selectedSubItems) ? 
+                                                    '<div><strong>البنود المحددة:</strong> ' + item.unfulfilledDetails.selectedSubItems.map(s => String(s).replace(/</g, '&lt;').replace(/>/g, '&gt;')).join('، ') + '</div>' : '') +
+                                                (item.unfulfilledDetails.manualItems ? 
+                                                    '<div style="margin-top: 5px;"><strong>بنود إضافية:</strong> ' + String(item.unfulfilledDetails.manualItems).replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div>' : '') +
+                                                (item.unfulfilledDetails.action ? 
+                                                    '<div style="margin-top: 5px;"><strong>الإجراء:</strong> ' + String(item.unfulfilledDetails.action).replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div>' : '')
+                                                : String(item.unfulfilledDetails).replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                                            }
+                                        </div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                    });
+                }
+                
+                editModal.innerHTML = `
+                    <div style="background: white; margin: 2% auto; padding: 30px; border-radius: 20px; max-width: 1200px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.4);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 3px solid #667eea; position: sticky; top: 0; background: white; z-index: 1;">
+                            <h2 style="color: #2d3561; margin: 0; display: flex; align-items: center; gap: 10px;">
+                                <span>✏️</span>
+                                <span>تحرير التقرير: ${reportName}</span>
+                            </h2>
+                            <button onclick="closeEditReportModal()" style="font-size: 2em; border: none; background: none; cursor: pointer; color: #999;">×</button>
+                        </div>
+                        
+                        <!-- Report Basic Info -->
+                        <div style="background: #e3f2fd; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                            <h3 style="color: #1976d2; margin-bottom: 15px;">معلومات التقرير</h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                                <div>
+                                    <label style="display: block; font-weight: 600; margin-bottom: 5px;">التاريخ:</label>
+                                    <input type="date" id="report_date" value="${reportContent.date || ''}" style="width: 100%; padding: 8px; border: 2px solid #ddd; border-radius: 8px;">
+                                </div>
+                                <div>
+                                    <label style="display: block; font-weight: 600; margin-bottom: 5px;">المناوبة:</label>
+                                    <input type="text" id="report_shift" value="${reportContent.shift || ''}" style="width: 100%; padding: 8px; border: 2px solid #ddd; border-radius: 8px;">
+                                </div>
+                                <div>
+                                    <label style="display: block; font-weight: 600; margin-bottom: 5px;">المنطقة:</label>
+                                    <input type="text" id="report_area" value="${reportContent.area || ''}" style="width: 100%; padding: 8px; border: 2px solid #ddd; border-radius: 8px;">
+                                </div>
+                                <div>
+                                    <label style="display: block; font-weight: 600; margin-bottom: 5px;">المفتش:</label>
+                                    <input type="text" id="report_inspector" value="${reportContent.selectedInspector || ''}" style="width: 100%; padding: 8px; border: 2px solid #ddd; border-radius: 8px;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Checklist Items -->
+                        <div style="margin-bottom: 20px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h3 style="color: #2d3561; margin: 0;">بنود التفتيش</h3>
+                                <button onclick="addNewChecklistItem()" class="btn btn-success" style="padding: 10px 20px;">
+                                    ➕ إضافة بند جديد
+                                </button>
+                            </div>
+                            <div id="checklistItemsContainer">
+                                ${checklistHTML}
+                            </div>
+                        </div>
+                        
+                        <!-- Notes -->
+                        <div style="background: #fff3e0; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                            <h3 style="color: #e65100; margin-bottom: 15px;">ملاحظات التقرير</h3>
+                            <div style="display: grid; gap: 15px;">
+                                <div>
+                                    <label style="display: block; font-weight: 600; margin-bottom: 5px;">ملاحظات عامة:</label>
+                                    <textarea id="report_general_notes" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px;" rows="3">${reportContent.notes?.generalNotes || ''}</textarea>
+                                </div>
+                                <div>
+                                    <label style="display: block; font-weight: 600; margin-bottom: 5px;">المخالفات المرصودة:</label>
+                                    <textarea id="report_violations" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px;" rows="3">${reportContent.notes?.violations || ''}</textarea>
+                                </div>
+                                <div>
+                                    <label style="display: block; font-weight: 600; margin-bottom: 5px;">التوصيات:</label>
+                                    <textarea id="report_recommendations" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px;" rows="3">${reportContent.notes?.recommendations || ''}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Save Buttons -->
+                        <div style="display: flex; gap: 15px; justify-content: center; margin-top: 25px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
+                            <button onclick="saveEditedReport('${reportPath}', '${reportName}')" class="btn btn-success" style="padding: 15px 40px; font-size: 1.1em;">
+                                💾 حفظ التعديلات
+                            </button>
+                            <button onclick="closeEditReportModal()" class="btn btn-secondary" style="padding: 15px 40px; font-size: 1.1em;">
+                                ✕ إلغاء
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(editModal);
+                
+                // Store original report data for editing
+                window.currentEditingReport = {
+                    path: reportPath,
+                    name: reportName,
+                    content: reportContent
+                };
+                
+            } catch (error) {
+                console.error('Error loading report for editing:', error);
+                document.body.removeChild(loadingDiv);
+                alert('❌ حدث خطأ أثناء تحميل التقرير:\n\n' + error.message);
+            }
+        };
+        
+        // Close edit report modal
+        window.closeEditReportModal = function() {
+            const modal = document.getElementById('editReportModal');
+            if (modal) modal.remove();
+            window.currentEditingReport = null;
+        };
+        
+        // Add new checklist item
+        window.addNewChecklistItem = function() {
+            const container = document.getElementById('checklistItemsContainer');
+            if (!container) return;
+            
+            const itemCount = container.children.length;
+            const newItemHTML = `
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 2px solid #28a745;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                        <div style="flex: 1;">
+                            <label style="display: block; font-weight: 600; color: #2d3561; margin-bottom: 8px;">
+                                البند ${itemCount + 1}:
+                            </label>
+                            <input type="text" id="item_label_${itemCount}" value="" placeholder="أدخل نص البند..." 
+                                   style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 1em;">
+                        </div>
+                        <button onclick="removeChecklistItem(${itemCount})" 
+                                style="margin-right: 10px; padding: 8px 15px; background: #dc3545; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                            🗑️ حذف
+                        </button>
+                    </div>
+                    
+                    <div style="margin-top: 10px;">
+                        <label style="display: block; font-weight: 600; color: #2d3561; margin-bottom: 8px;">
+                            الحالة:
+                        </label>
+                        <select id="item_value_${itemCount}" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px;">
+                            <option value="مستوفى">✅ مستوفى</option>
+                            <option value="غير مستوفى">❌ غير مستوفى</option>
+                            <option value="لم يتم التفتيش">⏭️ لم يتم التفتيش</option>
+                            <option value="لا ينطبق">➖ لا ينطبق</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', newItemHTML);
+        };
+        
+        // Remove checklist item
+        window.removeChecklistItem = function(index) {
+            if (!confirm('هل أنت متأكد من حذف هذا البند؟')) return;
+            
+            const container = document.getElementById('checklistItemsContainer');
+            if (!container) return;
+            
+            // Find the item by looking for the input with this index
+            const itemToRemove = container.querySelector(`#item_label_${index}`)?.closest('div[style*="background: #f8f9fa"]');
+            if (itemToRemove) {
+                itemToRemove.remove();
+            }
+        };
+        
+        // Save edited report back to GitHub
+        window.saveEditedReport = async function(reportPath, reportName) {
+            if (!confirm('هل أنت متأكد من حفظ التعديلات؟')) return;
+            
+            // Show saving message
+            const savingDiv = document.createElement('div');
+            savingDiv.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: white;
+                padding: 30px;
+                border-radius: 15px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+                z-index: 10001;
+                text-align: center;
+            `;
+            savingDiv.innerHTML = '<div style="font-size: 1.2em; color: #28a745;">⏳ جاري حفظ التعديلات...</div>';
+            document.body.appendChild(savingDiv);
+            
+            try {
+                // Collect edited data
+                const reportDate = document.getElementById('report_date').value;
+                const reportShift = document.getElementById('report_shift').value;
+                const reportArea = document.getElementById('report_area').value;
+                const reportInspector = document.getElementById('report_inspector').value;
+                
+                // Collect checklist items
+                const container = document.getElementById('checklistItemsContainer');
+                const checklist = [];
+                const originalChecklist = window.currentEditingReport.content.checklist || [];
+                
+                for (let i = 0; i < container.children.length; i++) {
+                    const labelInput = document.getElementById(`item_label_${i}`);
+                    const valueSelect = document.getElementById(`item_value_${i}`);
+                    
+                    if (labelInput && valueSelect) {
+                        const item = {
+                            id: `item_${i}`,
+                            label: labelInput.value,
+                            value: valueSelect.value
+                        };
+                        
+                        // Preserve original unfulfilled details from loaded report
+                        // (they are displayed as read-only, so we keep the original structure)
+                        if (originalChecklist[i] && originalChecklist[i].unfulfilledDetails) {
+                            item.unfulfilledDetails = originalChecklist[i].unfulfilledDetails;
+                        }
+                        
+                        checklist.push(item);
+                    }
+                }
+                
+                // Collect notes
+                const notes = {
+                    generalNotes: document.getElementById('report_general_notes').value,
+                    violations: document.getElementById('report_violations').value,
+                    recommendations: document.getElementById('report_recommendations').value
+                };
+                
+                // Build updated report
+                const updatedReport = {
+                    ...window.currentEditingReport.content,
+                    date: reportDate,
+                    shift: reportShift,
+                    area: reportArea,
+                    selectedInspector: reportInspector,
+                    checklist: checklist,
+                    notes: notes,
+                    lastModified: new Date().toISOString(),
+                    modifiedBy: reportInspector
+                };
+                
+                // Save to GitHub
+                const GITHUB_REPO = 'aliabdelaal-adm/Monthly_inspection_plan';
+                const GITHUB_TOKEN = localStorage.getItem('developerToken') || '';
+                
+                // Get current file SHA
+                const currentFileResponse = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${reportPath}`, {
+                    headers: {
+                        'Authorization': `Bearer ${GITHUB_TOKEN}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (!currentFileResponse.ok) {
+                    throw new Error('فشل الحصول على معلومات الملف الحالي');
+                }
+                
+                const currentFile = await currentFileResponse.json();
+                const currentSha = currentFile.sha;
+                
+                // Encode updated content
+                const content = btoa(unescape(encodeURIComponent(JSON.stringify(updatedReport, null, 2))));
+                
+                // Update file in GitHub
+                const updateResponse = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${reportPath}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${GITHUB_TOKEN}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/vnd.github.v3+json'
+                    },
+                    body: JSON.stringify({
+                        message: `Update group inspection report: ${reportArea} - ${reportDate}`,
+                        content: content,
+                        sha: currentSha,
+                        branch: 'main'
+                    })
+                });
+                
+                if (!updateResponse.ok) {
+                    const errorData = await updateResponse.json();
+                    throw new Error(errorData.message || 'فشل حفظ التعديلات');
+                }
+                
+                // Success!
+                document.body.removeChild(savingDiv);
+                alert('✅ تم حفظ التعديلات بنجاح في GitHub!');
+                closeEditReportModal();
+                
+            } catch (error) {
+                console.error('Error saving edited report:', error);
+                document.body.removeChild(savingDiv);
+                alert('❌ حدث خطأ أثناء حفظ التعديلات:\n\n' + error.message + '\n\nالرجاء التحقق من:\n1. اتصالك بالإنترنت\n2. إعدادات رمز الوصول\n3. صلاحياتك على المستودع');
             }
         };
         

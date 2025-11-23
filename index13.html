@@ -1722,7 +1722,15 @@
             const devControls = document.getElementById('developerControls');
             if (devControls.style.display === 'none') {
                 const password = prompt('أدخل كلمة مرور المطور:');
-                if (password === '12345' || password === 'developer') {
+                // Use stored developer password if available, otherwise use default
+                const storedPassword = localStorage.getItem('developerPassword');
+                const validPasswords = ['12345', 'developer'];
+                
+                if (storedPassword) {
+                    validPasswords.push(storedPassword);
+                }
+                
+                if (validPasswords.includes(password)) {
                     devControls.style.display = 'block';
                 } else {
                     alert('❌ كلمة المرور غير صحيحة');

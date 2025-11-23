@@ -4807,19 +4807,19 @@
                     <p style="margin-bottom: 10px; color: #666;">تم العثور على ${places.length} محلات في هذا الموقع:</p>
                     <div style="max-height: 300px; overflow-y: auto;">
                         ${places.map((place, index) => `
-                            <div onclick="selectPlaceForAddition('${place.place_id}', ${latLng.lat()}, ${latLng.lng()})" 
+                            <div onclick="selectPlaceForAddition('${escapeJs(place.place_id)}', ${latLng.lat()}, ${latLng.lng()})" 
                                  style="padding: 12px; margin: 8px 0; background: #f8f9fa; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;"
                                  onmouseover="this.style.borderColor='#667eea'; this.style.background='#e8eaf6';"
                                  onmouseout="this.style.borderColor='transparent'; this.style.background='#f8f9fa';">
                                 <div style="font-weight: 600; color: #2d3561; margin-bottom: 4px;">
-                                    ${place.name}
+                                    ${escapeHtml(place.name)}
                                 </div>
                                 <div style="font-size: 0.85em; color: #666;">
-                                    ${place.vicinity || 'لا يوجد عنوان'}
+                                    ${escapeHtml(place.vicinity || 'لا يوجد عنوان')}
                                 </div>
                                 ${place.rating ? `
                                     <div style="font-size: 0.8em; color: #ffc107; margin-top: 4px;">
-                                        ⭐ ${place.rating} ${place.user_ratings_total ? `(${place.user_ratings_total})` : ''}
+                                        ⭐ ${parseFloat(place.rating).toFixed(1)} ${place.user_ratings_total ? `(${parseInt(place.user_ratings_total)})` : ''}
                                     </div>
                                 ` : ''}
                             </div>
@@ -4900,7 +4900,7 @@
                         <div style="margin-bottom: 10px;">
                             <strong style="color: #2d3561;">الاسم:</strong>
                             <div style="margin-top: 5px;">
-                                <input type="text" id="newShopName" value="${place.name || ''}" 
+                                <input type="text" id="newShopName" value="${escapeHtml(place.name || '')}" 
                                        style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-family: Cairo;">
                             </div>
                         </div>
@@ -4908,7 +4908,7 @@
                         <div style="margin-bottom: 10px;">
                             <strong style="color: #2d3561;">العنوان:</strong>
                             <div style="margin-top: 5px;">
-                                <input type="text" id="newShopAddress" value="${place.formatted_address || place.vicinity || ''}" 
+                                <input type="text" id="newShopAddress" value="${escapeHtml(place.formatted_address || place.vicinity || '')}" 
                                        style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-family: Cairo;">
                             </div>
                         </div>
@@ -4916,7 +4916,7 @@
                         <div style="margin-bottom: 10px;">
                             <strong style="color: #2d3561;">رقم الهاتف:</strong>
                             <div style="margin-top: 5px;">
-                                <input type="text" id="newShopPhone" value="${place.formatted_phone_number || ''}" 
+                                <input type="text" id="newShopPhone" value="${escapeHtml(place.formatted_phone_number || '')}" 
                                        style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-family: Cairo;">
                             </div>
                         </div>
@@ -4942,8 +4942,8 @@
                         ${place.rating ? `
                             <div style="margin-bottom: 10px; padding: 8px; background: white; border-radius: 5px;">
                                 <strong style="color: #2d3561;">التقييم:</strong>
-                                <span style="color: #ffc107;">⭐ ${place.rating}</span>
-                                ${place.user_ratings_total ? `<span style="color: #666; font-size: 0.9em;"> (${place.user_ratings_total} تقييم)</span>` : ''}
+                                <span style="color: #ffc107;">⭐ ${parseFloat(place.rating).toFixed(1)}</span>
+                                ${place.user_ratings_total ? `<span style="color: #666; font-size: 0.9em;"> (${parseInt(place.user_ratings_total)} تقييم)</span>` : ''}
                             </div>
                         ` : ''}
                         
@@ -4978,7 +4978,7 @@
                 .filter(shop => shop && shop.area)
                 .map(shop => shop.area))].sort();
             
-            return areas.map(area => `<option value="${area}">${area}</option>`).join('');
+            return areas.map(area => `<option value="${escapeHtml(area)}">${escapeHtml(area)}</option>`).join('');
         }
         
         // Add new shop directly to inspection

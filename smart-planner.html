@@ -13126,7 +13126,7 @@
                     reportContent.checklist.forEach((item, idx) => {
                         checklistHTML += `
                             <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 2px solid #e0e0e0;">
-                                <div style="display: flex; justify-content: between; align-items: start; margin-bottom: 10px;">
+                                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
                                     <div style="flex: 1;">
                                         <label style="display: block; font-weight: 600; color: #2d3561; margin-bottom: 8px;">
                                             البند ${idx + 1}:
@@ -13155,7 +13155,17 @@
                                 ${item.unfulfilledDetails ? `
                                     <div style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 8px;">
                                         <strong style="color: #856404;">تفاصيل عدم الاستيفاء:</strong>
-                                        <textarea id="item_unfulfilled_${idx}" style="width: 100%; margin-top: 8px; padding: 8px; border: 2px solid #ddd; border-radius: 8px;" rows="3">${JSON.stringify(item.unfulfilledDetails, null, 2)}</textarea>
+                                        <div style="margin-top: 8px; padding: 8px; background: white; border: 2px solid #ddd; border-radius: 8px; font-size: 0.9em; color: #666;">
+                                            ${typeof item.unfulfilledDetails === 'object' ? 
+                                                (item.unfulfilledDetails.selectedSubItems ? 
+                                                    '<div><strong>البنود المحددة:</strong> ' + item.unfulfilledDetails.selectedSubItems.join('، ') + '</div>' : '') +
+                                                (item.unfulfilledDetails.manualItems ? 
+                                                    '<div style="margin-top: 5px;"><strong>بنود إضافية:</strong> ' + item.unfulfilledDetails.manualItems + '</div>' : '') +
+                                                (item.unfulfilledDetails.action ? 
+                                                    '<div style="margin-top: 5px;"><strong>الإجراء:</strong> ' + item.unfulfilledDetails.action + '</div>' : '')
+                                                : item.unfulfilledDetails
+                                            }
+                                        </div>
                                     </div>
                                 ` : ''}
                             </div>
@@ -13343,10 +13353,11 @@
                 // Collect checklist items
                 const container = document.getElementById('checklistItemsContainer');
                 const checklist = [];
+                const originalChecklist = window.currentEditingReport.content.checklist || [];
+                
                 for (let i = 0; i < container.children.length; i++) {
                     const labelInput = document.getElementById(`item_label_${i}`);
                     const valueSelect = document.getElementById(`item_value_${i}`);
-                    const unfulfilledText = document.getElementById(`item_unfulfilled_${i}`);
                     
                     if (labelInput && valueSelect) {
                         const item = {
@@ -13355,13 +13366,10 @@
                             value: valueSelect.value
                         };
                         
-                        if (unfulfilledText) {
-                            try {
-                                item.unfulfilledDetails = JSON.parse(unfulfilledText.value);
-                            } catch (e) {
-                                // If parsing fails, save as string
-                                item.unfulfilledDetails = { manualItems: unfulfilledText.value };
-                            }
+                        // Preserve original unfulfilled details from loaded report
+                        // (they are displayed as read-only, so we keep the original structure)
+                        if (originalChecklist[i] && originalChecklist[i].unfulfilledDetails) {
+                            item.unfulfilledDetails = originalChecklist[i].unfulfilledDetails;
                         }
                         
                         checklist.push(item);

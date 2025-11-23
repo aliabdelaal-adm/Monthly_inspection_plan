@@ -1206,6 +1206,12 @@
             
             // Generate checklist items
             generateChecklistItems();
+            
+            // Check if GitHub token is configured
+            if (!GITHUB_TOKEN) {
+                console.warn('⚠️ No GitHub token configured. Direct GitHub save will not work.');
+                console.warn('ℹ️ Use Ctrl+Shift+D to open Developer Controls and configure GitHub Settings');
+            }
         }
         
         function displayInspectionDetails() {
@@ -1640,7 +1646,8 @@
         
         // GitHub API Configuration
         const GITHUB_REPO = 'aliabdelaal-adm/Monthly_inspection_plan';
-        const GITHUB_TOKEN = localStorage.getItem('developerToken') || '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';
+        // Token must be configured by developer - no hardcoded fallback for security
+        const GITHUB_TOKEN = localStorage.getItem('developerToken') || '';
         
         // Test GitHub API connectivity
         async function testGitHubConnection() {
@@ -1671,6 +1678,14 @@
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
             const fileName = `group-inspection-${timestamp}.json`;
             const filePath = `files/group_inspection_reports/${fileName}`;
+            
+            // Check if GitHub token is configured
+            if (!GITHUB_TOKEN) {
+                console.warn('⚠️ No GitHub token configured. GitHub save methods will not work.');
+                console.warn('ℹ️ Please configure a token in Developer Controls > GitHub Settings');
+                // Return early to skip GitHub API attempts
+                return { success: false, method: 'none', error: 'no_token' };
+            }
             
             // Test GitHub connectivity first
             const isConnected = await testGitHubConnection();
@@ -1818,9 +1833,7 @@ ${reportData.notes.recommendations ? `**التوصيات:** ${reportData.notes.r
                     const issueData = await issueResponse.json();
                     console.log('✅ Report saved as GitHub issue:', issueData.html_url);
                     
-                    // Store issue URL for reference
-                    reportData.issueUrl = issueData.html_url;
-                    
+                    // Return issue URL without mutating reportData
                     return { success: true, method: 'github_issue', url: issueData.html_url };
                 } else {
                     const errorText = await issueResponse.text();
@@ -2035,14 +2048,27 @@ ${reportData.notes.recommendations ? `**التوصيات:** ${reportData.notes.r
                     saveBtn.textContent = originalText;
                     saveBtn.disabled = false;
                     
-                    // Provide detailed error feedback
-                    const errorMsg = '⚠️ تعذر حفظ التقرير في GitHub مباشرةً.\n\n' +
-                        'تم محاولة عدة طرق للحفظ ولكنها فشلت.\n\n' +
-                        'الحلول البديلة:\n' +
-                        '1. تحقق من الاتصال بالإنترنت\n' +
-                        '2. حاول مرة أخرى بعد قليل\n' +
-                        '3. اتصل بمسؤول النظام\n\n' +
-                        'تم حفظ نسخة احتياطية محلية في المتصفح.';
+                    // Provide detailed error feedback based on error type
+                    let errorMsg = '⚠️ تعذر حفظ التقرير في GitHub مباشرةً.\n\n';
+                    
+                    if (saveResult.error === 'no_token') {
+                        errorMsg += 'السبب: لم يتم تكوين رمز وصول GitHub.\n\n' +
+                            'لتفعيل الحفظ المباشر:\n' +
+                            '1. اضغط Ctrl+Shift+D لفتح لوحة المطور\n' +
+                            '2. اضغط "إعدادات GitHub"\n' +
+                            '3. أدخل رمز الوصول الشخصي\n\n' +
+                            'بدلاً من ذلك:\n' +
+                            '• استخدم زر "تنزيل التقرير كملف احتياطي" أسفل الصفحة\n' +
+                            '• سيتم حفظ نسخة احتياطية محلية في المتصفح';
+                    } else {
+                        errorMsg += 'تم محاولة عدة طرق للحفظ ولكنها فشلت.\n\n' +
+                            'الحلول البديلة:\n' +
+                            '1. تحقق من الاتصال بالإنترنت\n' +
+                            '2. تحقق من إعدادات رمز GitHub (Ctrl+Shift+D)\n' +
+                            '3. استخدم زر "تنزيل التقرير كملف احتياطي"\n' +
+                            '4. حاول مرة أخرى بعد قليل\n\n' +
+                            'تم حفظ نسخة احتياطية محلية في المتصفح.';
+                    }
                     
                     alert(errorMsg);
                     

@@ -32,27 +32,29 @@ jobs:
       
       - name: Create report file from workflow_dispatch
         if: github.event_name == 'workflow_dispatch'
+        env:
+          REPORT_DATA: ${{ github.event.inputs.report_data }}
+          FILENAME: ${{ github.event.inputs.filename }}
         run: |
           mkdir -p files/group_inspection_reports
           
-          # Save report to file
-          echo '${{ github.event.inputs.report_data }}' > "files/group_inspection_reports/${{ github.event.inputs.filename }}"
+          # Save report to file using environment variables (safer than direct echo)
+          printf '%s\n' "$REPORT_DATA" > "files/group_inspection_reports/$FILENAME"
           
-          echo "Report saved to files/group_inspection_reports/${{ github.event.inputs.filename }}"
+          echo "Report saved to files/group_inspection_reports/$FILENAME"
       
       - name: Create report file from repository_dispatch
         if: github.event_name == 'repository_dispatch'
+        env:
+          REPORT_DATA: ${{ toJson(github.event.client_payload.report) }}
+          FILENAME: ${{ github.event.client_payload.filename }}
         run: |
           mkdir -p files/group_inspection_reports
           
-          # Get report data from event payload
-          REPORT_DATA='${{ toJson(github.event.client_payload.report) }}'
-          FILENAME='${{ github.event.client_payload.filename }}'
+          # Save report to file using environment variables (safer than direct echo)
+          printf '%s\n' "$REPORT_DATA" > "files/group_inspection_reports/$FILENAME"
           
-          # Save report to file
-          echo "$REPORT_DATA" > "files/group_inspection_reports/${FILENAME}"
-          
-          echo "Report saved to files/group_inspection_reports/${FILENAME}"
+          echo "Report saved to files/group_inspection_reports/$FILENAME"
       
       - name: Commit and push changes
         run: |

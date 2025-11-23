@@ -31595,8 +31595,63 @@ async function loadGroupInspectionReports() {
         statusDiv.textContent = '⏳ جاري تحميل التقارير...';
         statusDiv.style.color = '#666';
         
-        // Load saved reports from localStorage (from index13.html)
+        // Load saved reports from localStorage (from index13.html) - for backward compatibility
         const savedReports = JSON.parse(localStorage.getItem('groupInspectionReports') || '[]');
+        
+        // Load reports from GitHub (PERMANENT storage)
+        let githubReports = [];
+        try {
+            const GITHUB_REPO = 'aliabdelaal-adm/Monthly_inspection_plan';
+            const GITHUB_TOKEN = localStorage.getItem('developerToken') || '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';
+            
+            // Fetch files from the 'files' directory
+            const response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/files`, {
+                headers: {
+                    'Authorization': `Bearer ${GITHUB_TOKEN}`
+                },
+                cache: 'no-cache'
+            });
+            
+            if (response.ok) {
+                const files = await response.json();
+                
+                // Filter for group inspection report files
+                const reportFiles = files.filter(file => 
+                    file.name.startsWith('group-inspection-') && 
+                    file.name.endsWith('.json')
+                );
+                
+                // Fetch each report file
+                for (const file of reportFiles) {
+                    try {
+                        const reportResponse = await fetch(file.download_url, {
+                            cache: 'no-cache'
+                        });
+                        
+                        if (reportResponse.ok) {
+                            const reportData = await reportResponse.json();
+                            reportData._githubFile = file.name; // Track GitHub filename
+                            reportData._githubPath = file.path;
+                            reportData._githubSha = file.sha;
+                            githubReports.push(reportData);
+                        }
+                    } catch (error) {
+                        console.warn('Error loading report file:', file.name, error);
+                    }
+                }
+                
+                // Sort GitHub reports by timestamp (newest first)
+                githubReports.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            }
+        } catch (error) {
+            console.warn('Unable to load reports from GitHub:', error);
+        }
+        
+        // Save GitHub reports to sessionStorage for use in viewAllGroupReport
+        sessionStorage.setItem('githubGroupReports', JSON.stringify(githubReports));
+        
+        // Merge reports (GitHub reports first, then localStorage)
+        const allReports = [...githubReports, ...savedReports];
         
         // تحميل ملف files.json مع منع التخزين المؤقت
         let groupReports = [];
@@ -31622,7 +31677,7 @@ async function loadGroupInspectionReports() {
             console.warn('Unable to load files.json, showing only local reports:', error);
         }
         
-        if (groupReports.length === 0 && savedReports.length === 0) {
+        if (groupReports.length === 0 && allReports.length === 0) {
             listDiv.innerHTML = `
                 <div style="text-align: center; color: #666; padding: 60px 0;">
                     <div style="font-size: 4em; margin-bottom: 20px;">📑</div>
@@ -31633,8 +31688,8 @@ async function loadGroupInspectionReports() {
         } else {
             let reportsHTML = '<div style="display: grid; gap: 15px;">';
             
-            // Display saved reports from index13.html first
-            savedReports.forEach((report, index) => {
+            // Display all reports (GitHub + localStorage)
+            allReports.forEach((report, index) => {
                 const reportDate = new Date(report.timestamp).toLocaleDateString('ar-EG', {
                     year: 'numeric',
                     month: 'long',
@@ -31643,9 +31698,16 @@ async function loadGroupInspectionReports() {
                     minute: '2-digit'
                 });
                 
-                const fulfilledCount = report.items.filter(item => item.value === 'مستوفى').length;
-                const unfulfilledCount = report.items.filter(item => item.value === 'غير مستوفى').length;
-                const totalItems = report.items.length;
+                // Handle different data structures (checklist vs items)
+                const items = report.checklist || report.items || [];
+                const fulfilledCount = items.filter(item => item.value === 'مستوفى').length;
+                const unfulfilledCount = items.filter(item => item.value === 'غير مستوفى').length;
+                const totalItems = items.length;
+                
+                const isGitHubReport = report._githubFile ? true : false;
+                const sourceBadge = isGitHubReport ? 
+                    '<span style="background: #28a745; color: white; padding: 3px 10px; border-radius: 5px; font-size: 0.85em;">✅ مخزن دائماً</span>' : 
+                    '<span style="background: #ffc107; color: #333; padding: 3px 10px; border-radius: 5px; font-size: 0.85em;">⚠️ محلي</span>';
                 
                 reportsHTML += `
                     <div style="background: linear-gradient(135deg, #fff5e6 0%, #ffe8cc 100%); padding: 20px; border-radius: 10px; border: 2px solid #ff9800; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(255,152,0,0.2);" 
@@ -31671,18 +31733,19 @@ async function loadGroupInspectionReports() {
                                     <span style="background: #f44336; color: white; padding: 4px 12px; border-radius: 6px;">❌ غير مستوفى: ${unfulfilledCount}</span>
                                     <span style="background: #667eea; color: white; padding: 4px 12px; border-radius: 6px;">📊 الإجمالي: ${totalItems}</span>
                                 </div>
-                                <div style="color: #999; font-size: 0.85em; margin-top: 8px;">
-                                    📅 ${reportDate}
+                                <div style="color: #999; font-size: 0.85em; margin-top: 8px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                                    <span>📅 ${reportDate}</span>
+                                    ${sourceBadge}
                                 </div>
                             </div>
                             <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                                <button onclick="viewSavedGroupReport(${index})" 
+                                <button onclick="viewAllGroupReport(${index})" 
                                     style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(255,152,0,0.3); transition: all 0.3s ease;"
                                     onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(255,152,0,0.4)';"
                                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(255,152,0,0.3)';">
                                     👁️ عرض التقرير
                                 </button>
-                                <button onclick="deleteSavedGroupReport(${index})" 
+                                <button onclick="deleteAllGroupReport(${index})" 
                                     style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(220,53,69,0.3); transition: all 0.3s ease;"
                                     onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(220,53,69,0.4)';"
                                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(220,53,69,0.3)';">
@@ -31888,7 +31951,227 @@ function viewSavedGroupReport(index) {
     document.body.appendChild(modal);
 }
 
-// Delete saved group inspection report
+// View group report from merged list (GitHub + localStorage)
+function viewAllGroupReport(index) {
+    // Load all reports (GitHub + localStorage)
+    const savedReports = JSON.parse(localStorage.getItem('groupInspectionReports') || '[]');
+    let githubReports = JSON.parse(sessionStorage.getItem('githubGroupReports') || '[]');
+    const allReports = [...githubReports, ...savedReports];
+    
+    const report = allReports[index];
+    
+    if (!report) {
+        alert('⚠️ التقرير غير موجود');
+        return;
+    }
+    
+    // Create a modal to display the report
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 20px; overflow-y: auto;';
+    
+    // Handle different data structures (checklist vs items)
+    const items = report.checklist || report.items || [];
+    const fulfilledCount = items.filter(item => item.value === 'مستوفى').length;
+    const unfulfilledCount = items.filter(item => item.value === 'غير مستوفى').length;
+    const notInspectedCount = items.filter(item => item.value === 'لم يتم التفتيش').length;
+    const notApplicableCount = items.filter(item => item.value === 'لا ينطبق').length;
+    
+    let itemsHTML = '';
+    items.forEach((item, idx) => {
+        const statusColor = item.value === 'مستوفى' ? '#4caf50' : 
+                           item.value === 'غير مستوفى' ? '#f44336' : 
+                           item.value === 'لم يتم التفتيش' ? '#ff9800' : '#9e9e9e';
+        
+        let unfulfilledDetailsHTML = '';
+        if (item.value === 'غير مستوفى' && item.unfulfilledDetails) {
+            const details = item.unfulfilledDetails;
+            unfulfilledDetailsHTML = '<div style="margin-top: 10px; padding: 10px; background: #fff3e0; border-radius: 6px; border: 1px solid #ff9800;">';
+            
+            if (details.selectedSubItems && details.selectedSubItems.length > 0) {
+                unfulfilledDetailsHTML += '<div style="margin-bottom: 8px;"><strong>البنود الفرعية غير المستوفاة:</strong></div>';
+                unfulfilledDetailsHTML += '<ul style="margin: 5px 0; padding-right: 20px;">';
+                details.selectedSubItems.forEach(subitem => {
+                    unfulfilledDetailsHTML += `<li>${subitem}</li>`;
+                });
+                unfulfilledDetailsHTML += '</ul>';
+            }
+            
+            if (details.manualItems) {
+                unfulfilledDetailsHTML += `<div style="margin-top: 8px;"><strong>بنود إضافية:</strong> ${details.manualItems}</div>`;
+            }
+            
+            if (details.action) {
+                unfulfilledDetailsHTML += `<div style="margin-top: 8px;"><strong>الإجراء المتخذ:</strong> ${details.action}</div>`;
+            }
+            
+            if (details.deadline) {
+                unfulfilledDetailsHTML += `<div style="margin-top: 8px;"><strong>المهلة:</strong> ${details.deadline.date}`;
+                if (details.deadline.notes) {
+                    unfulfilledDetailsHTML += ` - ${details.deadline.notes}`;
+                }
+                unfulfilledDetailsHTML += '</div>';
+            }
+            
+            unfulfilledDetailsHTML += '</div>';
+        }
+        
+        itemsHTML += `
+            <div style="background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; border-right: 4px solid ${statusColor};">
+                <div style="display: flex; justify-content: space-between; align-items: start; gap: 10px;">
+                    <div style="flex: 1;">
+                        <strong style="color: #234085;">${idx + 1}. ${item.label}</strong>
+                        <div style="margin-top: 8px; padding: 6px 12px; background: ${statusColor}; color: white; border-radius: 6px; display: inline-block; font-weight: 600;">
+                            ${item.value || 'لم يتم الإجابة'}
+                        </div>
+                        ${unfulfilledDetailsHTML}
+                        ${item.comment ? `<div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 6px; color: #666;"><strong>التعليق:</strong> ${item.comment}</div>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    // Display notes if available
+    let notesHTML = '';
+    if (report.notes) {
+        notesHTML = `
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 2px solid #e0e0e0;">
+                <h3 style="color: #234085; margin-bottom: 15px;">📝 الملاحظات</h3>
+                ${report.notes.generalNotes ? `<div style="margin-bottom: 10px;"><strong>ملاحظات عامة:</strong> ${report.notes.generalNotes}</div>` : ''}
+                ${report.notes.violations ? `<div style="margin-bottom: 10px;"><strong>المخالفات:</strong> ${report.notes.violations}</div>` : ''}
+                ${report.notes.awarenessItems ? `<div style="margin-bottom: 10px;"><strong>بنود التوعية:</strong> ${report.notes.awarenessItems}</div>` : ''}
+                ${report.notes.actionsTaken ? `<div style="margin-bottom: 10px;"><strong>الإجراءات المتخذة:</strong> ${report.notes.actionsTaken}</div>` : ''}
+                ${report.notes.recommendations ? `<div style="margin-bottom: 10px;"><strong>التوصيات:</strong> ${report.notes.recommendations}</div>` : ''}
+            </div>
+        `;
+    }
+    
+    const isGitHub = report._githubFile ? true : false;
+    const sourceBadge = isGitHub ? 
+        '<span style="background: #28a745; color: white; padding: 5px 15px; border-radius: 6px; font-size: 0.9em;">✅ مخزن دائماً في GitHub</span>' : 
+        '<span style="background: #ffc107; color: #333; padding: 5px 15px; border-radius: 6px; font-size: 0.9em;">⚠️ مخزن محلياً</span>';
+    
+    modal.innerHTML = `
+        <div style="background: white; border-radius: 20px; max-width: 1200px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+            <div style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: white; padding: 30px; border-radius: 20px 20px 0 0; position: sticky; top: 0; z-index: 1;">
+                <h2 style="margin: 0 0 10px 0; font-size: 2em;">📝 تقرير التفتيش الجماعى</h2>
+                ${sourceBadge}
+                <button onclick="this.closest('.modal-overlay, div[style*=fixed]').remove()" style="position: absolute; top: 20px; left: 20px; background: rgba(255,255,255,0.2); border: 2px solid white; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 1.5em; display: flex; align-items: center; justify-content: center;">×</button>
+            </div>
+            <div style="padding: 30px;">
+                <div style="background: linear-gradient(135deg, #fff5e6 0%, #ffe8cc 100%); padding: 20px; border-radius: 12px; margin-bottom: 30px; border: 2px solid #ff9800;">
+                    <h3 style="color: #e65100; margin-bottom: 15px;">تفاصيل عملية التفتيش</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                        <div style="background: white; padding: 12px; border-radius: 8px; border-right: 4px solid #ff9800;">
+                            <strong style="color: #e65100;">المفتشين:</strong> ${report.inspectors ? report.inspectors.join('، ') : 'غير محدد'}
+                        </div>
+                        <div style="background: white; padding: 12px; border-radius: 8px; border-right: 4px solid #ff9800;">
+                            <strong style="color: #e65100;">المفتش المنفذ:</strong> ${report.selectedInspector || 'غير محدد'}
+                        </div>
+                        <div style="background: white; padding: 12px; border-radius: 8px; border-right: 4px solid #ff9800;">
+                            <strong style="color: #e65100;">التاريخ:</strong> ${report.date || 'غير محدد'}
+                        </div>
+                        <div style="background: white; padding: 12px; border-radius: 8px; border-right: 4px solid #ff9800;">
+                            <strong style="color: #e65100;">المناوبة:</strong> ${report.shift || 'غير محدد'}
+                        </div>
+                        <div style="background: white; padding: 12px; border-radius: 8px; border-right: 4px solid #ff9800;">
+                            <strong style="color: #e65100;">المنطقة:</strong> ${report.area || 'غير محدد'}
+                        </div>
+                        <div style="background: white; padding: 12px; border-radius: 8px; border-right: 4px solid #ff9800;">
+                            <strong style="color: #e65100;">المحلات:</strong> ${report.shops ? report.shops.join('، ') : 'غير محدد'}
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
+                    <div style="background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 0.9em; opacity: 0.95;">مستوفى</div>
+                        <div style="font-size: 2.5em; font-weight: bold; margin: 10px 0;">${fulfilledCount}</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 0.9em; opacity: 0.95;">غير مستوفى</div>
+                        <div style="font-size: 2.5em; font-weight: bold; margin: 10px 0;">${unfulfilledCount}</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 0.9em; opacity: 0.95;">لم يتم التفتيش</div>
+                        <div style="font-size: 2.5em; font-weight: bold; margin: 10px 0;">${notInspectedCount}</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #9e9e9e 0%, #757575 100%); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 0.9em; opacity: 0.95;">لا ينطبق</div>
+                        <div style="font-size: 2.5em; font-weight: bold; margin: 10px 0;">${notApplicableCount}</div>
+                    </div>
+                </div>
+                
+                ${notesHTML}
+                
+                <div style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 2px solid #2196f3;">
+                    <h3 style="color: #1565c0; margin-bottom: 20px;">بنود التفتيش التفصيلية</h3>
+                    ${itemsHTML}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+// Delete group report from merged list
+async function deleteAllGroupReport(index) {
+    if (!confirm('هل تريد حذف هذا التقرير نهائياً؟')) return;
+    
+    // Load all reports
+    const savedReports = JSON.parse(localStorage.getItem('groupInspectionReports') || '[]');
+    let githubReports = JSON.parse(sessionStorage.getItem('githubGroupReports') || '[]');
+    const allReports = [...githubReports, ...savedReports];
+    
+    const report = allReports[index];
+    
+    if (!report) {
+        alert('⚠️ التقرير غير موجود');
+        return;
+    }
+    
+    // Check if it's a GitHub report
+    if (report._githubFile) {
+        // Delete from GitHub
+        try {
+            const GITHUB_REPO = 'aliabdelaal-adm/Monthly_inspection_plan';
+            const GITHUB_TOKEN = localStorage.getItem('developerToken') || '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';
+            
+            const deleteResponse = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${report._githubPath}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${GITHUB_TOKEN}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: `Delete group inspection report - ${report._githubFile}`,
+                    sha: report._githubSha,
+                    branch: 'main'
+                })
+            });
+            
+            if (deleteResponse.ok) {
+                alert('✅ تم حذف التقرير من GitHub بنجاح');
+            } else {
+                alert('⚠️ فشل حذف التقرير من GitHub');
+            }
+        } catch (error) {
+            console.error('Error deleting from GitHub:', error);
+            alert('⚠️ حدث خطأ أثناء حذف التقرير من GitHub');
+        }
+    } else {
+        // Delete from localStorage
+        const localIndex = index - githubReports.length;
+        savedReports.splice(localIndex, 1);
+        localStorage.setItem('groupInspectionReports', JSON.stringify(savedReports));
+    }
+    
+    // Reload the reports list
+    loadGroupInspectionReports();
+}
+
+// Delete saved group inspection report (backward compatibility)
 function deleteSavedGroupReport(index) {
     if (!confirm('هل تريد حذف هذا التقرير نهائياً؟')) return;
     

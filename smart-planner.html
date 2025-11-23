@@ -4801,13 +4801,23 @@
         
         // Show dialog to select from multiple shops
         function showShopSelectionDialog(places, latLng) {
+            // Validate coordinates
+            const lat = parseFloat(latLng.lat());
+            const lng = parseFloat(latLng.lng());
+            
+            if (isNaN(lat) || isNaN(lng)) {
+                console.error('Invalid coordinates:', lat, lng);
+                alert('⚠️ إحداثيات غير صالحة');
+                return;
+            }
+            
             const content = `
                 <div style="font-family: Cairo, Arial; direction: rtl; text-align: right; padding: 15px; min-width: 300px; max-width: 400px;">
                     <h3 style="margin: 0 0 15px 0; color: #2d3561;">🏪 اختر المحل المطلوب</h3>
                     <p style="margin-bottom: 10px; color: #666;">تم العثور على ${places.length} محلات في هذا الموقع:</p>
                     <div style="max-height: 300px; overflow-y: auto;">
                         ${places.map((place, index) => `
-                            <div onclick="selectPlaceForAddition('${escapeJs(place.place_id)}', ${latLng.lat()}, ${latLng.lng()})" 
+                            <div onclick="selectPlaceForAddition('${escapeJs(place.place_id)}', ${lat}, ${lng})" 
                                  style="padding: 12px; margin: 8px 0; background: #f8f9fa; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;"
                                  onmouseover="this.style.borderColor='#667eea'; this.style.background='#e8eaf6';"
                                  onmouseout="this.style.borderColor='transparent'; this.style.background='#f8f9fa';">
@@ -4885,8 +4895,18 @@
         // Show shop details and allow direct addition
         async function showShopDetailsForAddition(place, latLng) {
             const position = place.geometry ? place.geometry.location : latLng;
-            const lat = typeof position.lat === 'function' ? position.lat() : position.lat;
-            const lng = typeof position.lng === 'function' ? position.lng() : position.lng;
+            let lat = typeof position.lat === 'function' ? position.lat() : position.lat;
+            let lng = typeof position.lng === 'function' ? position.lng() : position.lng;
+            
+            // Validate and sanitize coordinates
+            lat = parseFloat(lat);
+            lng = parseFloat(lng);
+            
+            if (isNaN(lat) || isNaN(lng)) {
+                console.error('Invalid coordinates:', lat, lng);
+                alert('⚠️ إحداثيات غير صالحة');
+                return;
+            }
             
             const googleMapsLink = place.url || `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
             

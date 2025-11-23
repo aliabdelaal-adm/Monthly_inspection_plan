@@ -1780,10 +1780,10 @@
             // Method 3: Create a GitHub Issue as fallback
             try {
                 console.log('Creating GitHub issue as fallback...');
-                // Truncate report data if too large for issue
+                // Truncate report data if too large for issue (photos can be very large)
                 const reportSummary = {
                     ...reportData,
-                    photos: reportData.photos.length > 0 ? [`${reportData.photos.length} photos (truncated)`] : []
+                    photos: reportData.photos.length > 0 ? { count: reportData.photos.length, truncated: true } : []
                 };
                 
                 const issueBody = `## تقرير التفتيش الجماعى - ${reportData.area}
@@ -1833,7 +1833,6 @@ ${reportData.notes.recommendations ? `**التوصيات:** ${reportData.notes.r
                     const issueData = await issueResponse.json();
                     console.log('✅ Report saved as GitHub issue:', issueData.html_url);
                     
-                    // Return issue URL without mutating reportData
                     return { success: true, method: 'github_issue', url: issueData.html_url };
                 } else {
                     const errorText = await issueResponse.text();
@@ -2475,8 +2474,8 @@ ${reportData.notes.recommendations ? `**التوصيات:** ${reportData.notes.r
                     statusDiv.style.color = '#155724';
                     statusDiv.innerHTML = `✅ تم الاتصال بنجاح!<br>المستودع: ${repoData.full_name}<br>الوصول: ${repoData.permissions.push ? 'كامل' : 'قراءة فقط'}`;
                     
-                    // Update the global token variable
-                    window.location.reload();
+                    // Note: GITHUB_TOKEN constant cannot be updated, page will use localStorage value
+                    console.log('✅ Token saved successfully. It will be used for future save operations.');
                 } else {
                     const errorData = await response.json();
                     statusDiv.style.background = '#f8d7da';

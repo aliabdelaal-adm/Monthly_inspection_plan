@@ -57,16 +57,19 @@ jobs:
           echo "Report saved to files/group_inspection_reports/$FILENAME"
       
       - name: Commit and push changes
+        env:
+          COMMIT_MSG_DISPATCH: ${{ github.event.inputs.commit_message }}
+          COMMIT_MSG_REPO: ${{ github.event.client_payload.commit_message }}
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add files/group_inspection_reports/
           
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            COMMIT_MSG='${{ github.event.inputs.commit_message }}'
+            COMMIT_MSG="$COMMIT_MSG_DISPATCH"
           else
-            COMMIT_MSG='${{ github.event.client_payload.commit_message }}'
+            COMMIT_MSG="$COMMIT_MSG_REPO"
           fi
           
-          git commit -m "${COMMIT_MSG}" || echo "No changes to commit"
+          git commit -m "$COMMIT_MSG" || echo "No changes to commit"
           git push

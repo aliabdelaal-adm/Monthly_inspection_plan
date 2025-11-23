@@ -1651,9 +1651,13 @@
                     return false;
                 }
                 
-                // Create report entry
+                // Create report entry with unique ID
+                const uniqueId = `GIR_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                const inspectorName = reportData.selectedInspector || 
+                                     (reportData.inspectors && reportData.inspectors.length > 0 ? reportData.inspectors[0] : 'مفتش');
+                
                 const reportEntry = {
-                    id: Date.now().toString(),
+                    id: uniqueId,
                     name: fileName,
                     path: filePath,
                     category: 'group_inspection_reports',
@@ -1661,7 +1665,7 @@
                     size: new Blob([JSON.stringify(reportData)]).size,
                     uploadDate: new Date().toISOString(),
                     description: `تقرير تفتيش جماعي - ${reportData.area} - ${reportData.date}`,
-                    uploader: reportData.selectedInspector || reportData.inspectors[0] || 'مفتش',
+                    uploader: inspectorName,
                     visible: true
                 };
                 
@@ -1786,15 +1790,22 @@
                 
                 if (githubSaveSuccess) {
                     // Save to localStorage as backup only
+                    let localBackupSuccess = true;
                     try {
                         const savedReports = JSON.parse(localStorage.getItem('groupInspectionReports') || '[]');
                         savedReports.push(inspectionReport);
                         localStorage.setItem('groupInspectionReports', JSON.stringify(savedReports));
+                        console.log('✅ Local backup created successfully');
                     } catch (localStorageError) {
-                        console.warn('Local storage backup failed:', localStorageError);
+                        localBackupSuccess = false;
+                        console.warn('⚠️ Local storage backup failed:', localStorageError);
+                        // Not critical since GitHub save succeeded
                     }
                     
-                    alert('✅ تم حفظ التقرير بنجاح في GitHub! سيظهر التقرير بشكل دائم في صفحة تقارير التفتيش الجماعي.');
+                    const successMessage = '✅ تم حفظ التقرير بنجاح في GitHub! سيظهر التقرير بشكل دائم في صفحة تقارير التفتيش الجماعي.' +
+                        (localBackupSuccess ? '' : '\n\nملاحظة: لم يتم إنشاء نسخة احتياطية محلية بسبب امتلاء المساحة التخزينية.');
+                    
+                    alert(successMessage);
                     
                     // Redirect back to main page
                     setTimeout(() => {

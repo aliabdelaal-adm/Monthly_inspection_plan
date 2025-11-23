@@ -1,0 +1,75 @@
+name: Save Inspection Report
+
+on:
+  workflow_dispatch:
+    inputs:
+      filename:
+        description: 'Report filename'
+        required: true
+      report_data:
+        description: 'Report JSON data'
+        required: true
+      commit_message:
+        description: 'Commit message'
+        required: true
+        default: 'Add group inspection report'
+  repository_dispatch:
+    types: [save-inspection-report]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  save-report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+      
+      - name: Create report file from workflow_dispatch
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          REPORT_DATA: ${{ github.event.inputs.report_data }}
+          FILENAME: ${{ github.event.inputs.filename }}
+        run: |
+          mkdir -p files/group_inspection_reports
+          
+          # Save report to file using environment variables (safer than direct echo)
+          printf '%s\n' "$REPORT_DATA" > "files/group_inspection_reports/$FILENAME"
+          
+          echo "Report saved to files/group_inspection_reports/$FILENAME"
+      
+      - name: Create report file from repository_dispatch
+        if: github.event_name == 'repository_dispatch'
+        env:
+          REPORT_DATA: ${{ toJson(github.event.client_payload.report) }}
+          FILENAME: ${{ github.event.client_payload.filename }}
+        run: |
+          mkdir -p files/group_inspection_reports
+          
+          # Save report to file using environment variables (safer than direct echo)
+          printf '%s\n' "$REPORT_DATA" > "files/group_inspection_reports/$FILENAME"
+          
+          echo "Report saved to files/group_inspection_reports/$FILENAME"
+      
+      - name: Commit and push changes
+        env:
+          COMMIT_MSG_DISPATCH: ${{ github.event.inputs.commit_message }}
+          COMMIT_MSG_REPO: ${{ github.event.client_payload.commit_message }}
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add files/group_inspection_reports/
+          
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            COMMIT_MSG="$COMMIT_MSG_DISPATCH"
+          else
+            COMMIT_MSG="$COMMIT_MSG_REPO"
+          fi
+          
+          git commit -m "$COMMIT_MSG" || echo "No changes to commit"
+          git push

@@ -8815,8 +8815,30 @@
             document.getElementById('shopModal').style.display = 'block';
         }
         
+        // Helper function to clear shop modal optional fields
+        function clearShopModalOptionalFields() {
+            document.getElementById('shopModalNameEn').value = '';
+            document.getElementById('shopModalLicense').value = '';
+            document.getElementById('shopModalAddress').value = '';
+            document.getElementById('shopModalPhone').value = '';
+            document.getElementById('shopModalEmail').value = '';
+            document.getElementById('shopModalGoogleMaps').value = '';
+            document.getElementById('shopModalActivity').value = '';
+            document.getElementById('shopModalAdmCode').value = '';
+        }
+        
+        // Helper function to hide status message after delay
+        function hideStatusMessageAfterDelay(elementId, delayMs) {
+            setTimeout(() => {
+                const statusDiv = document.getElementById(elementId);
+                if (statusDiv) {
+                    statusDiv.style.display = 'none';
+                }
+            }, delayMs);
+        }
+        
         // Open edit shop modal - accepts shop ID or shop name
-        function openEditShopModal(shopIdOrName) {
+        async function openEditShopModal(shopIdOrName) {
             // Check if planData is loaded
             if (!planData) {
                 alert('⚠️ يرجى الانتظار حتى يتم تحميل البيانات');
@@ -8871,71 +8893,72 @@
                 select.value = shop.areaId;
             }
             
-            // Load additional details from shops_details.json
-            fetch('shops_details.json?' + new Date().getTime())
-                .then(response => {
-                    // Check if response is OK before parsing JSON
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(shopsDetails => {
-                    const details = shopsDetails[shop.name];
-                    if (details) {
-                        // Always populate all fields from shops_details.json
-                        document.getElementById('shopModalNameEn').value = details.nameEn || '';
-                        document.getElementById('shopModalLicense').value = details.licenseNo || '';
-                        document.getElementById('shopModalAddress').value = details.address || '';
-                        document.getElementById('shopModalPhone').value = details.contact || '';
-                        document.getElementById('shopModalEmail').value = details.email || '';
-                        document.getElementById('shopModalGoogleMaps').value = details.locationMap || '';
-                        document.getElementById('shopModalActivity').value = details.activity || '';
-                        document.getElementById('shopModalAdmCode').value = details.admCode || '';
-                        
-                        // Update area from shops_details if not already set
-                        // This handles both cases: shop not in planData.shops, or shop in planData but area changed
-                        if (details.areaId) {
-                            select.value = details.areaId;
-                            // Update the shop object's areaId for proper saving
-                            shop.areaId = details.areaId;
-                            if (details.area) {
-                                shop.area = details.area;
-                            }
-                        }
-                        
-                        // If shop doesn't have an ID yet but exists in shops_details, find or create the ID
-                        if (!shop.id && !isExistingShop) {
-                            // Look for an existing shop in planData.shops by name
-                            const existingShop = planData.shops.find(s => s.name === shop.name);
-                            if (existingShop) {
-                                // Shop exists in planData, use its ID
-                                shop.id = existingShop.id;
-                                document.getElementById('shopModalId').value = shop.id;
-                            }
-                        }
-                    } else {
-                        // Shop not in shops_details.json is OK - only clear fields for new shops
-                        console.log('Shop not found in shops_details.json:', shop.name);
-                        if (!isExistingShop) {
-                            document.getElementById('shopModalNameEn').value = '';
-                            document.getElementById('shopModalLicense').value = '';
-                            document.getElementById('shopModalAddress').value = '';
-                            document.getElementById('shopModalPhone').value = '';
-                            document.getElementById('shopModalEmail').value = '';
-                            document.getElementById('shopModalGoogleMaps').value = '';
-                            document.getElementById('shopModalActivity').value = '';
-                            document.getElementById('shopModalAdmCode').value = '';
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading shop details from shops_details.json:', error);
-                    // Only show alert for critical file loading failures (not for missing shop entries)
-                    // Silent fallback - keep existing field values
-                });
+            // Clear all optional fields before loading
+            clearShopModalOptionalFields();
             
+            // Show modal first with basic info
             document.getElementById('shopModal').style.display = 'block';
+            
+            // Show loading message
+            showMessage('shopModalStatus', 'info', '⏳ جاري تحميل تفاصيل المحل...');
+            
+            // Load additional details from shops_details.json
+            try {
+                const response = await fetch('shops_details.json?' + new Date().getTime());
+                // Check if response is OK before parsing JSON
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const shopsDetails = await response.json();
+                const details = shopsDetails[shop.name];
+                
+                if (details) {
+                    // Always populate all fields from shops_details.json
+                    document.getElementById('shopModalNameEn').value = details.nameEn || '';
+                    document.getElementById('shopModalLicense').value = details.licenseNo || '';
+                    document.getElementById('shopModalAddress').value = details.address || '';
+                    document.getElementById('shopModalPhone').value = details.contact || '';
+                    document.getElementById('shopModalEmail').value = details.email || '';
+                    document.getElementById('shopModalGoogleMaps').value = details.locationMap || '';
+                    document.getElementById('shopModalActivity').value = details.activity || '';
+                    document.getElementById('shopModalAdmCode').value = details.admCode || '';
+                    
+                    // Update area from shops_details if not already set
+                    // This handles both cases: shop not in planData.shops, or shop in planData but area changed
+                    if (details.areaId) {
+                        select.value = details.areaId;
+                        // Update the shop object's areaId for proper saving
+                        shop.areaId = details.areaId;
+                        if (details.area) {
+                            shop.area = details.area;
+                        }
+                    }
+                    
+                    // If shop doesn't have an ID yet but exists in shops_details, find or create the ID
+                    if (!shop.id && !isExistingShop) {
+                        // Look for an existing shop in planData.shops by name
+                        const existingShop = planData.shops.find(s => s.name === shop.name);
+                        if (existingShop) {
+                            // Shop exists in planData, use its ID
+                            shop.id = existingShop.id;
+                            document.getElementById('shopModalId').value = shop.id;
+                        }
+                    }
+                    
+                    // Hide loading message and show success
+                    showMessage('shopModalStatus', 'success', '✅ تم تحميل جميع تفاصيل المحل بنجاح');
+                    hideStatusMessageAfterDelay('shopModalStatus', 2000);
+                } else {
+                    // Shop not in shops_details.json
+                    console.log('Shop not found in shops_details.json:', shop.name);
+                    showMessage('shopModalStatus', 'warning', '⚠️ لم يتم العثور على تفاصيل إضافية لهذا المحل');
+                    hideStatusMessageAfterDelay('shopModalStatus', 2000);
+                }
+            } catch (error) {
+                console.error('Error loading shop details from shops_details.json:', error);
+                showMessage('shopModalStatus', 'error', '❌ خطأ في تحميل التفاصيل: ' + error.message);
+                hideStatusMessageAfterDelay('shopModalStatus', 3000);
+            }
         }
         
         // Close shop modal
@@ -9009,6 +9032,12 @@
                             planData.shops[shopIndex].area = area.name;
                         }
                         console.log('Updated existing shop:', shopName);
+                        isUpdate = true;
+                    } else {
+                        // Shop ID was provided but not found - this shouldn't happen
+                        console.error('Shop ID provided but not found:', shopId);
+                        showMessage('shopModalStatus', 'error', '❌ خطأ: لم يتم العثور على المحل في البيانات');
+                        return;
                     }
                 } else {
                     // Add new shop only if it doesn't exist
@@ -9020,7 +9049,8 @@
                         area: area ? area.name : ''
                     };
                     planData.shops.push(newShop);
-                    console.log('Added new shop:', shopName);
+                    shopId = newShop.id; // Store the new shop ID for reference
+                    console.log('Added new shop:', shopName, 'with ID:', shopId);
                 }
                 
                 // If shop name changed, update it in all inspection data
@@ -9064,7 +9094,11 @@
                 // Reload plan data from GitHub to ensure we have the latest data
                 await loadPlanData();
                 
-                showMessage('shopModalStatus', 'success', '✅ تم الحفظ بنجاح - المحل ظاهر الآن في القائمة');
+                // Show appropriate success message based on whether this was an update or addition
+                const successMessage = isUpdate 
+                    ? '✅ تم تحديث بيانات المحل بنجاح - جميع التفاصيل محفوظة' 
+                    : '✅ تم إضافة المحل بنجاح - المحل ظاهر الآن في القائمة';
+                showMessage('shopModalStatus', 'success', successMessage);
                 setTimeout(() => {
                     closeShopModal();
                     displayShopsList();

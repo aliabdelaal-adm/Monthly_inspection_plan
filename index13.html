@@ -2435,6 +2435,14 @@ ${reportData.notes.recommendations ? `**التوصيات:** ${reportData.notes.r
             }, 3000);
         }
         
+        // Helper function to escape HTML and prevent XSS
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
         // Export Group Inspection Reports to PowerPoint
         function exportGroupInspectionToPowerPoint() {
             const savedReports = JSON.parse(localStorage.getItem('groupInspectionReports') || '[]');
@@ -2499,6 +2507,9 @@ ${reportData.notes.recommendations ? `**التوصيات:** ${reportData.notes.r
                 <body>
             `;
             
+            // Calculate total checklist items from first report (all reports should have the same structure)
+            const totalChecklistItems = savedReports.length > 0 && savedReports[0].checklist ? savedReports[0].checklist.length : 0;
+            
             // Title slide
             htmlContent += `
                 <div class="slide">
@@ -2510,7 +2521,7 @@ ${reportData.notes.recommendations ? `**التوصيات:** ${reportData.notes.r
                             <div class="stat-label">إجمالي التقارير</div>
                         </div>
                         <div class="stat-box">
-                            <div class="stat-number">4</div>
+                            <div class="stat-number">${totalChecklistItems}</div>
                             <div class="stat-label">بنود رئيسية</div>
                         </div>
                     </div>
@@ -2595,17 +2606,17 @@ ${reportData.notes.recommendations ? `**التوصيات:** ${reportData.notes.r
                                     <strong>التفاصيل:</strong><br>`;
                         
                         if (details.manualItems) {
-                            htmlContent += `<div style="margin: 5px 0;">البنود غير المستوفية: ${details.manualItems.replace(/\n/g, '<br>')}</div>`;
+                            htmlContent += `<div style="margin: 5px 0;">البنود غير المستوفية: ${escapeHtml(details.manualItems).replace(/\n/g, '<br>')}</div>`;
                         }
                         if (details.action) {
                             let actionClass = 'action-awareness';
                             if (details.action === 'إنذار') actionClass = 'action-warning';
                             else if (details.action === 'إخطار') actionClass = 'action-notice';
                             else if (details.action === 'مخالفة') actionClass = 'action-violation';
-                            htmlContent += `<div style="margin: 5px 0;">الإجراء: <span class="action-badge ${actionClass}">${details.action}</span></div>`;
+                            htmlContent += `<div style="margin: 5px 0;">الإجراء: <span class="action-badge ${actionClass}">${escapeHtml(details.action)}</span></div>`;
                         }
                         if (details.deadline) {
-                            htmlContent += `<div style="margin: 5px 0;">المهلة: ${details.deadline}</div>`;
+                            htmlContent += `<div style="margin: 5px 0;">المهلة: ${escapeHtml(details.deadline)}</div>`;
                         }
                         
                         htmlContent += `
@@ -2629,7 +2640,7 @@ ${reportData.notes.recommendations ? `**التوصيات:** ${reportData.notes.r
                         htmlContent += `
                             <div class="notes-box">
                                 <h3>📝 الملاحظات العامة:</h3>
-                                <p style="margin: 10px 0;">${report.notes.generalNotes.replace(/\n/g, '<br>')}</p>
+                                <p style="margin: 10px 0;">${escapeHtml(report.notes.generalNotes).replace(/\n/g, '<br>')}</p>
                             </div>`;
                     }
                     
@@ -2637,7 +2648,7 @@ ${reportData.notes.recommendations ? `**التوصيات:** ${reportData.notes.r
                         htmlContent += `
                             <div class="violations-box">
                                 <h3>⚠️ المخالفات:</h3>
-                                <p style="margin: 10px 0;">${report.notes.violations.replace(/\n/g, '<br>')}</p>
+                                <p style="margin: 10px 0;">${escapeHtml(report.notes.violations).replace(/\n/g, '<br>')}</p>
                             </div>`;
                     }
                     
@@ -2645,7 +2656,7 @@ ${reportData.notes.recommendations ? `**التوصيات:** ${reportData.notes.r
                         htmlContent += `
                             <div class="notes-box">
                                 <h3>💡 بنود التوعية:</h3>
-                                <p style="margin: 10px 0;">${report.notes.awarenessItems.replace(/\n/g, '<br>')}</p>
+                                <p style="margin: 10px 0;">${escapeHtml(report.notes.awarenessItems).replace(/\n/g, '<br>')}</p>
                             </div>`;
                     }
                     
@@ -2653,7 +2664,7 @@ ${reportData.notes.recommendations ? `**التوصيات:** ${reportData.notes.r
                         htmlContent += `
                             <div class="recommendations-box">
                                 <h3>✅ الإجراءات المتخذة:</h3>
-                                <p style="margin: 10px 0;">${report.notes.actionsTaken.replace(/\n/g, '<br>')}</p>
+                                <p style="margin: 10px 0;">${escapeHtml(report.notes.actionsTaken).replace(/\n/g, '<br>')}</p>
                             </div>`;
                     }
                     
@@ -2661,7 +2672,7 @@ ${reportData.notes.recommendations ? `**التوصيات:** ${reportData.notes.r
                         htmlContent += `
                             <div class="recommendations-box">
                                 <h3>💡 التوصيات:</h3>
-                                <p style="margin: 10px 0;">${report.notes.recommendations.replace(/\n/g, '<br>')}</p>
+                                <p style="margin: 10px 0;">${escapeHtml(report.notes.recommendations).replace(/\n/g, '<br>')}</p>
                             </div>`;
                     }
                     

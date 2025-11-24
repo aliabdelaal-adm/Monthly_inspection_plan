@@ -575,41 +575,7 @@
             box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
         }
         
-        /* Sub-items checkbox list */
-        #subItemsCheckboxList {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        
-        .subitem-checkbox-label {
-            display: flex;
-            align-items: center;
-            padding: 12px 15px;
-            background: #f8f9fa;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .subitem-checkbox-label:hover {
-            background: #fff5e6;
-            border-color: #ff9800;
-        }
-        
-        .subitem-checkbox-label input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            margin-left: 12px;
-            cursor: pointer;
-        }
-        
-        .subitem-checkbox-label.checked {
-            background: #fff3e0;
-            border-color: #ff9800;
-        }
-        
+
         /* Actions list */
         .actions-list {
             display: flex;
@@ -884,21 +850,16 @@
                 <button class="modal-close-btn" onclick="closeUnfulfilledItemsModal()">×</button>
             </div>
             <div class="modal-body">
-                <p style="margin-bottom: 20px; color: #666;">يرجى تحديد أو كتابة البنود الفرعية غير المستوفية:</p>
-                
-                <!-- Predefined sub-items checkboxes -->
-                <div id="subItemsCheckboxList" style="margin-bottom: 20px;">
-                    <!-- Will be populated dynamically -->
-                </div>
+                <p style="margin-bottom: 20px; color: #666;">يرجى كتابة البنود الفرعية غير المستوفية:</p>
                 
                 <!-- Manual text entry -->
                 <div style="margin-top: 20px;">
                     <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #333;">
-                        أو أضف بنود أخرى يدوياً:
+                        أضف البنود الفرعية غير المستوفية:
                     </label>
                     <textarea 
                         id="manualUnfulfilledItems" 
-                        style="width: 100%; min-height: 100px; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-family: inherit; font-size: 1em; resize: vertical;"
+                        style="width: 100%; min-height: 150px; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-family: inherit; font-size: 1em; resize: vertical;"
                         placeholder="اكتب البنود غير المستوفية هنا (سطر لكل بند)..."
                     ></textarea>
                 </div>
@@ -1393,54 +1354,14 @@
         function openUnfulfilledItemsModal(itemId) {
             currentProcessingItemId = itemId;
             const modal = document.getElementById('unfulfilledItemsModal');
-            const subItemsList = document.getElementById('subItemsCheckboxList');
             const manualTextarea = document.getElementById('manualUnfulfilledItems');
             
             // Clear previous data
-            subItemsList.innerHTML = '';
             manualTextarea.value = '';
-            
-            // Get sub-items for this item
-            const itemData = inspectionSubItems[itemId];
-            if (itemData && itemData.subitems && itemData.subitems.length > 0) {
-                itemData.subitems.forEach((subitem, index) => {
-                    const label = document.createElement('label');
-                    label.className = 'subitem-checkbox-label';
-                    label.innerHTML = `
-                        <input type="checkbox" value="${subitem}" id="subitem_${itemId}_${index}">
-                        <span>${subitem}</span>
-                    `;
-                    
-                    // Add change event to toggle checked class
-                    const checkbox = label.querySelector('input[type="checkbox"]');
-                    checkbox.addEventListener('change', function() {
-                        if (this.checked) {
-                            label.classList.add('checked');
-                        } else {
-                            label.classList.remove('checked');
-                        }
-                    });
-                    
-                    subItemsList.appendChild(label);
-                });
-            } else {
-                subItemsList.innerHTML = '<p style="color: #999; font-style: italic;">لا توجد بنود فرعية محددة مسبقاً. يرجى الكتابة يدوياً أدناه.</p>';
-            }
             
             // Load previously saved data if exists
             if (unfulfilledItemsData[itemId]) {
                 const savedData = unfulfilledItemsData[itemId];
-                
-                // Check saved checkboxes
-                if (savedData.selectedSubItems) {
-                    savedData.selectedSubItems.forEach(subitemValue => {
-                        const checkbox = document.querySelector(`#subItemsCheckboxList input[value="${subitemValue}"]`);
-                        if (checkbox) {
-                            checkbox.checked = true;
-                            checkbox.parentElement.classList.add('checked');
-                        }
-                    });
-                }
                 
                 // Set manual text
                 if (savedData.manualItems) {
@@ -1478,18 +1399,12 @@
         function confirmUnfulfilledItems() {
             if (!currentProcessingItemId) return;
             
-            // Collect selected checkboxes
-            const selectedSubItems = [];
-            document.querySelectorAll('#subItemsCheckboxList input[type="checkbox"]:checked').forEach(checkbox => {
-                selectedSubItems.push(checkbox.value);
-            });
-            
             // Get manual text
             const manualItems = document.getElementById('manualUnfulfilledItems').value.trim();
             
-            // Validate that at least something is selected or written
-            if (selectedSubItems.length === 0 && !manualItems) {
-                alert('⚠️ يرجى تحديد أو كتابة بند واحد على الأقل من البنود غير المستوفية');
+            // Validate that at least something is written
+            if (!manualItems) {
+                alert('⚠️ يرجى كتابة بند واحد على الأقل من البنود غير المستوفية');
                 return;
             }
             
@@ -1497,7 +1412,8 @@
             if (!unfulfilledItemsData[currentProcessingItemId]) {
                 unfulfilledItemsData[currentProcessingItemId] = {};
             }
-            unfulfilledItemsData[currentProcessingItemId].selectedSubItems = selectedSubItems;
+            // Remove any old selectedSubItems property and save only manual items
+            delete unfulfilledItemsData[currentProcessingItemId].selectedSubItems;
             unfulfilledItemsData[currentProcessingItemId].manualItems = manualItems;
             
             // Close this modal and open actions modal

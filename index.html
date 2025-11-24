@@ -9380,18 +9380,25 @@ console.log('Smart distribution functions initialized');
             <!-- Photo Capture Section -->
             <div class="shelter-form-card">
                 <h3 class="section-header">📷 صور التفتيش</h3>
-                <button onclick="capturePhoto()" class="capture-photo-btn">
-                    <span style="font-size: 1.5em;">📸</span>
-                    <span>التقاط صورة من الكاميرا</span>
-                </button>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button onclick="capturePhoto()" class="capture-photo-btn" style="flex: 1; min-width: 200px;">
+                        <span style="font-size: 1.5em;">📸</span>
+                        <span>التقاط صورة من الكاميرا</span>
+                    </button>
+                    <button onclick="uploadFromGallery()" class="capture-photo-btn" style="flex: 1; min-width: 200px; background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%); box-shadow: 0 4px 15px rgba(86, 171, 47, 0.3);">
+                        <span style="font-size: 1.5em;">🖼️</span>
+                        <span>تحميل من المعرض</span>
+                    </button>
+                </div>
                 <input type="file" id="shelterPhotoInput" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoCapture(event)" multiple>
+                <input type="file" id="shelterGalleryInput" accept="image/*" style="display: none;" onchange="handlePhotoCapture(event)" multiple>
                 
                 <div id="shelterPhotosPreview" class="photos-preview-grid">
                     <!-- Photos will be displayed here -->
                 </div>
                 
                 <div class="photo-hint">
-                    💡 يمكنك التقاط عدة صور للملجأ
+                    💡 يمكنك التقاط عدة صور من الكاميرا أو تحميلها من معرض الصور
                 </div>
             </div>
             
@@ -30977,6 +30984,13 @@ function closeForgotPasswordModal() {
 
 function capturePhoto() {
     const input = document.getElementById('shelterPhotoInput');
+    if (input) {
+        input.click();
+    }
+}
+
+function uploadFromGallery() {
+    const input = document.getElementById('shelterGalleryInput');
     if (input) {
         input.click();
     }

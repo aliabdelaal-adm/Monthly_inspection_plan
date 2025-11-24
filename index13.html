@@ -736,6 +736,10 @@
             transform: scale(1.05);
         }
     </style>
+    
+    <!-- PptxGenJS Library for PowerPoint Generation -->
+    <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+    
 </head>
 <body>
     <div class="inspection-fullscreen-container">
@@ -2476,243 +2480,218 @@ ${reportData.notes.recommendations ? `**التوصيات:** ${reportData.notes.r
                 return;
             }
             
-            // Generate HTML presentation format that can be copied to PowerPoint
-            let htmlContent = `
-                <!DOCTYPE html>
-                <html dir="rtl" lang="ar">
-                <head>
-                    <meta charset="UTF-8">
-                    <title>عرض تقديمي - تقارير التفتيش الجماعي - تفصيلي كامل</title>
-                    <style>
-                        body { 
-                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-                            direction: rtl; 
-                            text-align: right; 
-                            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
-                            color: white;
-                            padding: 40px;
-                        }
-                        .slide { 
-                            background: white; 
-                            color: #333; 
-                            padding: 40px; 
-                            margin-bottom: 30px; 
-                            border-radius: 20px; 
-                            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-                            min-height: 500px;
-                            page-break-after: always;
-                        }
-                        h1 { color: #ff9800; text-align: center; font-size: 2.5em; margin-bottom: 30px; }
-                        h2 { color: #ff9800; border-bottom: 3px solid #ff9800; padding-bottom: 10px; margin-bottom: 20px; }
-                        h3 { color: #f57c00; border-bottom: 2px solid #f57c00; padding-bottom: 8px; margin-top: 20px; }
-                        .stats { display: flex; justify-content: space-around; margin: 30px 0; flex-wrap: wrap; gap: 15px; }
-                        .stat-box { text-align: center; padding: 20px; background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: white; border-radius: 15px; min-width: 120px; flex: 1; }
-                        .stat-number { font-size: 2.5em; font-weight: bold; }
-                        .stat-label { font-size: 1em; margin-top: 10px; }
-                        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-                        th, td { border: 1px solid #ddd; padding: 12px; text-align: right; }
-                        th { background-color: #ff9800; color: white; font-weight: bold; }
-                        tr:nth-child(even) { background-color: #f8f9fa; }
-                        .status-fulfilled { color: #28a745; font-weight: bold; }
-                        .status-unfulfilled { color: #dc3545; font-weight: bold; }
-                        .status-not-inspected { color: #ffc107; }
-                        .status-not-applicable { color: #6c757d; }
-                        .notes-box { background: #fff3cd; padding: 15px; border-radius: 10px; margin-top: 15px; border-left: 4px solid #ffc107; }
-                        .violations-box { background: #f8d7da; padding: 15px; border-radius: 10px; margin-top: 15px; border-left: 4px solid #dc3545; }
-                        .recommendations-box { background: #d1ecf1; padding: 15px; border-radius: 10px; margin-top: 15px; border-left: 4px solid #17a2b8; }
-                        .unfulfilled-details { background: #ffe5e5; padding: 10px; border-radius: 8px; margin: 5px 0; }
-                        .action-badge { display: inline-block; padding: 5px 15px; border-radius: 20px; font-weight: bold; margin: 5px 0; }
-                        .action-awareness { background: #cce5ff; color: #004085; }
-                        .action-warning { background: #fff3cd; color: #856404; }
-                        .action-notice { background: #ffe5cc; color: #854d0e; }
-                        .action-violation { background: #f8d7da; color: #721c24; }
-                    </style>
-                </head>
-                <body>
-            `;
+            // Check if PptxGenJS is loaded
+            if (typeof PptxGenJS === 'undefined') {
+                alert('⚠️ مكتبة PowerPoint غير متوفرة. يرجى المحاولة مرة أخرى.');
+                console.error('PptxGenJS library not loaded');
+                return;
+            }
             
-            // Calculate total checklist items from first report (all reports should have the same structure)
-            const totalChecklistItems = savedReports.length > 0 && savedReports[0].checklist ? savedReports[0].checklist.length : 0;
-            
-            // Title slide
-            htmlContent += `
-                <div class="slide">
-                    <h1>📋 تقارير التفتيش الجماعي</h1>
-                    <h2 style="text-align: center; font-size: 1.5em;">تقرير تفصيلي كامل</h2>
-                    <div class="stats">
-                        <div class="stat-box">
-                            <div class="stat-number">${savedReports.length}</div>
-                            <div class="stat-label">إجمالي التقارير</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-number">${totalChecklistItems}</div>
-                            <div class="stat-label">بنود رئيسية</div>
-                        </div>
-                    </div>
-                    <p style="text-align: center; font-size: 1.3em; margin-top: 50px;">تاريخ التقرير: ${new Date().toLocaleDateString('ar-EG')}</p>
-                </div>
-            `;
-            
-            savedReports.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            
-            // Individual report slides
-            savedReports.forEach((report, index) => {
-                const checklist = report.checklist || [];
-                const fulfilled = checklist.filter(item => item.value === 'مستوفى').length;
-                const unfulfilled = checklist.filter(item => item.value === 'غير مستوفى').length;
-                const compliance = checklist.length > 0 ? ((fulfilled / checklist.length) * 100).toFixed(1) : 0;
-                const timestamp = new Date(report.timestamp).toLocaleString('ar-EG');
+            try {
+                // Create new presentation
+                const pptx = new PptxGenJS();
                 
-                // Slide 1: Report Summary
-                htmlContent += `
-                    <div class="slide">
-                        <h2>التقرير #${index + 1} - الملخص</h2>
-                        <table>
-                            <tr><th style="width: 40%;">المفتش المسؤول</th><td>${escapeHtml(report.selectedInspector || 'غير محدد')}</td></tr>
-                            <tr><th>جميع المفتشين</th><td>${escapeHtml((report.inspectors || []).join('، ') || 'غير محدد')}</td></tr>
-                            <tr><th>التاريخ</th><td>${escapeHtml(report.date || 'غير محدد')}</td></tr>
-                            <tr><th>المناوبة</th><td>${escapeHtml(report.shift || 'غير محدد')}</td></tr>
-                            <tr><th>المنطقة</th><td>${escapeHtml(report.area || 'غير محدد')}</td></tr>
-                            <tr><th>المحلات</th><td>${escapeHtml((report.shops || []).join('، ') || 'غير محدد')}</td></tr>
-                            <tr><th>وقت الإرسال</th><td>${escapeHtml(timestamp)}</td></tr>
-                            <tr><th>رقم التقرير</th><td>${escapeHtml(report.reportId || 'N/A')}</td></tr>
-                        </table>
-                        <div class="stats">
-                            <div class="stat-box">
-                                <div class="stat-number">${compliance}%</div>
-                                <div class="stat-label">نسبة الامتثال</div>
-                            </div>
-                            <div class="stat-box">
-                                <div class="stat-number">${fulfilled}</div>
-                                <div class="stat-label">بنود مستوفاة</div>
-                            </div>
-                            <div class="stat-box">
-                                <div class="stat-number">${unfulfilled}</div>
-                                <div class="stat-label">بنود غير مستوفاة</div>
-                            </div>
-                            <div class="stat-box">
-                                <div class="stat-number">${(report.photos || []).length}</div>
-                                <div class="stat-label">صور</div>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                // Set RTL direction for the presentation
+                pptx.rtlMode = true;
+                pptx.layout = 'LAYOUT_WIDE';
                 
-                // Slide 2: Detailed Checklist Items
-                htmlContent += `
-                    <div class="slide">
-                        <h2>التقرير #${index + 1} - بنود التفتيش التفصيلية</h2>
-                        <table>
-                            <tr>
-                                <th style="width: 60%;">البند</th>
-                                <th style="width: 40%;">الحالة</th>
-                            </tr>`;
+                // Sort reports by timestamp
+                savedReports.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
                 
-                checklist.forEach(item => {
-                    const status = item.value || 'لم يتم التفتيش';
-                    let statusClass = 'status-not-inspected';
-                    if (status === 'مستوفى') statusClass = 'status-fulfilled';
-                    else if (status === 'غير مستوفى') statusClass = 'status-unfulfilled';
-                    else if (status === 'لا ينطبق') statusClass = 'status-not-applicable';
+                // Calculate total checklist items from first report
+                const totalChecklistItems = savedReports.length > 0 && savedReports[0].checklist ? savedReports[0].checklist.length : 0;
+                
+                // Title slide
+                let slide = pptx.addSlide();
+                slide.background = { fill: 'ff9800' };
+                slide.addText('📋 تقارير التفتيش الجماعي', {
+                    x: 0.5, y: 1.5, w: 9, h: 1.5,
+                    fontSize: 44, bold: true, color: 'FFFFFF', align: 'center',
+                    fontFace: 'Arial'
+                });
+                slide.addText('تقرير تفصيلي كامل', {
+                    x: 0.5, y: 3.0, w: 9, h: 0.8,
+                    fontSize: 28, color: 'FFFFFF', align: 'center',
+                    fontFace: 'Arial'
+                });
+                slide.addText(`إجمالي التقارير: ${savedReports.length} | بنود رئيسية: ${totalChecklistItems}`, {
+                    x: 0.5, y: 4.0, w: 9, h: 0.6,
+                    fontSize: 20, color: 'FFFFFF', align: 'center',
+                    fontFace: 'Arial'
+                });
+                slide.addText(`تاريخ التقرير: ${new Date().toLocaleDateString('ar-EG')}`, {
+                    x: 0.5, y: 5.0, w: 9, h: 0.6,
+                    fontSize: 18, color: 'FFFFFF', align: 'center',
+                    fontFace: 'Arial'
+                });
+                
+                // Individual report slides
+                savedReports.forEach((report, index) => {
+                    const checklist = report.checklist || [];
+                    const fulfilled = checklist.filter(item => item.value === 'مستوفى').length;
+                    const unfulfilled = checklist.filter(item => item.value === 'غير مستوفى').length;
+                    const compliance = checklist.length > 0 ? ((fulfilled / checklist.length) * 100).toFixed(1) : 0;
+                    const timestamp = new Date(report.timestamp).toLocaleString('ar-EG');
                     
-                    htmlContent += `
-                            <tr>
-                                <td>${escapeHtml(item.label || item.id)}</td>
-                                <td class="${statusClass}">${escapeHtml(status)}</td>
-                            </tr>`;
+                    // Slide 1: Report Summary
+                    slide = pptx.addSlide();
+                    slide.addText(`التقرير #${index + 1} - الملخص`, {
+                        x: 0.5, y: 0.3, w: 9, h: 0.6,
+                        fontSize: 28, bold: true, color: 'ff9800', align: 'right',
+                        fontFace: 'Arial'
+                    });
                     
-                    // If item has unfulfilled details, add them
-                    if (item.unfulfilledDetails) {
-                        const details = item.unfulfilledDetails;
-                        htmlContent += `
-                            <tr>
-                                <td colspan="2" class="unfulfilled-details">
-                                    <strong>التفاصيل:</strong><br>`;
+                    const summaryRows = [
+                        ['المفتش المسؤول', escapeHtml(report.selectedInspector || 'غير محدد')],
+                        ['جميع المفتشين', escapeHtml((report.inspectors || []).join('، ') || 'غير محدد')],
+                        ['التاريخ', escapeHtml(report.date || 'غير محدد')],
+                        ['المناوبة', escapeHtml(report.shift || 'غير محدد')],
+                        ['المنطقة', escapeHtml(report.area || 'غير محدد')],
+                        ['المحلات', escapeHtml((report.shops || []).join('، ') || 'غير محدد')],
+                        ['وقت الإرسال', escapeHtml(timestamp)],
+                        ['رقم التقرير', escapeHtml(report.reportId || 'N/A')],
+                        ['نسبة الامتثال', `${compliance}%`],
+                        ['بنود مستوفاة', fulfilled.toString()],
+                        ['بنود غير مستوفاة', unfulfilled.toString()],
+                        ['عدد الصور', (report.photos || []).length.toString()]
+                    ];
+                    
+                    slide.addTable(summaryRows, {
+                        x: 0.5, y: 1.2, w: 9, h: 4.5,
+                        fontSize: 14, fontFace: 'Arial', align: 'right',
+                        border: { pt: 1, color: 'CFCFCF' },
+                        fill: { color: 'F5F5F5' },
+                        colW: [3, 6]
+                    });
+                    
+                    // Slide 2: Detailed Checklist Items
+                    slide = pptx.addSlide();
+                    slide.addText(`التقرير #${index + 1} - بنود التفتيش التفصيلية`, {
+                        x: 0.5, y: 0.3, w: 9, h: 0.6,
+                        fontSize: 28, bold: true, color: 'ff9800', align: 'right',
+                        fontFace: 'Arial'
+                    });
+                    
+                    const checklistRows = [['البند', 'الحالة']];
+                    checklist.forEach(item => {
+                        const status = item.value || 'لم يتم التفتيش';
+                        checklistRows.push([escapeHtml(item.label || item.id), escapeHtml(status)]);
                         
-                        if (details.manualItems) {
-                            htmlContent += `<div style="margin: 5px 0;">البنود غير المستوفية: ${escapeHtml(details.manualItems).replace(/\n/g, '<br>')}</div>`;
+                        // Add unfulfilled details if present
+                        if (item.unfulfilledDetails) {
+                            const details = item.unfulfilledDetails;
+                            let detailsText = '';
+                            if (details.manualItems) detailsText += `البنود: ${escapeHtml(details.manualItems)} `;
+                            if (details.action) detailsText += `الإجراء: ${escapeHtml(details.action)} `;
+                            if (details.deadline) detailsText += `المهلة: ${escapeHtml(details.deadline)}`;
+                            if (detailsText) {
+                                checklistRows.push(['  التفاصيل:', detailsText]);
+                            }
                         }
-                        if (details.action) {
-                            let actionClass = 'action-awareness';
-                            if (details.action === 'إنذار') actionClass = 'action-warning';
-                            else if (details.action === 'إخطار') actionClass = 'action-notice';
-                            else if (details.action === 'مخالفة') actionClass = 'action-violation';
-                            htmlContent += `<div style="margin: 5px 0;">الإجراء: <span class="action-badge ${actionClass}">${escapeHtml(details.action)}</span></div>`;
-                        }
-                        if (details.deadline) {
-                            htmlContent += `<div style="margin: 5px 0;">المهلة: ${escapeHtml(details.deadline)}</div>`;
+                    });
+                    
+                    slide.addTable(checklistRows, {
+                        x: 0.5, y: 1.2, w: 9, h: 4.5,
+                        fontSize: 13, fontFace: 'Arial', align: 'right',
+                        border: { pt: 1, color: 'CFCFCF' },
+                        fill: { color: 'F5F5F5' },
+                        colW: [6, 3]
+                    });
+                    
+                    // Slide 3: Notes and Details
+                    if (report.notes) {
+                        slide = pptx.addSlide();
+                        slide.addText(`التقرير #${index + 1} - الملاحظات والتوصيات`, {
+                            x: 0.5, y: 0.3, w: 9, h: 0.6,
+                            fontSize: 28, bold: true, color: 'ff9800', align: 'right',
+                            fontFace: 'Arial'
+                        });
+                        
+                        let yPos = 1.2;
+                        
+                        if (report.notes.generalNotes) {
+                            slide.addText('📝 الملاحظات العامة:', {
+                                x: 0.5, y: yPos, w: 9, h: 0.5,
+                                fontSize: 18, bold: true, color: '856404', align: 'right',
+                                fontFace: 'Arial'
+                            });
+                            slide.addText(escapeHtml(report.notes.generalNotes), {
+                                x: 0.5, y: yPos + 0.5, w: 9, h: 0.8,
+                                fontSize: 14, color: '333333', align: 'right',
+                                fontFace: 'Arial'
+                            });
+                            yPos += 1.5;
                         }
                         
-                        htmlContent += `
-                                </td>
-                            </tr>`;
+                        if (report.notes.violations) {
+                            slide.addText('⚠️ المخالفات:', {
+                                x: 0.5, y: yPos, w: 9, h: 0.5,
+                                fontSize: 18, bold: true, color: 'dc3545', align: 'right',
+                                fontFace: 'Arial'
+                            });
+                            slide.addText(escapeHtml(report.notes.violations), {
+                                x: 0.5, y: yPos + 0.5, w: 9, h: 0.8,
+                                fontSize: 14, color: '333333', align: 'right',
+                                fontFace: 'Arial'
+                            });
+                            yPos += 1.5;
+                        }
+                        
+                        if (report.notes.awarenessItems) {
+                            slide.addText('💡 بنود التوعية:', {
+                                x: 0.5, y: yPos, w: 9, h: 0.5,
+                                fontSize: 18, bold: true, color: '856404', align: 'right',
+                                fontFace: 'Arial'
+                            });
+                            slide.addText(escapeHtml(report.notes.awarenessItems), {
+                                x: 0.5, y: yPos + 0.5, w: 9, h: 0.8,
+                                fontSize: 14, color: '333333', align: 'right',
+                                fontFace: 'Arial'
+                            });
+                            yPos += 1.5;
+                        }
+                        
+                        if (yPos < 4 && report.notes.actionsTaken) {
+                            slide.addText('✅ الإجراءات المتخذة:', {
+                                x: 0.5, y: yPos, w: 9, h: 0.5,
+                                fontSize: 18, bold: true, color: '17a2b8', align: 'right',
+                                fontFace: 'Arial'
+                            });
+                            slide.addText(escapeHtml(report.notes.actionsTaken), {
+                                x: 0.5, y: yPos + 0.5, w: 9, h: 0.8,
+                                fontSize: 14, color: '333333', align: 'right',
+                                fontFace: 'Arial'
+                            });
+                        }
+                        
+                        // If there are recommendations and space allows, add them
+                        if (report.notes.recommendations && yPos < 3.5) {
+                            yPos = yPos < 4 ? yPos + 1.5 : yPos;
+                            if (yPos < 5) {
+                                slide.addText('💡 التوصيات:', {
+                                    x: 0.5, y: yPos, w: 9, h: 0.5,
+                                    fontSize: 18, bold: true, color: '17a2b8', align: 'right',
+                                    fontFace: 'Arial'
+                                });
+                                slide.addText(escapeHtml(report.notes.recommendations), {
+                                    x: 0.5, y: yPos + 0.5, w: 9, h: 0.8,
+                                    fontSize: 14, color: '333333', align: 'right',
+                                    fontFace: 'Arial'
+                                });
+                            }
+                        }
                     }
                 });
                 
-                htmlContent += `
-                        </table>
-                    </div>
-                `;
+                // Save the presentation
+                const fileName = `تقارير_التفتيش_الجماعي_${new Date().toISOString().split('T')[0]}.pptx`;
+                pptx.writeFile({ fileName: fileName });
                 
-                // Slide 3: Notes and Details
-                if (report.notes) {
-                    htmlContent += `
-                        <div class="slide">
-                            <h2>التقرير #${index + 1} - الملاحظات والتوصيات</h2>`;
-                    
-                    if (report.notes.generalNotes) {
-                        htmlContent += `
-                            <div class="notes-box">
-                                <h3>📝 الملاحظات العامة:</h3>
-                                <p style="margin: 10px 0;">${escapeHtml(report.notes.generalNotes).replace(/\n/g, '<br>')}</p>
-                            </div>`;
-                    }
-                    
-                    if (report.notes.violations) {
-                        htmlContent += `
-                            <div class="violations-box">
-                                <h3>⚠️ المخالفات:</h3>
-                                <p style="margin: 10px 0;">${escapeHtml(report.notes.violations).replace(/\n/g, '<br>')}</p>
-                            </div>`;
-                    }
-                    
-                    if (report.notes.awarenessItems) {
-                        htmlContent += `
-                            <div class="notes-box">
-                                <h3>💡 بنود التوعية:</h3>
-                                <p style="margin: 10px 0;">${escapeHtml(report.notes.awarenessItems).replace(/\n/g, '<br>')}</p>
-                            </div>`;
-                    }
-                    
-                    if (report.notes.actionsTaken) {
-                        htmlContent += `
-                            <div class="recommendations-box">
-                                <h3>✅ الإجراءات المتخذة:</h3>
-                                <p style="margin: 10px 0;">${escapeHtml(report.notes.actionsTaken).replace(/\n/g, '<br>')}</p>
-                            </div>`;
-                    }
-                    
-                    if (report.notes.recommendations) {
-                        htmlContent += `
-                            <div class="recommendations-box">
-                                <h3>💡 التوصيات:</h3>
-                                <p style="margin: 10px 0;">${escapeHtml(report.notes.recommendations).replace(/\n/g, '<br>')}</p>
-                            </div>`;
-                    }
-                    
-                    htmlContent += `
-                        </div>
-                    `;
-                }
-            });
-            
-            htmlContent += '</body></html>';
-            
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(htmlContent);
-            printWindow.document.close();
-            
-            alert('✅ تم فتح العرض التقديمي - يحتوي على جميع التفاصيل الكاملة - يمكنك طباعته أو حفظه كـ PDF أو نسخه إلى PowerPoint');
+                alert('✅ تم إنشاء ملف PowerPoint بنجاح! جاري تحميل الملف...');
+            } catch (error) {
+                console.error('Error generating PowerPoint:', error);
+                alert('⚠️ حدث خطأ أثناء إنشاء ملف PowerPoint. يرجى المحاولة مرة أخرى.');
+            }
         }
 
         // Enable developer mode with keyboard shortcut (Ctrl+Shift+D)

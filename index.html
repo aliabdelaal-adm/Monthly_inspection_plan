@@ -5665,6 +5665,9 @@
     <!-- Ensure Google Maps components are initialized -->
     <script src="google-maps-init-checker.js"></script>
     
+    <!-- PptxGenJS Library for PowerPoint Generation -->
+    <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+    
 </head>
 <body>
 <!-- ============================================ -->
@@ -30321,6 +30324,13 @@ function exportShelterReportsToPowerPoint() {
         return;
     }
     
+    // Check if PptxGenJS is loaded
+    if (typeof PptxGenJS === 'undefined') {
+        alert('⚠️ مكتبة PowerPoint غير متوفرة. يرجى المحاولة مرة أخرى.');
+        console.error('PptxGenJS library not loaded');
+        return;
+    }
+    
     // Item labels for checklist
     const itemLabels = {
         'cleanliness': 'النظافة العامة للملجأ',
@@ -30337,191 +30347,165 @@ function exportShelterReportsToPowerPoint() {
         'documentation': 'الوثائق والتصاريح'
     };
     
-    // Generate HTML presentation format that can be copied to PowerPoint
-    let htmlContent = `
-        <!DOCTYPE html>
-        <html dir="rtl" lang="ar">
-        <head>
-            <meta charset="UTF-8">
-            <title>عرض تقديمي - تقارير زيارة الملاجىء - تفصيلي كامل</title>
-            <style>
-                body { 
-                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-                    direction: rtl; 
-                    text-align: right; 
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    color: white;
-                    padding: 40px;
-                }
-                .slide { 
-                    background: white; 
-                    color: #333; 
-                    padding: 40px; 
-                    margin-bottom: 30px; 
-                    border-radius: 20px; 
-                    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-                    min-height: 500px;
-                    page-break-after: always;
-                }
-                h1 { color: #667eea; text-align: center; font-size: 2.5em; margin-bottom: 30px; }
-                h2 { color: #667eea; border-bottom: 3px solid #667eea; padding-bottom: 10px; margin-bottom: 20px; }
-                h3 { color: #764ba2; border-bottom: 2px solid #764ba2; padding-bottom: 8px; margin-top: 20px; }
-                .stats { display: flex; justify-content: space-around; margin: 30px 0; flex-wrap: wrap; gap: 15px; }
-                .stat-box { text-align: center; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px; min-width: 120px; flex: 1; }
-                .stat-number { font-size: 2.5em; font-weight: bold; }
-                .stat-label { font-size: 1em; margin-top: 10px; }
-                table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-                th, td { border: 1px solid #ddd; padding: 12px; text-align: right; }
-                th { background-color: #667eea; color: white; font-weight: bold; }
-                tr:nth-child(even) { background-color: #f8f9fa; }
-                .status-fulfilled { color: #28a745; font-weight: bold; }
-                .status-unfulfilled { color: #dc3545; font-weight: bold; }
-                .status-not-inspected { color: #ffc107; }
-                .status-not-applicable { color: #6c757d; }
-                .notes-box { background: #fff3cd; padding: 15px; border-radius: 10px; margin-top: 15px; border-left: 4px solid #ffc107; }
-                .violations-box { background: #f8d7da; padding: 15px; border-radius: 10px; margin-top: 15px; border-left: 4px solid #dc3545; }
-                .recommendations-box { background: #d1ecf1; padding: 15px; border-radius: 10px; margin-top: 15px; border-left: 4px solid #17a2b8; }
-            </style>
-        </head>
-        <body>
-    `;
-    
-    // Title slide
-    htmlContent += `
-        <div class="slide">
-            <h1>🏘️ تقارير زيارة الملاجىء</h1>
-            <h2 style="text-align: center; font-size: 1.5em;">تقرير تفصيلي كامل</h2>
-            <div class="stats">
-                <div class="stat-box">
-                    <div class="stat-number">${savedReports.length}</div>
-                    <div class="stat-label">إجمالي التقارير</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-number">12</div>
-                    <div class="stat-label">بند تفتيش</div>
-                </div>
-            </div>
-            <p style="text-align: center; font-size: 1.3em; margin-top: 50px;">تاريخ التقرير: ${new Date().toLocaleDateString('ar-EG')}</p>
-        </div>
-    `;
-    
-    savedReports.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    
-    // Individual report slides - each report gets multiple slides
-    savedReports.forEach((report, index) => {
-        const results = report.results || {};
-        const resultsArray = Object.values(results);
-        const fulfilled = resultsArray.filter(r => r.status === 'fulfilled').length;
-        const unfulfilled = resultsArray.filter(r => r.status === 'unfulfilled').length;
-        const compliance = resultsArray.length > 0 ? ((fulfilled / resultsArray.length) * 100).toFixed(1) : 0;
-        const timestamp = new Date(report.timestamp).toLocaleString('ar-EG');
+    try {
+        // Create new presentation
+        const pptx = new PptxGenJS();
         
-        // Slide 1: Report Summary
-        htmlContent += `
-            <div class="slide">
-                <h2>التقرير #${index + 1} - الملخص</h2>
-                <table>
-                    <tr><th style="width: 40%;">المفتش</th><td>${report.inspector}</td></tr>
-                    <tr><th>التاريخ</th><td>${report.date}</td></tr>
-                    <tr><th>المناوبة</th><td>${report.shift || 'غير محدد'}</td></tr>
-                    <tr><th>المنطقة</th><td>${report.area}</td></tr>
-                    <tr><th>الملجأ</th><td>${report.shelter}</td></tr>
-                    <tr><th>وقت الإرسال</th><td>${timestamp}</td></tr>
-                </table>
-                <div class="stats">
-                    <div class="stat-box">
-                        <div class="stat-number">${compliance}%</div>
-                        <div class="stat-label">نسبة الامتثال</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-number">${fulfilled}</div>
-                        <div class="stat-label">بنود مستوفاة</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-number">${unfulfilled}</div>
-                        <div class="stat-label">بنود غير مستوفاة</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-number">${(report.photos || []).length}</div>
-                        <div class="stat-label">صور</div>
-                    </div>
-                </div>
-            </div>
-        `;
+        // Set RTL direction for the presentation
+        pptx.rtlMode = true;
+        pptx.layout = 'LAYOUT_WIDE';
         
-        // Slide 2: Detailed Checklist Items
-        htmlContent += `
-            <div class="slide">
-                <h2>التقرير #${index + 1} - بنود التفتيش التفصيلية</h2>
-                <table>
-                    <tr>
-                        <th style="width: 60%;">البند</th>
-                        <th style="width: 40%;">الحالة</th>
-                    </tr>`;
+        // Sort reports by timestamp
+        savedReports.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         
-        Object.keys(itemLabels).forEach(itemKey => {
-            const item = results[itemKey];
-            const status = item ? item.value : 'لم يتم التفتيش';
-            let statusClass = 'status-not-inspected';
-            if (status === 'مستوفى') statusClass = 'status-fulfilled';
-            else if (status === 'غير مستوفى') statusClass = 'status-unfulfilled';
-            else if (status === 'لا ينطبق') statusClass = 'status-not-applicable';
-            
-            htmlContent += `
-                    <tr>
-                        <td>${itemLabels[itemKey]}</td>
-                        <td class="${statusClass}">${status}</td>
-                    </tr>`;
+        // Title slide
+        let slide = pptx.addSlide();
+        slide.background = { fill: '667eea' };
+        slide.addText('🏘️ تقارير زيارة الملاجىء', {
+            x: 0.5, y: 1.5, w: 9, h: 1.5,
+            fontSize: 44, bold: true, color: 'FFFFFF', align: 'center',
+            fontFace: 'Arial'
+        });
+        slide.addText('تقرير تفصيلي كامل', {
+            x: 0.5, y: 3.0, w: 9, h: 0.8,
+            fontSize: 28, color: 'FFFFFF', align: 'center',
+            fontFace: 'Arial'
+        });
+        slide.addText(`إجمالي التقارير: ${savedReports.length} | بنود التفتيش: 12`, {
+            x: 0.5, y: 4.0, w: 9, h: 0.6,
+            fontSize: 20, color: 'FFFFFF', align: 'center',
+            fontFace: 'Arial'
+        });
+        slide.addText(`تاريخ التقرير: ${new Date().toLocaleDateString('ar-EG')}`, {
+            x: 0.5, y: 5.0, w: 9, h: 0.6,
+            fontSize: 18, color: 'FFFFFF', align: 'center',
+            fontFace: 'Arial'
         });
         
-        htmlContent += `
-                </table>
-            </div>
-        `;
+        // Individual report slides
+        savedReports.forEach((report, index) => {
+            const results = report.results || {};
+            const resultsArray = Object.values(results);
+            const fulfilled = resultsArray.filter(r => r.status === 'fulfilled').length;
+            const unfulfilled = resultsArray.filter(r => r.status === 'unfulfilled').length;
+            const compliance = resultsArray.length > 0 ? ((fulfilled / resultsArray.length) * 100).toFixed(1) : 0;
+            const timestamp = new Date(report.timestamp).toLocaleString('ar-EG');
+            
+            // Slide 1: Report Summary
+            slide = pptx.addSlide();
+            slide.addText(`التقرير #${index + 1} - الملخص`, {
+                x: 0.5, y: 0.3, w: 9, h: 0.6,
+                fontSize: 28, bold: true, color: '667eea', align: 'right',
+                fontFace: 'Arial'
+            });
+            
+            const summaryRows = [
+                ['المفتش', report.inspector || 'غير محدد'],
+                ['التاريخ', report.date || 'غير محدد'],
+                ['المناوبة', report.shift || 'غير محدد'],
+                ['المنطقة', report.area || 'غير محدد'],
+                ['الملجأ', report.shelter || 'غير محدد'],
+                ['وقت الإرسال', timestamp],
+                ['نسبة الامتثال', `${compliance}%`],
+                ['بنود مستوفاة', fulfilled.toString()],
+                ['بنود غير مستوفاة', unfulfilled.toString()],
+                ['عدد الصور', (report.photos || []).length.toString()]
+            ];
+            
+            slide.addTable(summaryRows, {
+                x: 0.5, y: 1.2, w: 9, h: 4,
+                fontSize: 16, fontFace: 'Arial', align: 'right',
+                border: { pt: 1, color: 'CFCFCF' },
+                fill: { color: 'F5F5F5' },
+                colW: [3, 6]
+            });
+            
+            // Slide 2: Detailed Checklist Items
+            slide = pptx.addSlide();
+            slide.addText(`التقرير #${index + 1} - بنود التفتيش التفصيلية`, {
+                x: 0.5, y: 0.3, w: 9, h: 0.6,
+                fontSize: 28, bold: true, color: '667eea', align: 'right',
+                fontFace: 'Arial'
+            });
+            
+            const checklistRows = [['البند', 'الحالة']];
+            Object.keys(itemLabels).forEach(itemKey => {
+                const item = results[itemKey];
+                const status = item ? item.value : 'لم يتم التفتيش';
+                checklistRows.push([itemLabels[itemKey], status]);
+            });
+            
+            slide.addTable(checklistRows, {
+                x: 0.5, y: 1.2, w: 9, h: 4.5,
+                fontSize: 14, fontFace: 'Arial', align: 'right',
+                border: { pt: 1, color: 'CFCFCF' },
+                fill: { color: 'F5F5F5' },
+                colW: [6, 3]
+            });
+            
+            // Slide 3: Notes, Violations, and Recommendations (if any)
+            if (report.notes || report.violations || report.recommendations) {
+                slide = pptx.addSlide();
+                slide.addText(`التقرير #${index + 1} - الملاحظات والتوصيات`, {
+                    x: 0.5, y: 0.3, w: 9, h: 0.6,
+                    fontSize: 28, bold: true, color: '667eea', align: 'right',
+                    fontFace: 'Arial'
+                });
+                
+                let yPos = 1.2;
+                
+                if (report.notes) {
+                    slide.addText('📝 الملاحظات:', {
+                        x: 0.5, y: yPos, w: 9, h: 0.5,
+                        fontSize: 18, bold: true, color: '856404', align: 'right',
+                        fontFace: 'Arial'
+                    });
+                    slide.addText(report.notes, {
+                        x: 0.5, y: yPos + 0.5, w: 9, h: 1,
+                        fontSize: 14, color: '333333', align: 'right',
+                        fontFace: 'Arial'
+                    });
+                    yPos += 1.7;
+                }
+                
+                if (report.violations) {
+                    slide.addText('⚠️ المخالفات:', {
+                        x: 0.5, y: yPos, w: 9, h: 0.5,
+                        fontSize: 18, bold: true, color: 'dc3545', align: 'right',
+                        fontFace: 'Arial'
+                    });
+                    slide.addText(report.violations, {
+                        x: 0.5, y: yPos + 0.5, w: 9, h: 1,
+                        fontSize: 14, color: '333333', align: 'right',
+                        fontFace: 'Arial'
+                    });
+                    yPos += 1.7;
+                }
+                
+                if (report.recommendations) {
+                    slide.addText('💡 التوصيات:', {
+                        x: 0.5, y: yPos, w: 9, h: 0.5,
+                        fontSize: 18, bold: true, color: '17a2b8', align: 'right',
+                        fontFace: 'Arial'
+                    });
+                    slide.addText(report.recommendations, {
+                        x: 0.5, y: yPos + 0.5, w: 9, h: 1,
+                        fontSize: 14, color: '333333', align: 'right',
+                        fontFace: 'Arial'
+                    });
+                }
+            }
+        });
         
-        // Slide 3: Notes, Violations, and Recommendations (if any)
-        if (report.notes || report.violations || report.recommendations) {
-            htmlContent += `
-                <div class="slide">
-                    <h2>التقرير #${index + 1} - الملاحظات والتوصيات</h2>`;
-            
-            if (report.notes) {
-                htmlContent += `
-                    <div class="notes-box">
-                        <h3>📝 الملاحظات:</h3>
-                        <p style="margin: 10px 0;">${report.notes}</p>
-                    </div>`;
-            }
-            
-            if (report.violations) {
-                htmlContent += `
-                    <div class="violations-box">
-                        <h3>⚠️ المخالفات:</h3>
-                        <p style="margin: 10px 0;">${report.violations}</p>
-                    </div>`;
-            }
-            
-            if (report.recommendations) {
-                htmlContent += `
-                    <div class="recommendations-box">
-                        <h3>💡 التوصيات:</h3>
-                        <p style="margin: 10px 0;">${report.recommendations}</p>
-                    </div>`;
-            }
-            
-            htmlContent += `
-                </div>
-            `;
-        }
-    });
-    
-    htmlContent += '</body></html>';
-    
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
-    
-    alert('✅ تم فتح العرض التقديمي - يحتوي على جميع التفاصيل والبنود الـ 12 - يمكنك طباعته أو حفظه كـ PDF أو نسخه إلى PowerPoint');
+        // Save the presentation
+        const fileName = `تقارير_زيارة_الملاجىء_${new Date().toISOString().split('T')[0]}.pptx`;
+        pptx.writeFile({ fileName: fileName });
+        
+        alert('✅ تم إنشاء ملف PowerPoint بنجاح! جاري تحميل الملف...');
+    } catch (error) {
+        console.error('Error generating PowerPoint:', error);
+        alert('⚠️ حدث خطأ أثناء إنشاء ملف PowerPoint. يرجى المحاولة مرة أخرى.');
+    }
 }
 
 function saveShelterReportsData() {

@@ -66,6 +66,7 @@
             transition: all 0.3s ease;
             text-decoration: none;
             display: inline-block;
+            z-index: 101; /* Ensure button is above header content */
         }
         
         .return-home-btn:hover {
@@ -405,6 +406,10 @@
                 position: static;
                 transform: none;
                 margin-bottom: 15px;
+                display: block;
+                width: fit-content;
+                margin-left: auto;
+                margin-right: auto;
             }
             
             .inspection-title {
@@ -511,6 +516,7 @@
             justify-content: space-between;
             align-items: center;
             border-bottom: 3px solid #2196f3;
+            gap: 15px; /* Add gap between items to prevent overlap */
         }
         
         .modal-close-btn {
@@ -526,6 +532,8 @@
             align-items: center;
             justify-content: center;
             border-radius: 50%;
+            flex-shrink: 0; /* Prevent button from shrinking */
+            margin-left: 10px; /* Add spacing from title */
         }
         
         .modal-close-btn:hover {
@@ -620,11 +628,27 @@
         @media (max-width: 768px) {
             .modal-content {
                 width: 95%;
+                max-width: calc(100vw - 20px); /* Ensure modal never exceeds viewport minus margin */
                 max-height: 95vh;
+                margin: 10px;
             }
             
             .modal-header {
-                padding: 20px;
+                padding: 15px;
+                flex-wrap: nowrap; /* Prevent wrapping */
+            }
+            
+            .modal-header h2 {
+                font-size: 1.2em;
+                flex: 1;
+                min-width: 0; /* Allow text to shrink if needed */
+            }
+            
+            .modal-close-btn {
+                font-size: 1.8em;
+                width: 36px;
+                height: 36px;
+                min-width: 36px; /* Ensure button never shrinks below this size */
             }
             
             .modal-body {

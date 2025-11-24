@@ -30348,38 +30348,64 @@ function exportShelterReportsToPowerPoint() {
     };
     
     try {
-        // Create new presentation
+        // Create new presentation with creative and professional design
         const pptx = new PptxGenJS();
         
         // Set RTL direction for the presentation
         pptx.rtlMode = true;
         pptx.layout = 'LAYOUT_WIDE';
         
+        // Define theme colors for professional look
+        const themeColors = {
+            primary: '4A90E2',
+            secondary: '667eea',
+            accent: 'F39C12',
+            success: '27AE60',
+            warning: 'E74C3C',
+            dark: '2C3E50',
+            light: 'ECF0F1'
+        };
+        
         // Sort reports by timestamp
         savedReports.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         
-        // Title slide
+        // Enhanced Title slide with gradient effect
         let slide = pptx.addSlide();
-        slide.background = { fill: '667eea' };
+        slide.background = { fill: themeColors.secondary };
+        
+        // Add decorative shape
+        slide.addShape(pptx.ShapeType.rect, {
+            x: 0, y: 0, w: 10, h: 0.5,
+            fill: { color: themeColors.primary, transparency: 30 }
+        });
+        
         slide.addText('🏘️ تقارير زيارة الملاجىء', {
             x: 0.5, y: 1.5, w: 9, h: 1.5,
-            fontSize: 44, bold: true, color: 'FFFFFF', align: 'center',
-            fontFace: 'Arial'
+            fontSize: 54, bold: true, color: 'FFFFFF', align: 'center',
+            fontFace: 'Arial',
+            shadow: { type: 'outer', angle: 45, blur: 8, offset: 3, opacity: 0.5, color: '000000' }
         });
-        slide.addText('تقرير تفصيلي كامل', {
+        slide.addText('تقرير تفصيلي كامل ومحترف', {
             x: 0.5, y: 3.0, w: 9, h: 0.8,
-            fontSize: 28, color: 'FFFFFF', align: 'center',
+            fontSize: 32, color: 'FFFFFF', align: 'center',
+            fontFace: 'Arial',
+            italic: true
+        });
+        slide.addText(`📊 إجمالي التقارير: ${savedReports.length} | 📋 بنود التفتيش: 12`, {
+            x: 0.5, y: 4.0, w: 9, h: 0.6,
+            fontSize: 24, color: 'FFFFFF', align: 'center',
             fontFace: 'Arial'
         });
-        slide.addText(`إجمالي التقارير: ${savedReports.length} | بنود التفتيش: 12`, {
-            x: 0.5, y: 4.0, w: 9, h: 0.6,
+        slide.addText(`📅 تاريخ إنشاء التقرير: ${new Date().toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`, {
+            x: 0.5, y: 5.0, w: 9, h: 0.6,
             fontSize: 20, color: 'FFFFFF', align: 'center',
             fontFace: 'Arial'
         });
-        slide.addText(`تاريخ التقرير: ${new Date().toLocaleDateString('ar-EG')}`, {
-            x: 0.5, y: 5.0, w: 9, h: 0.6,
-            fontSize: 18, color: 'FFFFFF', align: 'center',
-            fontFace: 'Arial'
+        
+        // Add footer decoration
+        slide.addShape(pptx.ShapeType.rect, {
+            x: 0, y: 6.5, w: 10, h: 0.5,
+            fill: { color: themeColors.primary, transparency: 30 }
         });
         
         // Individual report slides
@@ -30389,119 +30415,279 @@ function exportShelterReportsToPowerPoint() {
             const fulfilled = resultsArray.filter(r => r.status === 'fulfilled').length;
             const unfulfilled = resultsArray.filter(r => r.status === 'unfulfilled').length;
             const compliance = resultsArray.length > 0 ? ((fulfilled / resultsArray.length) * 100).toFixed(1) : 0;
-            const timestamp = new Date(report.timestamp).toLocaleString('ar-EG');
+            const timestamp = new Date(report.timestamp).toLocaleString('ar-EG', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
             
-            // Slide 1: Report Summary
+            // Get actual inspection date (use report.date if available, otherwise extract from timestamp)
+            let inspectionDate = report.date;
+            if (!inspectionDate || inspectionDate === 'غير محدد') {
+                inspectionDate = new Date(report.timestamp).toLocaleDateString('ar-EG', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            }
+            
+            // Slide 1: Report Summary with enhanced design
             slide = pptx.addSlide();
-            slide.addText(`التقرير #${index + 1} - الملخص`, {
-                x: 0.5, y: 0.3, w: 9, h: 0.6,
-                fontSize: 28, bold: true, color: '667eea', align: 'right',
+            slide.background = { fill: 'FFFFFF' };
+            
+            // Add header decoration
+            slide.addShape(pptx.ShapeType.rect, {
+                x: 0, y: 0, w: 10, h: 0.8,
+                fill: { color: themeColors.secondary }
+            });
+            
+            slide.addText(`📋 التقرير #${index + 1} - الملخص التنفيذي`, {
+                x: 0.5, y: 0.15, w: 9, h: 0.5,
+                fontSize: 36, bold: true, color: 'FFFFFF', align: 'center',
                 fontFace: 'Arial'
             });
             
+            // REVERSED COLUMN ORDER: Value on right, Label on left
             const summaryRows = [
-                ['المفتش', report.inspector || 'غير محدد'],
-                ['التاريخ', report.date || 'غير محدد'],
-                ['المناوبة', report.shift || 'غير محدد'],
-                ['المنطقة', report.area || 'غير محدد'],
-                ['الملجأ', report.shelter || 'غير محدد'],
-                ['وقت الإرسال', timestamp],
-                ['نسبة الامتثال', `${compliance}%`],
-                ['بنود مستوفاة', fulfilled.toString()],
-                ['بنود غير مستوفاة', unfulfilled.toString()],
-                ['عدد الصور', (report.photos || []).length.toString()]
+                [report.inspector || 'غير محدد', 'المفتش'],
+                [inspectionDate, 'تاريخ التفتيش'],
+                [report.shift || 'غير محدد', 'المناوبة'],
+                [report.area || 'غير محدد', 'المنطقة'],
+                [report.shelter || 'غير محدد', 'الملجأ'],
+                [timestamp, 'وقت الإرسال'],
+                [`${compliance}%`, 'نسبة الامتثال'],
+                [fulfilled.toString(), 'بنود مستوفاة ✅'],
+                [unfulfilled.toString(), 'بنود غير مستوفاة ❌'],
+                [(report.photos || []).length.toString(), 'عدد الصور 📷']
             ];
             
             slide.addTable(summaryRows, {
-                x: 0.5, y: 1.2, w: 9, h: 4,
-                fontSize: 16, fontFace: 'Arial', align: 'right',
-                border: { pt: 1, color: 'CFCFCF' },
-                fill: { color: 'F5F5F5' },
-                colW: [3, 6]
+                x: 0.5, y: 1.0, w: 9, h: 5,
+                fontSize: 20, fontFace: 'Arial', align: 'right',
+                border: { pt: 2, color: themeColors.secondary },
+                fill: { color: themeColors.light },
+                colW: [6, 3],
+                rowH: 0.5,
+                valign: 'middle',
+                margin: 0.1
             });
             
-            // Slide 2: Detailed Checklist Items
+            // Add compliance indicator
+            const complianceColor = compliance >= 80 ? themeColors.success : 
+                                   compliance >= 60 ? themeColors.accent : themeColors.warning;
+            slide.addShape(pptx.ShapeType.rect, {
+                x: 8.5, y: 6.2, w: 1, h: 0.4,
+                fill: { color: complianceColor }
+            });
+            slide.addText(`${compliance}%`, {
+                x: 8.5, y: 6.2, w: 1, h: 0.4,
+                fontSize: 18, bold: true, color: 'FFFFFF', align: 'center',
+                fontFace: 'Arial',
+                valign: 'middle'
+            });
+            
+            // Slide 2: Detailed Checklist Items with enhanced design
             slide = pptx.addSlide();
-            slide.addText(`التقرير #${index + 1} - بنود التفتيش التفصيلية`, {
-                x: 0.5, y: 0.3, w: 9, h: 0.6,
-                fontSize: 28, bold: true, color: '667eea', align: 'right',
+            slide.background = { fill: 'FFFFFF' };
+            
+            // Add header decoration
+            slide.addShape(pptx.ShapeType.rect, {
+                x: 0, y: 0, w: 10, h: 0.8,
+                fill: { color: themeColors.primary }
+            });
+            
+            slide.addText(`📝 التقرير #${index + 1} - بنود التفتيش التفصيلية`, {
+                x: 0.5, y: 0.15, w: 9, h: 0.5,
+                fontSize: 36, bold: true, color: 'FFFFFF', align: 'center',
                 fontFace: 'Arial'
             });
             
-            const checklistRows = [['البند', 'الحالة']];
+            // REVERSED COLUMN ORDER: Status first (right), then Item (left)
+            const checklistRows = [['الحالة', 'البند']];
             Object.keys(itemLabels).forEach(itemKey => {
                 const item = results[itemKey];
-                const status = item ? item.value : 'لم يتم التفتيش';
-                checklistRows.push([itemLabels[itemKey], status]);
+                let status = item ? item.value : 'لم يتم التفتيش';
+                // Add visual indicators
+                if (status === 'مستوفي' || status === 'fulfilled') {
+                    status = '✅ مستوفي';
+                } else if (status === 'غير مستوفي' || status === 'unfulfilled') {
+                    status = '❌ غير مستوفي';
+                } else if (status === 'غير قابل للتطبيق' || status === 'not_applicable') {
+                    status = '➖ غير قابل للتطبيق';
+                }
+                checklistRows.push([status, itemLabels[itemKey]]);
             });
             
             slide.addTable(checklistRows, {
-                x: 0.5, y: 1.2, w: 9, h: 4.5,
-                fontSize: 14, fontFace: 'Arial', align: 'right',
-                border: { pt: 1, color: 'CFCFCF' },
-                fill: { color: 'F5F5F5' },
-                colW: [6, 3]
+                x: 0.5, y: 1.0, w: 9, h: 5.5,
+                fontSize: 18, fontFace: 'Arial', align: 'right',
+                border: { pt: 2, color: themeColors.primary },
+                fill: { color: themeColors.light },
+                colW: [3, 6],
+                rowH: 0.42,
+                valign: 'middle',
+                margin: 0.1
             });
             
-            // Slide 3: Notes, Violations, and Recommendations (if any)
+            // Slide 3: Notes, Violations, and Recommendations with enhanced layout
             if (report.notes || report.violations || report.recommendations) {
                 slide = pptx.addSlide();
-                slide.addText(`التقرير #${index + 1} - الملاحظات والتوصيات`, {
-                    x: 0.5, y: 0.3, w: 9, h: 0.6,
-                    fontSize: 28, bold: true, color: '667eea', align: 'right',
+                slide.background = { fill: 'FFFFFF' };
+                
+                // Add header decoration
+                slide.addShape(pptx.ShapeType.rect, {
+                    x: 0, y: 0, w: 10, h: 0.8,
+                    fill: { color: themeColors.accent }
+                });
+                
+                slide.addText(`💭 التقرير #${index + 1} - الملاحظات والتوصيات`, {
+                    x: 0.5, y: 0.15, w: 9, h: 0.5,
+                    fontSize: 36, bold: true, color: 'FFFFFF', align: 'center',
                     fontFace: 'Arial'
                 });
                 
-                let yPos = 1.2;
+                let yPos = 1.1;
                 
                 if (report.notes) {
-                    slide.addText('📝 الملاحظات:', {
+                    slide.addShape(pptx.ShapeType.rect, {
                         x: 0.5, y: yPos, w: 9, h: 0.5,
-                        fontSize: 18, bold: true, color: '856404', align: 'right',
+                        fill: { color: 'FFF3CD' }
+                    });
+                    slide.addText('📝 الملاحظات:', {
+                        x: 0.7, y: yPos + 0.05, w: 8.6, h: 0.4,
+                        fontSize: 24, bold: true, color: '856404', align: 'right',
                         fontFace: 'Arial'
                     });
                     slide.addText(report.notes, {
-                        x: 0.5, y: yPos + 0.5, w: 9, h: 1,
-                        fontSize: 14, color: '333333', align: 'right',
-                        fontFace: 'Arial'
+                        x: 0.7, y: yPos + 0.6, w: 8.6, h: 1.2,
+                        fontSize: 18, color: '333333', align: 'right',
+                        fontFace: 'Arial',
+                        valign: 'top'
                     });
-                    yPos += 1.7;
+                    yPos += 2.0;
                 }
                 
                 if (report.violations) {
-                    slide.addText('⚠️ المخالفات:', {
+                    slide.addShape(pptx.ShapeType.rect, {
                         x: 0.5, y: yPos, w: 9, h: 0.5,
-                        fontSize: 18, bold: true, color: 'dc3545', align: 'right',
+                        fill: { color: 'F8D7DA' }
+                    });
+                    slide.addText('⚠️ المخالفات:', {
+                        x: 0.7, y: yPos + 0.05, w: 8.6, h: 0.4,
+                        fontSize: 24, bold: true, color: 'dc3545', align: 'right',
                         fontFace: 'Arial'
                     });
                     slide.addText(report.violations, {
-                        x: 0.5, y: yPos + 0.5, w: 9, h: 1,
-                        fontSize: 14, color: '333333', align: 'right',
-                        fontFace: 'Arial'
+                        x: 0.7, y: yPos + 0.6, w: 8.6, h: 1.2,
+                        fontSize: 18, color: '333333', align: 'right',
+                        fontFace: 'Arial',
+                        valign: 'top'
                     });
-                    yPos += 1.7;
+                    yPos += 2.0;
                 }
                 
                 if (report.recommendations) {
-                    slide.addText('💡 التوصيات:', {
+                    slide.addShape(pptx.ShapeType.rect, {
                         x: 0.5, y: yPos, w: 9, h: 0.5,
-                        fontSize: 18, bold: true, color: '17a2b8', align: 'right',
+                        fill: { color: 'D1ECF1' }
+                    });
+                    slide.addText('💡 التوصيات:', {
+                        x: 0.7, y: yPos + 0.05, w: 8.6, h: 0.4,
+                        fontSize: 24, bold: true, color: '17a2b8', align: 'right',
                         fontFace: 'Arial'
                     });
                     slide.addText(report.recommendations, {
-                        x: 0.5, y: yPos + 0.5, w: 9, h: 1,
-                        fontSize: 14, color: '333333', align: 'right',
-                        fontFace: 'Arial'
+                        x: 0.7, y: yPos + 0.6, w: 8.6, h: 1.2,
+                        fontSize: 18, color: '333333', align: 'right',
+                        fontFace: 'Arial',
+                        valign: 'top'
                     });
                 }
             }
+            
+            // Slide 4: Photos Gallery (if photos exist)
+            const photos = report.photos || [];
+            if (photos.length > 0) {
+                // Create slides for photos - 2 photos per slide for better visibility
+                for (let i = 0; i < photos.length; i += 2) {
+                    slide = pptx.addSlide();
+                    slide.background = { fill: 'F5F5F5' };
+                    
+                    // Add header decoration
+                    slide.addShape(pptx.ShapeType.rect, {
+                        x: 0, y: 0, w: 10, h: 0.7,
+                        fill: { color: themeColors.success }
+                    });
+                    
+                    slide.addText(`📷 التقرير #${index + 1} - الصور التوثيقية (${i + 1}-${Math.min(i + 2, photos.length)} من ${photos.length})`, {
+                        x: 0.5, y: 0.1, w: 9, h: 0.5,
+                        fontSize: 32, bold: true, color: 'FFFFFF', align: 'center',
+                        fontFace: 'Arial'
+                    });
+                    
+                    // First photo (right side for RTL)
+                    if (photos[i]) {
+                        try {
+                            slide.addImage({
+                                data: photos[i],
+                                x: 5.2, y: 1.0, w: 4.3, h: 4.3,
+                                sizing: { type: 'contain', w: 4.3, h: 4.3 }
+                            });
+                            slide.addText(`صورة ${i + 1}`, {
+                                x: 5.2, y: 5.5, w: 4.3, h: 0.4,
+                                fontSize: 16, bold: true, color: themeColors.dark, align: 'center',
+                                fontFace: 'Arial'
+                            });
+                        } catch (e) {
+                            console.warn('Could not add photo:', e);
+                        }
+                    }
+                    
+                    // Second photo (left side for RTL)
+                    if (photos[i + 1]) {
+                        try {
+                            slide.addImage({
+                                data: photos[i + 1],
+                                x: 0.5, y: 1.0, w: 4.3, h: 4.3,
+                                sizing: { type: 'contain', w: 4.3, h: 4.3 }
+                            });
+                            slide.addText(`صورة ${i + 2}`, {
+                                x: 0.5, y: 5.5, w: 4.3, h: 0.4,
+                                fontSize: 16, bold: true, color: themeColors.dark, align: 'center',
+                                fontFace: 'Arial'
+                            });
+                        } catch (e) {
+                            console.warn('Could not add photo:', e);
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Add a final summary slide
+        slide = pptx.addSlide();
+        slide.background = { fill: themeColors.success };
+        slide.addText('✅ انتهى التقرير', {
+            x: 0.5, y: 2.5, w: 9, h: 1,
+            fontSize: 48, bold: true, color: 'FFFFFF', align: 'center',
+            fontFace: 'Arial'
+        });
+        slide.addText('تم إعداد هذا التقرير بواسطة نظام إدارة التفتيش', {
+            x: 0.5, y: 3.8, w: 9, h: 0.6,
+            fontSize: 24, color: 'FFFFFF', align: 'center',
+            fontFace: 'Arial',
+            italic: true
         });
         
         // Save the presentation
         const fileName = `تقارير_زيارة_الملاجىء_${new Date().toISOString().split('T')[0]}.pptx`;
         pptx.writeFile({ fileName: fileName });
         
-        alert('✅ تم إنشاء ملف PowerPoint بنجاح! جاري تحميل الملف...');
+        alert('✅ تم إنشاء ملف PowerPoint بنجاح مع جميع التحسينات! جاري تحميل الملف...');
     } catch (error) {
         console.error('Error generating PowerPoint:', error);
         alert('⚠️ حدث خطأ أثناء إنشاء ملف PowerPoint. يرجى المحاولة مرة أخرى.');

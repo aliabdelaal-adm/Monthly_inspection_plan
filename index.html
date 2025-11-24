@@ -17239,7 +17239,7 @@ function renderShelterInspectionTable() {
     <table class="shelter-inspection-table">
         <thead>
             <tr>
-                <th>المفتش</th>
+                <th>المفتشين</th>
                 <th>التاريخ</th>
                 <th>المناوبة</th>
                 <th>المنطقة</th>
@@ -17323,8 +17323,23 @@ function renderShelterInspectionTable() {
         
         html += `
             <tr>
-                <td style="text-align:right;padding:8px 12px;">
-                    ${sortedInspectors.join('، ')}
+                <td>
+                    <div class="shops-dropdown-wrap">
+                        <button class="show-shops-btn" 
+                            onclick="toggleShelterInspectorsDropdown('${idx}')"
+                            style="background:#007bff;color:#fff;border:none;padding:6px 8px;border-radius:4px;cursor:pointer;font-size:0.9em;white-space:nowrap;">
+                            <span>عرض المفتشين (${sortedInspectors.length})</span>
+                        </button>
+                        <div class="shops-dropdown-list" id="shelter-inspectors-dropdown-${idx}">
+                            <div class="shops-dropdown-header">
+                                <span class="shops-count-badge">${sortedInspectors.length}</span>
+                                قائمة المفتشين
+                            </div>
+                            <ul>
+                                ${inspectorsListItems}
+                            </ul>
+                        </div>
+                    </div>
                 </td>
                 <td style="font-family:'Cairo', Arial, sans-serif;">
                     <div style="line-height:1.4;">
@@ -17750,6 +17765,104 @@ function toggleGroupShopsDropdown(rowIndex) {
     const dropdownId = `group-shops-dropdown-${rowIndex}`;
     const dropdown = document.getElementById(dropdownId);
     const button = document.querySelector(`button[onclick="toggleGroupShopsDropdown('${rowIndex}')"]`);
+    
+    if (!dropdown || !button) return;
+    
+    // إخفاء جميع القوائم المنسدلة الأخرى وإعادتها لمكانها الأصلي
+    document.querySelectorAll('.shops-dropdown-list').forEach(el => {
+        if (el.id !== dropdownId) {
+            el.style.display = 'none';
+            el.removeAttribute('data-open');
+            // إعادة العنصر لمكانه الأصلي إذا كان منقولاً
+            const originalParent = el.getAttribute('data-original-parent');
+            if (originalParent) {
+                const parent = document.querySelector(`[data-dropdown-parent="${el.id}"]`);
+                if (parent) {
+                    parent.appendChild(el);
+                    el.removeAttribute('data-original-parent');
+                }
+            }
+        }
+    });
+    
+    // تبديل حالة القائمة المنسدلة الحالية
+    if (dropdown.style.display === 'none' || dropdown.style.display === '') {
+        // نقل القائمة المنسدلة إلى body لضمان عرضها كoverlay
+        if (!dropdown.getAttribute('data-original-parent')) {
+            dropdown.setAttribute('data-original-parent', 'true');
+            dropdown.parentElement.setAttribute('data-dropdown-parent', dropdownId);
+            document.body.appendChild(dropdown);
+        }
+        
+        // احصل على موقع الزر لوضع القائمة المنسدلة
+        const buttonRect = button.getBoundingClientRect();
+        dropdown.style.position = 'fixed';
+        dropdown.style.zIndex = '9999';
+        dropdown.style.display = 'block';
+        
+        // حساب موقع القائمة المنسدلة - نعرضها دائماً أسفل الزر
+        const viewportHeight = window.innerHeight;
+        const dropdownMaxHeight = 280; // من CSS max-height المحدث
+        const spaceBelow = viewportHeight - buttonRect.bottom;
+        
+        // موقع القائمة أسفل الزر مباشرة
+        let topPosition = buttonRect.bottom + 5;
+        
+        // التأكد من أن القائمة لن تتجاوز حدود الشاشة
+        if (topPosition + dropdownMaxHeight > viewportHeight) {
+            // إذا كانت القائمة ستتجاوز الشاشة، نضعها أعلى الزر
+            topPosition = Math.max(10, buttonRect.top - dropdownMaxHeight - 5);
+        }
+        
+        dropdown.style.top = `${topPosition}px`;
+        
+        // تحديد أقصى ارتفاع للقائمة حسب المساحة المتاحة
+        const availableHeight = Math.min(dropdownMaxHeight, viewportHeight - topPosition - 20);
+        dropdown.style.maxHeight = `${availableHeight}px`;
+        
+        // تحديد الموقع الأفقي مع التأكد من عدم الخروج من الشاشة
+        const viewportWidth = window.innerWidth;
+        const dropdownWidth = 350; // تحديث العرض المتوقع
+        let leftPosition = buttonRect.left;
+        
+        // التحقق من عدم خروج القائمة من الجانب الأيمن
+        if (leftPosition + dropdownWidth > viewportWidth) {
+            leftPosition = viewportWidth - dropdownWidth - 10;
+        }
+        
+        // التحقق من عدم خروج القائمة من الجانب الأيسر
+        if (leftPosition < 10) {
+            leftPosition = 10;
+        }
+        
+        dropdown.style.left = `${leftPosition}px`;
+        
+        // إضافة تأخير قصير لضمان عدم الإغلاق المباشر
+        setTimeout(() => {
+            dropdown.setAttribute('data-open', 'true');
+        }, 10);
+    } else {
+        dropdown.style.display = 'none';
+        dropdown.removeAttribute('data-open');
+        
+        // إعادة العنصر لمكانه الأصلي
+        const originalParent = dropdown.getAttribute('data-original-parent');
+        if (originalParent) {
+            const parent = document.querySelector(`[data-dropdown-parent="${dropdownId}"]`);
+            if (parent) {
+                parent.appendChild(dropdown);
+                dropdown.removeAttribute('data-original-parent');
+                parent.removeAttribute('data-dropdown-parent');
+            }
+        }
+    }
+}
+
+// Toggle shelter inspection inspectors dropdown
+function toggleShelterInspectorsDropdown(rowIndex) {
+    const dropdownId = `shelter-inspectors-dropdown-${rowIndex}`;
+    const dropdown = document.getElementById(dropdownId);
+    const button = document.querySelector(`button[onclick="toggleShelterInspectorsDropdown('${rowIndex}')"]`);
     
     if (!dropdown || !button) return;
     

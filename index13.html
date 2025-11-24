@@ -2507,22 +2507,21 @@ ${reportData.notes.recommendations ? `**التوصيات:** ${reportData.notes.r
                 slide.addText('📋 تقارير التفتيش الجماعي', {
                     x: 0.5, y: 1.5, w: 9, h: 1.5,
                     fontSize: 44, bold: true, color: 'FFFFFF', align: 'center',
-                    fontFace: 'Arial'
+                    fontFace: 'Arial',
+                    rtlMode: true
                 });
-                slide.addText('تقرير تفصيلي كامل', {
-                    x: 0.5, y: 3.0, w: 9, h: 0.8,
-                    fontSize: 28, color: 'FFFFFF', align: 'center',
-                    fontFace: 'Arial'
-                });
+
                 slide.addText(`إجمالي التقارير: ${savedReports.length} | بنود رئيسية: ${totalChecklistItems}`, {
-                    x: 0.5, y: 4.0, w: 9, h: 0.6,
+                    x: 0.5, y: 3.5, w: 9, h: 0.6,
                     fontSize: 20, color: 'FFFFFF', align: 'center',
-                    fontFace: 'Arial'
+                    fontFace: 'Arial',
+                    rtlMode: true
                 });
                 slide.addText(`تاريخ التقرير: ${new Date().toLocaleDateString('ar-EG')}`, {
-                    x: 0.5, y: 5.0, w: 9, h: 0.6,
+                    x: 0.5, y: 4.5, w: 9, h: 0.6,
                     fontSize: 18, color: 'FFFFFF', align: 'center',
-                    fontFace: 'Arial'
+                    fontFace: 'Arial',
+                    rtlMode: true
                 });
                 
                 // Individual report slides
@@ -2530,8 +2529,20 @@ ${reportData.notes.recommendations ? `**التوصيات:** ${reportData.notes.r
                     const checklist = report.checklist || [];
                     const fulfilled = checklist.filter(item => item.value === 'مستوفى').length;
                     const unfulfilled = checklist.filter(item => item.value === 'غير مستوفى').length;
-                    const compliance = checklist.length > 0 ? ((fulfilled / checklist.length) * 100).toFixed(1) : 0;
-                    const timestamp = new Date(report.timestamp).toLocaleString('ar-EG');
+                    const compliance = checklist.length > 0 ? ((fulfilled / checklist.length) * 100).toFixed(0) : '0';
+                    // Format timestamp with clear separation between date and time
+                    const timestampDate = new Date(report.timestamp);
+                    const dateStr = timestampDate.toLocaleDateString('ar-EG', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric'
+                    });
+                    const timeStr = timestampDate.toLocaleTimeString('ar-EG', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    const timestamp = `${dateStr}  -  ${timeStr}`;
                     
                     // Slide 1: Report Summary
                     slide = pptx.addSlide();

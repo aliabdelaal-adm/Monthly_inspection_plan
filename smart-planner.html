@@ -8815,6 +8815,28 @@
             document.getElementById('shopModal').style.display = 'block';
         }
         
+        // Helper function to clear shop modal optional fields
+        function clearShopModalOptionalFields() {
+            document.getElementById('shopModalNameEn').value = '';
+            document.getElementById('shopModalLicense').value = '';
+            document.getElementById('shopModalAddress').value = '';
+            document.getElementById('shopModalPhone').value = '';
+            document.getElementById('shopModalEmail').value = '';
+            document.getElementById('shopModalGoogleMaps').value = '';
+            document.getElementById('shopModalActivity').value = '';
+            document.getElementById('shopModalAdmCode').value = '';
+        }
+        
+        // Helper function to hide status message after delay
+        function hideStatusMessageAfterDelay(elementId, delayMs) {
+            setTimeout(() => {
+                const statusDiv = document.getElementById(elementId);
+                if (statusDiv) {
+                    statusDiv.style.display = 'none';
+                }
+            }, delayMs);
+        }
+        
         // Open edit shop modal - accepts shop ID or shop name
         async function openEditShopModal(shopIdOrName) {
             // Check if planData is loaded
@@ -8872,14 +8894,7 @@
             }
             
             // Clear all optional fields before loading
-            document.getElementById('shopModalNameEn').value = '';
-            document.getElementById('shopModalLicense').value = '';
-            document.getElementById('shopModalAddress').value = '';
-            document.getElementById('shopModalPhone').value = '';
-            document.getElementById('shopModalEmail').value = '';
-            document.getElementById('shopModalGoogleMaps').value = '';
-            document.getElementById('shopModalActivity').value = '';
-            document.getElementById('shopModalAdmCode').value = '';
+            clearShopModalOptionalFields();
             
             // Show modal first with basic info
             document.getElementById('shopModal').style.display = 'block';
@@ -8932,32 +8947,17 @@
                     
                     // Hide loading message and show success
                     showMessage('shopModalStatus', 'success', '✅ تم تحميل جميع تفاصيل المحل بنجاح');
-                    setTimeout(() => {
-                        const statusDiv = document.getElementById('shopModalStatus');
-                        if (statusDiv) {
-                            statusDiv.style.display = 'none';
-                        }
-                    }, 2000);
+                    hideStatusMessageAfterDelay('shopModalStatus', 2000);
                 } else {
                     // Shop not in shops_details.json
                     console.log('Shop not found in shops_details.json:', shop.name);
                     showMessage('shopModalStatus', 'warning', '⚠️ لم يتم العثور على تفاصيل إضافية لهذا المحل');
-                    setTimeout(() => {
-                        const statusDiv = document.getElementById('shopModalStatus');
-                        if (statusDiv) {
-                            statusDiv.style.display = 'none';
-                        }
-                    }, 2000);
+                    hideStatusMessageAfterDelay('shopModalStatus', 2000);
                 }
             } catch (error) {
                 console.error('Error loading shop details from shops_details.json:', error);
                 showMessage('shopModalStatus', 'error', '❌ خطأ في تحميل التفاصيل: ' + error.message);
-                setTimeout(() => {
-                    const statusDiv = document.getElementById('shopModalStatus');
-                    if (statusDiv) {
-                        statusDiv.style.display = 'none';
-                    }
-                }, 3000);
+                hideStatusMessageAfterDelay('shopModalStatus', 3000);
             }
         }
         

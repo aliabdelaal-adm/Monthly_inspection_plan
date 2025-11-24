@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Enhanced PowerPoint Export</title>
+    <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js" integrity="sha384-VHjG7RDiBHqNj6RXCRzGKKPdNSHmZ8RrpjHKvWBNh5R8x8GJvZRLH8ONpV7EZwfk" crossorigin="anonymous"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .info-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+        }
+        .info-box h3 {
+            color: #667eea;
+            margin-top: 0;
+        }
+        .info-box ul {
+            margin: 10px 0;
+        }
+        .info-box li {
+            margin: 8px 0;
+            color: #333;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .button-group {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+            text-align: center;
+            font-size: 16px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+        .feature-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .feature-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+        .feature-item::before {
+            content: "✅ ";
+            color: #27AE60;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 اختبار تصدير PowerPoint المحسّن</h1>
+        <p class="subtitle">اختبار شامل للتحسينات الجديدة على تقرير زيارة الملاجئ</p>
+        
+        <div class="info-box">
+            <h3>📋 التحسينات المنفذة:</h3>
+            <div class="feature-list">
+                <div class="feature-item">عكس ترتيب أعمدة جدول الملخص</div>
+                <div class="feature-item">عرض تاريخ التفتيش الفعلي</div>
+                <div class="feature-item">عكس أعمدة جدول البنود</div>
+                <div class="feature-item">إضافة معرض الصور</div>
+                <div class="feature-item">تكبير أحجام الخطوط</div>
+                <div class="feature-item">تصميم احترافي بالألوان</div>
+                <div class="feature-item">أشكال زخرفية</div>
+                <div class="feature-item">مؤشرات بصرية</div>
+            </div>
+        </div>
+        
+        <div class="button-group">
+            <button onclick="testEnhancedShelterReport()">🚀 اختبار التقرير المحسّن</button>
+            <button onclick="testWithPhotos()">📷 اختبار مع الصور</button>
+        </div>
+        
+        <div id="status" class="status"></div>
+    </div>
+
+    <script>
+        function showStatus(message, isError = false) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = 'status ' + (isError ? 'error' : 'success');
+            statusDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function testEnhancedShelterReport() {
+            try {
+                if (typeof PptxGenJS === 'undefined') {
+                    showStatus('❌ مكتبة PptxGenJS غير محملة!', true);
+                    return;
+                }
+
+                showStatus('🔄 جاري إنشاء التقرير المحسّن...');
+
+                // Simulate shelter report data
+                const mockReport = {
+                    inspector: 'د. علي عبدالعال',
+                    date: '2024-01-15',
+                    shift: 'الصباحية',
+                    area: 'منطقة الوثبة',
+                    shelter: 'ملجأ الحيوانات الأليفة',
+                    timestamp: new Date().toISOString(),
+                    notes: 'الملجأ في حالة جيدة بشكل عام. تم ملاحظة نظافة عالية في جميع المناطق.',
+                    violations: 'لا توجد مخالفات كبيرة. بعض التحسينات البسيطة مطلوبة في نظام التهوية.',
+                    recommendations: 'يوصى بتحسين نظام التهوية وزيادة عدد الزيارات البيطرية الدورية.',
+                    results: {
+                        'cleanliness': { value: 'مستوفي', status: 'fulfilled' },
+                        'ventilation': { value: 'غير مستوفي', status: 'unfulfilled' },
+                        'lighting': { value: 'مستوفي', status: 'fulfilled' },
+                        'food_quality': { value: 'مستوفي', status: 'fulfilled' },
+                        'water_availability': { value: 'مستوفي', status: 'fulfilled' },
+                        'cage_conditions': { value: 'مستوفي', status: 'fulfilled' },
+                        'animal_health': { value: 'مستوفي', status: 'fulfilled' },
+                        'medical_records': { value: 'مستوفي', status: 'fulfilled' },
+                        'staff_presence': { value: 'مستوفي', status: 'fulfilled' },
+                        'safety_measures': { value: 'غير قابل للتطبيق', status: 'not_applicable' },
+                        'waste_management': { value: 'مستوفي', status: 'fulfilled' },
+                        'documentation': { value: 'مستوفي', status: 'fulfilled' }
+                    },
+                    photos: []
+                };
+
+                const savedReports = [mockReport];
+
+                // Item labels for checklist
+                const itemLabels = {
+                    'cleanliness': 'النظافة العامة للملجأ',
+                    'ventilation': 'التهوية المناسبة',
+                    'lighting': 'الإضاءة الكافية',
+                    'food_quality': 'جودة الأعلاف والطعام',
+                    'water_availability': 'توفر المياه النظيفة',
+                    'cage_conditions': 'حالة الأقفاص والحظائر',
+                    'animal_health': 'الحالة الصحية للحيوانات',
+                    'medical_records': 'السجلات الطبية محدثة',
+                    'staff_presence': 'وجود طاقم عمل مؤهل',
+                    'safety_measures': 'إجراءات السلامة والأمان',
+                    'waste_management': 'إدارة النفايات',
+                    'documentation': 'الوثائق والتصاريح'
+                };
+
+                // Create presentation
+                const pptx = new PptxGenJS();
+                pptx.rtlMode = true;
+                pptx.layout = 'LAYOUT_WIDE';
+
+                const themeColors = {
+                    primary: '4A90E2',
+                    secondary: '667eea',
+                    accent: 'F39C12',
+                    success: '27AE60',
+                    warning: 'E74C3C',
+                    dark: '2C3E50',
+                    light: 'ECF0F1'
+                };
+
+                // Title slide
+                let slide = pptx.addSlide();
+                slide.background = { fill: themeColors.secondary };
+
+                slide.addShape(pptx.ShapeType.rect, {
+                    x: 0, y: 0, w: 10, h: 0.5,
+                    fill: { color: themeColors.primary, transparency: 30 }
+                });
+
+                slide.addText('🏘️ تقارير زيارة الملاجىء', {
+                    x: 0.5, y: 1.5, w: 9, h: 1.5,
+                    fontSize: 54, bold: true, color: 'FFFFFF', align: 'center',
+                    fontFace: 'Arial',
+                    shadow: { type: 'outer', angle: 45, blur: 8, offset: 3, opacity: 0.5, color: '000000' }
+                });
+
+                slide.addText('تقرير تفصيلي كامل ومحترف', {
+                    x: 0.5, y: 3.0, w: 9, h: 0.8,
+                    fontSize: 32, color: 'FFFFFF', align: 'center',
+                    fontFace: 'Arial',
+                    italic: true
+                });
+
+                // Report slide
+                const report = mockReport;
+                const results = report.results || {};
+                const resultsArray = Object.values(results);
+                const fulfilled = resultsArray.filter(r => r.status === 'fulfilled').length;
+                const unfulfilled = resultsArray.filter(r => r.status === 'unfulfilled').length;
+                const compliance = resultsArray.length > 0 ? ((fulfilled / resultsArray.length) * 100).toFixed(1) : 0;
+                const timestamp = new Date(report.timestamp).toLocaleString('ar-EG', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                let inspectionDate = report.date;
+                if (!inspectionDate || inspectionDate === 'غير محدد') {
+                    inspectionDate = new Date(report.timestamp).toLocaleDateString('ar-EG', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                }
+
+                // Summary slide
+                slide = pptx.addSlide();
+                slide.background = { fill: 'FFFFFF' };
+
+                slide.addShape(pptx.ShapeType.rect, {
+                    x: 0, y: 0, w: 10, h: 0.8,
+                    fill: { color: themeColors.secondary }
+                });
+
+                slide.addText('📋 التقرير #1 - الملخص التنفيذي', {
+                    x: 0.5, y: 0.15, w: 9, h: 0.5,
+                    fontSize: 36, bold: true, color: 'FFFFFF', align: 'center',
+                    fontFace: 'Arial'
+                });
+
+                // REVERSED COLUMN ORDER
+                const summaryRows = [
+                    [report.inspector || 'غير محدد', 'المفتش'],
+                    [inspectionDate, 'تاريخ التفتيش'],
+                    [report.shift || 'غير محدد', 'المناوبة'],
+                    [report.area || 'غير محدد', 'المنطقة'],
+                    [report.shelter || 'غير محدد', 'الملجأ'],
+                    [timestamp, 'وقت الإرسال'],
+                    [`${compliance}%`, 'نسبة الامتثال'],
+                    [fulfilled.toString(), 'بنود مستوفاة ✅'],
+                    [unfulfilled.toString(), 'بنود غير مستوفاة ❌'],
+                    ['0', 'عدد الصور 📷']
+                ];
+
+                slide.addTable(summaryRows, {
+                    x: 0.5, y: 1.0, w: 9, h: 5,
+                    fontSize: 20, fontFace: 'Arial', align: 'right',
+                    border: { pt: 2, color: themeColors.secondary },
+                    fill: { color: themeColors.light },
+                    colW: [6, 3],
+                    rowH: 0.5,
+                    valign: 'middle',
+                    margin: 0.1
+                });
+
+                // Checklist slide
+                slide = pptx.addSlide();
+                slide.background = { fill: 'FFFFFF' };
+
+                slide.addShape(pptx.ShapeType.rect, {
+                    x: 0, y: 0, w: 10, h: 0.8,
+                    fill: { color: themeColors.primary }
+                });
+
+                slide.addText('📝 التقرير #1 - بنود التفتيش التفصيلية', {
+                    x: 0.5, y: 0.15, w: 9, h: 0.5,
+                    fontSize: 36, bold: true, color: 'FFFFFF', align: 'center',
+                    fontFace: 'Arial'
+                });
+
+                // REVERSED COLUMN ORDER: Status first, then Item
+                const checklistRows = [['الحالة', 'البند']];
+                Object.keys(itemLabels).forEach(itemKey => {
+                    const item = results[itemKey];
+                    let status = item ? item.value : 'لم يتم التفتيش';
+                    if (status === 'مستوفي' || status === 'fulfilled') {
+                        status = '✅ مستوفي';
+                    } else if (status === 'غير مستوفي' || status === 'unfulfilled') {
+                        status = '❌ غير مستوفي';
+                    } else if (status === 'غير قابل للتطبيق' || status === 'not_applicable') {
+                        status = '➖ غير قابل للتطبيق';
+                    }
+                    checklistRows.push([status, itemLabels[itemKey]]);
+                });
+
+                slide.addTable(checklistRows, {
+                    x: 0.5, y: 1.0, w: 9, h: 5.5,
+                    fontSize: 18, fontFace: 'Arial', align: 'right',
+                    border: { pt: 2, color: themeColors.primary },
+                    fill: { color: themeColors.light },
+                    colW: [3, 6],
+                    rowH: 0.42,
+                    valign: 'middle',
+                    margin: 0.1
+                });
+
+                // Notes slide
+                slide = pptx.addSlide();
+                slide.background = { fill: 'FFFFFF' };
+
+                slide.addShape(pptx.ShapeType.rect, {
+                    x: 0, y: 0, w: 10, h: 0.8,
+                    fill: { color: themeColors.accent }
+                });
+
+                slide.addText('💭 التقرير #1 - الملاحظات والتوصيات', {
+                    x: 0.5, y: 0.15, w: 9, h: 0.5,
+                    fontSize: 36, bold: true, color: 'FFFFFF', align: 'center',
+                    fontFace: 'Arial'
+                });
+
+                let yPos = 1.1;
+
+                slide.addShape(pptx.ShapeType.rect, {
+                    x: 0.5, y: yPos, w: 9, h: 0.5,
+                    fill: { color: 'FFF3CD' }
+                });
+                slide.addText('📝 الملاحظات:', {
+                    x: 0.7, y: yPos + 0.05, w: 8.6, h: 0.4,
+                    fontSize: 24, bold: true, color: '856404', align: 'right',
+                    fontFace: 'Arial'
+                });
+                slide.addText(report.notes, {
+                    x: 0.7, y: yPos + 0.6, w: 8.6, h: 1.2,
+                    fontSize: 18, color: '333333', align: 'right',
+                    fontFace: 'Arial',
+                    valign: 'top'
+                });
+
+                pptx.writeFile({ fileName: 'test_enhanced_shelter_report.pptx' });
+                showStatus('✅ تم إنشاء التقرير المحسّن بنجاح! تحقق من الملف المحمل.');
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus('❌ خطأ: ' + error.message, true);
+            }
+        }
+
+        function testWithPhotos() {
+            try {
+                if (typeof PptxGenJS === 'undefined') {
+                    showStatus('❌ مكتبة PptxGenJS غير محملة!', true);
+                    return;
+                }
+
+                showStatus('🔄 جاري إنشاء التقرير مع الصور...');
+
+                const pptx = new PptxGenJS();
+                pptx.rtlMode = true;
+                pptx.layout = 'LAYOUT_WIDE';
+
+                const themeColors = {
+                    success: '27AE60',
+                    dark: '2C3E50'
+                };
+
+                // Photos slide
+                let slide = pptx.addSlide();
+                slide.background = { fill: 'F5F5F5' };
+
+                slide.addShape(pptx.ShapeType.rect, {
+                    x: 0, y: 0, w: 10, h: 0.7,
+                    fill: { color: themeColors.success }
+                });
+
+                slide.addText('📷 التقرير #1 - الصور التوثيقية (اختبار)', {
+                    x: 0.5, y: 0.1, w: 9, h: 0.5,
+                    fontSize: 32, bold: true, color: 'FFFFFF', align: 'center',
+                    fontFace: 'Arial'
+                });
+
+                // Add sample colored rectangles as placeholders for images
+                slide.addShape(pptx.ShapeType.rect, {
+                    x: 5.2, y: 1.0, w: 4.3, h: 4.3,
+                    fill: { color: 'FF6B6B' }
+                });
+                slide.addText('صورة 1 (نموذج)', {
+                    x: 5.2, y: 2.8, w: 4.3, h: 0.4,
+                    fontSize: 24, bold: true, color: 'FFFFFF', align: 'center',
+                    fontFace: 'Arial'
+                });
+
+                slide.addShape(pptx.ShapeType.rect, {
+                    x: 0.5, y: 1.0, w: 4.3, h: 4.3,
+                    fill: { color: '4ECDC4' }
+                });
+                slide.addText('صورة 2 (نموذج)', {
+                    x: 0.5, y: 2.8, w: 4.3, h: 0.4,
+                    fontSize: 24, bold: true, color: 'FFFFFF', align: 'center',
+                    fontFace: 'Arial'
+                });
+
+                pptx.writeFile({ fileName: 'test_photos_layout.pptx' });
+                showStatus('✅ تم إنشاء تقرير الصور بنجاح! تحقق من التخطيط.');
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus('❌ خطأ: ' + error.message, true);
+            }
+        }
+    </script>
+</body>
+</html>

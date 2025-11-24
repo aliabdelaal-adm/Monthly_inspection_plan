@@ -2506,6 +2506,10 @@ ${reportData.notes.recommendations ? `**التوصيات:** ${reportData.notes.r
                     light: 'ECF0F1'
                 };
                 
+                // Define compliance thresholds
+                const COMPLIANCE_EXCELLENT = 80; // >= 80% shows green
+                const COMPLIANCE_GOOD = 60; // >= 60% shows orange
+                
                 // Sort reports by timestamp
                 savedReports.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
                 
@@ -2554,7 +2558,7 @@ ${reportData.notes.recommendations ? `**التوصيات:** ${reportData.notes.r
                     const checklist = report.checklist || [];
                     const fulfilled = checklist.filter(item => item.value === 'مستوفى').length;
                     const unfulfilled = checklist.filter(item => item.value === 'غير مستوفى').length;
-                    const compliance = checklist.length > 0 ? ((fulfilled / checklist.length) * 100).toFixed(0) : '0';
+                    const compliance = checklist.length > 0 ? Math.round((fulfilled / checklist.length) * 100) : 0;
                     // Format timestamp with clear separation between date and time
                     const timestampDate = new Date(report.timestamp);
                     const dateStr = timestampDate.toLocaleDateString('ar-EG', { 
@@ -2624,8 +2628,8 @@ ${reportData.notes.recommendations ? `**التوصيات:** ${reportData.notes.r
                     });
                     
                     // Add compliance indicator
-                    const complianceColor = compliance >= 80 ? themeColors.success : 
-                                           compliance >= 60 ? themeColors.accent : themeColors.warning;
+                    const complianceColor = compliance >= COMPLIANCE_EXCELLENT ? themeColors.success : 
+                                           compliance >= COMPLIANCE_GOOD ? themeColors.accent : themeColors.warning;
                     slide.addShape(pptx.ShapeType.rect, {
                         x: 8.5, y: 6.2, w: 1, h: 0.4,
                         fill: { color: complianceColor }
@@ -2675,7 +2679,7 @@ ${reportData.notes.recommendations ? `**التوصيات:** ${reportData.notes.r
                             if (details.action) detailsText += `الإجراء: ${escapeHtml(details.action)} `;
                             if (details.deadline) detailsText += `المهلة: ${escapeHtml(details.deadline)}`;
                             if (detailsText) {
-                                checklistRows.push(['  التفاصيل:', detailsText]);
+                                checklistRows.push(['↳ التفاصيل:', detailsText]);
                             }
                         }
                     });

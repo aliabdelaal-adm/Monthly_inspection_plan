@@ -2355,7 +2355,11 @@
                     <span>📝</span>
                     <span>تحميل وتحرير تقرير التفتيش الجماعي</span>
                 </button>
-                <button class="btn btn-primary" onclick="switchTab('shelterInspection')" style="background: white; color: #9c27b0;">
+                <button class="btn btn-warning" onclick="switchTab('fileManager', event)" style="background: white; color: #ff6b6b; font-weight: bold; border: 2px solid #ff6b6b;">
+                    <span>📂</span>
+                    <span>إدارة ملفات التقارير الجماعية (للمطور فقط)</span>
+                </button>
+                <button class="btn btn-primary" onclick="switchTab('shelterInspection', event)" style="background: white; color: #9c27b0;">
                     <span>🏘️</span>
                     <span>تخطيط تفتيش الملاجئ</span>
                 </button>
@@ -2419,32 +2423,35 @@
         <div id="mainInterface" style="display: none;">
             <!-- Tab Navigation -->
             <div class="tabs">
-                <button class="tab-button active" onclick="switchTab('add')">
+                <button class="tab-button active" onclick="switchTab('add', event)">
                     <span>➕</span> إضافة تفتيش جديد
                 </button>
-                <button class="tab-button" onclick="switchTab('view')">
+                <button class="tab-button" onclick="switchTab('view', event)">
                     <span>👁️</span> عرض التفتيشات
                 </button>
-                <button class="tab-button" onclick="switchTab('stats')">
+                <button class="tab-button" onclick="switchTab('stats', event)">
                     <span>📊</span> إحصائيات المفتشين
                 </button>
-                <button class="tab-button" onclick="switchTab('calendar')">
+                <button class="tab-button" onclick="switchTab('calendar', event)">
                     <span>📅</span> التقويم الشهري
                 </button>
-                <button class="tab-button" onclick="switchTab('shops')">
+                <button class="tab-button" onclick="switchTab('shops', event)">
                     <span>🏪</span> إدارة المحلات
                 </button>
-                <button class="tab-button" onclick="switchTab('areas')">
+                <button class="tab-button" onclick="switchTab('areas', event)">
                     <span>🗺️</span> إدارة المناطق
                 </button>
-                <button class="tab-button" onclick="switchTab('maintenance')">
+                <button class="tab-button" onclick="switchTab('maintenance', event)">
                     <span>🔧</span> التحكم الذكي في رسالة التحديث
                 </button>
-                <button class="tab-button" onclick="switchTab('groupInspection')">
+                <button class="tab-button" onclick="switchTab('groupInspection', event)">
                     <span>👥</span> التفتيش الجماعي
                 </button>
-                <button class="tab-button" onclick="switchTab('shelterInspection')">
+                <button class="tab-button" onclick="switchTab('shelterInspection', event)">
                     <span>🏘️</span> تفتيش الملاجئ
+                </button>
+                <button class="tab-button" onclick="switchTab('fileManager', event)">
+                    <span>📂</span> إدارة ملفات التقارير
                 </button>
             </div>
             
@@ -3303,6 +3310,74 @@
                 </div>
                 
                 <div class="status-message" id="shelterInspectionStatus"></div>
+            </div>
+        </div>
+        
+        <!-- Tab Content: File Manager for Group Inspection Reports -->
+        <div id="fileManagerTab" class="tab-content">
+            <div class="section">
+                <h2 class="section-title">📂 إدارة ملفات تقارير التفتيش الجماعي</h2>
+                <div style="background: linear-gradient(135deg, #ff6b6b 0%, #c92a2a 100%); color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center;">
+                    <p style="margin: 0; font-size: 1.1em; font-weight: bold;">⚠️ هذه الصفحة مخصصة للمطورين فقط</p>
+                    <p style="margin: 5px 0 0 0; font-size: 0.95em; opacity: 0.9;">إدارة كاملة لملفات تقارير التفتيش الجماعي: رفع، تعديل، حذف</p>
+                </div>
+                
+                <!-- Upload New Report Section -->
+                <div style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 25px; border-radius: 15px; margin-bottom: 25px; border: 2px solid #2196f3; box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);">
+                    <h3 style="margin: 0 0 20px 0; color: #1565c0; text-align: center; font-size: 1.3em;">📤 رفع تقرير جديد</h3>
+                    
+                    <form id="fileManagerUploadForm" style="max-width: 900px; margin: 0 auto;">
+                        <div class="form-group">
+                            <label class="form-label" style="color: #1565c0; font-weight: bold;">📎 اختر ملف التقرير</label>
+                            <input type="file" id="fileManagerFileInput" accept=".pdf,.xlsx,.xls,.docx,.doc,.pptx,.ppt" class="form-control">
+                            <small style="color: #666; font-size: 0.9em; margin-top: 5px; display: block;">الملفات المدعومة: PDF, Excel (.xlsx, .xls), Word (.docx, .doc), PowerPoint (.pptx, .ppt) - الحد الأقصى 25 ميجابايت</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" style="color: #1565c0; font-weight: bold;">📝 عنوان التقرير</label>
+                            <input type="text" id="fileManagerTitle" class="form-control" placeholder="مثال: تقرير التفتيش الجماعي - يناير 2025" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" style="color: #1565c0; font-weight: bold;">📄 وصف التقرير</label>
+                            <textarea id="fileManagerDescription" class="form-control" rows="3" placeholder="وصف مختصر للتقرير..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" style="color: #1565c0; font-weight: bold;">👤 اسم الرافع</label>
+                            <input type="text" id="fileManagerUploader" class="form-control" placeholder="د. علي عبدالعال" value="د. علي عبدالعال">
+                        </div>
+                        
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-success" onclick="uploadReportFile()">
+                                <span>📤</span> رفع التقرير
+                            </button>
+                            <button type="button" class="btn btn-warning" onclick="clearUploadForm()">
+                                <span>🔄</span> إعادة تعيين
+                            </button>
+                        </div>
+                        <div class="status-message" id="fileManagerUploadStatus"></div>
+                    </form>
+                </div>
+                
+                <!-- Files List Section -->
+                <div style="background: #f8f9fa; padding: 25px; border-radius: 15px; border: 2px solid #e0e0e0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="margin: 0; color: #2d3561; font-size: 1.3em;">📋 التقارير المتاحة</h3>
+                        <button class="btn btn-primary" onclick="loadGroupReportFiles()">
+                            <span>🔄</span> تحديث القائمة
+                        </button>
+                    </div>
+                    
+                    <div id="fileManagerFilesList" style="min-height: 300px;">
+                        <p style="text-align: center; color: #999; padding: 60px 20px;">
+                            <span style="font-size: 3em; display: block; margin-bottom: 10px;">📑</span>
+                            جاري تحميل قائمة التقارير...
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="status-message" id="fileManagerStatus"></div>
             </div>
         </div>
         
@@ -6071,7 +6146,7 @@
         }
         
         // Tab switching
-        function switchTab(tabName) {
+        function switchTab(tabName, event) {
             // Hide all tabs
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active');
@@ -6082,13 +6157,20 @@
             
             // Show selected tab
             document.getElementById(tabName + 'Tab').classList.add('active');
-            event.target.classList.add('active');
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
             
             // Load data for specific tabs
             if (tabName === 'view') {
                 loadInspectionsView();
             } else if (tabName === 'stats') {
                 populateStatsInspector();
+            } else if (tabName === 'fileManager') {
+                // Load group report files when file manager tab is opened
+                if (typeof loadGroupReportFiles === 'function') {
+                    loadGroupReportFiles();
+                }
             } else if (tabName === 'calendar') {
                 // Set default month to current month
                 const now = new Date();
@@ -8472,6 +8554,15 @@
         
         // Check if user is already logged in
         window.onload = async function() {
+            // Check if we should open file manager tab
+            const openFileManager = sessionStorage.getItem('openFileManager');
+            if (openFileManager === 'true') {
+                sessionStorage.removeItem('openFileManager');
+                // Wait a bit for the page to fully load, then switch to file manager
+                setTimeout(() => {
+                    switchTab('fileManager');
+                }, 500);
+            }
             const savedToken = localStorage.getItem('devToken');
             if (savedToken) {
                 document.getElementById('githubToken').value = savedToken;
@@ -20938,6 +21029,536 @@
         
         // ========================================
         // End of Smart Pet Shop Discovery
+        // ========================================
+        
+        // ========================================
+        // File Manager for Group Inspection Reports
+        // ========================================
+        
+        // Load and display all group inspection reports
+        async function loadGroupReportFiles() {
+            const listDiv = document.getElementById('fileManagerFilesList');
+            const statusDiv = document.getElementById('fileManagerStatus');
+            
+            if (!listDiv) return;
+            
+            try {
+                listDiv.innerHTML = '<p style="text-align: center; color: #666; padding: 40px;">⏳ جاري تحميل التقارير...</p>';
+                
+                // Load files.json
+                const response = await fetch('files.json?t=' + Date.now(), {
+                    cache: 'no-cache'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load files.json');
+                }
+                
+                const filesData = await response.json();
+                
+                // Filter group inspection reports
+                const groupReports = filesData.files
+                    .filter(f => f.category === 'group_inspection_reports')
+                    .sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
+                
+                if (groupReports.length === 0) {
+                    listDiv.innerHTML = `
+                        <p style="text-align: center; color: #666; padding: 60px;">
+                            <span style="font-size: 3em; display: block; margin-bottom: 10px;">📑</span>
+                            <strong>لا توجد تقارير حالياً</strong><br>
+                            <small>قم برفع تقرير جديد باستخدام النموذج أعلاه</small>
+                        </p>
+                    `;
+                    return;
+                }
+                
+                // Build files list HTML
+                let html = '<div style="display: grid; gap: 15px;">';
+                groupReports.forEach((file, index) => {
+                    const uploadDate = new Date(file.uploadDate).toLocaleDateString('ar-EG', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
+                    const fileSize = formatFileSize(file.size || 0);
+                    const fileIcon = getFileIcon(file.type);
+                    
+                    html += `
+                        <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-right: 4px solid #2196f3;">
+                            <div style="display: grid; grid-template-columns: auto 1fr auto; gap: 15px; align-items: start;">
+                                <div style="font-size: 2.5em;">${fileIcon}</div>
+                                <div>
+                                    <h4 style="margin: 0 0 10px 0; color: #2d3561; font-size: 1.1em;">${file.name}</h4>
+                                    <p style="margin: 0 0 10px 0; color: #666; font-size: 0.95em;">${file.description}</p>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 15px; font-size: 0.85em; color: #999;">
+                                        <span><strong>📅 تاريخ الرفع:</strong> ${uploadDate}</span>
+                                        <span><strong>👤 الرافع:</strong> ${file.uploader}</span>
+                                        <span><strong>📦 الحجم:</strong> ${fileSize}</span>
+                                        <span><strong>📝 النوع:</strong> ${file.type.toUpperCase()}</span>
+                                    </div>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <button onclick="downloadReportFile('${file.path}')" 
+                                        style="background: #4caf50; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em; white-space: nowrap;">
+                                        📥 تحميل
+                                    </button>
+                                    <button onclick="editReportFile('${file.id}')" 
+                                        style="background: #ff9800; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em; white-space: nowrap;">
+                                        ✏️ تعديل
+                                    </button>
+                                    <button onclick="deleteReportFile('${file.id}', '${file.path}')" 
+                                        style="background: #f44336; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em; white-space: nowrap;">
+                                        🗑️ حذف
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                
+                listDiv.innerHTML = html;
+                showFileManagerMessage('✅ تم تحميل ' + groupReports.length + ' تقرير بنجاح', 'success');
+                
+            } catch (error) {
+                console.error('Error loading files:', error);
+                listDiv.innerHTML = `
+                    <p style="text-align: center; color: #dc3545; padding: 40px;">
+                        <span style="font-size: 2em; display: block; margin-bottom: 10px;">❌</span>
+                        <strong>حدث خطأ أثناء تحميل التقارير</strong><br>
+                        <small>${error.message}</small>
+                    </p>
+                `;
+                showFileManagerMessage('❌ فشل تحميل التقارير: ' + error.message, 'error');
+            }
+        }
+        
+        // Upload a new report file
+        async function uploadReportFile() {
+            const fileInput = document.getElementById('fileManagerFileInput');
+            const titleInput = document.getElementById('fileManagerTitle');
+            const descriptionInput = document.getElementById('fileManagerDescription');
+            const uploaderInput = document.getElementById('fileManagerUploader');
+            const statusDiv = document.getElementById('fileManagerUploadStatus');
+            
+            // Validate inputs
+            if (!fileInput.files[0]) {
+                showFileManagerMessage('❌ يرجى اختيار ملف', 'error', 'fileManagerUploadStatus');
+                return;
+            }
+            
+            if (!titleInput.value.trim()) {
+                showFileManagerMessage('❌ يرجى إدخال عنوان التقرير', 'error', 'fileManagerUploadStatus');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const maxSize = 25 * 1024 * 1024; // 25 MB
+            
+            if (file.size > maxSize) {
+                showFileManagerMessage('❌ حجم الملف كبير جداً! الحد الأقصى 25 ميجابايت', 'error', 'fileManagerUploadStatus');
+                return;
+            }
+            
+            try {
+                showFileManagerMessage('⏳ جاري التحضير...', 'info', 'fileManagerUploadStatus');
+                
+                // Get GitHub token
+                const token = githubToken || localStorage.getItem('devToken');
+                if (!token) {
+                    showFileManagerMessage('❌ يرجى تسجيل الدخول أولاً', 'error', 'fileManagerUploadStatus');
+                    return;
+                }
+                
+                // Read file as base64
+                const base64Content = await readFileAsBase64(file);
+                
+                // Clean filename - preserve Arabic and alphanumeric, replace problematic characters
+                let cleanFileName = file.name
+                    .replace(/[<>:"/\\|?*\x00-\x1f]/g, '_')  // Replace invalid file system characters
+                    .replace(/\s+/g, '_')                     // Replace spaces with underscores
+                    .replace(/_{2,}/g, '_')                   // Replace multiple underscores with single
+                    .replace(/^_+|_+$/g, '');                 // Remove leading/trailing underscores
+                
+                // Ensure filename is not empty after sanitization
+                if (!cleanFileName || cleanFileName.trim().length === 0) {
+                    cleanFileName = 'report_' + Date.now() + '.' + (file.name.split('.').pop() || 'file');
+                }
+                const filePath = `files/group_inspection_reports/${cleanFileName}`;
+                
+                showFileManagerMessage('⏳ جاري رفع الملف إلى GitHub...', 'info', 'fileManagerUploadStatus');
+                
+                // Check if file exists
+                let existingFileSha = null;
+                try {
+                    const checkRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+                    
+                    if (checkRes.ok) {
+                        const existingFile = await checkRes.json();
+                        existingFileSha = existingFile.sha;
+                    }
+                } catch (e) {
+                    // File doesn't exist, which is fine
+                }
+                
+                // Upload file to GitHub
+                const uploadData = {
+                    message: `رفع تقرير تفتيش جماعي: ${titleInput.value.trim()}`,
+                    content: base64Content,
+                    branch: 'main'
+                };
+                
+                if (existingFileSha) {
+                    uploadData.sha = existingFileSha;
+                }
+                
+                const uploadRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(uploadData)
+                });
+                
+                if (!uploadRes.ok) {
+                    throw new Error('فشل رفع الملف إلى GitHub');
+                }
+                
+                showFileManagerMessage('⏳ جاري تحديث files.json...', 'info', 'fileManagerUploadStatus');
+                
+                // Update files.json
+                await updateFilesJson({
+                    id: 'group_report_' + Date.now(),
+                    name: cleanFileName,
+                    path: filePath,
+                    category: 'group_inspection_reports',
+                    type: file.name.split('.').pop().toLowerCase(),
+                    size: file.size,
+                    uploadDate: new Date().toISOString(),
+                    description: descriptionInput.value.trim() || titleInput.value.trim(),
+                    uploader: uploaderInput.value.trim() || 'د. علي عبدالعال',
+                    visible: true
+                });
+                
+                showFileManagerMessage('✅ تم رفع التقرير بنجاح!', 'success', 'fileManagerUploadStatus');
+                clearUploadForm();
+                loadGroupReportFiles();
+                
+            } catch (error) {
+                console.error('Error uploading file:', error);
+                showFileManagerMessage('❌ حدث خطأ: ' + error.message, 'error', 'fileManagerUploadStatus');
+            }
+        }
+        
+        // Edit report metadata
+        async function editReportFile(fileId) {
+            try {
+                // Load files.json
+                const response = await fetch('files.json?t=' + Date.now(), {
+                    cache: 'no-cache'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('فشل تحميل files.json');
+                }
+                
+                const filesData = await response.json();
+                const file = filesData.files.find(f => f.id === fileId);
+                
+                if (!file) {
+                    throw new Error('لم يتم العثور على الملف');
+                }
+                
+                // Show edit dialog
+                const newTitle = prompt('أدخل عنوان جديد للتقرير:', file.name);
+                if (newTitle === null) return; // User cancelled
+                
+                const newDescription = prompt('أدخل وصف جديد للتقرير:', file.description);
+                if (newDescription === null) return; // User cancelled
+                
+                // Update file metadata
+                file.name = newTitle.trim() || file.name;
+                file.description = newDescription.trim() || file.description;
+                
+                // Save updated files.json
+                await saveFilesJson(filesData);
+                
+                showFileManagerMessage('✅ تم تحديث بيانات التقرير بنجاح', 'success');
+                loadGroupReportFiles();
+                
+            } catch (error) {
+                console.error('Error editing file:', error);
+                showFileManagerMessage('❌ حدث خطأ: ' + error.message, 'error');
+            }
+        }
+        
+        // Delete report file
+        async function deleteReportFile(fileId, filePath) {
+            if (!confirm('هل أنت متأكد من حذف هذا التقرير؟\n\nسيتم حذف الملف نهائياً من GitHub والنظام.')) {
+                return;
+            }
+            
+            try {
+                showFileManagerMessage('⏳ جاري الحذف...', 'info');
+                
+                const token = githubToken || localStorage.getItem('devToken');
+                if (!token) {
+                    showFileManagerMessage('❌ يرجى تسجيل الدخول أولاً', 'error');
+                    return;
+                }
+                
+                // Get file SHA
+                const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (!getRes.ok) {
+                    throw new Error('فشل الحصول على معلومات الملف');
+                }
+                
+                const fileData = await getRes.json();
+                
+                // Delete file from GitHub
+                const deleteRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: `حذف تقرير التفتيش الجماعي: ${fileId}`,
+                        sha: fileData.sha,
+                        branch: 'main'
+                    })
+                });
+                
+                if (!deleteRes.ok) {
+                    throw new Error('فشل حذف الملف من GitHub');
+                }
+                
+                // Remove from files.json
+                const response = await fetch('files.json?t=' + Date.now(), {
+                    cache: 'no-cache'
+                });
+                
+                if (response.ok) {
+                    const filesData = await response.json();
+                    filesData.files = filesData.files.filter(f => f.id !== fileId);
+                    await saveFilesJson(filesData);
+                }
+                
+                showFileManagerMessage('✅ تم حذف التقرير بنجاح', 'success');
+                loadGroupReportFiles();
+                
+            } catch (error) {
+                console.error('Error deleting file:', error);
+                showFileManagerMessage('❌ حدث خطأ: ' + error.message, 'error');
+            }
+        }
+        
+        // Download report file
+        function downloadReportFile(filePath) {
+            const downloadUrl = `https://raw.githubusercontent.com/${repo}/main/${filePath}`;
+            window.open(downloadUrl, '_blank');
+        }
+        
+        // Helper: Update files.json with new file
+        async function updateFilesJson(newFile) {
+            try {
+                const token = githubToken || localStorage.getItem('devToken');
+                if (!token) {
+                    throw new Error('لا يوجد توكن متاح');
+                }
+                
+                // Load current files.json
+                const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/files.json`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (!getRes.ok) {
+                    throw new Error('فشل تحميل files.json');
+                }
+                
+                const currentFile = await getRes.json();
+                const filesData = JSON.parse(atob(currentFile.content));
+                
+                // Add new file
+                filesData.files.push(newFile);
+                filesData.lastUpdate = new Date().toISOString();
+                
+                // Save updated files.json
+                await saveFilesJson(filesData, currentFile.sha);
+                
+            } catch (error) {
+                console.error('Error updating files.json:', error);
+                throw error;
+            }
+        }
+        
+        // Helper: Save files.json to GitHub
+        async function saveFilesJson(filesData, sha = null) {
+            try {
+                const token = githubToken || localStorage.getItem('devToken');
+                if (!token) {
+                    throw new Error('لا يوجد توكن متاح');
+                }
+                
+                // Get current SHA if not provided
+                if (!sha) {
+                    const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/files.json`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+                    
+                    if (getRes.ok) {
+                        const currentFile = await getRes.json();
+                        sha = currentFile.sha;
+                    }
+                }
+                
+                // Update lastUpdate timestamp
+                filesData.lastUpdate = new Date().toISOString();
+                
+                // Convert to base64
+                const content = btoa(unescape(encodeURIComponent(JSON.stringify(filesData, null, 2))));
+                
+                // Save to GitHub
+                const saveRes = await fetch(`https://api.github.com/repos/${repo}/contents/files.json`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: 'تحديث files.json - إدارة تقارير التفتيش الجماعي',
+                        content: content,
+                        sha: sha,
+                        branch: 'main'
+                    })
+                });
+                
+                if (!saveRes.ok) {
+                    throw new Error('فشل حفظ files.json');
+                }
+                
+            } catch (error) {
+                console.error('Error saving files.json:', error);
+                throw error;
+            }
+        }
+        
+        // Helper: Read file as base64
+        function readFileAsBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const result = e.target.result;
+                        if (!result || typeof result !== 'string') {
+                            throw new Error('Invalid file data');
+                        }
+                        const parts = result.split(',');
+                        if (parts.length < 2) {
+                            throw new Error('Invalid data URL format');
+                        }
+                        const base64 = parts[1];
+                        if (!base64 || base64.trim().length === 0) {
+                            throw new Error('Empty base64 data');
+                        }
+                        resolve(base64);
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                reader.onerror = () => reject(new Error('Failed to read file'));
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        // Helper: Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+        
+        // Helper: Get file icon
+        function getFileIcon(fileType) {
+            const icons = {
+                'pdf': '📄',
+                'xlsx': '📊',
+                'xls': '📊',
+                'docx': '📝',
+                'doc': '📝',
+                'pptx': '📊',
+                'ppt': '📊'
+            };
+            return icons[fileType.toLowerCase()] || '📎';
+        }
+        
+        // Helper: Show message
+        function showFileManagerMessage(message, type, targetId = 'fileManagerStatus') {
+            const statusDiv = document.getElementById(targetId);
+            if (!statusDiv) return;
+            
+            statusDiv.textContent = message;
+            statusDiv.className = 'status-message show';
+            
+            const colors = {
+                'success': '#28a745',
+                'error': '#dc3545',
+                'warning': '#ffc107',
+                'info': '#17a2b8'
+            };
+            
+            statusDiv.style.background = colors[type] || colors['info'];
+            statusDiv.style.color = 'white';
+            statusDiv.style.padding = '15px';
+            statusDiv.style.borderRadius = '8px';
+            statusDiv.style.marginTop = '15px';
+            statusDiv.style.fontWeight = 'bold';
+            statusDiv.style.textAlign = 'center';
+        }
+        
+        // Clear upload form
+        function clearUploadForm() {
+            document.getElementById('fileManagerFileInput').value = '';
+            document.getElementById('fileManagerTitle').value = '';
+            document.getElementById('fileManagerDescription').value = '';
+            const statusDiv = document.getElementById('fileManagerUploadStatus');
+            if (statusDiv) {
+                statusDiv.textContent = '';
+                statusDiv.className = 'status-message';
+            }
+        }
+        
+        // Note: File loading is now integrated directly into switchTab function
+        // No need for wrapper function - see switchTab() for fileManager case
+        
+        // ========================================
+        // End of File Manager
         // ========================================
     </script>
 </body>

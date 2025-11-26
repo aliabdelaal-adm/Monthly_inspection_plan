@@ -10148,16 +10148,24 @@ let isDev = localStorage.getItem('isDevLoggedIn') === 'true';
 // This function correctly decodes base64 content with Arabic/UTF-8 text
 function decodeBase64Utf8(base64Content) {
     try {
-        const binaryString = atob(base64Content);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
+        // First validate and clean the base64 input
+        if (!base64Content || typeof base64Content !== 'string') {
+            throw new Error('Invalid base64 input');
         }
+        const binaryString = atob(base64Content);
+        // Use Uint8Array.from() for more efficient byte array creation
+        const bytes = Uint8Array.from(binaryString, char => char.charCodeAt(0));
         return new TextDecoder('utf-8').decode(bytes);
     } catch (e) {
+        // Log the error for debugging
+        console.warn('decodeBase64Utf8 failed:', e.message || e);
         // Fallback to the old method if TextDecoder fails
-        console.warn('TextDecoder failed, using fallback decoding method:', e);
-        return decodeURIComponent(escape(atob(base64Content)));
+        try {
+            return decodeURIComponent(escape(atob(base64Content)));
+        } catch (fallbackError) {
+            console.error('Both decoding methods failed:', fallbackError);
+            throw new Error('Failed to decode base64 content');
+        }
     }
 }
 

@@ -10144,6 +10144,23 @@ console.log('Smart distribution functions initialized');
 // Restore developer login state from localStorage if exists (moved here to prevent reference errors)
 let isDev = localStorage.getItem('isDevLoggedIn') === 'true';
 
+// ===== Helper function for proper UTF-8 decoding of base64 content =====
+// This function correctly decodes base64 content with Arabic/UTF-8 text
+function decodeBase64Utf8(base64Content) {
+    try {
+        const binaryString = atob(base64Content);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        return new TextDecoder('utf-8').decode(bytes);
+    } catch (e) {
+        // Fallback to the old method if TextDecoder fails
+        console.warn('TextDecoder failed, using fallback decoding method:', e);
+        return decodeURIComponent(escape(atob(base64Content)));
+    }
+}
+
 // تبديل عرض/إخفاء قسم خدمات النظام
 function toggleSystemServices() {
     const content = document.getElementById('systemServicesContent');
@@ -23864,7 +23881,7 @@ async function updateFilesRegistryAfterUpload(fileName, filePath, category, file
         
         if (res.ok) {
             const file = await res.json();
-            filesData = JSON.parse(decodeURIComponent(escape(atob(file.content))));
+            filesData = JSON.parse(decodeBase64Utf8(file.content));
             currentSha = file.sha;
         }
         
@@ -29440,7 +29457,7 @@ async function updateFilesRegistryFromMain(fileName, filePath, category, fileSiz
         
         if (res.ok) {
             const file = await res.json();
-            filesData = JSON.parse(decodeURIComponent(escape(atob(file.content))));
+            filesData = JSON.parse(decodeBase64Utf8(file.content));
             currentSha = file.sha;
         }
         
@@ -29521,7 +29538,7 @@ async function editFileFromMain(fileId, fileName, description, category) {
         
         if (res.ok) {
             const file = await res.json();
-            const filesData = JSON.parse(decodeURIComponent(escape(atob(file.content))));
+            const filesData = JSON.parse(decodeBase64Utf8(file.content));
             
             // تحديث وصف الملف
             const fileIndex = filesData.files.findIndex(f => f.id === fileId);
@@ -29650,7 +29667,7 @@ async function removeFromFilesRegistryFromMain(fileId, token) {
         
         if (res.ok) {
             const file = await res.json();
-            const filesData = JSON.parse(decodeURIComponent(escape(atob(file.content))));
+            const filesData = JSON.parse(decodeBase64Utf8(file.content));
             
             // إزالة الملف من القائمة
             filesData.files = filesData.files.filter(f => f.id !== fileId);
@@ -32957,7 +32974,7 @@ async function updateGroupReportsRegistry(fileName, filePath, fileSize, title, d
         
         if (res.ok) {
             const file = await res.json();
-            filesData = JSON.parse(decodeURIComponent(escape(atob(file.content))));
+            filesData = JSON.parse(decodeBase64Utf8(file.content));
             currentSha = file.sha;
         } else {
             throw new Error('فشل في تحميل ملف files.json');
@@ -33237,7 +33254,7 @@ async function removeFromGroupReportsRegistry(reportId, token) {
         
         if (res.ok) {
             const file = await res.json();
-            const filesData = JSON.parse(decodeURIComponent(escape(atob(file.content))));
+            const filesData = JSON.parse(decodeBase64Utf8(file.content));
             
             // إزالة التقرير من القائمة
             filesData.files = filesData.files.filter(f => f.id !== reportId);

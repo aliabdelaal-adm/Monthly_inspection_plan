@@ -8423,9 +8423,9 @@ console.log('Smart distribution functions initialized');
             <div id="groupReportUploadStatus" style="margin-top: 15px; font-weight: bold;"></div>
         </div>
         
-        <!-- قائمة التقارير المتاحة -->
+        <!-- قائمة التقارير المتاحة - عرض مبسط مع فلتر بحث -->
         <div style="margin-bottom: 15px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
                 <h3 style="color: #234085; margin: 0; font-size: 1.2em;">
                     📋 التقارير المتاحة
                 </h3>
@@ -8434,9 +8434,59 @@ console.log('Smart distribution functions initialized');
                     🔄 تحديث
                 </button>
             </div>
+            
+            <!-- فلتر البحث والقائمة المنسدلة -->
+            <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 2px solid #667eea;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                    <span style="font-size: 1.5em;">🔍</span>
+                    <h4 style="margin: 0; color: #667eea;">البحث السريع في التقارير</h4>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                    <!-- بحث بالاسم -->
+                    <div>
+                        <label style="display: block; font-weight: 600; color: #2d3561; margin-bottom: 5px; font-size: 0.9em;">
+                            📝 البحث بالاسم:
+                        </label>
+                        <input type="text" id="reportSearchByName" placeholder="اكتب اسم التقرير..." 
+                               oninput="filterGroupReports()"
+                               style="width: 100%; padding: 10px; border: 2px solid #ced4da; border-radius: 8px; font-size: 1em;">
+                    </div>
+                    
+                    <!-- بحث بالتاريخ -->
+                    <div>
+                        <label style="display: block; font-weight: 600; color: #2d3561; margin-bottom: 5px; font-size: 0.9em;">
+                            📅 البحث بالتاريخ:
+                        </label>
+                        <input type="date" id="reportSearchByDate" 
+                               oninput="filterGroupReports()"
+                               style="width: 100%; padding: 10px; border: 2px solid #ced4da; border-radius: 8px; font-size: 1em;">
+                    </div>
+                </div>
+                
+                <!-- القائمة المنسدلة للتقارير -->
+                <div style="margin-top: 15px;">
+                    <label style="display: block; font-weight: 600; color: #2d3561; margin-bottom: 5px; font-size: 0.9em;">
+                        📂 اختر تقرير من القائمة:
+                    </label>
+                    <select id="reportDropdownSelector" 
+                            onchange="handleReportDropdownSelection()"
+                            style="width: 100%; padding: 12px; border: 2px solid #667eea; border-radius: 8px; font-size: 1em; background: white; cursor: pointer;">
+                        <option value="">-- اختر تقرير للعرض --</option>
+                    </select>
+                </div>
+                
+                <!-- أزرار مسح الفلتر -->
+                <div style="margin-top: 15px; text-align: center;">
+                    <button onclick="clearReportFilters()" 
+                            style="background: #6c757d; color: white; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
+                        🔄 مسح الفلتر
+                    </button>
+                </div>
+            </div>
         </div>
         
-        <div id="groupReportsList" style="min-height: 300px; padding: 20px; border: 2px solid #e0e0e0; border-radius: 12px; background: #f9f9f9;">
+        <div id="groupReportsList" style="min-height: 200px; padding: 20px; border: 2px solid #e0e0e0; border-radius: 12px; background: #f9f9f9;">
             <div style="text-align: center; color: #666; padding: 60px 0;">
                 <div style="font-size: 4em; margin-bottom: 20px;">📑</div>
                 <p style="font-size: 1.2em; margin: 0; font-weight: 600;">لا توجد تقارير متاحة حالياً</p>
@@ -32157,6 +32207,15 @@ async function loadGroupInspectionReports() {
             console.warn('Unable to load files.json, showing only local reports:', error);
         }
         
+        // Store reports globally for filtering
+        window.allGroupReportsData = {
+            localReports: allReports,
+            uploadedReports: groupReports
+        };
+        
+        // Populate the dropdown with reports (Arabic name + date)
+        populateReportDropdown(allReports, groupReports);
+        
         if (groupReports.length === 0 && allReports.length === 0) {
             listDiv.innerHTML = `
                 <div style="text-align: center; color: #666; padding: 60px 0;">
@@ -32323,6 +32382,161 @@ async function loadGroupInspectionReports() {
         statusDiv.textContent = '❌ فشل في تحميل التقارير';
         statusDiv.style.color = '#dc3545';
     }
+}
+
+// ===== وظائف فلتر وعرض التقارير المبسط =====
+
+// Populate dropdown with all reports (Arabic name + date)
+function populateReportDropdown(localReports, uploadedReports) {
+    const dropdown = document.getElementById('reportDropdownSelector');
+    if (!dropdown) return;
+    
+    dropdown.innerHTML = '<option value="">-- اختر تقرير للعرض --</option>';
+    
+    // Add local reports group
+    if (localReports && localReports.length > 0) {
+        const localGroup = document.createElement('optgroup');
+        localGroup.label = '📋 التقارير المحلية';
+        
+        localReports.forEach((report, index) => {
+            const option = document.createElement('option');
+            option.value = `local_${index}`;
+            const reportDate = report.date || (report.timestamp ? new Date(report.timestamp).toLocaleDateString('ar-EG') : 'تاريخ غير محدد');
+            const reportName = report.area || report.name || 'تقرير بدون اسم';
+            option.textContent = `📝 ${reportName} - ${reportDate}`;
+            option.dataset.reportType = 'local';
+            option.dataset.reportIndex = index;
+            localGroup.appendChild(option);
+        });
+        
+        dropdown.appendChild(localGroup);
+    }
+    
+    // Add uploaded reports group
+    if (uploadedReports && uploadedReports.length > 0) {
+        const uploadedGroup = document.createElement('optgroup');
+        uploadedGroup.label = '📤 التقارير المرفوعة';
+        
+        uploadedReports.forEach((report, index) => {
+            const option = document.createElement('option');
+            option.value = `uploaded_${index}`;
+            const reportDate = report.inspectionDate || report.uploadDate ? 
+                new Date(report.inspectionDate || report.uploadDate).toLocaleDateString('ar-EG') : 'تاريخ غير محدد';
+            const reportName = report.description || report.name || 'تقرير بدون اسم';
+            option.textContent = `📄 ${reportName} - ${reportDate}`;
+            option.dataset.reportType = 'uploaded';
+            option.dataset.reportIndex = index;
+            uploadedGroup.appendChild(option);
+        });
+        
+        dropdown.appendChild(uploadedGroup);
+    }
+}
+
+// Handle dropdown selection
+function handleReportDropdownSelection() {
+    const dropdown = document.getElementById('reportDropdownSelector');
+    if (!dropdown || !dropdown.value) return;
+    
+    const selectedOption = dropdown.options[dropdown.selectedIndex];
+    const reportType = selectedOption.dataset.reportType;
+    const reportIndex = parseInt(selectedOption.dataset.reportIndex);
+    
+    if (reportType === 'local') {
+        viewAllGroupReport(reportIndex);
+    } else if (reportType === 'uploaded') {
+        const reports = window.allGroupReportsData?.uploadedReports || [];
+        if (reports[reportIndex]) {
+            const report = reports[reportIndex];
+            viewGroupReport(report.path, report.name, report.type);
+        }
+    }
+    
+    // Reset dropdown after selection
+    dropdown.value = '';
+}
+
+// Filter reports based on search criteria
+function filterGroupReports() {
+    const searchName = document.getElementById('reportSearchByName')?.value?.toLowerCase() || '';
+    const searchDate = document.getElementById('reportSearchByDate')?.value || '';
+    
+    const listDiv = document.getElementById('groupReportsList');
+    if (!listDiv) return;
+    
+    const data = window.allGroupReportsData;
+    if (!data) return;
+    
+    const localReports = data.localReports || [];
+    const uploadedReports = data.uploadedReports || [];
+    
+    // Filter local reports
+    const filteredLocal = localReports.filter(report => {
+        const name = (report.area || report.name || '').toLowerCase();
+        const date = report.date || (report.timestamp ? report.timestamp.split('T')[0] : '');
+        
+        const matchesName = !searchName || name.includes(searchName);
+        const matchesDate = !searchDate || date.includes(searchDate);
+        
+        return matchesName && matchesDate;
+    });
+    
+    // Filter uploaded reports
+    const filteredUploaded = uploadedReports.filter(report => {
+        const name = (report.description || report.name || '').toLowerCase();
+        const date = report.inspectionDate || (report.uploadDate ? report.uploadDate.split('T')[0] : '');
+        
+        const matchesName = !searchName || name.includes(searchName);
+        const matchesDate = !searchDate || date.includes(searchDate);
+        
+        return matchesName && matchesDate;
+    });
+    
+    // Rebuild the dropdown with filtered results
+    populateReportDropdown(filteredLocal, filteredUploaded);
+    
+    // Update the reports list display
+    if (filteredLocal.length === 0 && filteredUploaded.length === 0) {
+        listDiv.innerHTML = `
+            <div style="text-align: center; color: #666; padding: 40px 0;">
+                <div style="font-size: 3em; margin-bottom: 15px;">🔍</div>
+                <p style="font-size: 1.1em; margin: 0; font-weight: 600;">لا توجد نتائج مطابقة</p>
+                <p style="font-size: 0.9em; margin-top: 10px; color: #999;">جرب تغيير معايير البحث أو مسح الفلتر</p>
+            </div>
+        `;
+    } else {
+        // Show compact summary
+        const totalFiltered = filteredLocal.length + filteredUploaded.length;
+        listDiv.innerHTML = `
+            <div style="text-align: center; padding: 30px;">
+                <div style="font-size: 2.5em; margin-bottom: 15px;">✅</div>
+                <p style="font-size: 1.2em; margin: 0; font-weight: 600; color: #28a745;">تم العثور على ${totalFiltered} تقرير</p>
+                <p style="font-size: 0.95em; margin-top: 10px; color: #666;">
+                    (${filteredLocal.length} تقرير محلي، ${filteredUploaded.length} تقرير مرفوع)
+                </p>
+                <p style="font-size: 0.9em; margin-top: 15px; color: #667eea;">
+                    👆 اختر تقرير من القائمة المنسدلة أعلاه للعرض
+                </p>
+            </div>
+        `;
+    }
+}
+
+// Clear report filters
+function clearReportFilters() {
+    const searchName = document.getElementById('reportSearchByName');
+    const searchDate = document.getElementById('reportSearchByDate');
+    
+    if (searchName) searchName.value = '';
+    if (searchDate) searchDate.value = '';
+    
+    // Reload reports
+    loadGroupInspectionReports();
+}
+
+// Refresh reports list
+function refreshGroupReportsList() {
+    loadGroupInspectionReports();
 }
 
 // View saved group inspection report

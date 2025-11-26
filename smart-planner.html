@@ -19413,6 +19413,103 @@
         </div>
     </div>
     
+    <!-- Comprehensive Report Edit Modal - تعديل شامل للتقارير -->
+    <div id="editReportModal" class="modal" style="display: none; z-index: 3500;">
+        <div class="modal-content" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: white; padding: 20px; border-radius: 15px 15px 0 0; margin: -30px -30px 20px -30px;">
+                <h2 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.3em;">✏️</span>
+                    <span>تعديل شامل لبيانات التقرير</span>
+                </h2>
+                <span class="modal-close" onclick="closeEditReportModal()" style="position: absolute; top: 15px; left: 15px; font-size: 1.8em; cursor: pointer; color: white;">&times;</span>
+            </div>
+            
+            <div style="background: #fff8e1; border: 2px solid #ffcc02; border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.5em;">💡</span>
+                    <div>
+                        <strong style="color: #f57c00;">نصيحة:</strong>
+                        <span style="color: #666;">يمكنك تعديل جميع بيانات التقرير من هنا بما في ذلك الاسم والوصف وتاريخ التفتيش والرافع ونوع التقرير</span>
+                    </div>
+                </div>
+            </div>
+            
+            <form id="editReportForm" onsubmit="saveReportEdits(event)">
+                <input type="hidden" id="editReportFileId">
+                
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label" style="display: block; font-weight: 600; color: #2d3561; margin-bottom: 8px;">
+                        📝 اسم الملف (بالعربي أو الإنجليزي)
+                    </label>
+                    <input type="text" id="editReportName" class="form-control" required 
+                           placeholder="مثال: تقرير التفتيش الجماعي - يناير 2025"
+                           style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em;">
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label" style="display: block; font-weight: 600; color: #2d3561; margin-bottom: 8px;">
+                        📄 الوصف (بالعربي)
+                    </label>
+                    <textarea id="editReportDescription" class="form-control" rows="3" 
+                              placeholder="وصف مفصل للتقرير باللغة العربية..."
+                              style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; resize: vertical;"></textarea>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label" style="display: block; font-weight: 600; color: #2d3561; margin-bottom: 8px;">
+                        📅 تاريخ التفتيش
+                    </label>
+                    <input type="date" id="editReportInspectionDate" class="form-control"
+                           style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em;">
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label" style="display: block; font-weight: 600; color: #2d3561; margin-bottom: 8px;">
+                        👤 اسم الرافع
+                    </label>
+                    <input type="text" id="editReportUploader" class="form-control" 
+                           placeholder="مثال: اسم الرافع"
+                           style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em;">
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label" style="display: block; font-weight: 600; color: #2d3561; margin-bottom: 8px;">
+                        📂 نوع التقرير
+                    </label>
+                    <select id="editReportCategory" class="form-control"
+                            style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; background: white;">
+                        <option value="group_inspection_reports">📋 تقرير تفتيش جماعي</option>
+                        <option value="shelter_visit_reports">🏘️ تقرير زيارة ملاجئ</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label" style="display: block; font-weight: 600; color: #2d3561; margin-bottom: 8px;">
+                        👁️ إظهار التقرير
+                    </label>
+                    <select id="editReportVisible" class="form-control"
+                            style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; background: white;">
+                        <option value="true">✅ مرئي للجميع</option>
+                        <option value="false">🔒 مخفي</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; gap: 15px; justify-content: center; margin-top: 25px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
+                    <button type="submit" class="btn btn-success" style="font-size: 1.1em; padding: 15px 30px; display: flex; align-items: center; gap: 8px;">
+                        <span>💾</span>
+                        <span>حفظ التعديلات</span>
+                    </button>
+                    <button type="button" onclick="closeEditReportModal()" class="btn btn-danger" style="font-size: 1.1em; padding: 15px 30px; display: flex; align-items: center; gap: 8px;">
+                        <span>✖️</span>
+                        <span>إلغاء</span>
+                    </button>
+                </div>
+            </form>
+            
+            <div id="editReportStatus" class="status-message" style="margin-top: 15px; display: none;"></div>
+        </div>
+    </div>
+    
     <!-- MediaPipe Hands Library -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
@@ -21522,7 +21619,7 @@
             }
         }
         
-        // Edit report metadata
+        // Edit report metadata - Enhanced comprehensive edit modal
         async function editReportFile(fileId) {
             try {
                 // Load files.json
@@ -21541,26 +21638,127 @@
                     throw new Error('لم يتم العثور على الملف');
                 }
                 
-                // Show edit dialog
-                const newTitle = prompt('أدخل عنوان جديد للتقرير:', file.name);
-                if (newTitle === null) return; // User cancelled
+                // Store filesData globally for save operation
+                window.currentEditFilesData = filesData;
                 
-                const newDescription = prompt('أدخل وصف جديد للتقرير:', file.description);
-                if (newDescription === null) return; // User cancelled
+                // Populate the edit modal with current file data
+                document.getElementById('editReportFileId').value = fileId;
+                document.getElementById('editReportName').value = file.name || '';
+                document.getElementById('editReportDescription').value = file.description || '';
+                document.getElementById('editReportUploader').value = file.uploader || '';
+                document.getElementById('editReportCategory').value = file.category || 'group_inspection_reports';
+                document.getElementById('editReportVisible').value = file.visible !== false ? 'true' : 'false';
                 
-                // Update file metadata
-                file.name = newTitle.trim() || file.name;
-                file.description = newDescription.trim() || file.description;
+                // Handle inspection date - extract from uploadDate or inspectionDate
+                const inspectionDate = file.inspectionDate || (file.uploadDate ? file.uploadDate.split('T')[0] : '');
+                document.getElementById('editReportInspectionDate').value = inspectionDate;
+                
+                // Show the edit modal
+                const modal = document.getElementById('editReportModal');
+                if (modal) {
+                    modal.style.display = 'flex';
+                    modal.style.alignItems = 'center';
+                    modal.style.justifyContent = 'center';
+                }
+                
+            } catch (error) {
+                console.error('Error loading file for edit:', error);
+                showFileManagerMessage('❌ حدث خطأ: ' + error.message, 'error');
+            }
+        }
+        
+        // Close edit report modal
+        function closeEditReportModal() {
+            const modal = document.getElementById('editReportModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+            // Clear stored data
+            window.currentEditFilesData = null;
+        }
+        
+        // Save report edits - comprehensive update
+        async function saveReportEdits(event) {
+            event.preventDefault();
+            
+            try {
+                const fileId = document.getElementById('editReportFileId').value;
+                const filesData = window.currentEditFilesData;
+                
+                if (!filesData) {
+                    throw new Error('لم يتم تحميل بيانات الملفات');
+                }
+                
+                const file = filesData.files.find(f => f.id === fileId);
+                if (!file) {
+                    throw new Error('لم يتم العثور على الملف');
+                }
+                
+                // Get all form values
+                const newName = document.getElementById('editReportName').value.trim();
+                const newDescription = document.getElementById('editReportDescription').value.trim();
+                const newInspectionDate = document.getElementById('editReportInspectionDate').value;
+                const newUploader = document.getElementById('editReportUploader').value.trim();
+                const newCategory = document.getElementById('editReportCategory').value;
+                const newVisible = document.getElementById('editReportVisible').value === 'true';
+                
+                // Validate required fields
+                if (!newName) {
+                    showEditReportStatus('⚠️ يرجى إدخال اسم الملف', 'error');
+                    return;
+                }
+                
+                // Update file metadata comprehensively
+                file.name = newName;
+                file.description = newDescription || file.description || 'تقرير تفتيش'; // Keep existing description or use default
+                file.uploader = newUploader || file.uploader; // Keep existing uploader if empty
+                file.category = newCategory;
+                file.visible = newVisible;
+                
+                // Add/update inspection date
+                if (newInspectionDate) {
+                    file.inspectionDate = newInspectionDate;
+                }
+                
+                // Update last modified timestamp
+                file.lastModified = new Date().toISOString();
+                
+                // Show saving status
+                showEditReportStatus('⏳ جاري حفظ التعديلات...', 'info');
                 
                 // Save updated files.json
                 await saveFilesJson(filesData);
                 
-                showFileManagerMessage('✅ تم تحديث بيانات التقرير بنجاح', 'success');
-                loadGroupReportFiles();
+                showEditReportStatus('✅ تم تحديث بيانات التقرير بنجاح!', 'success');
+                
+                // Close modal after short delay
+                setTimeout(() => {
+                    closeEditReportModal();
+                    // Refresh the reports list
+                    loadGroupReportFiles();
+                    showFileManagerMessage('✅ تم تحديث بيانات التقرير بنجاح', 'success');
+                }, 1000);
                 
             } catch (error) {
-                console.error('Error editing file:', error);
-                showFileManagerMessage('❌ حدث خطأ: ' + error.message, 'error');
+                console.error('Error saving report edits:', error);
+                showEditReportStatus('❌ حدث خطأ: ' + error.message, 'error');
+            }
+        }
+        
+        // Show status message in edit modal
+        function showEditReportStatus(message, type) {
+            const statusDiv = document.getElementById('editReportStatus');
+            if (!statusDiv) return;
+            
+            statusDiv.textContent = message;
+            statusDiv.style.display = 'block';
+            statusDiv.className = 'status-message show ' + type;
+            
+            // Auto-hide for success messages
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 3000);
             }
         }
         

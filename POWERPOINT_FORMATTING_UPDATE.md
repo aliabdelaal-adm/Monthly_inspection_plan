@@ -11,8 +11,8 @@ This update aligns all PowerPoint report generation with the design and formatti
 - Maintained presentation-level RTL setting: `pptx.rtlMode = true`
 
 ### 2. Files Updated
-- `index.html` - Shelter inspection reports PowerPoint generation (17 RTL updates)
-- `index13.html` - Group inspection reports PowerPoint generation (21 RTL updates)
+- `index.html` - Shelter inspection reports PowerPoint generation (18 RTL updates)
+- `index13.html` - Group inspection reports PowerPoint generation (22 RTL updates)
 
 ### 3. Formatting Specifications (Matching sea-world.pptx)
 

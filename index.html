@@ -32096,8 +32096,9 @@ function getArabicReportName(report) {
     if (report.description) {
         const arabicChars = report.description.match(/[\u0600-\u06FF]/g);
         if (arabicChars && arabicChars.length > 0) {
-            // إزالة الأحرف اللاتينية والاحتفاظ بالعربية فقط
-            return report.description.replace(/[a-zA-Z0-9_\-\.]+/g, '').trim() || report.description;
+            // إزالة الكلمات اللاتينية الكاملة والاحتفاظ بالعربية فقط
+            const cleanedText = report.description.replace(/\b[a-zA-Z0-9_\-\.]+\b/g, '').replace(/\s+/g, ' ').trim();
+            return cleanedText || report.description;
         }
     }
     
@@ -32105,27 +32106,29 @@ function getArabicReportName(report) {
     const filename = report.name || '';
     const nameWithoutExt = filename.replace(/\.[^/.]+$/, ''); // إزالة الامتداد
     
-    // قاموس الترجمة للأسماء الشائعة
-    const translations = {
-        'emirate-zoo': 'حديقة حيوان الإمارات',
-        'emirate_zoo': 'حديقة حيوان الإمارات',
-        'sea-world': 'عالم البحار',
-        'sea_world': 'عالم البحار',
-        'seaworld': 'عالم البحار',
-        'bird-market': 'سوق الطيور',
-        'bird_market': 'سوق الطيور',
-        'pet-shop': 'محل الحيوانات الأليفة',
-        'pet_shop': 'محل الحيوانات الأليفة',
-        'shelter': 'الإيواء',
-        'inspection': 'تقرير تفتيش',
-        'report': 'تقرير',
-        'group': 'جماعي'
-    };
+    // قاموس الترجمة للأسماء الشائعة - مرتبة من الأطول للأقصر لتجنب التطابقات الجزئية
+    const translations = [
+        { pattern: 'emirate-zoo', arabic: 'حديقة حيوان الإمارات' },
+        { pattern: 'emirate_zoo', arabic: 'حديقة حيوان الإمارات' },
+        { pattern: 'bird-market', arabic: 'سوق الطيور' },
+        { pattern: 'bird_market', arabic: 'سوق الطيور' },
+        { pattern: 'pet-shop', arabic: 'محل الحيوانات الأليفة' },
+        { pattern: 'pet_shop', arabic: 'محل الحيوانات الأليفة' },
+        { pattern: 'sea-world', arabic: 'عالم البحار' },
+        { pattern: 'sea_world', arabic: 'عالم البحار' },
+        { pattern: 'seaworld', arabic: 'عالم البحار' },
+        { pattern: 'shelter', arabic: 'الإيواء' }
+    ];
     
-    // البحث عن ترجمة مطابقة
+    // البحث عن ترجمة مطابقة - استخدام المطابقة الدقيقة أو بداية/نهاية الاسم
     const lowerName = nameWithoutExt.toLowerCase();
-    for (const [english, arabic] of Object.entries(translations)) {
-        if (lowerName.includes(english)) {
+    for (const { pattern, arabic } of translations) {
+        // تحقق من المطابقة الدقيقة أو أن النمط يشكل كلمة كاملة في الاسم
+        if (lowerName === pattern || 
+            lowerName.startsWith(pattern + '-') || 
+            lowerName.startsWith(pattern + '_') ||
+            lowerName.endsWith('-' + pattern) || 
+            lowerName.endsWith('_' + pattern)) {
             return arabic;
         }
     }
@@ -32151,7 +32154,11 @@ function getFileTypeArabic(type) {
         'json': 'ملف بيانات',
         'txt': 'ملف نصي'
     };
-    return types[type?.toLowerCase()] || 'ملف';
+    // التحقق من النوع قبل التحويل
+    if (typeof type !== 'string') {
+        return 'ملف';
+    }
+    return types[type.toLowerCase()] || 'ملف';
 }
 
 async function loadGroupInspectionReports() {

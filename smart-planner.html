@@ -6166,6 +6166,11 @@
                 loadInspectionsView();
             } else if (tabName === 'stats') {
                 populateStatsInspector();
+            } else if (tabName === 'fileManager') {
+                // Load group report files when file manager tab is opened
+                if (typeof loadGroupReportFiles === 'function') {
+                    loadGroupReportFiles();
+                }
             } else if (tabName === 'calendar') {
                 // Set default month to current month
                 const now = new Date();
@@ -21172,11 +21177,16 @@
                 const base64Content = await readFileAsBase64(file);
                 
                 // Clean filename - preserve Arabic and alphanumeric, replace problematic characters
-                const cleanFileName = file.name
+                let cleanFileName = file.name
                     .replace(/[<>:"/\\|?*\x00-\x1f]/g, '_')  // Replace invalid file system characters
                     .replace(/\s+/g, '_')                     // Replace spaces with underscores
                     .replace(/_{2,}/g, '_')                   // Replace multiple underscores with single
                     .replace(/^_+|_+$/g, '');                 // Remove leading/trailing underscores
+                
+                // Ensure filename is not empty after sanitization
+                if (!cleanFileName || cleanFileName.trim().length === 0) {
+                    cleanFileName = 'report_' + Date.now() + '.' + (file.name.split('.').pop() || 'file');
+                }
                 const filePath = `files/group_inspection_reports/${cleanFileName}`;
                 
                 showFileManagerMessage('⏳ جاري رفع الملف إلى GitHub...', 'info', 'fileManagerUploadStatus');
@@ -21472,6 +21482,9 @@
                             throw new Error('Invalid data URL format');
                         }
                         const base64 = parts[1];
+                        if (!base64 || base64.trim().length === 0) {
+                            throw new Error('Empty base64 data');
+                        }
                         resolve(base64);
                     } catch (error) {
                         reject(error);
@@ -21541,16 +21554,8 @@
             }
         }
         
-        // Load files when file manager tab is opened
-        document.addEventListener('DOMContentLoaded', function() {
-            const originalSwitchTab = window.switchTab;
-            window.switchTab = function(tabName, event) {
-                originalSwitchTab(tabName, event);
-                if (tabName === 'fileManager') {
-                    loadGroupReportFiles();
-                }
-            };
-        });
+        // Note: File loading is now integrated directly into switchTab function
+        // No need for wrapper function - see switchTab() for fileManager case
         
         // ========================================
         // End of File Manager

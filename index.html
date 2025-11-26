@@ -32090,6 +32090,70 @@ function printMonthlyInspectionPlan() {
     }
 }
 
+// دالة مساعدة لاستخراج الاسم العربي من اسم الملف أو الوصف
+function getArabicReportName(report) {
+    // أولاً: إذا كان الوصف موجوداً ويحتوي على أحرف عربية، استخدمه
+    if (report.description) {
+        const arabicChars = report.description.match(/[\u0600-\u06FF]/g);
+        if (arabicChars && arabicChars.length > 0) {
+            // إزالة الأحرف اللاتينية والاحتفاظ بالعربية فقط
+            return report.description.replace(/[a-zA-Z0-9_\-\.]+/g, '').trim() || report.description;
+        }
+    }
+    
+    // ثانياً: محاولة تحويل اسم الملف اللاتيني إلى عربي
+    const filename = report.name || '';
+    const nameWithoutExt = filename.replace(/\.[^/.]+$/, ''); // إزالة الامتداد
+    
+    // قاموس الترجمة للأسماء الشائعة
+    const translations = {
+        'emirate-zoo': 'حديقة حيوان الإمارات',
+        'emirate_zoo': 'حديقة حيوان الإمارات',
+        'sea-world': 'عالم البحار',
+        'sea_world': 'عالم البحار',
+        'seaworld': 'عالم البحار',
+        'bird-market': 'سوق الطيور',
+        'bird_market': 'سوق الطيور',
+        'pet-shop': 'محل الحيوانات الأليفة',
+        'pet_shop': 'محل الحيوانات الأليفة',
+        'shelter': 'الإيواء',
+        'inspection': 'تقرير تفتيش',
+        'report': 'تقرير',
+        'group': 'جماعي'
+    };
+    
+    // البحث عن ترجمة مطابقة
+    const lowerName = nameWithoutExt.toLowerCase();
+    for (const [english, arabic] of Object.entries(translations)) {
+        if (lowerName.includes(english)) {
+            return arabic;
+        }
+    }
+    
+    // ثالثاً: إذا لم يتم العثور على ترجمة، استخدم الوصف أو اسم عام
+    if (report.description) {
+        return report.description;
+    }
+    
+    return 'تقرير تفتيش جماعي';
+}
+
+// دالة مساعدة للحصول على نوع الملف بالعربية
+function getFileTypeArabic(type) {
+    const types = {
+        'pdf': 'ملف PDF',
+        'xlsx': 'ملف إكسل',
+        'xls': 'ملف إكسل',
+        'docx': 'ملف وورد',
+        'doc': 'ملف وورد',
+        'pptx': 'عرض تقديمي',
+        'ppt': 'عرض تقديمي',
+        'json': 'ملف بيانات',
+        'txt': 'ملف نصي'
+    };
+    return types[type?.toLowerCase()] || 'ملف';
+}
+
 async function loadGroupInspectionReports() {
     const listDiv = document.getElementById('groupReportsList');
     const statusDiv = document.getElementById('groupReportsLoadingStatus');
@@ -32191,16 +32255,15 @@ async function loadGroupInspectionReports() {
                 </div>
             `;
         } else {
-            let reportsHTML = '<div style="display: grid; gap: 15px;">';
+            // عرض التقارير بتصميم ذكي واحترافي وحجم مدمج
+            let reportsHTML = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;">';
             
             // Display all reports (GitHub + localStorage)
             allReports.forEach((report, index) => {
                 const reportDate = new Date(report.timestamp).toLocaleDateString('ar-EG', {
                     year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
+                    month: 'short',
+                    day: 'numeric'
                 });
                 
                 // Handle different data structures (checklist vs items)
@@ -32208,113 +32271,92 @@ async function loadGroupInspectionReports() {
                 const fulfilledCount = items.filter(item => item.value === 'مستوفى').length;
                 const unfulfilledCount = items.filter(item => item.value === 'غير مستوفى').length;
                 const totalItems = items.length;
+                const complianceRate = totalItems > 0 ? Math.round((fulfilledCount / totalItems) * 100) : 0;
                 
                 const isGitHubReport = report._githubFile ? true : false;
-                const sourceBadge = isGitHubReport ? 
-                    '<span style="background: #28a745; color: white; padding: 3px 10px; border-radius: 5px; font-size: 0.85em;">✅ مخزن دائماً</span>' : 
-                    '<span style="background: #ffc107; color: #333; padding: 3px 10px; border-radius: 5px; font-size: 0.85em;">⚠️ محلي</span>';
                 
                 reportsHTML += `
-                    <div style="background: linear-gradient(135deg, #fff5e6 0%, #ffe8cc 100%); padding: 20px; border-radius: 10px; border: 2px solid #ff9800; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(255,152,0,0.2);" 
-                         onmouseover="this.style.borderColor='#f57c00'; this.style.boxShadow='0 4px 15px rgba(255,152,0,0.3)';" 
-                         onmouseout="this.style.borderColor='#ff9800'; this.style.boxShadow='0 2px 8px rgba(255,152,0,0.2)';">
-                        <div style="display: flex; justify-content: space-between; align-items: start; gap: 15px; flex-wrap: wrap;">
-                            <div style="flex: 1; min-width: 250px;">
-                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                                    <span style="font-size: 2em;">📝</span>
-                                    <h4 style="margin: 0; color: #e65100; font-size: 1.15em;">تقرير التفتيش - ${report.area}</h4>
-                                </div>
-                                <div style="color: #666; font-size: 0.95em; margin-bottom: 8px;">
-                                    <strong>المفتشين:</strong> ${report.inspectors.join('، ')}
-                                </div>
-                                <div style="color: #666; font-size: 0.95em; margin-bottom: 8px;">
-                                    <strong>التاريخ:</strong> ${report.date} - ${report.shift}
-                                </div>
-                                <div style="color: #666; font-size: 0.95em; margin-bottom: 8px;">
-                                    <strong>المحلات:</strong> ${report.shops.join('، ')}
-                                </div>
-                                <div style="color: #666; font-size: 0.9em; display: flex; gap: 15px; flex-wrap: wrap; margin-top: 10px;">
-                                    <span style="background: #4caf50; color: white; padding: 4px 12px; border-radius: 6px;">✅ مستوفى: ${fulfilledCount}</span>
-                                    <span style="background: #f44336; color: white; padding: 4px 12px; border-radius: 6px;">❌ غير مستوفى: ${unfulfilledCount}</span>
-                                    <span style="background: #667eea; color: white; padding: 4px 12px; border-radius: 6px;">📊 الإجمالي: ${totalItems}</span>
-                                </div>
-                                <div style="color: #999; font-size: 0.85em; margin-top: 8px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                                    <span>📅 ${reportDate}</span>
-                                    ${sourceBadge}
-                                </div>
+                    <div style="background: linear-gradient(135deg, #fff9f0 0%, #fff3e0 100%); padding: 14px; border-radius: 10px; border-right: 4px solid #ff9800; box-shadow: 0 2px 6px rgba(255,152,0,0.15); transition: all 0.3s ease; cursor: pointer;" 
+                         onclick="viewAllGroupReport(${index})"
+                         onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 15px rgba(255,152,0,0.25)';" 
+                         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 6px rgba(255,152,0,0.15)';">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <span style="font-size: 1.6em;">📝</span>
+                            <div style="flex: 1;">
+                                <h4 style="margin: 0; color: #e65100; font-size: 1em; font-weight: 700; line-height: 1.3;">تقرير تفتيش ${report.area}</h4>
+                                <span style="font-size: 0.75em; color: #888;">📅 ${reportDate}</span>
                             </div>
-                            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                                <button onclick="viewAllGroupReport(${index})" 
-                                    style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(255,152,0,0.3); transition: all 0.3s ease;"
-                                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(255,152,0,0.4)';"
-                                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(255,152,0,0.3)';">
-                                    👁️ عرض التقرير
-                                </button>
-                                <button onclick="deleteAllGroupReport(${index})" 
-                                    style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(220,53,69,0.3); transition: all 0.3s ease;"
-                                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(220,53,69,0.4)';"
-                                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(220,53,69,0.3)';">
-                                    🗑️ حذف
-                                </button>
+                            <div style="background: ${complianceRate >= 70 ? 'linear-gradient(135deg, #4caf50, #388e3c)' : complianceRate >= 50 ? 'linear-gradient(135deg, #ff9800, #f57c00)' : 'linear-gradient(135deg, #f44336, #d32f2f)'}; color: white; padding: 4px 8px; border-radius: 6px; font-size: 0.85em; font-weight: bold;">
+                                ${complianceRate}%
                             </div>
+                        </div>
+                        <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;">
+                            <span style="background: #e8f5e9; color: #2e7d32; padding: 2px 8px; border-radius: 4px; font-size: 0.75em;">✅ ${fulfilledCount}</span>
+                            <span style="background: #ffebee; color: #c62828; padding: 2px 8px; border-radius: 4px; font-size: 0.75em;">❌ ${unfulfilledCount}</span>
+                            <span style="background: #e3f2fd; color: #1565c0; padding: 2px 8px; border-radius: 4px; font-size: 0.75em;">📊 ${totalItems}</span>
+                            ${isGitHubReport ? '<span style="background: #e8f5e9; color: #2e7d32; padding: 2px 8px; border-radius: 4px; font-size: 0.7em;">☁️ محفوظ</span>' : ''}
+                        </div>
+                        <div style="font-size: 0.8em; color: #666; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">👤 ${report.inspectors?.slice(0,2).join('، ') || 'غير محدد'}${report.inspectors?.length > 2 ? '...' : ''}</span>
+                            <button onclick="event.stopPropagation(); deleteAllGroupReport(${index})" 
+                                style="background: #ffebee; color: #c62828; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75em; font-weight: 500;">
+                                🗑️
+                            </button>
                         </div>
                     </div>
                 `;
             });
             
+            // عرض التقارير المرفوعة من files.json بتصميم مدمج واحترافي
             groupReports.forEach(report => {
                 const uploadDate = new Date(report.uploadDate).toLocaleDateString('ar-EG', {
                     year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
+                    month: 'short',
+                    day: 'numeric'
                 });
                 
                 const fileIcon = getFileIcon(report.type);
-                const fileSizeMB = (report.size / (1024 * 1024)).toFixed(2);
+                const fileSizeKB = Math.round(report.size / 1024);
+                const fileSizeDisplay = fileSizeKB > 1024 ? `${(fileSizeKB / 1024).toFixed(1)} MB` : `${fileSizeKB} KB`;
+                const arabicName = getArabicReportName(report);
+                const fileTypeArabic = getFileTypeArabic(report.type);
                 
                 reportsHTML += `
-                    <div style="background: white; padding: 20px; border-radius: 10px; border: 2px solid #e0e0e0; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.05);" 
-                         onmouseover="this.style.borderColor='#667eea'; this.style.boxShadow='0 4px 15px rgba(102,126,234,0.2)';" 
-                         onmouseout="this.style.borderColor='#e0e0e0'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.05)';">
-                        <div style="display: flex; justify-content: space-between; align-items: start; gap: 15px; flex-wrap: wrap;">
-                            <div style="flex: 1; min-width: 250px;">
-                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                                    <span style="font-size: 2em;">${fileIcon}</span>
-                                    <h4 style="margin: 0; color: #234085; font-size: 1.15em;">${report.description || report.name}</h4>
-                                </div>
-                                <div style="color: #666; font-size: 0.95em; margin-bottom: 8px;">
-                                    <strong>اسم الملف:</strong> ${report.name}
-                                </div>
-                                <div style="color: #666; font-size: 0.9em; display: flex; gap: 15px; flex-wrap: wrap;">
-                                    <span>📅 ${uploadDate}</span>
-                                    <span>📊 ${fileSizeMB} MB</span>
-                                    <span>👤 ${report.uploader}</span>
-                                </div>
+                    <div style="background: linear-gradient(135deg, #f8f9ff 0%, #eef1ff 100%); padding: 14px; border-radius: 10px; border-right: 4px solid #667eea; box-shadow: 0 2px 6px rgba(102,126,234,0.15); transition: all 0.3s ease;" 
+                         onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 15px rgba(102,126,234,0.25)';" 
+                         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 6px rgba(102,126,234,0.15)';">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <span style="font-size: 1.6em;">${fileIcon}</span>
+                            <div style="flex: 1; min-width: 0;">
+                                <h4 style="margin: 0; color: #3949ab; font-size: 1em; font-weight: 700; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${arabicName}">${arabicName}</h4>
+                                <span style="font-size: 0.75em; color: #888;">📅 ${uploadDate}</span>
                             </div>
-                            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                                <button onclick="viewGroupReport('${report.path}', '${report.name}', '${report.type}')" 
-                                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(102,126,234,0.3); transition: all 0.3s ease;"
-                                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(102,126,234,0.4)';"
-                                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(102,126,234,0.3)';">
-                                    👁️ عرض
+                        </div>
+                        <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px;">
+                            <span style="background: #e8eaf6; color: #3949ab; padding: 2px 8px; border-radius: 4px; font-size: 0.75em;">📁 ${fileTypeArabic}</span>
+                            <span style="background: #e8eaf6; color: #3949ab; padding: 2px 8px; border-radius: 4px; font-size: 0.75em;">📊 ${fileSizeDisplay}</span>
+                        </div>
+                        <div style="display: flex; gap: 6px; justify-content: flex-end;">
+                            <button onclick="viewGroupReport('${report.path}', '${report.name}', '${report.type}')" 
+                                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em; font-weight: 600; transition: all 0.2s ease;"
+                                onmouseover="this.style.transform='scale(1.05)';"
+                                onmouseout="this.style.transform='scale(1)';">
+                                👁️ عرض
+                            </button>
+                            <button onclick="downloadGroupReport('${report.path}', '${report.name}')" 
+                                style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em; font-weight: 600; transition: all 0.2s ease;"
+                                onmouseover="this.style.transform='scale(1.05)';"
+                                onmouseout="this.style.transform='scale(1)';">
+                                📥 تحميل
+                            </button>
+                            ${(isDev || window.isDev) ? `
+                                <button onclick="deleteGroupReport('${report.id}', '${report.name}', '${report.path}')" 
+                                    style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em; font-weight: 600; transition: all 0.2s ease;"
+                                    onmouseover="this.style.transform='scale(1.05)';"
+                                    onmouseout="this.style.transform='scale(1)';">
+                                    🗑️
                                 </button>
-                                <button onclick="downloadGroupReport('${report.path}', '${report.name}')" 
-                                    style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(40,167,69,0.3); transition: all 0.3s ease;"
-                                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(40,167,69,0.4)';"
-                                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(40,167,69,0.3)';">
-                                    📥 تحميل
-                                </button>
-                                ${(isDev || window.isDev) ? `
-                                    <button onclick="deleteGroupReport('${report.id}', '${report.name}', '${report.path}')" 
-                                        style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(220,53,69,0.3); transition: all 0.3s ease;"
-                                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(220,53,69,0.4)';"
-                                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(220,53,69,0.3)';">
-                                        🗑️ حذف
-                                    </button>
-                                ` : ''}
-                            </div>
+                            ` : ''}
                         </div>
                     </div>
                 `;
@@ -32324,8 +32366,8 @@ async function loadGroupInspectionReports() {
             listDiv.innerHTML = reportsHTML;
         }
         
-        const totalReports = groupReports.length + savedReports.length;
-        statusDiv.textContent = `✅ تم تحميل ${totalReports} تقرير بنجاح (${savedReports.length} تقرير محلي، ${groupReports.length} تقرير مرفوع)`;
+        const totalReports = groupReports.length + allReports.length;
+        statusDiv.textContent = `✅ تم تحميل ${totalReports} تقرير`;
         statusDiv.style.color = '#28a745';
         
         setTimeout(() => {

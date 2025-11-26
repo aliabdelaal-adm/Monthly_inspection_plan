@@ -8363,6 +8363,28 @@ console.log('Smart distribution functions initialized');
             <p style="color: #666; font-size: 1.05em;">عرض وتحميل تقارير التفتيش الجماعي المحملة من قبل المطور</p>
         </div>
         
+        <!-- زر إدارة التقارير الذكي - للمطور فقط -->
+        <div id="developerSmartFileManagerSection" style="display: none; margin-bottom: 25px; padding: 20px; background: linear-gradient(135deg, #ff6b6b 0%, #c92a2a 100%); border: 3px solid #ff6b6b; border-radius: 12px; box-shadow: 0 6px 20px rgba(255, 107, 107, 0.3);">
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                <span style="font-size: 2.5em;">📂</span>
+                <div>
+                    <h3 style="color: white; margin: 0; font-size: 1.5em; font-weight: bold;">إدارة ملفات التقارير الذكية</h3>
+                    <p style="color: rgba(255,255,255,0.9); margin: 5px 0 0 0; font-size: 1em;">لوحة التحكم الكاملة للمطور فقط</p>
+                </div>
+            </div>
+            <p style="color: white; margin-bottom: 20px; font-size: 1em; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">
+                <strong>⚠️ تنبيه:</strong> هذه اللوحة مخصصة للمطورين فقط وتوفر إمكانية رفع، تعديل، وحذف تقارير التفتيش الجماعي مباشرة في مستودع GitHub
+            </p>
+            <button onclick="openSmartFileManager()" 
+                style="background: white; color: #c92a2a; border: none; padding: 15px 30px; border-radius: 10px; cursor: pointer; font-size: 1.1em; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: all 0.3s ease; display: flex; align-items: center; gap: 10px; width: fit-content; margin: 0 auto;">
+                <span style="font-size: 1.3em;">🚀</span>
+                <span>فتح لوحة إدارة التقارير الذكية</span>
+            </button>
+            <small style="display: block; text-align: center; color: rgba(255,255,255,0.8); margin-top: 15px; font-size: 0.9em;">
+                سيتم فتح أداة التخطيط الذكية مع لوحة إدارة الملفات
+            </small>
+        </div>
+        
         <!-- قسم رفع التقارير - للمطور فقط -->
         <div id="developerGroupReportUploadSection" style="display: none; margin-bottom: 25px; padding: 20px; background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%); border: 2px solid #667eea; border-radius: 12px; box-shadow: 0 4px 15px rgba(102,126,234,0.15);">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
@@ -29836,6 +29858,16 @@ function showGroupInspectionReportsModal() {
     if (modal) {
         modal.style.display = 'flex';
         
+        // إظهار زر إدارة التقارير الذكي للمطور فقط
+        const smartFileManagerSection = document.getElementById('developerSmartFileManagerSection');
+        if (smartFileManagerSection) {
+            if (isDev || window.isDev) {
+                smartFileManagerSection.style.display = 'block';
+            } else {
+                smartFileManagerSection.style.display = 'none';
+            }
+        }
+        
         // إظهار قسم الرفع للمطور فقط
         const uploadSection = document.getElementById('developerGroupReportUploadSection');
         if (uploadSection) {
@@ -29856,6 +29888,15 @@ function closeGroupInspectionReportsModal() {
     if (modal) {
         modal.style.display = 'none';
     }
+}
+
+// فتح لوحة إدارة التقارير الذكية في smart-planner.html
+function openSmartFileManager() {
+    // حفظ علامة للعودة إلى إدارة الملفات
+    sessionStorage.setItem('openFileManager', 'true');
+    
+    // فتح smart-planner.html
+    window.location.href = 'smart-planner.html';
 }
 
 // New function: Show Shelter Visit Report Modal

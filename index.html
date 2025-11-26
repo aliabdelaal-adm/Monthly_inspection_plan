@@ -32690,43 +32690,67 @@ async function uploadGroupInspectionReport() {
         }
         
         if (!token) {
-            statusDiv.textContent = '❌ خطأ: لا يوجد توكن متاح. يرجى تسجيل الخروج ثم تسجيل الدخول مرة أخرى';
+            statusDiv.innerHTML = '❌ خطأ: لا يوجد توكن متاح.<br><br><button onclick="showTokenPopup()" style="background: #007bff; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">🔑 إدخال توكن GitHub</button>';
             statusDiv.style.color = '#dc3545';
             uploadBtn.disabled = false;
             return;
         }
         
-        // التحقق من صلاحية التوكن أولاً
+        // التحقق من صلاحية التوكن أولاً مع إعادة المحاولة
         const repo = 'aliabdelaal-adm/Monthly_inspection_plan';
-        try {
-            const testRes = await fetch(`https://api.github.com/repos/${repo}`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/vnd.github.v3+json'
-                },
-                mode: 'cors',
-                credentials: 'omit'
-            });
-            
-            if (!testRes.ok) {
-                if (testRes.status === 401 || testRes.status === 403) {
-                    statusDiv.textContent = '❌ التوكن غير صالح أو منتهي الصلاحية. يرجى تسجيل الخروج وتسجيل الدخول مرة أخرى';
+        let tokenValid = false;
+        let lastError = null;
+        const maxRetries = 3;
+        
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                if (attempt > 1) {
+                    statusDiv.textContent = `⏳ إعادة المحاولة (${attempt}/${maxRetries})...`;
+                    await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+                }
+                
+                const testRes = await fetch(`https://api.github.com/repos/${repo}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (testRes.ok) {
+                    tokenValid = true;
+                    console.log('✅ Token validation successful');
+                    break;
+                } else if (testRes.status === 401 || testRes.status === 403) {
+                    // التوكن غير صالح - لا داعي لإعادة المحاولة
+                    statusDiv.innerHTML = '❌ التوكن غير صالح أو منتهي الصلاحية.<br><br><button onclick="showTokenPopup()" style="background: #007bff; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">🔑 تحديث التوكن</button>';
                     statusDiv.style.color = '#dc3545';
                     uploadBtn.disabled = false;
                     localStorage.removeItem('devToken');
                     localStorage.removeItem('githubToken');
+                    console.error('Token invalid or expired:', testRes.status);
                     return;
                 } else {
-                    throw new Error(`فشل في التحقق من التوكن: ${testRes.status}`);
+                    lastError = new Error(`HTTP ${testRes.status}`);
+                    console.warn(`Token validation attempt ${attempt} failed:`, testRes.status);
                 }
+            } catch (fetchError) {
+                lastError = fetchError;
+                console.warn(`Token validation attempt ${attempt} error:`, fetchError.message);
             }
-        } catch (testError) {
-            statusDiv.textContent = '❌ خطأ في الاتصال بخادم GitHub. يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى';
+        }
+        
+        if (!tokenValid) {
+            // فشلت جميع المحاولات
+            const errorMessage = lastError?.message || 'خطأ غير معروف';
+            if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError') || errorMessage.includes('fetch')) {
+                statusDiv.innerHTML = '❌ فشل الاتصال بخادم GitHub.<br><br>يرجى التحقق من:<br>1. اتصالك بالإنترنت<br>2. أن GitHub متاح<br><br><button onclick="uploadGroupInspectionReport()" style="background: #28a745; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-left: 10px;">🔄 إعادة المحاولة</button>';
+            } else {
+                statusDiv.innerHTML = `❌ خطأ في الاتصال: ${errorMessage}<br><br><button onclick="showTokenPopup()" style="background: #007bff; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">🔑 تحديث التوكن</button> <button onclick="uploadGroupInspectionReport()" style="background: #28a745; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-left: 10px;">🔄 إعادة المحاولة</button>`;
+            }
             statusDiv.style.color = '#dc3545';
             uploadBtn.disabled = false;
-            console.error('Token validation error:', testError);
+            console.error('All token validation attempts failed:', lastError);
             return;
         }
         
@@ -32752,9 +32776,7 @@ async function uploadGroupInspectionReport() {
                         headers: {
                             'Authorization': `Bearer ${token}`,
                             'Accept': 'application/vnd.github.v3+json'
-                        },
-                        mode: 'cors',
-                        credentials: 'omit'
+                        }
                     });
                     
                     if (checkRes.ok) {
@@ -32789,9 +32811,7 @@ async function uploadGroupInspectionReport() {
                         'Content-Type': 'application/json',
                         'Accept': 'application/vnd.github.v3+json'
                     },
-                    body: JSON.stringify(uploadData),
-                    mode: 'cors',
-                    credentials: 'omit'
+                    body: JSON.stringify(uploadData)
                 });
                 
                 if (uploadRes.status === 201 || uploadRes.status === 200) {
@@ -32818,20 +32838,28 @@ async function uploadGroupInspectionReport() {
                 } else {
                     const err = await uploadRes.json().catch(() => ({ message: `HTTP ${uploadRes.status}` }));
                     let errorMsg = '❌ خطأ في رفع التقرير: ';
+                    let showTokenButton = false;
                     
                     if (uploadRes.status === 401 || uploadRes.status === 403) {
-                        errorMsg += 'التوكن غير صالح أو منتهي الصلاحية. يرجى تسجيل الخروج وتسجيل الدخول مرة أخرى';
+                        errorMsg += 'التوكن غير صالح أو منتهي الصلاحية.';
+                        showTokenButton = true;
+                        localStorage.removeItem('devToken');
+                        localStorage.removeItem('githubToken');
                     } else if (uploadRes.status === 404) {
-                        errorMsg += 'المسار غير موجود في المستودع';
+                        errorMsg += 'المسار غير موجود في المستودع.';
                     } else if (uploadRes.status === 409) {
-                        errorMsg += 'تعارض في الملف. حاول مرة أخرى';
+                        errorMsg += 'تعارض في الملف. حاول مرة أخرى.';
                     } else if (uploadRes.status === 422) {
-                        errorMsg += err.message || 'البيانات غير صالحة. تحقق من الملف والعنوان';
+                        errorMsg += err.message || 'البيانات غير صالحة. تحقق من الملف والعنوان.';
                     } else {
                         errorMsg += err.message || `كود الخطأ: ${uploadRes.status}`;
                     }
                     
-                    statusDiv.textContent = errorMsg;
+                    if (showTokenButton) {
+                        statusDiv.innerHTML = `${errorMsg}<br><br><button onclick="showTokenPopup()" style="background: #007bff; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">🔑 تحديث التوكن</button>`;
+                    } else {
+                        statusDiv.innerHTML = `${errorMsg}<br><br><button onclick="uploadGroupInspectionReport()" style="background: #28a745; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">🔄 إعادة المحاولة</button>`;
+                    }
                     statusDiv.style.color = '#dc3545';
                     console.error('Upload error:', err);
                 }
@@ -32839,14 +32867,13 @@ async function uploadGroupInspectionReport() {
                 let errorMsg = '❌ خطأ في رفع التقرير: ';
                 
                 if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.message.includes('fetch')) {
-                    errorMsg += 'خطأ في الاتصال بخادم GitHub. يرجى التحقق من:\n1. اتصالك بالإنترنت\n2. أن GitHub متاح\n3. المحاولة مرة أخرى بعد قليل';
+                    statusDiv.innerHTML = `${errorMsg}فشل الاتصال بخادم GitHub.<br><br>يرجى التحقق من اتصالك بالإنترنت.<br><br><button onclick="uploadGroupInspectionReport()" style="background: #28a745; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">🔄 إعادة المحاولة</button>`;
                 } else if (error.message.includes('CORS')) {
-                    errorMsg += 'خطأ في إعدادات الأمان. يرجى المحاولة مرة أخرى';
+                    statusDiv.innerHTML = `${errorMsg}خطأ في إعدادات الأمان.<br><br><button onclick="uploadGroupInspectionReport()" style="background: #28a745; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">🔄 إعادة المحاولة</button>`;
                 } else {
-                    errorMsg += error.message;
+                    statusDiv.innerHTML = `${errorMsg}${error.message}<br><br><button onclick="uploadGroupInspectionReport()" style="background: #28a745; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">🔄 إعادة المحاولة</button>`;
                 }
                 
-                statusDiv.textContent = errorMsg;
                 statusDiv.style.color = '#dc3545';
                 console.error('Upload error:', error);
             } finally {
@@ -32855,7 +32882,7 @@ async function uploadGroupInspectionReport() {
         };
         
         reader.onerror = function() {
-            statusDiv.textContent = '❌ خطأ في قراءة الملف. حاول مرة أخرى';
+            statusDiv.innerHTML = '❌ خطأ في قراءة الملف.<br><br><button onclick="uploadGroupInspectionReport()" style="background: #28a745; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">🔄 إعادة المحاولة</button>';
             statusDiv.style.color = '#dc3545';
             uploadBtn.disabled = false;
         };
@@ -32863,7 +32890,7 @@ async function uploadGroupInspectionReport() {
         reader.readAsDataURL(file);
         
     } catch (error) {
-        statusDiv.textContent = '❌ خطأ غير متوقع: ' + error.message;
+        statusDiv.innerHTML = `❌ خطأ غير متوقع: ${error.message}<br><br><button onclick="uploadGroupInspectionReport()" style="background: #28a745; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">🔄 إعادة المحاولة</button>`;
         statusDiv.style.color = '#dc3545';
         uploadBtn.disabled = false;
         console.error('Unexpected error:', error);
@@ -32878,11 +32905,8 @@ async function updateGroupReportsRegistry(fileName, filePath, fileSize, title, d
         const res = await fetch(`https://api.github.com/repos/${repo}/contents/files.json?t=${Date.now()}`, {
             headers: {
                 'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
                 'Accept': 'application/vnd.github.v3+json'
-            },
-            mode: 'cors',
-            credentials: 'omit'
+            }
         });
         
         let filesData = { files: [], categories: [], lastUpdate: new Date().toISOString() };
@@ -32950,9 +32974,7 @@ async function updateGroupReportsRegistry(fileName, filePath, fileSize, title, d
                 content: content,
                 sha: currentSha,
                 branch: 'main'
-            }),
-            mode: 'cors',
-            credentials: 'omit'
+            })
         });
         
         if (!updateRes.ok) {

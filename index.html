@@ -33791,8 +33791,14 @@ async function addToShelterReportsRegistry(report, token) {
 // عرض تقرير زيارة ملجأ مرفوع
 async function viewShelterUploadedReport(filePath, fileName, fileType) {
     try {
+        // Path validation to prevent traversal attacks
+        if (!filePath || filePath.includes('..') || filePath.startsWith('/') || filePath.includes('://')) {
+            alert('❌ مسار الملف غير صالح');
+            return;
+        }
+        
         const baseUrl = 'https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/';
-        const fileUrl = baseUrl + filePath;
+        const fileUrl = baseUrl + encodeURI(filePath);
         
         // فتح الملف في نافذة جديدة
         if (fileType === 'pdf') {
@@ -33814,8 +33820,14 @@ async function viewShelterUploadedReport(filePath, fileName, fileType) {
 // تحميل تقرير زيارة ملجأ مرفوع
 async function downloadShelterUploadedReport(filePath, fileName) {
     try {
+        // Path validation to prevent traversal attacks
+        if (!filePath || filePath.includes('..') || filePath.startsWith('/') || filePath.includes('://')) {
+            alert('❌ مسار الملف غير صالح');
+            return;
+        }
+        
         const baseUrl = 'https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/';
-        const fileUrl = baseUrl + filePath;
+        const fileUrl = baseUrl + encodeURI(filePath);
         
         // إنشاء رابط تحميل مؤقت
         const link = document.createElement('a');

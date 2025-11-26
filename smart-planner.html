@@ -3316,14 +3316,22 @@
         <!-- Tab Content: File Manager for Group Inspection Reports -->
         <div id="fileManagerTab" class="tab-content">
             <div class="section">
-                <h2 class="section-title">📂 إدارة ملفات تقارير التفتيش الجماعي</h2>
-                <div style="background: linear-gradient(135deg, #ff6b6b 0%, #c92a2a 100%); color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center;">
-                    <p style="margin: 0; font-size: 1.1em; font-weight: bold;">⚠️ هذه الصفحة مخصصة للمطورين فقط</p>
-                    <p style="margin: 5px 0 0 0; font-size: 0.95em; opacity: 0.9;">إدارة كاملة لملفات تقارير التفتيش الجماعي: رفع، تعديل، حذف</p>
+                <h2 class="section-title">📂 تقارير التفتيش الجماعي وزيارة الملاجئ</h2>
+                
+                <!-- Developer Warning Banner - Only visible to developers -->
+                <div id="developerWarningBanner" style="background: linear-gradient(135deg, #ff6b6b 0%, #c92a2a 100%); color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; display: none;">
+                    <p style="margin: 0; font-size: 1.1em; font-weight: bold;">🔐 وضع المطور - صلاحيات كاملة</p>
+                    <p style="margin: 5px 0 0 0; font-size: 0.95em; opacity: 0.9;">إدارة كاملة لملفات التقارير: رفع، تعديل، حذف</p>
                 </div>
                 
-                <!-- Upload New Report Section -->
-                <div style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 25px; border-radius: 15px; margin-bottom: 25px; border: 2px solid #2196f3; box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);">
+                <!-- Viewer Info Banner - Only visible to non-developers -->
+                <div id="viewerInfoBanner" style="background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%); color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; display: none;">
+                    <p style="margin: 0; font-size: 1.1em; font-weight: bold;">👁️ وضع العرض - للقراءة فقط</p>
+                    <p style="margin: 5px 0 0 0; font-size: 0.95em; opacity: 0.9;">يمكنك عرض وتحميل التقارير المتاحة</p>
+                </div>
+                
+                <!-- Upload New Report Section - Only visible to developers -->
+                <div id="developerUploadSection" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 25px; border-radius: 15px; margin-bottom: 25px; border: 2px solid #2196f3; box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2); display: none;">
                     <h3 style="margin: 0 0 20px 0; color: #1565c0; text-align: center; font-size: 1.3em;">📤 رفع تقرير جديد</h3>
                     
                     <form id="fileManagerUploadForm" style="max-width: 900px; margin: 0 auto;">
@@ -3360,7 +3368,7 @@
                     </form>
                 </div>
                 
-                <!-- Files List Section -->
+                <!-- Files List Section - Visible to all, but with different buttons -->
                 <div style="background: #f8f9fa; padding: 25px; border-radius: 15px; border: 2px solid #e0e0e0;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <h3 style="margin: 0; color: #2d3561; font-size: 1.3em;">📋 التقارير المتاحة</h3>
@@ -20010,10 +20018,16 @@
                 planData.groupInspectionData = [];
             }
             
+            // Check if user is a developer
+            const isDevUser = isDeveloper();
+            
             if (!planData.groupInspectionData || planData.groupInspectionData.length === 0) {
+                const emptyMessage = isDevUser 
+                    ? 'لا توجد تفتيشات جماعية حالياً. قم بإضافة تفتيش جماعي جديد باستخدام النموذج أعلاه.'
+                    : 'لا توجد تفتيشات جماعية حالياً.';
                 container.innerHTML = `
                     <p style="text-align: center; color: #999; padding: 40px 20px;">
-                        لا توجد تفتيشات جماعية حالياً. قم بإضافة تفتيش جماعي جديد باستخدام النموذج أعلاه.
+                        ${emptyMessage}
                     </p>
                 `;
                 return;
@@ -20036,10 +20050,12 @@
             
             // If no upcoming inspections, show message
             if (upcomingInspections.length === 0) {
+                const emptyMessage = isDevUser 
+                    ? 'لا توجد تفتيشات جماعية قادمة. جميع التفتيشات المجدولة قد انتهت.<br>قم بإضافة تفتيش جماعي جديد باستخدام النموذج أعلاه.'
+                    : 'لا توجد تفتيشات جماعية قادمة. جميع التفتيشات المجدولة قد انتهت.';
                 container.innerHTML = `
                     <p style="text-align: center; color: #999; padding: 40px 20px;">
-                        لا توجد تفتيشات جماعية قادمة. جميع التفتيشات المجدولة قد انتهت.<br>
-                        قم بإضافة تفتيش جماعي جديد باستخدام النموذج أعلاه.
+                        ${emptyMessage}
                     </p>
                 `;
                 return;
@@ -20059,6 +20075,11 @@
                 return days[date.getDay()];
             }
             
+            // Build table header - different for developers vs viewers
+            const actionsHeader = isDevUser 
+                ? '<th style="padding: 15px; text-align: center; border-bottom: 2px solid #e65100;">الإجراءات</th>'
+                : '<th style="padding: 15px; text-align: center; border-bottom: 2px solid #e65100;">عرض</th>';
+            
             let html = `
                 <div style="overflow-x: auto;">
                     <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
@@ -20069,7 +20090,7 @@
                                 <th style="padding: 15px; text-align: right; border-bottom: 2px solid #e65100;">المناوبة</th>
                                 <th style="padding: 15px; text-align: right; border-bottom: 2px solid #e65100;">المنطقة</th>
                                 <th style="padding: 15px; text-align: right; border-bottom: 2px solid #e65100;">المحلات</th>
-                                <th style="padding: 15px; text-align: center; border-bottom: 2px solid #e65100;">الإجراءات</th>
+                                ${actionsHeader}
                             </tr>
                         </thead>
                         <tbody>
@@ -20085,6 +20106,27 @@
                 const inspectorsBadges = item.inspectors.map(inspector => 
                     `<span style="display: inline-block; background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); color: white; padding: 4px 10px; border-radius: 15px; font-size: 0.85em; margin: 2px; white-space: nowrap;">👤 ${inspector}</span>`
                 ).join('');
+                
+                // Build action buttons based on role
+                let actionButtons = '';
+                if (isDevUser) {
+                    // Developer: Full CRUD buttons (Edit, Update, Delete)
+                    actionButtons = `
+                        <button onclick="editSmartGroupInspection(${originalIdx})" class="btn btn-sm" style="background: #2196f3; color: white; padding: 6px 12px; margin: 2px; border: none; border-radius: 5px; cursor: pointer;">
+                            ✏️ تعديل
+                        </button>
+                        <button onclick="deleteSmartGroupInspection(${originalIdx})" class="btn btn-sm" style="background: #f44336; color: white; padding: 6px 12px; margin: 2px; border: none; border-radius: 5px; cursor: pointer;">
+                            🗑️ حذف
+                        </button>
+                    `;
+                } else {
+                    // Viewer: Only display icon
+                    actionButtons = `
+                        <button onclick="viewGroupInspectionDetails(${originalIdx})" class="btn btn-sm" style="background: #4caf50; color: white; padding: 6px 12px; margin: 2px; border: none; border-radius: 5px; cursor: pointer;">
+                            👁️ عرض
+                        </button>
+                    `;
+                }
                 
                 html += `
                     <tr style="border-bottom: 1px solid #eee; transition: background 0.2s;" onmouseover="this.style.background='#fff3e0'" onmouseout="this.style.background='white'">
@@ -20111,12 +20153,7 @@
                             ${item.shopName}
                         </td>
                         <td style="padding: 12px; text-align: center;">
-                            <button onclick="editSmartGroupInspection(${originalIdx})" class="btn btn-sm" style="background: #2196f3; color: white; padding: 6px 12px; margin: 2px; border: none; border-radius: 5px; cursor: pointer;">
-                                ✏️ تعديل
-                            </button>
-                            <button onclick="deleteSmartGroupInspection(${originalIdx})" class="btn btn-sm" style="background: #f44336; color: white; padding: 6px 12px; margin: 2px; border: none; border-radius: 5px; cursor: pointer;">
-                                🗑️ حذف
-                            </button>
+                            ${actionButtons}
                         </td>
                     </tr>
                 `;
@@ -20380,6 +20417,64 @@
             });
         }
         
+        // View group inspection details (for viewers - read-only)
+        function viewGroupInspectionDetails(idx) {
+            if (!planData.groupInspectionData || !planData.groupInspectionData[idx]) return;
+            
+            const item = planData.groupInspectionData[idx];
+            const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+            const dayName = days[new Date(item.day).getDay()];
+            
+            // Create view modal
+            const modal = document.createElement('div');
+            modal.id = 'viewGroupInspectionModal';
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px;';
+            
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 15px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+                    <div style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: white; padding: 20px; border-radius: 15px 15px 0 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h3 style="margin: 0; font-size: 1.4em;">👁️ تفاصيل التفتيش الجماعي</h3>
+                            <button onclick="document.getElementById('viewGroupInspectionModal').remove()" style="background: rgba(255,255,255,0.2); border: none; color: white; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-size: 1.3em;">×</button>
+                        </div>
+                    </div>
+                    <div style="padding: 25px;">
+                        <div style="display: grid; gap: 15px;">
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; border-right: 4px solid #ff9800;">
+                                <strong style="color: #ff9800;">📅 التاريخ:</strong>
+                                <div style="margin-top: 5px; font-size: 1.1em;">${item.day} (${dayName})</div>
+                            </div>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; border-right: 4px solid #4caf50;">
+                                <strong style="color: #4caf50;">🕐 المناوبة:</strong>
+                                <div style="margin-top: 5px; font-size: 1.1em;">${item.shift === 'صباحية' ? '🌅' : '🌆'} ${item.shift}</div>
+                            </div>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; border-right: 4px solid #2196f3;">
+                                <strong style="color: #2196f3;">📍 المنطقة:</strong>
+                                <div style="margin-top: 5px; font-size: 1.1em;">${item.area}</div>
+                            </div>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; border-right: 4px solid #9c27b0;">
+                                <strong style="color: #9c27b0;">🏪 المحل:</strong>
+                                <div style="margin-top: 5px; font-size: 1.1em;">${item.shopName}</div>
+                            </div>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; border-right: 4px solid #009688;">
+                                <strong style="color: #009688;">👥 المفتشون:</strong>
+                                <div style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px;">
+                                    ${item.inspectors.map(inspector => `<span style="background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); color: white; padding: 5px 12px; border-radius: 15px; font-size: 0.9em;">👤 ${inspector}</span>`).join('')}
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 25px; text-align: center;">
+                            <button onclick="document.getElementById('viewGroupInspectionModal').remove()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: bold;">
+                                إغلاق
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+        
         // Delete group inspection
         async function deleteSmartGroupInspection(idx) {
             if (!planData.groupInspectionData || !planData.groupInspectionData[idx]) return;
@@ -20480,10 +20575,16 @@
                 planData.shelterInspectionData = [];
             }
             
+            // Check if user is a developer
+            const isDevUser = isDeveloper();
+            
             if (!planData.shelterInspectionData || planData.shelterInspectionData.length === 0) {
+                const emptyMessage = isDevUser 
+                    ? 'لا توجد خطط تفتيش ملاجئ حالياً. قم بإضافة خطة جديدة باستخدام النموذج أعلاه.'
+                    : 'لا توجد خطط تفتيش ملاجئ حالياً.';
                 container.innerHTML = `
                     <p style="text-align: center; color: #999; padding: 40px 20px;">
-                        لا توجد خطط تفتيش ملاجئ حالياً. قم بإضافة خطة جديدة باستخدام النموذج أعلاه.
+                        ${emptyMessage}
                     </p>
                 `;
                 return;
@@ -20506,10 +20607,12 @@
             
             // If no upcoming inspections, show message
             if (upcomingInspections.length === 0) {
+                const emptyMessage = isDevUser 
+                    ? 'لا توجد خطط تفتيش ملاجئ قادمة. جميع خطط التفتيش المجدولة قد انتهت.<br>قم بإضافة خطة تفتيش جديدة باستخدام النموذج أعلاه.'
+                    : 'لا توجد خطط تفتيش ملاجئ قادمة. جميع خطط التفتيش المجدولة قد انتهت.';
                 container.innerHTML = `
                     <p style="text-align: center; color: #999; padding: 40px 20px;">
-                        لا توجد خطط تفتيش ملاجئ قادمة. جميع خطط التفتيش المجدولة قد انتهت.<br>
-                        قم بإضافة خطة تفتيش جديدة باستخدام النموذج أعلاه.
+                        ${emptyMessage}
                     </p>
                 `;
                 return;
@@ -20522,6 +20625,11 @@
                 return days[date.getDay()];
             }
             
+            // Build table header - different for developers vs viewers
+            const actionsHeader = isDevUser 
+                ? '<th style="padding: 15px; text-align: center; border-bottom: 2px solid #6a1b9a;">الإجراءات</th>'
+                : '<th style="padding: 15px; text-align: center; border-bottom: 2px solid #6a1b9a;">عرض</th>';
+            
             let html = `
                 <div style="overflow-x: auto;">
                     <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
@@ -20533,7 +20641,7 @@
                                 <th style="padding: 15px; text-align: right; border-bottom: 2px solid #6a1b9a;">المنطقة</th>
                                 <th style="padding: 15px; text-align: right; border-bottom: 2px solid #6a1b9a;">الملجأ</th>
                                 <th style="padding: 15px; text-align: right; border-bottom: 2px solid #6a1b9a;">الملاحظات</th>
-                                <th style="padding: 15px; text-align: center; border-bottom: 2px solid #6a1b9a;">الإجراءات</th>
+                                ${actionsHeader}
                             </tr>
                         </thead>
                         <tbody>
@@ -20553,6 +20661,27 @@
                 
                 // Handle both old format (item.location) and new format (item.area)
                 const areaName = item.area || item.location;
+                
+                // Build action buttons based on role
+                let actionButtons = '';
+                if (isDevUser) {
+                    // Developer: Full CRUD buttons (Edit, Update, Delete)
+                    actionButtons = `
+                        <button onclick="editSmartShelterInspection(${originalIdx})" class="btn btn-sm" style="background: #2196f3; color: white; padding: 6px 12px; margin: 2px; border: none; border-radius: 5px; cursor: pointer;">
+                            ✏️ تعديل
+                        </button>
+                        <button onclick="deleteSmartShelterInspection(${originalIdx})" class="btn btn-sm" style="background: #f44336; color: white; padding: 6px 12px; margin: 2px; border: none; border-radius: 5px; cursor: pointer;">
+                            🗑️ حذف
+                        </button>
+                    `;
+                } else {
+                    // Viewer: Only display icon
+                    actionButtons = `
+                        <button onclick="viewShelterInspectionDetails(${originalIdx})" class="btn btn-sm" style="background: #4caf50; color: white; padding: 6px 12px; margin: 2px; border: none; border-radius: 5px; cursor: pointer;">
+                            👁️ عرض
+                        </button>
+                    `;
+                }
                 
                 html += `
                     <tr style="border-bottom: 1px solid #eee; transition: background 0.2s;" onmouseover="this.style.background='#f3e5f5'" onmouseout="this.style.background='white'">
@@ -20582,12 +20711,7 @@
                             ${notes}
                         </td>
                         <td style="padding: 12px; text-align: center;">
-                            <button onclick="editSmartShelterInspection(${originalIdx})" class="btn btn-sm" style="background: #2196f3; color: white; padding: 6px 12px; margin: 2px; border: none; border-radius: 5px; cursor: pointer;">
-                                ✏️ تعديل
-                            </button>
-                            <button onclick="deleteSmartShelterInspection(${originalIdx})" class="btn btn-sm" style="background: #f44336; color: white; padding: 6px 12px; margin: 2px; border: none; border-radius: 5px; cursor: pointer;">
-                                🗑️ حذف
-                            </button>
+                            ${actionButtons}
                         </td>
                     </tr>
                 `;
@@ -20780,6 +20904,70 @@
             setTimeout(() => {
                 statusDiv.style.display = 'none';
             }, 5000);
+        }
+        
+        // View shelter inspection details (for viewers - read-only)
+        function viewShelterInspectionDetails(idx) {
+            if (!planData.shelterInspectionData || !planData.shelterInspectionData[idx]) return;
+            
+            const item = planData.shelterInspectionData[idx];
+            const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+            const dayName = days[new Date(item.day).getDay()];
+            const areaName = item.area || item.location;
+            const notes = item.notes ? item.notes : 'لا توجد ملاحظات';
+            
+            // Create view modal
+            const modal = document.createElement('div');
+            modal.id = 'viewShelterInspectionModal';
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px;';
+            
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 15px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+                    <div style="background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%); color: white; padding: 20px; border-radius: 15px 15px 0 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h3 style="margin: 0; font-size: 1.4em;">👁️ تفاصيل زيارة الملجأ</h3>
+                            <button onclick="document.getElementById('viewShelterInspectionModal').remove()" style="background: rgba(255,255,255,0.2); border: none; color: white; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-size: 1.3em;">×</button>
+                        </div>
+                    </div>
+                    <div style="padding: 25px;">
+                        <div style="display: grid; gap: 15px;">
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; border-right: 4px solid #9c27b0;">
+                                <strong style="color: #9c27b0;">📅 التاريخ:</strong>
+                                <div style="margin-top: 5px; font-size: 1.1em;">${item.day} (${dayName})</div>
+                            </div>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; border-right: 4px solid #4caf50;">
+                                <strong style="color: #4caf50;">🕐 المناوبة:</strong>
+                                <div style="margin-top: 5px; font-size: 1.1em;">${item.shift === 'صباحية' ? '🌅' : '🌆'} ${item.shift}</div>
+                            </div>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; border-right: 4px solid #2196f3;">
+                                <strong style="color: #2196f3;">📍 المنطقة:</strong>
+                                <div style="margin-top: 5px; font-size: 1.1em;">${areaName}</div>
+                            </div>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; border-right: 4px solid #ff9800;">
+                                <strong style="color: #ff9800;">🏘️ الملجأ:</strong>
+                                <div style="margin-top: 5px; font-size: 1.1em;">${item.shelterName}</div>
+                            </div>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; border-right: 4px solid #009688;">
+                                <strong style="color: #009688;">👥 المفتشون:</strong>
+                                <div style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px;">
+                                    ${item.inspectors.map(inspector => `<span style="background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%); color: white; padding: 5px 12px; border-radius: 15px; font-size: 0.9em;">👤 ${inspector}</span>`).join('')}
+                                </div>
+                            </div>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; border-right: 4px solid #607d8b;">
+                                <strong style="color: #607d8b;">📝 الملاحظات:</strong>
+                                <div style="margin-top: 5px; font-size: 1em; color: #666;">${notes}</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 25px; text-align: center;">
+                            <button onclick="document.getElementById('viewShelterInspectionModal').remove()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: bold;">
+                                إغلاق
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
         }
         
         // ========================================
@@ -21035,12 +21223,42 @@
         // File Manager for Group Inspection Reports
         // ========================================
         
+        // Check if user is a developer (has valid GitHub token)
+        function isDeveloper() {
+            return githubToken !== null && githubToken !== '';
+        }
+        
+        // Update file manager UI based on user role
+        function updateFileManagerUI() {
+            const developerWarningBanner = document.getElementById('developerWarningBanner');
+            const viewerInfoBanner = document.getElementById('viewerInfoBanner');
+            const developerUploadSection = document.getElementById('developerUploadSection');
+            
+            if (isDeveloper()) {
+                // Developer view: Show upload section and developer banner
+                if (developerWarningBanner) developerWarningBanner.style.display = 'block';
+                if (viewerInfoBanner) viewerInfoBanner.style.display = 'none';
+                if (developerUploadSection) developerUploadSection.style.display = 'block';
+            } else {
+                // Viewer view: Show viewer banner, hide upload section
+                if (developerWarningBanner) developerWarningBanner.style.display = 'none';
+                if (viewerInfoBanner) viewerInfoBanner.style.display = 'block';
+                if (developerUploadSection) developerUploadSection.style.display = 'none';
+            }
+        }
+        
         // Load and display all group inspection reports
         async function loadGroupReportFiles() {
             const listDiv = document.getElementById('fileManagerFilesList');
             const statusDiv = document.getElementById('fileManagerStatus');
             
             if (!listDiv) return;
+            
+            // Update UI based on user role
+            updateFileManagerUI();
+            
+            // Check if user is a developer
+            const isDevUser = isDeveloper();
             
             try {
                 listDiv.innerHTML = '<p style="text-align: center; color: #666; padding: 40px;">⏳ جاري تحميل التقارير...</p>';
@@ -21056,23 +21274,27 @@
                 
                 const filesData = await response.json();
                 
-                // Filter group inspection reports
+                // Filter group inspection reports and shelter visit reports
                 const groupReports = filesData.files
-                    .filter(f => f.category === 'group_inspection_reports')
+                    .filter(f => f.category === 'group_inspection_reports' || f.category === 'shelter_visit_reports')
                     .sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
                 
                 if (groupReports.length === 0) {
+                    const emptyMessage = isDevUser 
+                        ? '<small>قم برفع تقرير جديد باستخدام النموذج أعلاه</small>'
+                        : '<small>لا توجد تقارير متاحة حالياً للعرض</small>';
+                    
                     listDiv.innerHTML = `
                         <p style="text-align: center; color: #666; padding: 60px;">
                             <span style="font-size: 3em; display: block; margin-bottom: 10px;">📑</span>
                             <strong>لا توجد تقارير حالياً</strong><br>
-                            <small>قم برفع تقرير جديد باستخدام النموذج أعلاه</small>
+                            ${emptyMessage}
                         </p>
                     `;
                     return;
                 }
                 
-                // Build files list HTML
+                // Build files list HTML with different buttons based on role
                 let html = '<div style="display: grid; gap: 15px;">';
                 groupReports.forEach((file, index) => {
                     const uploadDate = new Date(file.uploadDate).toLocaleDateString('ar-EG', {
@@ -21086,12 +21308,56 @@
                     const fileSize = formatFileSize(file.size || 0);
                     const fileIcon = getFileIcon(file.type);
                     
+                    // Category badge color
+                    const categoryColor = file.category === 'group_inspection_reports' ? '#ff9800' : '#9c27b0';
+                    const categoryLabel = file.category === 'group_inspection_reports' ? 'تفتيش جماعي' : 'زيارة ملاجئ';
+                    
+                    // Build action buttons based on role
+                    let actionButtons = '';
+                    
+                    if (isDevUser) {
+                        // Developer: Full CRUD buttons (Add is in upload section, here: View, Download, Edit, Delete)
+                        actionButtons = `
+                            <button onclick="viewReportFile('${file.path}')" 
+                                style="background: #2196f3; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em; white-space: nowrap; display: flex; align-items: center; gap: 5px;">
+                                <span>👁️</span> عرض
+                            </button>
+                            <button onclick="downloadReportFile('${file.path}')" 
+                                style="background: #4caf50; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em; white-space: nowrap; display: flex; align-items: center; gap: 5px;">
+                                <span>📥</span> تحميل
+                            </button>
+                            <button onclick="editReportFile('${file.id}')" 
+                                style="background: #ff9800; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em; white-space: nowrap; display: flex; align-items: center; gap: 5px;">
+                                <span>✏️</span> تعديل
+                            </button>
+                            <button onclick="deleteReportFile('${file.id}', '${file.path}')" 
+                                style="background: #f44336; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em; white-space: nowrap; display: flex; align-items: center; gap: 5px;">
+                                <span>🗑️</span> حذف
+                            </button>
+                        `;
+                    } else {
+                        // Viewer: Only display and download icons
+                        actionButtons = `
+                            <button onclick="viewReportFile('${file.path}')" 
+                                style="background: #2196f3; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 0.95em; white-space: nowrap; display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 1.2em;">👁️</span> عرض
+                            </button>
+                            <button onclick="downloadReportFile('${file.path}')" 
+                                style="background: #4caf50; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 0.95em; white-space: nowrap; display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 1.2em;">📥</span> تحميل
+                            </button>
+                        `;
+                    }
+                    
                     html += `
-                        <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-right: 4px solid #2196f3;">
+                        <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-right: 4px solid ${categoryColor};">
                             <div style="display: grid; grid-template-columns: auto 1fr auto; gap: 15px; align-items: start;">
                                 <div style="font-size: 2.5em;">${fileIcon}</div>
                                 <div>
-                                    <h4 style="margin: 0 0 10px 0; color: #2d3561; font-size: 1.1em;">${file.name}</h4>
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                        <h4 style="margin: 0; color: #2d3561; font-size: 1.1em;">${file.name}</h4>
+                                        <span style="background: ${categoryColor}; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.75em; font-weight: bold;">${categoryLabel}</span>
+                                    </div>
                                     <p style="margin: 0 0 10px 0; color: #666; font-size: 0.95em;">${file.description}</p>
                                     <div style="display: flex; flex-wrap: wrap; gap: 15px; font-size: 0.85em; color: #999;">
                                         <span><strong>📅 تاريخ الرفع:</strong> ${uploadDate}</span>
@@ -21101,18 +21367,7 @@
                                     </div>
                                 </div>
                                 <div style="display: flex; flex-direction: column; gap: 8px;">
-                                    <button onclick="downloadReportFile('${file.path}')" 
-                                        style="background: #4caf50; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em; white-space: nowrap;">
-                                        📥 تحميل
-                                    </button>
-                                    <button onclick="editReportFile('${file.id}')" 
-                                        style="background: #ff9800; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em; white-space: nowrap;">
-                                        ✏️ تعديل
-                                    </button>
-                                    <button onclick="deleteReportFile('${file.id}', '${file.path}')" 
-                                        style="background: #f44336; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em; white-space: nowrap;">
-                                        🗑️ حذف
-                                    </button>
+                                    ${actionButtons}
                                 </div>
                             </div>
                         </div>
@@ -21121,7 +21376,8 @@
                 html += '</div>';
                 
                 listDiv.innerHTML = html;
-                showFileManagerMessage('✅ تم تحميل ' + groupReports.length + ' تقرير بنجاح', 'success');
+                const roleText = isDevUser ? '(وضع المطور - صلاحيات كاملة)' : '(وضع العرض - للقراءة والتحميل فقط)';
+                showFileManagerMessage(`✅ تم تحميل ${groupReports.length} تقرير بنجاح ${roleText}`, 'success');
                 
             } catch (error) {
                 console.error('Error loading files:', error);
@@ -21134,6 +21390,12 @@
                 `;
                 showFileManagerMessage('❌ فشل تحميل التقارير: ' + error.message, 'error');
             }
+        }
+        
+        // View report file (opens in new tab)
+        function viewReportFile(filePath) {
+            const viewUrl = `https://raw.githubusercontent.com/${repo}/main/${filePath}`;
+            window.open(viewUrl, '_blank');
         }
         
         // Upload a new report file

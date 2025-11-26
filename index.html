@@ -32706,7 +32706,9 @@ async function uploadGroupInspectionReport() {
             try {
                 if (attempt > 1) {
                     statusDiv.textContent = `⏳ إعادة المحاولة (${attempt}/${maxRetries})...`;
-                    await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+                    // Exponential backoff with jitter to prevent thundering herd
+                    const jitter = Math.random() * 400 - 200; // ± 200ms
+                    await new Promise(resolve => setTimeout(resolve, 1000 * attempt + jitter));
                 }
                 
                 const testRes = await fetch(`https://api.github.com/repos/${repo}`, {

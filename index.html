@@ -9000,6 +9000,89 @@ console.log('Smart distribution functions initialized');
             </button>
         </div>
         
+        <!-- زر إدارة التقارير الذكي - للمطور فقط (Shelter Visit Reports) -->
+        <div id="developerShelterSmartFileManagerSection" style="display: none; margin-bottom: 25px; padding: 20px; background: linear-gradient(135deg, #9c27b0 0%, #673ab7 100%); border: 3px solid #9c27b0; border-radius: 12px; box-shadow: 0 6px 20px rgba(156, 39, 176, 0.3);">
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                <span style="font-size: 2.5em;">📂</span>
+                <div>
+                    <h3 style="color: white; margin: 0; font-size: 1.5em; font-weight: bold;">إدارة ملفات تقارير زيارة الملاجئ</h3>
+                    <p style="color: rgba(255,255,255,0.9); margin: 5px 0 0 0; font-size: 1em;">لوحة التحكم الكاملة للمطور فقط</p>
+                </div>
+            </div>
+            <p style="color: white; margin-bottom: 20px; font-size: 1em; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">
+                <strong>⚠️ تنبيه:</strong> هذه اللوحة مخصصة للمطورين فقط وتوفر إمكانية رفع، تعديل، وحذف تقارير زيارة الملاجئ مباشرة في مستودع GitHub
+            </p>
+            <button onclick="openShelterSmartFileManager()" 
+                style="background: white; color: #673ab7; border: none; padding: 15px 30px; border-radius: 10px; cursor: pointer; font-size: 1.1em; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: all 0.3s ease; display: flex; align-items: center; gap: 10px; width: fit-content; margin: 0 auto;">
+                <span style="font-size: 1.3em;">🚀</span>
+                <span>فتح لوحة إدارة التقارير الذكية</span>
+            </button>
+            <small style="display: block; text-align: center; color: rgba(255,255,255,0.8); margin-top: 15px; font-size: 0.9em;">
+                سيتم فتح أداة التخطيط الذكية مع لوحة إدارة الملفات
+            </small>
+        </div>
+        
+        <!-- قسم رفع التقارير - للمطور فقط (Shelter Visit Reports) -->
+        <div id="developerShelterReportUploadSection" style="display: none; margin-bottom: 25px; padding: 20px; background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%); border: 2px solid #9c27b0; border-radius: 12px; box-shadow: 0 4px 15px rgba(156, 39, 176, 0.15);">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                <span style="font-size: 1.8em;">📤</span>
+                <h3 style="color: #9c27b0; margin: 0; font-size: 1.3em;">رفع تقرير زيارة ملجأ جديد</h3>
+            </div>
+            <p style="color: #555; margin-bottom: 15px; font-size: 0.95em;">
+                <strong>ملاحظة:</strong> هذا القسم متاح للمطور فقط لرفع تقارير زيارة الملاجئ من مصادر خارجية
+            </p>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: bold; color: #333; font-size: 1em;">
+                    📎 اختر ملف التقرير:
+                </label>
+                <input type="file" id="shelterReportFileUpload" accept=".pdf,.xlsx,.xls,.docx,.doc,.pptx,.ppt" 
+                    style="padding: 10px; border: 2px solid #ccc; border-radius: 8px; width: 100%; box-sizing: border-box; font-size: 1em; background: white;">
+                <small style="color: #666; display: block; margin-top: 5px;">الملفات المدعومة: PDF, Excel (.xlsx, .xls), Word (.docx, .doc), PowerPoint (.pptx, .ppt)</small>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: bold; color: #333; font-size: 1em;">
+                    📝 عنوان التقرير:
+                </label>
+                <input type="text" id="shelterReportTitle" placeholder="مثال: تقرير زيارة ملجأ الرحبة - يناير 2025" 
+                    style="padding: 10px; border: 2px solid #ccc; border-radius: 8px; width: 100%; box-sizing: border-box; font-size: 1em;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: bold; color: #333; font-size: 1em;">
+                    📄 وصف التقرير (اختياري):
+                </label>
+                <textarea id="shelterReportDescription" placeholder="وصف مختصر للتقرير..." 
+                    style="padding: 10px; border: 2px solid #ccc; border-radius: 8px; width: 100%; box-sizing: border-box; min-height: 80px; resize: vertical; font-family: 'Cairo', sans-serif; font-size: 1em;"></textarea>
+            </div>
+            <button onclick="uploadShelterVisitReport()" id="shelterReportUploadBtn" 
+                style="background: linear-gradient(135deg, #9c27b0 0%, #673ab7 100%); color: #fff; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-size: 1.05em; font-weight: bold; box-shadow: 0 4px 15px rgba(156, 39, 176, 0.3); transition: all 0.3s ease;">
+                📤 رفع التقرير
+            </button>
+            <div id="shelterReportUploadStatus" style="margin-top: 15px; font-weight: bold;"></div>
+        </div>
+        
+        <!-- قائمة التقارير المرفوعة (Shelter Visit Reports) -->
+        <div style="margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="color: #673ab7; margin: 0; font-size: 1.2em;">
+                    📋 تقارير زيارة الملاجئ المرفوعة
+                </h3>
+                <button onclick="refreshShelterUploadedReportsList()" 
+                    style="background: #9c27b0; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.95em;">
+                    🔄 تحديث
+                </button>
+            </div>
+        </div>
+        
+        <div id="shelterUploadedReportsList" style="min-height: 200px; padding: 20px; border: 2px solid #e0e0e0; border-radius: 12px; background: #f9f9f9; margin-bottom: 20px;">
+            <div style="text-align: center; color: #666; padding: 40px 0;">
+                <div style="font-size: 3em; margin-bottom: 15px;">🏘️</div>
+                <p style="font-size: 1.1em; margin: 0; font-weight: 600;">لا توجد تقارير مرفوعة حالياً</p>
+                <p style="font-size: 0.95em; margin-top: 10px; color: #999;">سيتم عرض تقارير زيارة الملاجئ المرفوعة هنا بمجرد رفعها</p>
+            </div>
+        </div>
+        
+        <div id="shelterUploadedReportsLoadingStatus" style="margin-bottom: 15px; text-align: center; color: #666;"></div>
+        
         <!-- Export Buttons (Available for All Users) -->
         <div id="shelterReportExportActions" style="margin: 20px 0; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; box-shadow: 0 4px 15px rgba(102,126,234,0.3);">
             <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center;">
@@ -29936,6 +30019,29 @@ function showShelterVisitReportModal() {
         // Force reload of reports to ensure latest data is shown
         loadShelterVisitReports();
         
+        // إظهار زر إدارة التقارير الذكي للمطور فقط
+        const smartFileManagerSection = document.getElementById('developerShelterSmartFileManagerSection');
+        if (smartFileManagerSection) {
+            if (isDev || window.isDev) {
+                smartFileManagerSection.style.display = 'block';
+            } else {
+                smartFileManagerSection.style.display = 'none';
+            }
+        }
+        
+        // إظهار قسم الرفع للمطور فقط
+        const uploadSection = document.getElementById('developerShelterReportUploadSection');
+        if (uploadSection) {
+            if (isDev || window.isDev) {
+                uploadSection.style.display = 'block';
+            } else {
+                uploadSection.style.display = 'none';
+            }
+        }
+        
+        // تحميل قائمة التقارير المرفوعة
+        loadShelterUploadedReports();
+        
         // Show developer-only buttons if developer is logged in
         if (isDev || window.isDev) {
             const devActions = document.getElementById('shelterReportDeveloperActions');
@@ -33339,6 +33445,573 @@ async function removeFromGroupReportsRegistry(reportId, token) {
 
 function refreshGroupReportsList() {
     loadGroupInspectionReports();
+}
+
+// ===== وظائف تقارير زيارة الملاجئ المرفوعة =====
+
+// فتح لوحة إدارة التقارير الذكية لتقارير زيارة الملاجئ
+function openShelterSmartFileManager() {
+    // حفظ علامة للعودة إلى إدارة ملفات تقارير الملاجئ
+    sessionStorage.setItem('openShelterFileManager', 'true');
+    
+    // فتح smart-planner.html
+    window.location.href = 'smart-planner.html';
+}
+
+// تحديث قائمة التقارير المرفوعة
+function refreshShelterUploadedReportsList() {
+    loadShelterUploadedReports();
+}
+
+// تحميل قائمة تقارير زيارة الملاجئ المرفوعة
+async function loadShelterUploadedReports() {
+    const listDiv = document.getElementById('shelterUploadedReportsList');
+    const statusDiv = document.getElementById('shelterUploadedReportsLoadingStatus');
+    
+    if (!listDiv) return;
+    
+    try {
+        if (statusDiv) {
+            statusDiv.textContent = '⏳ جاري تحميل التقارير المرفوعة...';
+            statusDiv.style.color = '#666';
+        }
+        
+        // تحميل ملف files.json مع منع التخزين المؤقت
+        let shelterReports = [];
+        try {
+            const response = await fetch('files.json?t=' + Date.now(), {
+                cache: 'no-cache',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
+            });
+            
+            if (response.ok) {
+                const filesData = await response.json();
+                
+                // تصفية التقارير الخاصة بزيارة الملاجئ وترتيبها حسب تاريخ الرفع (الأحدث أولاً)
+                shelterReports = filesData.files
+                    .filter(f => f.category === 'shelter_visit_reports' && f.visible === true)
+                    .sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
+            }
+        } catch (error) {
+            console.warn('Unable to load files.json for shelter reports:', error);
+        }
+        
+        if (shelterReports.length === 0) {
+            listDiv.innerHTML = `
+                <div style="text-align: center; color: #666; padding: 40px 0;">
+                    <div style="font-size: 3em; margin-bottom: 15px;">🏘️</div>
+                    <p style="font-size: 1.1em; margin: 0; font-weight: 600;">لا توجد تقارير مرفوعة حالياً</p>
+                    <p style="font-size: 0.95em; margin-top: 10px; color: #999;">سيتم عرض تقارير زيارة الملاجئ المرفوعة هنا بمجرد رفعها</p>
+                </div>
+            `;
+        } else {
+            let reportsHTML = '<div style="display: grid; gap: 15px;">';
+            
+            shelterReports.forEach((report, index) => {
+                const uploadDate = new Date(report.uploadDate).toLocaleDateString('ar-EG', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                const fileIcon = getFileIcon(report.type);
+                const fileSizeMB = (report.size / (1024 * 1024)).toFixed(2);
+                
+                reportsHTML += `
+                    <div style="background: white; padding: 20px; border-radius: 10px; border: 2px solid #e0e0e0; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.05);" 
+                         onmouseover="this.style.borderColor='#9c27b0'; this.style.boxShadow='0 4px 15px rgba(156, 39, 176, 0.2)';" 
+                         onmouseout="this.style.borderColor='#e0e0e0'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.05)';">
+                        <div style="display: flex; justify-content: space-between; align-items: start; gap: 15px; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 250px;">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                    <span style="font-size: 2em;">${fileIcon}</span>
+                                    <h4 style="margin: 0; color: #673ab7; font-size: 1.15em;">${report.description || report.name}</h4>
+                                </div>
+                                <div style="color: #666; font-size: 0.95em; margin-bottom: 8px;">
+                                    <strong>اسم الملف:</strong> ${report.name}
+                                </div>
+                                <div style="color: #666; font-size: 0.9em; display: flex; gap: 15px; flex-wrap: wrap;">
+                                    <span>📅 ${uploadDate}</span>
+                                    <span>📊 ${fileSizeMB} MB</span>
+                                    <span>👤 ${report.uploader}</span>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                                <button onclick="viewShelterUploadedReport('${report.path}', '${report.name}', '${report.type}')" 
+                                    style="background: linear-gradient(135deg, #9c27b0 0%, #673ab7 100%); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(156, 39, 176, 0.3); transition: all 0.3s ease;"
+                                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(156, 39, 176, 0.4)';"
+                                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(156, 39, 176, 0.3)';">
+                                    👁️ عرض
+                                </button>
+                                <button onclick="downloadShelterUploadedReport('${report.path}', '${report.name}')" 
+                                    style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(40,167,69,0.3); transition: all 0.3s ease;"
+                                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(40,167,69,0.4)';"
+                                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(40,167,69,0.3)';">
+                                    📥 تحميل
+                                </button>
+                                ${(isDev || window.isDev) ? `
+                                    <button onclick="deleteShelterUploadedReport('${report.id}', '${report.name}', '${report.path}')" 
+                                        style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(220,53,69,0.3); transition: all 0.3s ease;"
+                                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(220,53,69,0.4)';"
+                                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(220,53,69,0.3)';">
+                                        🗑️ حذف
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            reportsHTML += '</div>';
+            listDiv.innerHTML = reportsHTML;
+        }
+        
+        if (statusDiv) {
+            const totalReports = shelterReports.length;
+            statusDiv.textContent = `✅ تم تحميل ${totalReports} تقرير مرفوع بنجاح`;
+            statusDiv.style.color = '#28a745';
+            
+            setTimeout(() => {
+                statusDiv.textContent = '';
+            }, 3000);
+        }
+        
+    } catch (error) {
+        console.error('خطأ في تحميل تقارير زيارة الملاجئ:', error);
+        listDiv.innerHTML = `
+            <div style="text-align: center; color: #dc3545; padding: 40px 0;">
+                <div style="font-size: 3em; margin-bottom: 15px;">⚠️</div>
+                <p style="font-size: 1.1em; margin: 0; font-weight: bold;">خطأ في تحميل التقارير</p>
+                <p style="font-size: 0.9em; margin-top: 10px; color: #666;">${error.message}</p>
+                <button onclick="loadShelterUploadedReports()" 
+                    style="margin-top: 15px; background: #9c27b0; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                    🔄 إعادة المحاولة
+                </button>
+            </div>
+        `;
+        if (statusDiv) {
+            statusDiv.textContent = '❌ فشل في تحميل التقارير';
+            statusDiv.style.color = '#dc3545';
+        }
+    }
+}
+
+// رفع تقرير زيارة ملجأ جديد
+async function uploadShelterVisitReport() {
+    if (!isDev && !window.isDev) {
+        alert('❌ صلاحيات المطور مطلوبة لرفع التقارير');
+        return;
+    }
+    
+    const fileInput = document.getElementById('shelterReportFileUpload');
+    const titleInput = document.getElementById('shelterReportTitle');
+    const descriptionInput = document.getElementById('shelterReportDescription');
+    const statusDiv = document.getElementById('shelterReportUploadStatus');
+    const uploadBtn = document.getElementById('shelterReportUploadBtn');
+    
+    if (!fileInput.files[0]) {
+        statusDiv.textContent = '❌ يرجى اختيار ملف التقرير أولاً';
+        statusDiv.style.color = '#dc3545';
+        return;
+    }
+    
+    if (!titleInput.value.trim()) {
+        statusDiv.textContent = '❌ يرجى إدخال عنوان للتقرير';
+        statusDiv.style.color = '#dc3545';
+        return;
+    }
+    
+    const file = fileInput.files[0];
+    const title = titleInput.value.trim();
+    const description = descriptionInput.value.trim() || title;
+    
+    // التحقق من حجم الملف (الحد الأقصى 25 MB)
+    const maxSize = 25 * 1024 * 1024;
+    if (file.size > maxSize) {
+        statusDiv.textContent = '❌ حجم الملف كبير جداً! يجب أن يكون أقل من 25 ميجابايت';
+        statusDiv.style.color = '#dc3545';
+        return;
+    }
+    
+    try {
+        uploadBtn.disabled = true;
+        statusDiv.textContent = '⏳ جاري التحقق من التوكن...';
+        statusDiv.style.color = '#666';
+        
+        // الحصول على التوكن
+        let token = localStorage.getItem('devToken') || localStorage.getItem('githubToken');
+        
+        if (!token && (isDev || window.isDev)) {
+            const defaultToken = "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";
+            localStorage.setItem("devToken", defaultToken);
+            token = defaultToken;
+        }
+        
+        if (!token) {
+            statusDiv.innerHTML = '❌ خطأ: لا يوجد توكن متاح.<br><br><button onclick="showTokenPopup()" style="background: #007bff; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">🔑 إدخال توكن GitHub</button>';
+            statusDiv.style.color = '#dc3545';
+            uploadBtn.disabled = false;
+            return;
+        }
+        
+        // التحقق من صلاحية التوكن
+        const repo = 'aliabdelaal-adm/Monthly_inspection_plan';
+        let tokenValid = false;
+        
+        try {
+            const testRes = await fetch(`https://api.github.com/repos/${repo}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+            
+            if (testRes.ok) {
+                tokenValid = true;
+            } else if (testRes.status === 401 || testRes.status === 403) {
+                statusDiv.innerHTML = '❌ التوكن غير صالح أو منتهي الصلاحية.<br><br><button onclick="showTokenPopup()" style="background: #007bff; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">🔑 تحديث التوكن</button>';
+                statusDiv.style.color = '#dc3545';
+                uploadBtn.disabled = false;
+                return;
+            }
+        } catch (fetchError) {
+            statusDiv.innerHTML = '❌ فشل الاتصال بخادم GitHub.<br><br><button onclick="uploadShelterVisitReport()" style="background: #28a745; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">🔄 إعادة المحاولة</button>';
+            statusDiv.style.color = '#dc3545';
+            uploadBtn.disabled = false;
+            return;
+        }
+        
+        if (!tokenValid) {
+            statusDiv.innerHTML = '❌ خطأ في التحقق من التوكن.<br><br><button onclick="uploadShelterVisitReport()" style="background: #28a745; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">🔄 إعادة المحاولة</button>';
+            statusDiv.style.color = '#dc3545';
+            uploadBtn.disabled = false;
+            return;
+        }
+        
+        statusDiv.textContent = '⏳ جاري قراءة الملف...';
+        
+        // قراءة الملف كـ base64
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            const content = e.target.result.split(',')[1];
+            
+            statusDiv.textContent = '⏳ جاري رفع الملف إلى GitHub...';
+            
+            // تحديد اسم الملف ومساره
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+            const timestamp = Date.now();
+            const safeFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+            const fileName = `shelter_visit_report_${timestamp}_${safeFileName}`;
+            const filePath = `files/shelter_visit_reports/${fileName}`;
+            
+            try {
+                // رفع الملف إلى GitHub
+                const uploadRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: `رفع تقرير زيارة ملجأ: ${title}`,
+                        content: content
+                    })
+                });
+                
+                if (uploadRes.ok) {
+                    statusDiv.textContent = '⏳ جاري تحديث سجل التقارير...';
+                    
+                    // تحديث ملف files.json
+                    const newReport = {
+                        id: `shelter_report_${timestamp}`,
+                        name: file.name,
+                        path: filePath,
+                        category: 'shelter_visit_reports',
+                        type: fileExtension,
+                        size: file.size,
+                        uploadDate: new Date().toISOString(),
+                        description: description,
+                        uploader: 'د. علي عبدالعال',
+                        visible: true
+                    };
+                    
+                    await addToShelterReportsRegistry(newReport, token);
+                    
+                    statusDiv.textContent = '✅ تم رفع التقرير بنجاح!';
+                    statusDiv.style.color = '#28a745';
+                    
+                    // مسح الحقول
+                    fileInput.value = '';
+                    titleInput.value = '';
+                    descriptionInput.value = '';
+                    
+                    // تحديث قائمة التقارير
+                    await loadShelterUploadedReports();
+                    
+                } else {
+                    const errorData = await uploadRes.json();
+                    statusDiv.innerHTML = `❌ فشل رفع الملف: ${errorData.message || 'خطأ غير معروف'}<br><br><button onclick="uploadShelterVisitReport()" style="background: #28a745; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">🔄 إعادة المحاولة</button>`;
+                    statusDiv.style.color = '#dc3545';
+                }
+            } catch (uploadError) {
+                statusDiv.innerHTML = `❌ خطأ في الرفع: ${uploadError.message}<br><br><button onclick="uploadShelterVisitReport()" style="background: #28a745; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">🔄 إعادة المحاولة</button>`;
+                statusDiv.style.color = '#dc3545';
+            }
+            
+            uploadBtn.disabled = false;
+        };
+        
+        reader.onerror = function() {
+            statusDiv.innerHTML = '❌ خطأ في قراءة الملف.<br><br><button onclick="uploadShelterVisitReport()" style="background: #28a745; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">🔄 إعادة المحاولة</button>';
+            statusDiv.style.color = '#dc3545';
+            uploadBtn.disabled = false;
+        };
+        
+        reader.readAsDataURL(file);
+        
+    } catch (error) {
+        statusDiv.innerHTML = `❌ خطأ غير متوقع: ${error.message}<br><br><button onclick="uploadShelterVisitReport()" style="background: #28a745; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">🔄 إعادة المحاولة</button>`;
+        statusDiv.style.color = '#dc3545';
+        uploadBtn.disabled = false;
+    }
+}
+
+// إضافة تقرير جديد إلى سجل files.json
+async function addToShelterReportsRegistry(report, token) {
+    try {
+        const repo = 'aliabdelaal-adm/Monthly_inspection_plan';
+        
+        // تحميل ملف files.json الحالي
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/files.json`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (res.ok) {
+            const file = await res.json();
+            const filesData = JSON.parse(decodeBase64Utf8(file.content));
+            
+            // التأكد من وجود فئة تقارير زيارة الملاجئ
+            const categoryExists = filesData.categories.some(c => c.id === 'shelter_visit_reports');
+            if (!categoryExists) {
+                filesData.categories.push({
+                    id: 'shelter_visit_reports',
+                    name: 'تقارير زيارة الملاجئ',
+                    nameEn: 'Shelter Visit Reports',
+                    description: 'تقارير زيارة الملاجئ المحملة من قبل المطور',
+                    path: 'files/shelter_visit_reports/'
+                });
+            }
+            
+            // إضافة التقرير الجديد
+            filesData.files.push(report);
+            filesData.lastUpdate = new Date().toISOString();
+            
+            // حفظ ملف files.json المحدث
+            const content = btoa(unescape(encodeURIComponent(JSON.stringify(filesData, null, 2))));
+            await fetch(`https://api.github.com/repos/${repo}/contents/files.json`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: 'إضافة تقرير زيارة ملجأ جديد',
+                    content: content,
+                    sha: file.sha
+                })
+            });
+        }
+    } catch (error) {
+        console.error('خطأ في تحديث سجل التقارير:', error);
+    }
+}
+
+// عرض تقرير زيارة ملجأ مرفوع
+async function viewShelterUploadedReport(filePath, fileName, fileType) {
+    try {
+        // Path validation to prevent traversal attacks
+        if (!filePath || filePath.includes('..') || filePath.startsWith('/') || filePath.includes('://')) {
+            alert('❌ مسار الملف غير صالح');
+            return;
+        }
+        
+        const baseUrl = 'https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/';
+        const fileUrl = baseUrl + encodeURI(filePath);
+        
+        // فتح الملف في نافذة جديدة
+        if (fileType === 'pdf') {
+            // استخدام عارض PDF من Google
+            window.open(`https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`, '_blank');
+        } else if (['xlsx', 'xls', 'docx', 'doc', 'pptx', 'ppt'].includes(fileType)) {
+            // استخدام Office Online للمستندات
+            window.open(`https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(fileUrl)}`, '_blank');
+        } else {
+            // فتح مباشر للملفات الأخرى
+            window.open(fileUrl, '_blank');
+        }
+    } catch (error) {
+        console.error('خطأ في عرض التقرير:', error);
+        alert('❌ خطأ في عرض التقرير: ' + error.message);
+    }
+}
+
+// تحميل تقرير زيارة ملجأ مرفوع
+async function downloadShelterUploadedReport(filePath, fileName) {
+    try {
+        // Path validation to prevent traversal attacks
+        if (!filePath || filePath.includes('..') || filePath.startsWith('/') || filePath.includes('://')) {
+            alert('❌ مسار الملف غير صالح');
+            return;
+        }
+        
+        const baseUrl = 'https://raw.githubusercontent.com/aliabdelaal-adm/Monthly_inspection_plan/main/';
+        const fileUrl = baseUrl + encodeURI(filePath);
+        
+        // إنشاء رابط تحميل مؤقت
+        const link = document.createElement('a');
+        link.href = fileUrl;
+        link.download = fileName;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } catch (error) {
+        console.error('خطأ في تحميل التقرير:', error);
+        alert('❌ خطأ في تحميل التقرير: ' + error.message);
+    }
+}
+
+// حذف تقرير زيارة ملجأ مرفوع
+async function deleteShelterUploadedReport(reportId, reportName, filePath) {
+    if (!isDev && !window.isDev) {
+        alert('❌ صلاحيات المطور مطلوبة لحذف التقارير');
+        return;
+    }
+    
+    if (!confirm(`هل أنت متأكد من حذف التقرير:\n\n${reportName}\n\nلا يمكن التراجع عن هذا الإجراء!`)) {
+        return;
+    }
+    
+    const statusDiv = document.getElementById('shelterUploadedReportsLoadingStatus');
+    const token = localStorage.getItem('devToken') || localStorage.getItem('githubToken');
+    
+    if (!token) {
+        alert('❌ يرجى تسجيل الدخول كمطور أولاً');
+        return;
+    }
+    
+    try {
+        if (statusDiv) {
+            statusDiv.textContent = '⏳ جاري حذف التقرير...';
+            statusDiv.style.color = '#666';
+        }
+        
+        const repo = 'aliabdelaal-adm/Monthly_inspection_plan';
+        
+        // حذف الملف من GitHub
+        const fileRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (fileRes.ok) {
+            const fileData = await fileRes.json();
+            
+            const deleteRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: `حذف تقرير زيارة ملجأ: ${reportName}`,
+                    sha: fileData.sha
+                })
+            });
+            
+            if (deleteRes.ok) {
+                // حذف من سجل files.json
+                await removeFromShelterReportsRegistry(reportId, token);
+                
+                if (statusDiv) {
+                    statusDiv.textContent = '✅ تم حذف التقرير بنجاح';
+                    statusDiv.style.color = '#28a745';
+                }
+                
+                // تحديث قائمة التقارير فوراً
+                await loadShelterUploadedReports();
+            } else {
+                if (statusDiv) {
+                    statusDiv.textContent = '❌ خطأ في حذف التقرير';
+                    statusDiv.style.color = '#dc3545';
+                }
+            }
+        } else {
+            if (statusDiv) {
+                statusDiv.textContent = '❌ التقرير غير موجود';
+                statusDiv.style.color = '#dc3545';
+            }
+        }
+    } catch (error) {
+        if (statusDiv) {
+            statusDiv.textContent = '❌ خطأ: ' + error.message;
+            statusDiv.style.color = '#dc3545';
+        }
+    }
+}
+
+// إزالة تقرير من سجل files.json
+async function removeFromShelterReportsRegistry(reportId, token) {
+    try {
+        const repo = 'aliabdelaal-adm/Monthly_inspection_plan';
+        
+        // تحميل ملف files.json الحالي
+        const res = await fetch(`https://api.github.com/repos/${repo}/contents/files.json`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (res.ok) {
+            const file = await res.json();
+            const filesData = JSON.parse(decodeBase64Utf8(file.content));
+            
+            // إزالة التقرير من القائمة
+            filesData.files = filesData.files.filter(f => f.id !== reportId);
+            filesData.lastUpdate = new Date().toISOString();
+            
+            // حفظ ملف files.json المحدث
+            const content = btoa(unescape(encodeURIComponent(JSON.stringify(filesData, null, 2))));
+            await fetch(`https://api.github.com/repos/${repo}/contents/files.json`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: 'تحديث سجل التقارير - حذف تقرير زيارة ملجأ',
+                    content: content,
+                    sha: file.sha
+                })
+            });
+        }
+    } catch (error) {
+        console.error('خطأ في تحديث سجل التقارير:', error);
+    }
 }
 
 // ===== إصلاح مؤقت للأزرار المعطلة =====

@@ -4323,6 +4323,29 @@
                     </div>
                 </div>
                 
+                <!-- Search Section for Shops on Map -->
+                <div class="map-search-section" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); padding: 20px; border-radius: 15px; margin: 15px 0; border: 2px solid #4caf50;">
+                    <h4 style="margin: 0 0 15px 0; color: #2e7d32; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.3em;">🔍</span>
+                        البحث عن محل واختياره مباشرة
+                    </h4>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch;">
+                        <div style="flex: 1; min-width: 250px; position: relative;">
+                            <input type="text" id="mapShopSearchInput" class="form-control" 
+                                   placeholder="🔎 ابحث باسم المحل..." 
+                                   oninput="searchShopsOnMap()"
+                                   style="padding: 12px 15px; font-size: 1em; border: 2px solid #4caf50; border-radius: 10px; width: 100%;">
+                            <div id="mapShopSearchResults" style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #4caf50; border-top: none; border-radius: 0 0 10px 10px; max-height: 300px; overflow-y: auto; display: none; z-index: 1000; box-shadow: 0 5px 15px rgba(0,0,0,0.2);"></div>
+                        </div>
+                        <button class="map-tool-btn" onclick="clearMapSearch()" style="background: linear-gradient(135deg, #ff5722 0%, #e64a19 100%); color: white; padding: 12px 20px; white-space: nowrap;">
+                            🗑️ مسح البحث
+                        </button>
+                    </div>
+                    <p style="margin: 10px 0 0 0; font-size: 0.9em; color: #388e3c;">
+                        💡 <strong>اكتب اسم المحل</strong> للبحث عنه، ثم <strong>انقر عليه</strong> لإضافته مباشرة لخطة التفتيش
+                    </p>
+                </div>
+                
                 <!-- Helper Tools -->
                 <div class="map-helper-tools">
                     <h4>🛠️ أدوات مساعدة</h4>
@@ -6038,6 +6061,317 @@
             }
         }
         
+        // ========================================
+        // Map Search Functions - البحث عن المحلات على الخريطة
+        // ========================================
+        
+        // Search shops on map by name
+        function searchShopsOnMap() {
+            const searchInput = document.getElementById('mapShopSearchInput');
+            const resultsContainer = document.getElementById('mapShopSearchResults');
+            
+            if (!searchInput || !resultsContainer) return;
+            
+            const searchTerm = searchInput.value.trim().toLowerCase();
+            
+            // Hide results if search is empty
+            if (searchTerm.length < 2) {
+                resultsContainer.style.display = 'none';
+                resultsContainer.innerHTML = '';
+                return;
+            }
+            
+            // Get all shops and filter by search term
+            const matchingShops = [];
+            
+            if (shopsDetails) {
+                Object.keys(shopsDetails).forEach(shopName => {
+                    const shop = shopsDetails[shopName];
+                    const nameMatch = shopName.toLowerCase().includes(searchTerm);
+                    const arabicNameMatch = shop.nameAr && shop.nameAr.toLowerCase().includes(searchTerm);
+                    const areaMatch = shop.area && shop.area.toLowerCase().includes(searchTerm);
+                    const addressMatch = shop.address && shop.address.toLowerCase().includes(searchTerm);
+                    
+                    if (nameMatch || arabicNameMatch || areaMatch || addressMatch) {
+                        matchingShops.push({
+                            shopName: shopName,
+                            shop: shop,
+                            isSelected: mapSelectedShops.includes(shopName)
+                        });
+                    }
+                });
+            }
+            
+            // Sort results: selected first, then by name
+            matchingShops.sort((a, b) => {
+                if (a.isSelected && !b.isSelected) return -1;
+                if (!a.isSelected && b.isSelected) return 1;
+                return a.shopName.localeCompare(b.shopName, 'ar');
+            });
+            
+            // Build results HTML
+            if (matchingShops.length === 0) {
+                resultsContainer.innerHTML = `
+                    <div style="padding: 15px; text-align: center; color: #666;">
+                        <span style="font-size: 1.5em;">🔍</span>
+                        <p style="margin: 5px 0 0 0;">لم يتم العثور على محلات مطابقة</p>
+                    </div>
+                `;
+                resultsContainer.style.display = 'block';
+                return;
+            }
+            
+            let html = `<div style="padding: 8px; background: #e8f5e9; color: #2e7d32; font-size: 0.9em; border-bottom: 1px solid #c8e6c9;">
+                تم العثور على ${matchingShops.length} محل - انقر على المحل لإضافته للخطة
+            </div>`;
+            
+            matchingShops.slice(0, 20).forEach(({ shopName, shop, isSelected }) => {
+                const priority = getShopPriority(shopName);
+                const priorityColors = {
+                    'very-high': { bg: '#ffebee', border: '#8b0000', icon: '🔴' },
+                    'high': { bg: '#ffebee', border: '#dc3545', icon: '🟠' },
+                    'medium': { bg: '#fffde7', border: '#ffc107', icon: '🟡' },
+                    'normal': { bg: '#e3f2fd', border: '#667eea', icon: '🔵' }
+                };
+                const priorityStyle = priorityColors[priority] || priorityColors['normal'];
+                
+                html += `
+                    <div data-shop-name="${escapeHtml(shopName)}" class="map-search-result-item"
+                         style="padding: 12px; cursor: pointer; border-bottom: 1px solid #eee; 
+                                background: ${isSelected ? '#c8e6c9' : 'white'}; 
+                                transition: all 0.2s; border-right: 4px solid ${priorityStyle.border};"
+                         onmouseover="this.style.background='${isSelected ? '#a5d6a7' : '#f5f5f5'}'"
+                         onmouseout="this.style.background='${isSelected ? '#c8e6c9' : 'white'}'">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 1.3em;">${isSelected ? '✅' : '🏪'}</span>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: #2d3561;">
+                                    ${escapeHtml(shop.nameAr || shopName)}
+                                </div>
+                                <div style="font-size: 0.85em; color: #666; margin-top: 2px;">
+                                    📍 ${escapeHtml(shop.area || 'غير محدد')} 
+                                    ${shop.address ? `| ${escapeHtml(shop.address.length > 30 ? shop.address.substring(0, 30) + '...' : shop.address)}` : ''}
+                                </div>
+                            </div>
+                            <span style="font-size: 1.1em;" title="الأولوية: ${priority}">${priorityStyle.icon}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            if (matchingShops.length > 20) {
+                html += `<div style="padding: 10px; text-align: center; color: #999; font-size: 0.9em;">
+                    ... و ${matchingShops.length - 20} محل آخر (حدد البحث للمزيد)
+                </div>`;
+            }
+            
+            resultsContainer.innerHTML = html;
+            resultsContainer.style.display = 'block';
+            
+            // Add event delegation for search result clicks
+            resultsContainer.querySelectorAll('.map-search-result-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const shopName = this.getAttribute('data-shop-name');
+                    if (shopName) {
+                        selectShopFromSearch(shopName);
+                    }
+                });
+            });
+        }
+        
+        // Select shop from search results and add to inspection plan
+        async function selectShopFromSearch(shopName) {
+            // Hide search results
+            const resultsContainer = document.getElementById('mapShopSearchResults');
+            if (resultsContainer) {
+                resultsContainer.style.display = 'none';
+            }
+            
+            // Check if shop is already selected
+            const shopIndex = mapSelectedShops.indexOf(shopName);
+            
+            if (shopIndex === -1) {
+                // Add shop to selection
+                mapSelectedShops.push(shopName);
+                console.log(`✅ Shop added from search: ${shopName}`);
+                
+                // Find and highlight marker on map if it exists
+                const marker = markers.find(m => m.shopName === shopName);
+                if (marker) {
+                    // Update marker appearance
+                    marker.setIcon({
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 12,
+                        fillColor: '#28a745',
+                        fillOpacity: 1,
+                        strokeColor: 'white',
+                        strokeWeight: 2
+                    });
+                    
+                    // Pan to marker
+                    map.panTo(marker.getPosition());
+                    map.setZoom(15);
+                    
+                    // Show info window
+                    showInfoWindow(marker, `✅ تم إضافة "${shopName}" للخطة`);
+                } else {
+                    // Shop doesn't have a marker (no coordinates), but still add it
+                    console.log(`ℹ️ Shop "${shopName}" has no map marker but was added to selection`);
+                }
+                
+                // Update selection display
+                updateMapSelection();
+                
+                // Enable apply button
+                document.getElementById('applyMapBtn').disabled = false;
+                document.getElementById('saveFromMapBtn').disabled = false;
+                
+                // Update stats
+                updateMapStats();
+                
+                // Show success message
+                showMapNotification(`✅ تم إضافة "${shopName}" لخطة التفتيش`, 'success');
+            } else {
+                // Remove shop from selection (toggle)
+                mapSelectedShops.splice(shopIndex, 1);
+                console.log(`❌ Shop removed from search: ${shopName}`);
+                
+                // Find and update marker appearance
+                const marker = markers.find(m => m.shopName === shopName);
+                if (marker) {
+                    const priority = getShopPriority(shopName);
+                    let markerColor = '#667eea';
+                    if (priority === 'very-high') markerColor = '#8b0000';
+                    else if (priority === 'high') markerColor = '#dc3545';
+                    else if (priority === 'medium') markerColor = '#ffc107';
+                    
+                    marker.setIcon({
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 8,
+                        fillColor: markerColor,
+                        fillOpacity: 0.8,
+                        strokeColor: 'white',
+                        strokeWeight: 2
+                    });
+                }
+                
+                // Update selection display
+                updateMapSelection();
+                
+                // Update buttons state
+                const hasSelection = mapSelectedShops.length > 0;
+                document.getElementById('applyMapBtn').disabled = !hasSelection;
+                document.getElementById('saveFromMapBtn').disabled = !hasSelection;
+                
+                // Update stats
+                updateMapStats();
+                
+                // Show removal message
+                showMapNotification(`❌ تم إزالة "${shopName}" من خطة التفتيش`, 'warning');
+            }
+            
+            // Clear search input
+            const searchInput = document.getElementById('mapShopSearchInput');
+            if (searchInput) {
+                searchInput.value = '';
+            }
+        }
+        
+        // Clear map search
+        function clearMapSearch() {
+            const searchInput = document.getElementById('mapShopSearchInput');
+            const resultsContainer = document.getElementById('mapShopSearchResults');
+            
+            if (searchInput) {
+                searchInput.value = '';
+            }
+            
+            if (resultsContainer) {
+                resultsContainer.style.display = 'none';
+                resultsContainer.innerHTML = '';
+            }
+        }
+        
+        // Show temporary notification on map
+        function showMapNotification(message, type = 'info') {
+            // Remove any existing notification
+            const existingNotification = document.getElementById('mapNotification');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+            
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.id = 'mapNotification';
+            
+            const colors = {
+                success: { bg: '#d4edda', border: '#28a745', text: '#155724' },
+                warning: { bg: '#fff3cd', border: '#ffc107', text: '#856404' },
+                error: { bg: '#f8d7da', border: '#dc3545', text: '#721c24' },
+                info: { bg: '#d1ecf1', border: '#17a2b8', text: '#0c5460' }
+            };
+            const style = colors[type] || colors.info;
+            
+            notification.style.cssText = `
+                position: fixed;
+                bottom: 100px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: ${style.bg};
+                border: 2px solid ${style.border};
+                color: ${style.text};
+                padding: 12px 25px;
+                border-radius: 10px;
+                font-family: 'Cairo', sans-serif;
+                font-weight: 600;
+                font-size: 1em;
+                z-index: 10000;
+                box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+                animation: slideUp 0.3s ease-out;
+            `;
+            notification.textContent = message;
+            
+            // Add animation keyframes if not already added
+            if (!document.getElementById('mapNotificationStyles')) {
+                const styleSheet = document.createElement('style');
+                styleSheet.id = 'mapNotificationStyles';
+                styleSheet.textContent = `
+                    @keyframes slideUp {
+                        from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+                        to { transform: translateX(-50%) translateY(0); opacity: 1; }
+                    }
+                `;
+                document.head.appendChild(styleSheet);
+            }
+            
+            document.body.appendChild(notification);
+            
+            // Remove notification after 3 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.style.opacity = '0';
+                    notification.style.transform = 'translateX(-50%) translateY(20px)';
+                    setTimeout(() => notification.remove(), 300);
+                }
+            }, 3000);
+        }
+        
+        // Close search results when clicking outside
+        document.addEventListener('click', function(event) {
+            const searchInput = document.getElementById('mapShopSearchInput');
+            const resultsContainer = document.getElementById('mapShopSearchResults');
+            
+            if (searchInput && resultsContainer && event.target) {
+                if (!searchInput.contains(event.target) && !resultsContainer.contains(event.target)) {
+                    resultsContainer.style.display = 'none';
+                }
+            }
+        });
+        
+        // ========================================
+        // End of Map Search Functions
+        // ========================================
+        
         // Apply map selection to main form
         async function applyMapSelection() {
             if (mapSelectedShops.length === 0) {
@@ -6843,6 +7177,15 @@
         }
         
         // Sort shops by priority
+        // Get shop priority level - helper function for map features
+        // Returns: 'very-high', 'high', 'medium', or 'low'
+        function getShopPriority(shopName) {
+            // Use current date by default
+            const today = new Date().toISOString().split('T')[0];
+            const priority = calculateShopPriority(shopName, null, today);
+            return priority.level;
+        }
+        
         function sortShopsByPriority(shops, inspector, date) {
             return shops.map(shop => {
                 const priority = calculateShopPriority(shop, inspector, date);

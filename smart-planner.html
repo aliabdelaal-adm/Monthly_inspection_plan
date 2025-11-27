@@ -6136,7 +6136,7 @@
                 const priorityStyle = priorityColors[priority] || priorityColors['normal'];
                 
                 html += `
-                    <div onclick="selectShopFromSearch('${escapeJs(shopName)}')" 
+                    <div data-shop-name="${escapeHtml(shopName)}" class="map-search-result-item"
                          style="padding: 12px; cursor: pointer; border-bottom: 1px solid #eee; 
                                 background: ${isSelected ? '#c8e6c9' : 'white'}; 
                                 transition: all 0.2s; border-right: 4px solid ${priorityStyle.border};"
@@ -6150,7 +6150,7 @@
                                 </div>
                                 <div style="font-size: 0.85em; color: #666; margin-top: 2px;">
                                     📍 ${escapeHtml(shop.area || 'غير محدد')} 
-                                    ${shop.address ? `| ${escapeHtml(shop.address.substring(0, 30))}...` : ''}
+                                    ${shop.address ? `| ${escapeHtml(shop.address.length > 30 ? shop.address.substring(0, 30) + '...' : shop.address)}` : ''}
                                 </div>
                             </div>
                             <span style="font-size: 1.1em;" title="الأولوية: ${priority}">${priorityStyle.icon}</span>
@@ -6167,6 +6167,16 @@
             
             resultsContainer.innerHTML = html;
             resultsContainer.style.display = 'block';
+            
+            // Add event delegation for search result clicks
+            resultsContainer.querySelectorAll('.map-search-result-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const shopName = this.getAttribute('data-shop-name');
+                    if (shopName) {
+                        selectShopFromSearch(shopName);
+                    }
+                });
+            });
         }
         
         // Select shop from search results and add to inspection plan
@@ -6339,7 +6349,8 @@
             // Remove notification after 3 seconds
             setTimeout(() => {
                 if (notification.parentNode) {
-                    notification.style.animation = 'slideUp 0.3s ease-out reverse';
+                    notification.style.opacity = '0';
+                    notification.style.transform = 'translateX(-50%) translateY(20px)';
                     setTimeout(() => notification.remove(), 300);
                 }
             }, 3000);
@@ -6350,7 +6361,7 @@
             const searchInput = document.getElementById('mapShopSearchInput');
             const resultsContainer = document.getElementById('mapShopSearchResults');
             
-            if (searchInput && resultsContainer) {
+            if (searchInput && resultsContainer && event.target) {
                 if (!searchInput.contains(event.target) && !resultsContainer.contains(event.target)) {
                     resultsContainer.style.display = 'none';
                 }

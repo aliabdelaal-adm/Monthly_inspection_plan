@@ -21974,9 +21974,25 @@
             
             const url = urlInput.value.trim();
             
-            // Validate that it's a Google Maps URL
-            if (!url.includes('google.com/maps') && !url.includes('goo.gl/maps') && !url.includes('maps.app.goo.gl')) {
-                showExtractionStatus('❌ هذا ليس رابط خرائط جوجل صحيح', 'error');
+            // Validate that it's a valid Google Maps URL with proper domain checking
+            let isValidGoogleMapsUrl = false;
+            try {
+                const urlObj = new URL(url);
+                const hostname = urlObj.hostname.toLowerCase();
+                // Check for valid Google Maps domains
+                isValidGoogleMapsUrl = (
+                    (hostname === 'www.google.com' || hostname === 'google.com' || hostname.endsWith('.google.com')) && 
+                    urlObj.pathname.includes('/maps')
+                ) || 
+                hostname === 'goo.gl' || 
+                hostname === 'maps.app.goo.gl' ||
+                hostname === 'maps.google.com';
+            } catch (e) {
+                isValidGoogleMapsUrl = false;
+            }
+            
+            if (!isValidGoogleMapsUrl) {
+                showExtractionStatus('❌ هذا ليس رابط خرائط جوجل صحيح. يرجى نسخ الرابط من شريط عنوان المتصفح في خرائط جوجل.', 'error');
                 return;
             }
             
@@ -21991,19 +22007,31 @@
                 // Pattern 1: /place/Name+Of+Place/
                 const placeMatch = url.match(/\/place\/([^\/\@]+)/);
                 if (placeMatch) {
-                    extractedName = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '));
+                    try {
+                        extractedName = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '));
+                    } catch (e) {
+                        extractedName = placeMatch[1].replace(/\+/g, ' ');
+                    }
                 }
                 
                 // Pattern 2: Search query in URL
                 const searchMatch = url.match(/\/search\/([^\/\@]+)/);
                 if (searchMatch && !extractedName) {
-                    extractedName = decodeURIComponent(searchMatch[1].replace(/\+/g, ' '));
+                    try {
+                        extractedName = decodeURIComponent(searchMatch[1].replace(/\+/g, ' '));
+                    } catch (e) {
+                        extractedName = searchMatch[1].replace(/\+/g, ' ');
+                    }
                 }
                 
                 // Pattern 3: Query parameter q=
                 const qMatch = url.match(/[?&]q=([^&]+)/);
                 if (qMatch && !extractedName) {
-                    extractedName = decodeURIComponent(qMatch[1].replace(/\+/g, ' '));
+                    try {
+                        extractedName = decodeURIComponent(qMatch[1].replace(/\+/g, ' '));
+                    } catch (e) {
+                        extractedName = qMatch[1].replace(/\+/g, ' ');
+                    }
                 }
                 
                 // Try to extract coordinates for address hints
@@ -22041,8 +22069,10 @@
                         document.getElementById('petShopName').value = extractedName;
                     } else if (hasEnglish) {
                         document.getElementById('petShopNameEn').value = extractedName;
-                        // Also put in Arabic field as placeholder
+                        // Set Arabic field as well but highlight it needs translation
                         document.getElementById('petShopName').value = extractedName;
+                        document.getElementById('petShopName').style.border = '2px solid #ffc107';
+                        document.getElementById('petShopName').placeholder = 'يرجى ترجمة الاسم إلى العربية';
                     }
                 }
                 
@@ -22054,15 +22084,23 @@
                     }
                 }
                 
-                showExtractionStatus(
-                    '✅ تم استخراج البيانات من الرابط!\n' +
-                    (extractedName ? `📍 الاسم: ${extractedName}\n` : '') +
-                    '✏️ يرجى مراجعة وإكمال البيانات الناقصة',
-                    'success'
-                );
+                // Build success message
+                let successMessage = '✅ تم استخراج البيانات من الرابط!\n';
+                if (extractedName) {
+                    successMessage += `📍 الاسم: ${extractedName}\n`;
+                }
+                successMessage += '✏️ يرجى مراجعة وإكمال البيانات الناقصة';
                 
-                // Clear the URL input
-                urlInput.value = '';
+                // If the name is in English, add a note about translation
+                const hasArabicFinal = /[\u0600-\u06FF]/.test(extractedName);
+                if (extractedName && !hasArabicFinal) {
+                    successMessage += '\n⚠️ الاسم بالإنجليزية - يرجى ترجمته للعربية';
+                }
+                
+                showExtractionStatus(successMessage, 'success');
+                
+                // Don't clear the URL input - keep it until successful form submission
+                // User can manually clear it if needed
                 
                 // Focus on the first empty required field
                 if (!document.getElementById('petShopName').value) {
@@ -22073,7 +22111,7 @@
                 
             } catch (error) {
                 console.error('Error extracting data from URL:', error);
-                showExtractionStatus('❌ حدث خطأ أثناء استخراج البيانات', 'error');
+                showExtractionStatus('❌ حدث خطأ أثناء استخراج البيانات. يرجى التأكد من صحة الرابط والمحاولة مرة أخرى.', 'error');
             }
         }
         
@@ -22311,6 +22349,13 @@
             const urlInput = document.getElementById('googleMapsUrlInput');
             if (urlInput) {
                 urlInput.value = '';
+            }
+            
+            // Reset Arabic name field border style (may have been highlighted for translation)
+            const petShopNameField = document.getElementById('petShopName');
+            if (petShopNameField) {
+                petShopNameField.style.border = '';
+                petShopNameField.placeholder = 'مثال: محل الطيور الجميلة';
             }
             
             // Hide extraction status

@@ -6448,15 +6448,16 @@
                 // Get current map center for search location
                 const center = map ? map.getCenter() : { lat: () => 24.4539, lng: () => 54.3773 };
                 
-                // Create search request
+                // Create search request for textSearch API
+                // Note: textSearch accepts 'type' as a single string (not array)
+                // We rely on the query term for filtering rather than type restrictions
                 const request = {
                     query: searchTerm,
                     location: {
                         lat: typeof center.lat === 'function' ? center.lat() : center.lat,
                         lng: typeof center.lng === 'function' ? center.lng() : center.lng
                     },
-                    radius: FEATURE_CONFIG.googlePlacesSearchRadius || 50000, // Default 50km radius
-                    type: FEATURE_CONFIG.googlePlacesSearchTypes || ['establishment', 'store', 'pet_store', 'shopping_mall']
+                    radius: FEATURE_CONFIG.googlePlacesSearchRadius || 50000 // Default 50km radius
                 };
                 
                 // Use textSearch for more flexible search
@@ -6502,8 +6503,14 @@
             displayResults.forEach((place, index) => {
                 const placeName = place.name || 'مكان غير معروف';
                 const placeAddress = place.formatted_address || place.vicinity || 'العنوان غير متاح';
-                const placeRating = place.rating ? `⭐ ${place.rating.toFixed(1)}` : '';
-                const placeTypes = place.types ? place.types.slice(0, 2).join(', ') : '';
+                // Safely format rating - place.rating is a number from Google API
+                const placeRating = place.rating ? `⭐ ${parseFloat(place.rating).toFixed(1)}` : '';
+                // Safely format types - filter and join only valid string types
+                const placeTypes = place.types ? place.types
+                    .filter(t => typeof t === 'string')
+                    .slice(0, 2)
+                    .map(t => t.replace(/_/g, ' '))  // Make types more readable
+                    .join(', ') : '';
                 
                 // Check if this place is already in our shops list
                 const isExistingShop = shopsDetails && Object.keys(shopsDetails).some(shopName => 

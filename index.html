@@ -184,6 +184,13 @@
     <!-- Chart.js for Smart Data Visualization -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
+        /* UAE National Day Colors - CSS Custom Properties */
+        :root {
+            --uae-green: #00732f;
+            --uae-red: #ff0000;
+            --uae-black: #000000;
+        }
+        
         /* Universal box-sizing to prevent overflow issues */
         *, *::before, *::after {
             box-sizing: border-box;
@@ -1111,46 +1118,43 @@
             font-family: 'Tajawal', 'Cairo', Arial, sans-serif;
             font-size: 1.1em;
             font-weight: 700;
-            background: linear-gradient(90deg, #00732f 0%, #ff0000 50%, #000000 100%);
+            /* Fallback color for browsers that don't support background-clip: text */
+            color: var(--uae-green);
+            /* Gradient using CSS custom properties */
+            background: linear-gradient(90deg, var(--uae-green) 0%, var(--uae-red) 50%, var(--uae-black) 100%);
             background-size: 200% auto;
+            /* Standard property first, then webkit prefix */
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
-            animation: textGradient 3s linear infinite, textAppearDisappear 5s ease-in-out infinite, textRewrite 5s steps(12) infinite;
+            /* Consolidated animation - removed clip-path for better performance */
+            animation: uaeTextAnimation 5s ease-in-out infinite;
             white-space: nowrap;
             text-shadow: none;
             position: relative;
         }
         
-        @keyframes textGradient {
-            0% { background-position: 0% center; }
-            100% { background-position: 200% center; }
-        }
-        
-        @keyframes textAppearDisappear {
-            0%, 10% { 
+        /* Combined animation for better performance */
+        @keyframes uaeTextAnimation {
+            0%, 5% { 
                 opacity: 0; 
                 transform: translateY(10px);
+                background-position: 0% center;
             }
-            20%, 80% { 
+            15%, 45% { 
                 opacity: 1; 
                 transform: translateY(0);
+                background-position: 100% center;
             }
-            90%, 100% { 
+            55%, 85% { 
+                opacity: 1; 
+                transform: translateY(0);
+                background-position: 200% center;
+            }
+            95%, 100% { 
                 opacity: 0; 
                 transform: translateY(-10px);
-            }
-        }
-        
-        @keyframes textRewrite {
-            0% { 
-                clip-path: inset(0 100% 0 0);
-            }
-            50% { 
-                clip-path: inset(0 0 0 0);
-            }
-            100% { 
-                clip-path: inset(0 0 0 100%);
+                background-position: 200% center;
             }
         }
         
@@ -1173,6 +1177,20 @@
             
             .uae-national-day-text {
                 font-size: 0.95em;
+            }
+        }
+        
+        /* Reduced motion preference for accessibility */
+        @media (prefers-reduced-motion: reduce) {
+            .uae-flag-animated {
+                animation: none;
+                opacity: 0.5;
+            }
+            
+            .uae-national-day-text {
+                animation: none;
+                opacity: 1;
+                background-position: 100% center;
             }
         }
         

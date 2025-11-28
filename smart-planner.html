@@ -4292,7 +4292,7 @@
                 <button class="map-modal-close" onclick="closeMapModal()">✖ إغلاق</button>
             </div>
             
-            <div class="map-modal-body">
+            <div class="map-modal-body" style="overflow-y: auto;">
                 <!-- Controls Panel -->
                 <div class="map-controls-panel">
                     <div class="map-control-group">
@@ -4323,8 +4323,91 @@
                     </div>
                 </div>
                 
+                <!-- NEW: Quick Action - Open Google Maps Directly -->
+                <div style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); padding: 20px; margin: 15px 20px; border-radius: 15px; text-align: center; box-shadow: 0 4px 15px rgba(238, 90, 36, 0.3);">
+                    <h4 style="margin: 0 0 15px 0; color: white; font-size: 1.3em;">
+                        🗺️ فتح خرائط جوجل مباشرة للنقر على المحلات
+                    </h4>
+                    <p style="margin: 0 0 15px 0; color: rgba(255,255,255,0.9); font-size: 0.95em;">
+                        💡 انقر على الزر أدناه لفتح خرائط جوجل في نافذة جديدة، ثم انقر على أي محل وانسخ رابطه للإضافة
+                    </p>
+                    <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                        <button onclick="openGoogleMapsDirectly()" style="background: white; color: #ee5a24; border: none; padding: 15px 30px; border-radius: 10px; font-weight: bold; font-size: 1.1em; cursor: pointer; display: flex; align-items: center; gap: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.2); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                            <span style="font-size: 1.3em;">🌍</span>
+                            فتح خرائط جوجل (محلات الحيوانات)
+                        </button>
+                        <button onclick="openGoogleMapsDirectlyPetShops()" style="background: white; color: #ee5a24; border: none; padding: 15px 30px; border-radius: 10px; font-weight: bold; font-size: 1.1em; cursor: pointer; display: flex; align-items: center; gap: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.2); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                            <span style="font-size: 1.3em;">🐾</span>
+                            البحث عن محلات حيوانات أليفة
+                        </button>
+                        <button onclick="openGoogleMapsDirectlyBirdShops()" style="background: white; color: #ee5a24; border: none; padding: 15px 30px; border-radius: 10px; font-weight: bold; font-size: 1.1em; cursor: pointer; display: flex; align-items: center; gap: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.2); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                            <span style="font-size: 1.3em;">🐦</span>
+                            البحث عن محلات الطيور
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Map Container - Moved UP for better visibility -->
+                <div class="map-container" style="margin: 15px 20px; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+                    <div id="googleMap" style="border-radius: 15px;"></div>
+                </div>
+                
+                <!-- Helper Tools - Enhanced visibility and functionality -->
+                <div class="map-helper-tools" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin: 15px 20px; border: none; color: white;">
+                    <h4 style="color: white; margin-bottom: 15px; font-size: 1.2em;">🛠️ أدوات مساعدة - انقر على الأزرار للتفاعل مع الخريطة</h4>
+                    <div class="map-tools-buttons" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="map-tool-btn" onclick="selectNearbyShops()" style="background: white; color: #667eea; border: 2px solid white; font-weight: bold; padding: 12px 20px;">
+                            📍 اختيار المحلات المتقاربة
+                        </button>
+                        <button class="map-tool-btn" onclick="selectHighPriorityShops()" style="background: white; color: #667eea; border: 2px solid white; font-weight: bold; padding: 12px 20px;">
+                            ⭐ اختيار الأولوية العالية
+                        </button>
+                        <button class="map-tool-btn" onclick="clearMapSelection()" style="background: white; color: #dc3545; border: 2px solid white; font-weight: bold; padding: 12px 20px;">
+                            🗑️ مسح الاختيار
+                        </button>
+                        <button class="map-tool-btn" onclick="zoomToSelectedShops()" style="background: white; color: #667eea; border: 2px solid white; font-weight: bold; padding: 12px 20px;">
+                            🔍 تكبير على المختارة
+                        </button>
+                        <button class="map-tool-btn" onclick="showAllShops()" style="background: white; color: #667eea; border: 2px solid white; font-weight: bold; padding: 12px 20px;">
+                            🌍 عرض جميع المحلات
+                        </button>
+                        <button class="map-tool-btn" onclick="refreshMapMarkers()" style="background: white; color: #28a745; border: 2px solid white; font-weight: bold; padding: 12px 20px;">
+                            🔄 تحديث علامات الخريطة
+                        </button>
+                    </div>
+                    <p style="margin: 15px 0 0 0; font-size: 0.9em; color: rgba(255,255,255,0.9);">
+                        💡 <strong>نصيحة:</strong> انقر مباشرة على المحلات في الخريطة أعلاه لإضافتها، أو استخدم الأزرار أعلاه لاختيار مجموعة من المحلات
+                    </p>
+                </div>
+                
+                <!-- Selected Shops Display - Moved up for visibility -->
+                <div id="selectedShopsOnMap" class="selected-shops-on-map" style="display: none; margin: 15px 20px;">
+                    <h4>✅ المحلات المختارة (<span id="mapSelectedCount">0</span>)</h4>
+                    <div id="selectedShopTags"></div>
+                </div>
+                
+                <!-- Statistics Bar - Enhanced -->
+                <div class="map-stats-bar" style="margin: 0 20px 15px 20px; border-radius: 10px;">
+                    <div class="map-stat-item">
+                        <div class="map-stat-value" id="mapTotalShops">0</div>
+                        <div class="map-stat-label">إجمالي المحلات</div>
+                    </div>
+                    <div class="map-stat-item">
+                        <div class="map-stat-value" id="mapAvailableShops">0</div>
+                        <div class="map-stat-label">المحلات المتاحة</div>
+                    </div>
+                    <div class="map-stat-item">
+                        <div class="map-stat-value" id="mapSelectedShops">0</div>
+                        <div class="map-stat-label">المحلات المختارة</div>
+                    </div>
+                    <div class="map-stat-item">
+                        <div class="map-stat-value" id="mapHighPriorityShops">0</div>
+                        <div class="map-stat-label">أولوية عالية</div>
+                    </div>
+                </div>
+                
                 <!-- Search Section for Shops on Map -->
-                <div class="map-search-section" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); padding: 20px; border-radius: 15px; margin: 15px 0; border: 2px solid #4caf50;">
+                <div class="map-search-section" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); padding: 20px; border-radius: 15px; margin: 15px 20px; border: 2px solid #4caf50;">
                     <h4 style="margin: 0 0 15px 0; color: #2e7d32; display: flex; align-items: center; gap: 10px;">
                         <span style="font-size: 1.3em;">🔍</span>
                         البحث عن محل واختياره مباشرة
@@ -4347,7 +4430,7 @@
                 </div>
                 
                 <!-- NEW: Google Places Search Section - Search on Google Maps -->
-                <div class="map-search-section" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 20px; border-radius: 15px; margin: 15px 0; border: 2px solid #1976d2;">
+                <div class="map-search-section" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 20px; border-radius: 15px; margin: 15px 20px; border: 2px solid #1976d2;">
                     <h4 style="margin: 0 0 15px 0; color: #1565c0; display: flex; align-items: center; gap: 10px;">
                         <span style="font-size: 1.3em;">🌐</span>
                         البحث في خرائط جوجل (اكتشاف محلات جديدة)
@@ -4373,30 +4456,8 @@
                     <div id="googlePlacesSearchStatus" style="margin-top: 10px; display: none;"></div>
                 </div>
                 
-                <!-- Helper Tools -->
-                <div class="map-helper-tools">
-                    <h4>🛠️ أدوات مساعدة</h4>
-                    <div class="map-tools-buttons">
-                        <button class="map-tool-btn" onclick="selectNearbyShops()">
-                            📍 اختيار المحلات المتقاربة
-                        </button>
-                        <button class="map-tool-btn" onclick="selectHighPriorityShops()">
-                            ⭐ اختيار الأولوية العالية
-                        </button>
-                        <button class="map-tool-btn" onclick="clearMapSelection()">
-                            🗑️ مسح الاختيار
-                        </button>
-                        <button class="map-tool-btn" onclick="zoomToSelectedShops()">
-                            🔍 تكبير على المختارة
-                        </button>
-                        <button class="map-tool-btn" onclick="showAllShops()">
-                            🌍 عرض جميع المحلات
-                        </button>
-                    </div>
-                </div>
-                
                 <!-- Location Accuracy Legend -->
-                <div class="map-accuracy-legend">
+                <div class="map-accuracy-legend" style="margin: 0 20px 15px 20px;">
                     <h4>🎯 دقة مواقع المحلات</h4>
                     <div class="accuracy-legend-items">
                         <div class="accuracy-legend-item">
@@ -4414,37 +4475,6 @@
                             <span class="accuracy-label">⚠️ دقة منخفضة - من المنطقة</span>
                             <span class="accuracy-count" id="accuracyLowCount">0</span>
                         </div>
-                    </div>
-                </div>
-                
-                <!-- Selected Shops Display -->
-                <div id="selectedShopsOnMap" class="selected-shops-on-map" style="display: none;">
-                    <h4>✅ المحلات المختارة (<span id="mapSelectedCount">0</span>)</h4>
-                    <div id="selectedShopTags"></div>
-                </div>
-                
-                <!-- Map Container -->
-                <div class="map-container">
-                    <div id="googleMap"></div>
-                </div>
-                
-                <!-- Statistics Bar -->
-                <div class="map-stats-bar">
-                    <div class="map-stat-item">
-                        <div class="map-stat-value" id="mapTotalShops">0</div>
-                        <div class="map-stat-label">إجمالي المحلات</div>
-                    </div>
-                    <div class="map-stat-item">
-                        <div class="map-stat-value" id="mapAvailableShops">0</div>
-                        <div class="map-stat-label">المحلات المتاحة</div>
-                    </div>
-                    <div class="map-stat-item">
-                        <div class="map-stat-value" id="mapSelectedShops">0</div>
-                        <div class="map-stat-label">المحلات المختارة</div>
-                    </div>
-                    <div class="map-stat-item">
-                        <div class="map-stat-value" id="mapHighPriorityShops">0</div>
-                        <div class="map-stat-label">أولوية عالية</div>
                     </div>
                 </div>
             </div>
@@ -5953,6 +5983,108 @@
             });
             map.fitBounds(bounds);
         }
+        
+        // ========================================
+        // NEW: Functions to Open Google Maps Directly
+        // ========================================
+        
+        /**
+         * Open Google Maps directly in a new tab for pet shops discovery
+         * Allows users to click on shops and copy their links
+         */
+        function openGoogleMapsDirectly() {
+            // Abu Dhabi coordinates as default center
+            const lat = 24.4539;
+            const lng = 54.3773;
+            
+            // Open Google Maps centered on Abu Dhabi
+            const mapsUrl = `https://www.google.com/maps/@${lat},${lng},12z`;
+            
+            window.open(mapsUrl, '_blank');
+            
+            showMapNotification(
+                '✅ تم فتح خرائط جوجل في نافذة جديدة!\n\n' +
+                '📋 الخطوات:\n' +
+                '1. انقر على أي محل في الخريطة\n' +
+                '2. انسخ الرابط من شريط العنوان\n' +
+                '3. استخدم مربع "البحث في خرائط جوجل" للصق الرابط',
+                'info'
+            );
+        }
+        
+        /**
+         * Open Google Maps with pet shops search
+         */
+        function openGoogleMapsDirectlyPetShops() {
+            // Abu Dhabi coordinates
+            const lat = 24.4539;
+            const lng = 54.3773;
+            
+            // Search for pet shops
+            const searchQuery = 'pet shop محل حيوانات أليفة';
+            const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(searchQuery)}/@${lat},${lng},12z`;
+            
+            window.open(mapsUrl, '_blank');
+            
+            showMapNotification(
+                '✅ تم فتح بحث محلات الحيوانات الأليفة في خرائط جوجل!\n\n' +
+                '📋 انقر على أي محل ثم انسخ رابطه لإضافته هنا',
+                'info'
+            );
+        }
+        
+        /**
+         * Open Google Maps with bird shops search
+         */
+        function openGoogleMapsDirectlyBirdShops() {
+            // Abu Dhabi coordinates
+            const lat = 24.4539;
+            const lng = 54.3773;
+            
+            // Search for bird shops
+            const searchQuery = 'bird shop محل طيور';
+            const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(searchQuery)}/@${lat},${lng},12z`;
+            
+            window.open(mapsUrl, '_blank');
+            
+            showMapNotification(
+                '✅ تم فتح بحث محلات الطيور في خرائط جوجل!\n\n' +
+                '📋 انقر على أي محل ثم انسخ رابطه لإضافته هنا',
+                'info'
+            );
+        }
+        
+        /**
+         * Refresh map markers - useful when markers don't load properly
+         */
+        async function refreshMapMarkers() {
+            if (!map) {
+                showMapNotification('⚠️ الخريطة غير محملة، يرجى الانتظار...', 'warning');
+                return;
+            }
+            
+            try {
+                // Clear existing markers
+                markers.forEach(marker => {
+                    if (marker.setMap) {
+                        marker.setMap(null);
+                    }
+                });
+                markers = [];
+                
+                // Reload markers
+                await loadShopMarkers();
+                
+                showMapNotification('✅ تم تحديث علامات الخريطة بنجاح!', 'success');
+            } catch (error) {
+                console.error('Error refreshing markers:', error);
+                showMapNotification('❌ حدث خطأ أثناء تحديث العلامات', 'error');
+            }
+        }
+        
+        // ========================================
+        // End of Google Maps Direct Open Functions
+        // ========================================
         
         // Open map modal
         async function openMapModal() {

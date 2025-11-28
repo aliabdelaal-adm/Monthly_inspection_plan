@@ -20167,52 +20167,103 @@
                 <ol style="margin: 0; padding-right: 20px; line-height: 1.8;">
                     <li>انقر على زر "فتح خرائط جوجل" أدناه</li>
                     <li>سيتم فتح خرائط جوجل تلقائياً مع البحث عن محلات الحيوانات الأليفة</li>
-                    <li>انسخ اسم المحل والموقع من خرائط جوجل</li>
-                    <li>الصق المعلومات في النموذج أدناه</li>
-                    <li>انقر على "إضافة إلى خطة التفتيش" لإضافة المحل تلقائياً</li>
+                    <li>انقر على أي محل في الخريطة لعرض تفاصيله</li>
+                    <li>انسخ رابط المحل من شريط العنوان أو من زر "مشاركة"</li>
+                    <li>الصق الرابط في الحقل أدناه وانقر "استخراج البيانات"</li>
+                    <li>سيتم تعبئة البيانات تلقائياً في النموذج</li>
                 </ol>
             </div>
             
-            <div style="text-align: center; margin-bottom: 30px;">
+            <div style="text-align: center; margin-bottom: 20px;">
                 <button onclick="openGoogleMapsSearch()" class="btn btn-primary" style="font-size: 1.2em; padding: 18px 40px;">
                     <span>🗺️</span>
                     <span>فتح خرائط جوجل للبحث</span>
                 </button>
             </div>
             
+            <!-- Section for pasting Google Maps URL -->
+            <div style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 2px solid #4caf50;">
+                <h3 style="color: #2e7d32; margin-bottom: 15px; text-align: center;">🔗 استخراج بيانات المحل من خرائط جوجل</h3>
+                <p style="color: #388e3c; margin-bottom: 15px; text-align: center; font-size: 0.95em;">
+                    بعد النقر على المحل في خرائط جوجل، انسخ الرابط والصقه هنا
+                </p>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <input type="text" id="googleMapsUrlInput" class="form-control" style="flex: 1; min-width: 250px;"
+                           placeholder="الصق رابط خرائط جوجل هنا... مثال: https://maps.google.com/?cid=...">
+                    <button type="button" onclick="extractDataFromGoogleMapsUrl()" class="btn btn-success" style="white-space: nowrap;">
+                        <span>📥</span>
+                        <span>استخراج البيانات</span>
+                    </button>
+                </div>
+                <div id="extractionStatus" class="status-message" style="margin-top: 10px; display: none;"></div>
+            </div>
+            
             <div style="background: white; padding: 25px; border-radius: 10px; border: 2px solid #667eea;">
-                <h3 style="color: #2d3561; margin-bottom: 20px; text-align: center;">✏️ إضافة محل إلى خطة التفتيش</h3>
+                <h3 style="color: #2d3561; margin-bottom: 20px; text-align: center;">✏️ تفاصيل المحل</h3>
                 
                 <form id="smartPetShopForm" onsubmit="addPetShopToInspection(event)">
-                    <div class="form-group">
-                        <label class="form-label">اسم المحل *</label>
-                        <input type="text" id="petShopName" class="form-control" required 
-                               placeholder="مثال: محل الطيور الجميلة، متجر أسماك الزينة">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
+                        <div class="form-group">
+                            <label class="form-label">اسم المحل بالعربية *</label>
+                            <input type="text" id="petShopName" class="form-control" required 
+                                   placeholder="مثال: محل الطيور الجميلة">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">اسم المحل بالإنجليزية</label>
+                            <input type="text" id="petShopNameEn" class="form-control" 
+                                   placeholder="Example: Beautiful Birds Shop">
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
+                        <div class="form-group">
+                            <label class="form-label">المنطقة *</label>
+                            <select id="petShopArea" class="form-control" required>
+                                <option value="">اختر المنطقة</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">طبيعة نشاط المحل</label>
+                            <select id="petShopBusinessType" class="form-control">
+                                <option value="">اختر نوع النشاط</option>
+                                <option value="pet_shop">محل حيوانات أليفة</option>
+                                <option value="bird_shop">محل طيور</option>
+                                <option value="fish_shop">محل أسماك زينة</option>
+                                <option value="pet_supplies">مستلزمات حيوانات</option>
+                                <option value="pet_grooming">تجميل حيوانات</option>
+                                <option value="veterinary">عيادة بيطرية</option>
+                                <option value="mixed">متعدد الأنشطة</option>
+                                <option value="other">أخرى</option>
+                            </select>
+                        </div>
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">المنطقة *</label>
-                        <select id="petShopArea" class="form-control" required>
-                            <option value="">اختر المنطقة</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">العنوان / الموقع</label>
+                        <label class="form-label">العنوان التفصيلي</label>
                         <input type="text" id="petShopAddress" class="form-control" 
-                               placeholder="مثال: شارع الشيخ زايد، بالقرب من مول أبوظبي">
+                               placeholder="مثال: شارع الشيخ زايد، بالقرب من مول أبوظبي، مبنى رقم 15">
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">رابط خرائط جوجل (اختياري)</label>
+                        <label class="form-label">رابط خرائط جوجل</label>
                         <input type="url" id="petShopMapLink" class="form-control" 
                                placeholder="https://maps.google.com/...">
                     </div>
                     
-                    <div class="form-group">
-                        <label class="form-label">رقم الهاتف (اختياري)</label>
-                        <input type="tel" id="petShopPhone" class="form-control" 
-                               placeholder="+971 2 123 4567">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
+                        <div class="form-group">
+                            <label class="form-label">رقم الهاتف</label>
+                            <input type="tel" id="petShopPhone" class="form-control" 
+                                   placeholder="+971 2 123 4567">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">البريد الإلكتروني / الموقع</label>
+                            <input type="text" id="petShopEmailWebsite" class="form-control" 
+                                   placeholder="example@email.com أو www.example.com">
+                        </div>
                     </div>
                     
                     <div class="form-group">
@@ -20226,7 +20277,7 @@
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">ملاحظات</label>
+                        <label class="form-label">ملاحظات إضافية</label>
                         <textarea id="petShopNotes" class="form-control" rows="3" 
                                   placeholder="أي معلومات إضافية عن المحل"></textarea>
                     </div>
@@ -21898,14 +21949,273 @@
             
             // Show helper message
             showPetShopStatus(
-                '✅ تم فتح خرائط جوجل!\n\n' +
-                'نصائح:\n' +
-                '1. ابحث عن "pet shop" أو "محل حيوانات" أو "محل طيور"\n' +
-                '2. انقر على أي محل لعرض التفاصيل\n' +
-                '3. انسخ الاسم والموقع\n' +
-                '4. الصق المعلومات في النموذج أدناه',
+                '✅ تم فتح خرائط جوجل في نافذة جديدة!\n\n' +
+                '📋 الخطوات التالية:\n' +
+                '1. انقر على أي محل في الخريطة\n' +
+                '2. انسخ الرابط من شريط العنوان\n' +
+                '3. ارجع هنا والصق الرابط في حقل "استخراج البيانات"\n' +
+                '4. سيتم تعبئة البيانات تلقائياً!',
                 'info'
             );
+        }
+        
+        /**
+         * Extract data from Google Maps URL
+         * Parses Google Maps URLs to extract place information
+         */
+        function extractDataFromGoogleMapsUrl() {
+            const urlInput = document.getElementById('googleMapsUrlInput');
+            const statusDiv = document.getElementById('extractionStatus');
+            
+            if (!urlInput || !urlInput.value.trim()) {
+                showExtractionStatus('⚠️ يرجى لصق رابط خرائط جوجل أولاً', 'warning');
+                return;
+            }
+            
+            const url = urlInput.value.trim();
+            
+            // Validate that it's a valid Google Maps URL with proper domain checking
+            let isValidGoogleMapsUrl = false;
+            try {
+                const urlObj = new URL(url);
+                const hostname = urlObj.hostname.toLowerCase();
+                // Check for valid Google Maps domains
+                isValidGoogleMapsUrl = (
+                    (hostname === 'www.google.com' || hostname === 'google.com' || hostname.endsWith('.google.com')) && 
+                    urlObj.pathname.includes('/maps')
+                ) || 
+                hostname === 'goo.gl' || 
+                hostname === 'maps.app.goo.gl' ||
+                hostname === 'maps.google.com';
+            } catch (e) {
+                isValidGoogleMapsUrl = false;
+            }
+            
+            if (!isValidGoogleMapsUrl) {
+                showExtractionStatus('❌ هذا ليس رابط خرائط جوجل صحيح. يرجى نسخ الرابط من شريط عنوان المتصفح في خرائط جوجل.', 'error');
+                return;
+            }
+            
+            try {
+                // Set the map link field
+                document.getElementById('petShopMapLink').value = url;
+                
+                // Try to extract place name from URL
+                let extractedName = '';
+                let extractedAddress = '';
+                
+                // Pattern 1: /place/Name+Of+Place/
+                const placeMatch = url.match(/\/place\/([^\/\@]+)/);
+                if (placeMatch) {
+                    try {
+                        extractedName = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '));
+                    } catch (e) {
+                        extractedName = placeMatch[1].replace(/\+/g, ' ');
+                    }
+                }
+                
+                // Pattern 2: Search query in URL
+                const searchMatch = url.match(/\/search\/([^\/\@]+)/);
+                if (searchMatch && !extractedName) {
+                    try {
+                        extractedName = decodeURIComponent(searchMatch[1].replace(/\+/g, ' '));
+                    } catch (e) {
+                        extractedName = searchMatch[1].replace(/\+/g, ' ');
+                    }
+                }
+                
+                // Pattern 3: Query parameter q=
+                const qMatch = url.match(/[?&]q=([^&]+)/);
+                if (qMatch && !extractedName) {
+                    try {
+                        extractedName = decodeURIComponent(qMatch[1].replace(/\+/g, ' '));
+                    } catch (e) {
+                        extractedName = qMatch[1].replace(/\+/g, ' ');
+                    }
+                }
+                
+                // Try to extract coordinates for address hints
+                const coordMatch = url.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+                if (coordMatch) {
+                    const lat = parseFloat(coordMatch[1]);
+                    const lng = parseFloat(coordMatch[2]);
+                    
+                    // Try to determine area based on coordinates (Abu Dhabi regions)
+                    const area = determineAreaFromCoordinates(lat, lng);
+                    if (area) {
+                        const areaSelect = document.getElementById('petShopArea');
+                        if (areaSelect) {
+                            // Try to find matching area option
+                            for (let option of areaSelect.options) {
+                                if (option.value && (
+                                    option.value.includes(area) || 
+                                    option.textContent.includes(area)
+                                )) {
+                                    areaSelect.value = option.value;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Set extracted name
+                if (extractedName) {
+                    // Check if name contains Arabic characters
+                    const hasArabic = /[\u0600-\u06FF]/.test(extractedName);
+                    const hasEnglish = /[a-zA-Z]/.test(extractedName);
+                    
+                    if (hasArabic) {
+                        document.getElementById('petShopName').value = extractedName;
+                    } else if (hasEnglish) {
+                        document.getElementById('petShopNameEn').value = extractedName;
+                        // Set Arabic field as well but highlight it needs translation
+                        document.getElementById('petShopName').value = extractedName;
+                        document.getElementById('petShopName').style.border = '2px solid #ffc107';
+                        document.getElementById('petShopName').placeholder = 'يرجى ترجمة الاسم إلى العربية';
+                    }
+                }
+                
+                // Try to detect business type from name
+                if (extractedName) {
+                    const businessType = detectBusinessType(extractedName);
+                    if (businessType) {
+                        document.getElementById('petShopBusinessType').value = businessType;
+                    }
+                }
+                
+                // Build success message
+                let successMessage = '✅ تم استخراج البيانات من الرابط!\n';
+                if (extractedName) {
+                    successMessage += `📍 الاسم: ${extractedName}\n`;
+                }
+                successMessage += '✏️ يرجى مراجعة وإكمال البيانات الناقصة';
+                
+                // If the name is in English, add a note about translation
+                const hasArabicFinal = /[\u0600-\u06FF]/.test(extractedName);
+                if (extractedName && !hasArabicFinal) {
+                    successMessage += '\n⚠️ الاسم بالإنجليزية - يرجى ترجمته للعربية';
+                }
+                
+                showExtractionStatus(successMessage, 'success');
+                
+                // Don't clear the URL input - keep it until successful form submission
+                // User can manually clear it if needed
+                
+                // Focus on the first empty required field
+                if (!document.getElementById('petShopName').value) {
+                    document.getElementById('petShopName').focus();
+                } else if (!document.getElementById('petShopArea').value) {
+                    document.getElementById('petShopArea').focus();
+                }
+                
+            } catch (error) {
+                console.error('Error extracting data from URL:', error);
+                showExtractionStatus('❌ حدث خطأ أثناء استخراج البيانات. يرجى التأكد من صحة الرابط والمحاولة مرة أخرى.', 'error');
+            }
+        }
+        
+        /**
+         * Determine area based on coordinates (Abu Dhabi specific)
+         */
+        function determineAreaFromCoordinates(lat, lng) {
+            // Abu Dhabi area coordinate ranges (approximate)
+            const areas = [
+                { name: 'أبوظبي', latMin: 24.4, latMax: 24.5, lngMin: 54.3, lngMax: 54.5 },
+                { name: 'العين', latMin: 24.1, latMax: 24.3, lngMin: 55.6, lngMax: 55.9 },
+                { name: 'الظفرة', latMin: 23.5, latMax: 24.0, lngMin: 53.5, lngMax: 54.5 },
+                { name: 'مدينة زايد', latMin: 23.6, latMax: 23.7, lngMin: 53.6, lngMax: 53.8 },
+                { name: 'الشامخة', latMin: 24.3, latMax: 24.4, lngMin: 54.5, lngMax: 54.7 },
+                { name: 'مصفح', latMin: 24.35, latMax: 24.45, lngMin: 54.45, lngMax: 54.55 },
+                { name: 'خليفة', latMin: 24.4, latMax: 24.5, lngMin: 54.5, lngMax: 54.65 },
+            ];
+            
+            for (const area of areas) {
+                if (lat >= area.latMin && lat <= area.latMax && 
+                    lng >= area.lngMin && lng <= area.lngMax) {
+                    return area.name;
+                }
+            }
+            
+            return null;
+        }
+        
+        /**
+         * Detect business type from shop name
+         */
+        function detectBusinessType(name) {
+            const nameLower = name.toLowerCase();
+            
+            // Bird shops
+            if (nameLower.includes('طيور') || nameLower.includes('bird') || 
+                nameLower.includes('طير') || nameLower.includes('حمام')) {
+                return 'bird_shop';
+            }
+            
+            // Fish/Aquarium shops
+            if (nameLower.includes('أسماك') || nameLower.includes('fish') || 
+                nameLower.includes('aquarium') || nameLower.includes('سمك') ||
+                nameLower.includes('أكواريوم')) {
+                return 'fish_shop';
+            }
+            
+            // Veterinary
+            if (nameLower.includes('بيطري') || nameLower.includes('vet') || 
+                nameLower.includes('clinic') || nameLower.includes('عيادة')) {
+                return 'veterinary';
+            }
+            
+            // Pet grooming
+            if (nameLower.includes('تجميل') || nameLower.includes('grooming') || 
+                nameLower.includes('spa') || nameLower.includes('salon')) {
+                return 'pet_grooming';
+            }
+            
+            // Pet supplies
+            if (nameLower.includes('مستلزمات') || nameLower.includes('supplies') || 
+                nameLower.includes('accessories')) {
+                return 'pet_supplies';
+            }
+            
+            // General pet shop
+            if (nameLower.includes('حيوان') || nameLower.includes('pet') || 
+                nameLower.includes('animal')) {
+                return 'pet_shop';
+            }
+            
+            return '';
+        }
+        
+        /**
+         * Show extraction status message
+         */
+        function showExtractionStatus(message, type) {
+            const statusDiv = document.getElementById('extractionStatus');
+            if (!statusDiv) return;
+            
+            statusDiv.textContent = message;
+            statusDiv.style.display = 'block';
+            statusDiv.style.padding = '12px';
+            statusDiv.style.borderRadius = '8px';
+            statusDiv.style.fontWeight = 'bold';
+            statusDiv.style.textAlign = 'center';
+            
+            const colors = {
+                'success': { bg: '#d4edda', color: '#155724', border: '#c3e6cb' },
+                'error': { bg: '#f8d7da', color: '#721c24', border: '#f5c6cb' },
+                'warning': { bg: '#fff3cd', color: '#856404', border: '#ffeeba' },
+                'info': { bg: '#d1ecf1', color: '#0c5460', border: '#bee5eb' }
+            };
+            
+            const style = colors[type] || colors['info'];
+            statusDiv.style.background = style.bg;
+            statusDiv.style.color = style.color;
+            statusDiv.style.border = `2px solid ${style.border}`;
+            
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 10000);
         }
         
         /**
@@ -21919,17 +22229,20 @@
                 return;
             }
             
-            // Get form values
+            // Get form values - including new fields
             const shopName = document.getElementById('petShopName').value.trim();
+            const shopNameEn = document.getElementById('petShopNameEn').value.trim();
             const area = document.getElementById('petShopArea').value;
+            const businessType = document.getElementById('petShopBusinessType').value;
             const address = document.getElementById('petShopAddress').value.trim();
             const mapLink = document.getElementById('petShopMapLink').value.trim();
             const phone = document.getElementById('petShopPhone').value.trim();
+            const emailWebsite = document.getElementById('petShopEmailWebsite').value.trim();
             const priority = document.getElementById('petShopPriority').value;
             const notes = document.getElementById('petShopNotes').value.trim();
             
             if (!shopName || !area) {
-                showPetShopStatus('⚠️ يرجى تعبئة الاسم والمنطقة على الأقل', 'error');
+                showPetShopStatus('⚠️ يرجى تعبئة اسم المحل بالعربية والمنطقة على الأقل', 'error');
                 return;
             }
             
@@ -21952,13 +22265,16 @@
                 }
             }
             
-            // Create new shop object
+            // Create new shop object with all fields
             const newShop = {
                 name: shopName,
+                nameEn: shopNameEn || '',
                 area: area,
+                businessType: businessType || '',
                 address: address || '',
                 mapLink: mapLink || '',
                 phone: phone || '',
+                emailWebsite: emailWebsite || '',
                 priority: priority,
                 notes: notes || '',
                 lastInspectionDate: null,
@@ -22027,6 +22343,31 @@
             const form = document.getElementById('smartPetShopForm');
             if (form) {
                 form.reset();
+            }
+            
+            // Also clear the URL input field
+            const urlInput = document.getElementById('googleMapsUrlInput');
+            if (urlInput) {
+                urlInput.value = '';
+            }
+            
+            // Reset Arabic name field border style (may have been highlighted for translation)
+            const petShopNameField = document.getElementById('petShopName');
+            if (petShopNameField) {
+                petShopNameField.style.border = '';
+                petShopNameField.placeholder = 'مثال: محل الطيور الجميلة';
+            }
+            
+            // Hide extraction status
+            const extractionStatus = document.getElementById('extractionStatus');
+            if (extractionStatus) {
+                extractionStatus.style.display = 'none';
+            }
+            
+            // Hide pet shop status
+            const petShopStatus = document.getElementById('petShopStatus');
+            if (petShopStatus) {
+                petShopStatus.style.display = 'none';
             }
         }
         

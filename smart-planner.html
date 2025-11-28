@@ -21982,7 +21982,7 @@
                 // Check for valid Google Maps domains
                 isValidGoogleMapsUrl = (
                     (hostname === 'www.google.com' || hostname === 'google.com' || hostname.endsWith('.google.com')) && 
-                    urlObj.pathname.includes('/maps')
+                    (urlObj.pathname.includes('/maps') || urlObj.search.includes('cid='))
                 ) || 
                 hostname === 'goo.gl' || 
                 hostname === 'maps.app.goo.gl' ||
@@ -21997,25 +21997,31 @@
             }
             
             try {
-                // Set the map link field
+                // Set the map link field immediately
                 document.getElementById('petShopMapLink').value = url;
                 
-                // Try to extract place name from URL
+                // Track what data was extracted
                 let extractedName = '';
                 let extractedAddress = '';
+                let extractedArea = '';
+                let extractedBusinessType = '';
+                let dataExtracted = false;
                 
-                // Pattern 1: /place/Name+Of+Place/
-                const placeMatch = url.match(/\/place\/([^\/\@]+)/);
+                // Pattern 1: /place/Name+Of+Place/ or /place/Name%20Of%20Place/
+                // This pattern captures the place name before @ symbol
+                const placeMatch = url.match(/\/place\/([^\/\@]+)/i);
                 if (placeMatch) {
                     try {
                         extractedName = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '));
+                        // Clean up common URL encoding artifacts
+                        extractedName = extractedName.replace(/%20/g, ' ').trim();
                     } catch (e) {
-                        extractedName = placeMatch[1].replace(/\+/g, ' ');
+                        extractedName = placeMatch[1].replace(/\+/g, ' ').replace(/%20/g, ' ').trim();
                     }
                 }
                 
-                // Pattern 2: Search query in URL
-                const searchMatch = url.match(/\/search\/([^\/\@]+)/);
+                // Pattern 2: Search query in URL /search/query/
+                const searchMatch = url.match(/\/search\/([^\/\@\?]+)/i);
                 if (searchMatch && !extractedName) {
                     try {
                         extractedName = decodeURIComponent(searchMatch[1].replace(/\+/g, ' '));
@@ -22024,17 +22030,52 @@
                     }
                 }
                 
-                // Pattern 3: Query parameter q=
-                const qMatch = url.match(/[?&]q=([^&]+)/);
+                // Pattern 3: Query parameter q= (can contain place name or coordinates)
+                const qMatch = url.match(/[?&]q=([^&]+)/i);
                 if (qMatch && !extractedName) {
                     try {
-                        extractedName = decodeURIComponent(qMatch[1].replace(/\+/g, ' '));
+                        let qValue = decodeURIComponent(qMatch[1].replace(/\+/g, ' '));
+                        // Check if q value is coordinates (e.g., 24.4631,54.3644)
+                        if (!/^-?\d+\.?\d*,-?\d+\.?\d*$/.test(qValue)) {
+                            extractedName = qValue;
+                        }
                     } catch (e) {
-                        extractedName = qMatch[1].replace(/\+/g, ' ');
+                        let qValue = qMatch[1].replace(/\+/g, ' ');
+                        if (!/^-?\d+\.?\d*,-?\d+\.?\d*$/.test(qValue)) {
+                            extractedName = qValue;
+                        }
                     }
                 }
                 
-                // Try to extract coordinates for address hints
+                // Pattern 4: Data parameter with 3m1!1s format (contains place ID info)
+                const dataMatch = url.match(/data=([^&]+)/i);
+                if (dataMatch && !extractedName) {
+                    try {
+                        // Look for place name in data parameter (usually after !19s)
+                        const nameInData = dataMatch[1].match(/!19s([^!]+)/);
+                        if (nameInData) {
+                            extractedName = decodeURIComponent(nameInData[1].replace(/\+/g, ' '));
+                        }
+                    } catch (e) {
+                        // Ignore errors in data parameter parsing
+                    }
+                }
+                
+                // Pattern 5: Extract from ftid (feature ID that sometimes contains name)
+                const ftidMatch = url.match(/ftid=([^&:]+):([^&]+)/i);
+                if (ftidMatch && !extractedName) {
+                    try {
+                        // The second group might contain encoded place info
+                        const ftidValue = decodeURIComponent(ftidMatch[2]);
+                        if (ftidValue && !/^0x[0-9a-f]+$/i.test(ftidValue)) {
+                            extractedName = ftidValue;
+                        }
+                    } catch (e) {
+                        // Ignore
+                    }
+                }
+                
+                // Try to extract coordinates for area detection
                 const coordMatch = url.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
                 if (coordMatch) {
                     const lat = parseFloat(coordMatch[1]);
@@ -22043,6 +22084,7 @@
                     // Try to determine area based on coordinates (Abu Dhabi regions)
                     const area = determineAreaFromCoordinates(lat, lng);
                     if (area) {
+                        extractedArea = area;
                         const areaSelect = document.getElementById('petShopArea');
                         if (areaSelect) {
                             // Try to find matching area option
@@ -22052,6 +22094,7 @@
                                     option.textContent.includes(area)
                                 )) {
                                     areaSelect.value = option.value;
+                                    dataExtracted = true;
                                     break;
                                 }
                             }
@@ -22059,48 +22102,94 @@
                     }
                 }
                 
-                // Set extracted name
+                // Clean up extracted name - remove common suffixes and artifacts
                 if (extractedName) {
+                    // Remove trailing coordinates if any
+                    extractedName = extractedName.replace(/@.+$/, '').trim();
+                    // Remove leading/trailing dashes and underscores
+                    extractedName = extractedName.replace(/^[-_]+|[-_]+$/g, '').trim();
+                    // Replace multiple spaces with single space
+                    extractedName = extractedName.replace(/\s+/g, ' ').trim();
+                }
+                
+                // Set extracted name to form fields
+                if (extractedName && extractedName.length > 0) {
+                    dataExtracted = true;
+                    
                     // Check if name contains Arabic characters
                     const hasArabic = /[\u0600-\u06FF]/.test(extractedName);
                     const hasEnglish = /[a-zA-Z]/.test(extractedName);
                     
                     if (hasArabic) {
                         document.getElementById('petShopName').value = extractedName;
+                        // Reset border style
+                        document.getElementById('petShopName').style.border = '';
                     } else if (hasEnglish) {
                         document.getElementById('petShopNameEn').value = extractedName;
                         // Set Arabic field as well but highlight it needs translation
                         document.getElementById('petShopName').value = extractedName;
                         document.getElementById('petShopName').style.border = '2px solid #ffc107';
                         document.getElementById('petShopName').placeholder = 'يرجى ترجمة الاسم إلى العربية';
+                    } else {
+                        // Neither Arabic nor English (could be mixed or other)
+                        document.getElementById('petShopName').value = extractedName;
                     }
-                }
-                
-                // Try to detect business type from name
-                if (extractedName) {
+                    
+                    // Try to detect business type from name
                     const businessType = detectBusinessType(extractedName);
                     if (businessType) {
                         document.getElementById('petShopBusinessType').value = businessType;
+                        extractedBusinessType = businessType;
                     }
                 }
                 
-                // Build success message
-                let successMessage = '✅ تم استخراج البيانات من الرابط!\n';
-                if (extractedName) {
-                    successMessage += `📍 الاسم: ${extractedName}\n`;
+                // Build appropriate message based on what was extracted
+                if (dataExtracted && extractedName) {
+                    let successMessage = '✅ تم استخراج البيانات من الرابط بنجاح!\n';
+                    successMessage += `📍 اسم المحل: ${extractedName}\n`;
+                    if (extractedArea) {
+                        successMessage += `🗺️ المنطقة المقترحة: ${extractedArea}\n`;
+                    }
+                    if (extractedBusinessType) {
+                        const businessTypes = {
+                            'pet_shop': 'محل حيوانات أليفة',
+                            'bird_shop': 'محل طيور',
+                            'fish_shop': 'محل أسماك زينة',
+                            'pet_supplies': 'مستلزمات حيوانات',
+                            'pet_grooming': 'تجميل حيوانات',
+                            'veterinary': 'عيادة بيطرية'
+                        };
+                        successMessage += `🏪 نوع النشاط: ${businessTypes[extractedBusinessType] || extractedBusinessType}\n`;
+                    }
+                    successMessage += '✏️ يرجى مراجعة واستكمال البيانات الناقصة';
+                    
+                    // If the name is in English, add a note about translation
+                    const hasArabicFinal = /[\u0600-\u06FF]/.test(extractedName);
+                    if (!hasArabicFinal) {
+                        successMessage += '\n⚠️ الاسم بالإنجليزية - يرجى ترجمته للعربية';
+                    }
+                    
+                    showExtractionStatus(successMessage, 'success');
+                } else if (dataExtracted && extractedArea) {
+                    // Only area was extracted
+                    let partialMessage = '⚠️ تم حفظ الرابط وتحديد المنطقة فقط\n';
+                    partialMessage += `🗺️ المنطقة المقترحة: ${extractedArea}\n`;
+                    partialMessage += '❌ لم يتم العثور على اسم المحل في الرابط\n';
+                    partialMessage += '✏️ يرجى إدخال اسم المحل والبيانات الأخرى يدوياً';
+                    
+                    showExtractionStatus(partialMessage, 'warning');
+                } else {
+                    // No data extracted - only the URL was saved
+                    let noDataMessage = '⚠️ تم حفظ الرابط فقط!\n';
+                    noDataMessage += '❌ لم يتم العثور على بيانات المحل في الرابط\n';
+                    noDataMessage += '📝 هذا الرابط قد يكون:\n';
+                    noDataMessage += '   • رابط مشاركة قصير (يحتاج لفتحه أولاً)\n';
+                    noDataMessage += '   • رابط بحث عام وليس محل محدد\n';
+                    noDataMessage += '   • رابط يحتوي على معرف المحل فقط (CID)\n';
+                    noDataMessage += '\n💡 نصيحة: انقر على المحل في خرائط جوجل ثم انسخ الرابط من شريط العنوان بعد ظهور اسم المحل';
+                    
+                    showExtractionStatus(noDataMessage, 'warning');
                 }
-                successMessage += '✏️ يرجى مراجعة وإكمال البيانات الناقصة';
-                
-                // If the name is in English, add a note about translation
-                const hasArabicFinal = /[\u0600-\u06FF]/.test(extractedName);
-                if (extractedName && !hasArabicFinal) {
-                    successMessage += '\n⚠️ الاسم بالإنجليزية - يرجى ترجمته للعربية';
-                }
-                
-                showExtractionStatus(successMessage, 'success');
-                
-                // Don't clear the URL input - keep it until successful form submission
-                // User can manually clear it if needed
                 
                 // Focus on the first empty required field
                 if (!document.getElementById('petShopName').value) {
@@ -22195,10 +22284,13 @@
             
             statusDiv.textContent = message;
             statusDiv.style.display = 'block';
-            statusDiv.style.padding = '12px';
+            statusDiv.style.padding = '15px';
             statusDiv.style.borderRadius = '8px';
-            statusDiv.style.fontWeight = 'bold';
-            statusDiv.style.textAlign = 'center';
+            statusDiv.style.fontWeight = '600';
+            statusDiv.style.textAlign = 'right'; // RTL alignment
+            statusDiv.style.whiteSpace = 'pre-line'; // Preserve line breaks
+            statusDiv.style.lineHeight = '1.6';
+            statusDiv.style.direction = 'rtl';
             
             const colors = {
                 'success': { bg: '#d4edda', color: '#155724', border: '#c3e6cb' },
@@ -22212,10 +22304,11 @@
             statusDiv.style.color = style.color;
             statusDiv.style.border = `2px solid ${style.border}`;
             
-            // Auto-hide after 10 seconds
+            // Auto-hide after 15 seconds for longer messages
+            const hideDelay = message.length > 150 ? 15000 : 10000;
             setTimeout(() => {
                 statusDiv.style.display = 'none';
-            }, 10000);
+            }, hideDelay);
         }
         
         /**

@@ -6455,8 +6455,8 @@
                         lat: typeof center.lat === 'function' ? center.lat() : center.lat,
                         lng: typeof center.lng === 'function' ? center.lng() : center.lng
                     },
-                    radius: 50000, // 50km radius
-                    type: ['establishment', 'store', 'pet_store', 'shopping_mall']
+                    radius: FEATURE_CONFIG.googlePlacesSearchRadius || 50000, // Default 50km radius
+                    type: FEATURE_CONFIG.googlePlacesSearchTypes || ['establishment', 'store', 'pet_store', 'shopping_mall']
                 };
                 
                 // Use textSearch for more flexible search
@@ -6531,8 +6531,8 @@
                                     📍 ${escapeHtml(placeAddress.length > 60 ? placeAddress.substring(0, 60) + '...' : placeAddress)}
                                 </div>
                                 <div style="font-size: 0.8em; color: #999; display: flex; gap: 15px;">
-                                    ${placeRating ? `<span>${placeRating}</span>` : ''}
-                                    ${placeTypes ? `<span style="opacity: 0.8;">${placeTypes}</span>` : ''}
+                                    ${placeRating ? `<span>${escapeHtml(placeRating)}</span>` : ''}
+                                    ${placeTypes ? `<span style="opacity: 0.8;">${escapeHtml(placeTypes)}</span>` : ''}
                                 </div>
                             </div>
                             <button onclick="addPlaceToInspection(event, '${escapeJs(place.place_id || '')}', '${escapeJs(placeName)}', '${escapeJs(placeAddress)}')" 
@@ -6854,17 +6854,6 @@
                     if (statusDiv) statusDiv.style.display = 'none';
                 }, 5000);
             }
-        }
-        
-        // Helper function to escape JavaScript strings
-        function escapeJs(str) {
-            if (!str) return '';
-            return String(str)
-                .replace(/\\/g, '\\\\')
-                .replace(/'/g, "\\'")
-                .replace(/"/g, '\\"')
-                .replace(/\n/g, '\\n')
-                .replace(/\r/g, '\\r');
         }
         
         // ========================================

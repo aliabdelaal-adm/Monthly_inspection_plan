@@ -4346,6 +4346,33 @@
                     </p>
                 </div>
                 
+                <!-- NEW: Google Places Search Section - Search on Google Maps -->
+                <div class="map-search-section" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 20px; border-radius: 15px; margin: 15px 0; border: 2px solid #1976d2;">
+                    <h4 style="margin: 0 0 15px 0; color: #1565c0; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.3em;">🌐</span>
+                        البحث في خرائط جوجل (اكتشاف محلات جديدة)
+                    </h4>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch;">
+                        <div style="flex: 1; min-width: 250px; position: relative;">
+                            <input type="text" id="googlePlacesSearchInput" class="form-control" 
+                                   placeholder="🔎 ابحث عن محل جديد في خرائط جوجل (مثال: pet shop, محل حيوانات)..." 
+                                   onkeypress="handleGooglePlacesSearchKeypress(event)"
+                                   style="padding: 12px 15px; font-size: 1em; border: 2px solid #1976d2; border-radius: 10px; width: 100%;">
+                            <div id="googlePlacesSearchResults" style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #1976d2; border-top: none; border-radius: 0 0 10px 10px; max-height: 350px; overflow-y: auto; display: none; z-index: 1001; box-shadow: 0 5px 20px rgba(0,0,0,0.3);"></div>
+                        </div>
+                        <button class="map-tool-btn" onclick="searchGooglePlaces()" style="background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%); color: white; padding: 12px 20px; white-space: nowrap;">
+                            🔍 بحث في جوجل
+                        </button>
+                        <button class="map-tool-btn" onclick="clearGooglePlacesSearch()" style="background: linear-gradient(135deg, #ff5722 0%, #e64a19 100%); color: white; padding: 12px 20px; white-space: nowrap;">
+                            🗑️ مسح
+                        </button>
+                    </div>
+                    <p style="margin: 10px 0 0 0; font-size: 0.9em; color: #1565c0;">
+                        🌐 <strong>اكتشف محلات جديدة</strong> من خرائط جوجل واضغط على <strong>"إضافة إلى التفتيش"</strong> لإضافتها مباشرة
+                    </p>
+                    <div id="googlePlacesSearchStatus" style="margin-top: 10px; display: none;"></div>
+                </div>
+                
                 <!-- Helper Tools -->
                 <div class="map-helper-tools">
                     <h4>🛠️ أدوات مساعدة</h4>
@@ -6366,7 +6393,479 @@
                     resultsContainer.style.display = 'none';
                 }
             }
+            
+            // Also close Google Places search results when clicking outside
+            const googleSearchInput = document.getElementById('googlePlacesSearchInput');
+            const googleResultsContainer = document.getElementById('googlePlacesSearchResults');
+            
+            if (googleSearchInput && googleResultsContainer && event.target) {
+                if (!googleSearchInput.contains(event.target) && !googleResultsContainer.contains(event.target)) {
+                    googleResultsContainer.style.display = 'none';
+                }
+            }
         });
+        
+        // ========================================
+        // Google Places Search Functions - البحث في خرائط جوجل
+        // ========================================
+        
+        // Handle keypress in Google Places search input
+        function handleGooglePlacesSearchKeypress(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                searchGooglePlaces();
+            }
+        }
+        
+        // Search Google Places API for new shops
+        async function searchGooglePlaces() {
+            const searchInput = document.getElementById('googlePlacesSearchInput');
+            const resultsContainer = document.getElementById('googlePlacesSearchResults');
+            const statusDiv = document.getElementById('googlePlacesSearchStatus');
+            
+            if (!searchInput || !resultsContainer) return;
+            
+            const searchTerm = searchInput.value.trim();
+            
+            if (searchTerm.length < 2) {
+                showGooglePlacesStatus('⚠️ يرجى كتابة كلمة بحث أطول (حرفين على الأقل)', 'warning');
+                return;
+            }
+            
+            // Check if Google Maps Places API is available
+            if (!window.placesService) {
+                if (typeof google !== 'undefined' && typeof google.maps !== 'undefined' && typeof google.maps.places !== 'undefined' && map) {
+                    window.placesService = new google.maps.places.PlacesService(map);
+                } else {
+                    showGooglePlacesStatus('⚠️ خدمة خرائط جوجل غير متاحة. يرجى المحاولة مرة أخرى بعد تحميل الخريطة.', 'error');
+                    return;
+                }
+            }
+            
+            showGooglePlacesStatus('🔍 جاري البحث في خرائط جوجل...', 'info');
+            
+            try {
+                // Get current map center for search location
+                const center = map ? map.getCenter() : { lat: () => 24.4539, lng: () => 54.3773 };
+                
+                // Create search request for textSearch API
+                // Note: textSearch accepts 'type' as a single string (not array)
+                // We rely on the query term for filtering rather than type restrictions
+                const request = {
+                    query: searchTerm,
+                    location: {
+                        lat: typeof center.lat === 'function' ? center.lat() : center.lat,
+                        lng: typeof center.lng === 'function' ? center.lng() : center.lng
+                    },
+                    radius: FEATURE_CONFIG.googlePlacesSearchRadius || 50000 // Default 50km radius
+                };
+                
+                // Use textSearch for more flexible search
+                window.placesService.textSearch(request, (results, status) => {
+                    if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
+                        displayGooglePlacesResults(results, searchTerm);
+                        showGooglePlacesStatus(`✅ تم العثور على ${results.length} نتيجة`, 'success');
+                    } else if (status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
+                        resultsContainer.innerHTML = `
+                            <div style="padding: 20px; text-align: center; color: #666;">
+                                <div style="font-size: 2em; margin-bottom: 10px;">🔍</div>
+                                <div>لم يتم العثور على نتائج لـ "${escapeHtml(searchTerm)}"</div>
+                                <div style="font-size: 0.9em; margin-top: 10px;">جرب كلمات بحث مختلفة مثل: pet shop, محل حيوانات, bird shop</div>
+                            </div>
+                        `;
+                        resultsContainer.style.display = 'block';
+                        showGooglePlacesStatus('⚠️ لم يتم العثور على نتائج', 'warning');
+                    } else {
+                        console.error('Google Places search error:', status);
+                        showGooglePlacesStatus(`❌ حدث خطأ في البحث: ${status}`, 'error');
+                    }
+                });
+            } catch (error) {
+                console.error('Error searching Google Places:', error);
+                showGooglePlacesStatus('❌ حدث خطأ أثناء البحث. يرجى المحاولة مرة أخرى.', 'error');
+            }
+        }
+        
+        // Display Google Places search results
+        function displayGooglePlacesResults(results, searchTerm) {
+            const resultsContainer = document.getElementById('googlePlacesSearchResults');
+            if (!resultsContainer) return;
+            
+            let html = `
+                <div style="padding: 10px 15px; background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%); color: white; font-weight: 600; border-radius: 0;">
+                    🌐 نتائج البحث في خرائط جوجل (${results.length} نتيجة)
+                </div>
+            `;
+            
+            // Display up to 15 results
+            const displayResults = results.slice(0, 15);
+            
+            displayResults.forEach((place, index) => {
+                const placeName = place.name || 'مكان غير معروف';
+                const placeAddress = place.formatted_address || place.vicinity || 'العنوان غير متاح';
+                // Safely format rating - place.rating is a number from Google API
+                const placeRating = place.rating ? `⭐ ${parseFloat(place.rating).toFixed(1)}` : '';
+                // Safely format types - filter and join only valid string types
+                const placeTypes = place.types ? place.types
+                    .filter(t => typeof t === 'string')
+                    .slice(0, 2)
+                    .map(t => t.replace(/_/g, ' '))  // Make types more readable
+                    .join(', ') : '';
+                
+                // Check if this place is already in our shops list
+                const isExistingShop = shopsDetails && Object.keys(shopsDetails).some(shopName => 
+                    shopName.toLowerCase() === placeName.toLowerCase() ||
+                    (shopsDetails[shopName].nameAr && shopsDetails[shopName].nameAr.toLowerCase() === placeName.toLowerCase())
+                );
+                
+                html += `
+                    <div class="google-places-result-item" 
+                         data-place-id="${escapeHtml(place.place_id || '')}"
+                         data-place-name="${escapeHtml(placeName)}"
+                         data-place-address="${escapeHtml(placeAddress)}"
+                         data-place-lat="${place.geometry && place.geometry.location ? (typeof place.geometry.location.lat === 'function' ? place.geometry.location.lat() : place.geometry.location.lat) : ''}"
+                         data-place-lng="${place.geometry && place.geometry.location ? (typeof place.geometry.location.lng === 'function' ? place.geometry.location.lng() : place.geometry.location.lng) : ''}"
+                         style="padding: 15px; border-bottom: 1px solid #e0e0e0; cursor: pointer; transition: all 0.2s; ${isExistingShop ? 'background: #e8f5e9;' : ''}"
+                         onmouseover="this.style.background='#e3f2fd';" 
+                         onmouseout="this.style.background='${isExistingShop ? '#e8f5e9' : 'white'}';">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: #1565c0; margin-bottom: 5px; display: flex; align-items: center; gap: 8px;">
+                                    ${escapeHtml(placeName)}
+                                    ${isExistingShop ? '<span style="background: #4caf50; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75em;">✓ موجود</span>' : ''}
+                                </div>
+                                <div style="font-size: 0.85em; color: #666; margin-bottom: 5px;">
+                                    📍 ${escapeHtml(placeAddress.length > 60 ? placeAddress.substring(0, 60) + '...' : placeAddress)}
+                                </div>
+                                <div style="font-size: 0.8em; color: #999; display: flex; gap: 15px;">
+                                    ${placeRating ? `<span>${escapeHtml(placeRating)}</span>` : ''}
+                                    ${placeTypes ? `<span style="opacity: 0.8;">${escapeHtml(placeTypes)}</span>` : ''}
+                                </div>
+                            </div>
+                            <button onclick="addPlaceToInspection(event, '${escapeJs(place.place_id || '')}', '${escapeJs(placeName)}', '${escapeJs(placeAddress)}')" 
+                                    class="add-to-inspection-btn"
+                                    style="background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-family: 'Cairo', sans-serif; font-weight: 600; font-size: 0.9em; white-space: nowrap; display: flex; align-items: center; gap: 5px; box-shadow: 0 2px 8px rgba(76,175,80,0.3); transition: all 0.2s;"
+                                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(76,175,80,0.4)';"
+                                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(76,175,80,0.3)';">
+                                <span>➕</span>
+                                <span>إضافة إلى التفتيش</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            if (results.length > 15) {
+                html += `
+                    <div style="padding: 12px; text-align: center; color: #1565c0; font-size: 0.9em; background: #e3f2fd;">
+                        💡 يتم عرض أول 15 نتيجة فقط. حاول تحديد بحثك للحصول على نتائج أدق.
+                    </div>
+                `;
+            }
+            
+            resultsContainer.innerHTML = html;
+            resultsContainer.style.display = 'block';
+        }
+        
+        // Add a place from Google Places search to the inspection
+        async function addPlaceToInspection(event, placeId, placeName, placeAddress) {
+            event.stopPropagation();
+            
+            const inspector = document.getElementById('mapInspectorSelect')?.value;
+            const date = document.getElementById('mapInspectionDate')?.value;
+            
+            if (!inspector || !date) {
+                showMapNotification('⚠️ يرجى اختيار المفتش والتاريخ أولاً من الأعلى', 'warning');
+                return;
+            }
+            
+            try {
+                // Get more details about the place if we have a place ID
+                let placeDetails = { name: placeName, formatted_address: placeAddress };
+                let lat = null;
+                let lng = null;
+                
+                if (placeId && window.placesService) {
+                    try {
+                        const detailsRequest = {
+                            placeId: placeId,
+                            fields: ['name', 'formatted_address', 'formatted_phone_number', 'geometry', 'url', 'types', 'rating']
+                        };
+                        
+                        placeDetails = await new Promise((resolve, reject) => {
+                            window.placesService.getDetails(detailsRequest, (place, status) => {
+                                if (status === google.maps.places.PlacesServiceStatus.OK && place) {
+                                    resolve(place);
+                                } else {
+                                    resolve({ name: placeName, formatted_address: placeAddress });
+                                }
+                            });
+                        });
+                        
+                        if (placeDetails.geometry && placeDetails.geometry.location) {
+                            lat = typeof placeDetails.geometry.location.lat === 'function' 
+                                ? placeDetails.geometry.location.lat() 
+                                : placeDetails.geometry.location.lat;
+                            lng = typeof placeDetails.geometry.location.lng === 'function' 
+                                ? placeDetails.geometry.location.lng() 
+                                : placeDetails.geometry.location.lng;
+                        }
+                    } catch (err) {
+                        console.log('Could not get place details, using basic info:', err);
+                    }
+                }
+                
+                // Generate Google Maps link
+                const googleMapsLink = placeDetails.url || (lat && lng ? `https://www.google.com/maps/search/?api=1&query=${lat},${lng}` : '');
+                
+                // Show the add shop dialog
+                showAddShopFromGooglePlacesDialog(placeDetails, lat, lng, googleMapsLink);
+                
+            } catch (error) {
+                console.error('Error adding place to inspection:', error);
+                showMapNotification('❌ حدث خطأ أثناء إضافة المحل', 'error');
+            }
+        }
+        
+        // Show dialog to add shop from Google Places
+        function showAddShopFromGooglePlacesDialog(place, lat, lng, googleMapsLink) {
+            const shopName = place.name || '';
+            const shopAddress = place.formatted_address || place.vicinity || '';
+            const shopPhone = place.formatted_phone_number || '';
+            
+            const content = `
+                <div style="font-family: Cairo, Arial; direction: rtl; text-align: right; padding: 20px; min-width: 380px; max-width: 500px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 3px solid #4caf50;">
+                        <span style="font-size: 2em;">➕</span>
+                        <h3 style="margin: 0; color: #2e7d32;">إضافة إلى التفتيش</h3>
+                    </div>
+                    
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                        <div style="margin-bottom: 12px;">
+                            <label style="display: block; font-weight: 600; color: #2d3561; margin-bottom: 5px;">اسم المحل *</label>
+                            <input type="text" id="googlePlaceShopName" value="${escapeHtml(shopName)}" 
+                                   style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-family: Cairo; font-size: 1em;">
+                        </div>
+                        
+                        <div style="margin-bottom: 12px;">
+                            <label style="display: block; font-weight: 600; color: #2d3561; margin-bottom: 5px;">العنوان</label>
+                            <input type="text" id="googlePlaceShopAddress" value="${escapeHtml(shopAddress)}" 
+                                   style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-family: Cairo; font-size: 1em;">
+                        </div>
+                        
+                        <div style="margin-bottom: 12px;">
+                            <label style="display: block; font-weight: 600; color: #2d3561; margin-bottom: 5px;">رقم الهاتف</label>
+                            <input type="text" id="googlePlaceShopPhone" value="${escapeHtml(shopPhone)}" 
+                                   style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-family: Cairo; font-size: 1em;">
+                        </div>
+                        
+                        <div style="margin-bottom: 12px;">
+                            <label style="display: block; font-weight: 600; color: #2d3561; margin-bottom: 5px;">المنطقة *</label>
+                            <select id="googlePlaceShopArea" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-family: Cairo; font-size: 1em;">
+                                <option value="">اختر المنطقة...</option>
+                                ${getAreasForDropdown()}
+                            </select>
+                        </div>
+                        
+                        <div style="margin-bottom: 12px;">
+                            <label style="display: block; font-weight: 600; color: #2d3561; margin-bottom: 5px;">رقم الترخيص (اختياري)</label>
+                            <input type="text" id="googlePlaceShopLicense" placeholder="اختياري" 
+                                   style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-family: Cairo; font-size: 1em;">
+                        </div>
+                        
+                        ${lat && lng ? `
+                            <div style="font-size: 0.85em; color: #666; margin-top: 10px; padding: 8px; background: white; border-radius: 5px;">
+                                📍 الإحداثيات: ${parseFloat(lat).toFixed(6)}, ${parseFloat(lng).toFixed(6)}
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="confirmAddShopFromGooglePlaces('${lat || ''}', '${lng || ''}', '${escapeJs(googleMapsLink)}')" 
+                                style="flex: 1; padding: 14px; background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-family: Cairo; font-weight: 700; font-size: 1.1em; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <span>✅</span>
+                            <span>إضافة إلى التفتيش</span>
+                        </button>
+                        <button onclick="closeInfoWindow()" 
+                                style="padding: 14px 20px; background: #6c757d; color: white; border: none; border-radius: 10px; cursor: pointer; font-family: Cairo; font-weight: 600;">
+                            ❌ إلغاء
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Position the info window at the center of the map or at the place location
+            const position = lat && lng ? { lat: parseFloat(lat), lng: parseFloat(lng) } : (map ? map.getCenter() : { lat: 24.4539, lng: 54.3773 });
+            
+            infoWindow.setContent(content);
+            infoWindow.setPosition(position);
+            infoWindow.open(map);
+            
+            // Pan to the location
+            if (map && lat && lng) {
+                map.panTo(position);
+                map.setZoom(15);
+            }
+        }
+        
+        // Confirm and add shop from Google Places to inspection
+        async function confirmAddShopFromGooglePlaces(lat, lng, googleMapsLink) {
+            const name = document.getElementById('googlePlaceShopName')?.value?.trim();
+            const address = document.getElementById('googlePlaceShopAddress')?.value?.trim();
+            const phone = document.getElementById('googlePlaceShopPhone')?.value?.trim();
+            const area = document.getElementById('googlePlaceShopArea')?.value;
+            const license = document.getElementById('googlePlaceShopLicense')?.value?.trim();
+            
+            if (!name) {
+                alert('⚠️ يرجى إدخال اسم المحل');
+                return;
+            }
+            
+            if (!area) {
+                alert('⚠️ يرجى اختيار المنطقة');
+                return;
+            }
+            
+            const inspector = document.getElementById('mapInspectorSelect')?.value;
+            const date = document.getElementById('mapInspectionDate')?.value;
+            
+            if (!inspector || !date) {
+                alert('⚠️ يرجى اختيار المفتش والتاريخ أولاً');
+                closeInfoWindow();
+                return;
+            }
+            
+            try {
+                // Generate unique shop ID
+                const timestamp = Date.now();
+                const shopId = `shop_${timestamp}`;
+                
+                // Generate ADM code (auto-increment from existing)
+                const existingCodes = Object.values(shopsDetails || {})
+                    .map(s => s.admCode)
+                    .filter(code => code && code.startsWith('ADM'))
+                    .map(code => parseInt(code.replace('ADM', '')))
+                    .filter(num => !isNaN(num));
+                
+                const nextCodeNum = existingCodes.length > 0 ? Math.max(...existingCodes) + 1 : 1;
+                const admCode = `ADM${String(nextCodeNum).padStart(4, '0')}`;
+                
+                // Create new shop object
+                const newShop = {
+                    nameAr: name,
+                    nameEn: '',
+                    licenseNo: license || '',
+                    locationMap: googleMapsLink,
+                    admCode: admCode,
+                    address: address || '',
+                    contact: phone || '',
+                    activity: '',
+                    area: area,
+                    areaId: findAreaId(area),
+                    addedFromGooglePlaces: true,
+                    addedDate: new Date().toISOString()
+                };
+                
+                // Add to shops details
+                if (!shopsDetails) shopsDetails = {};
+                shopsDetails[name] = newShop;
+                
+                // Track new shop for saving
+                if (!newShopsAddedFromMap.includes(name)) {
+                    newShopsAddedFromMap.push(name);
+                }
+                
+                // Add to map selection
+                if (!mapSelectedShops.includes(name)) {
+                    mapSelectedShops.push(name);
+                }
+                
+                // Close info window
+                closeInfoWindow();
+                
+                // Clear Google Places search
+                clearGooglePlacesSearch();
+                
+                // Reload map markers to show the new shop
+                await loadShopMarkers();
+                
+                // Update UI
+                updateMapSelection();
+                
+                // Enable buttons
+                document.getElementById('applyMapBtn').disabled = false;
+                document.getElementById('saveFromMapBtn').disabled = false;
+                
+                // Show success message
+                showMapNotification(`✅ تم إضافة "${name}" بنجاح!`, 'success');
+                
+                console.log('✅ New shop added from Google Places:', newShop);
+                
+                // Show detailed success message
+                alert(`✅ تمت إضافة المحل بنجاح!\n\nالاسم: ${name}\nكود ADM: ${admCode}\nالمنطقة: ${area}\n\nالمحل مختار ومجهز للحفظ.\nاضغط "حفظ التفتيش مباشرة" أو "تطبيق الاختيار" للحفظ النهائي.`);
+                
+            } catch (error) {
+                console.error('Error adding shop from Google Places:', error);
+                alert('⚠️ حدث خطأ أثناء إضافة المحل. حاول مرة أخرى.');
+            }
+        }
+        
+        // Clear Google Places search
+        function clearGooglePlacesSearch() {
+            const searchInput = document.getElementById('googlePlacesSearchInput');
+            const resultsContainer = document.getElementById('googlePlacesSearchResults');
+            const statusDiv = document.getElementById('googlePlacesSearchStatus');
+            
+            if (searchInput) {
+                searchInput.value = '';
+            }
+            
+            if (resultsContainer) {
+                resultsContainer.style.display = 'none';
+                resultsContainer.innerHTML = '';
+            }
+            
+            if (statusDiv) {
+                statusDiv.style.display = 'none';
+            }
+        }
+        
+        // Show Google Places search status
+        function showGooglePlacesStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('googlePlacesSearchStatus');
+            if (!statusDiv) return;
+            
+            const colors = {
+                success: { bg: '#d4edda', border: '#28a745', text: '#155724' },
+                warning: { bg: '#fff3cd', border: '#ffc107', text: '#856404' },
+                error: { bg: '#f8d7da', border: '#dc3545', text: '#721c24' },
+                info: { bg: '#d1ecf1', border: '#17a2b8', text: '#0c5460' }
+            };
+            const style = colors[type] || colors.info;
+            
+            statusDiv.style.cssText = `
+                padding: 10px 15px;
+                background: ${style.bg};
+                border: 1px solid ${style.border};
+                color: ${style.text};
+                border-radius: 8px;
+                font-weight: 600;
+                margin-top: 10px;
+                display: block;
+            `;
+            statusDiv.textContent = message;
+            
+            // Auto-hide after 5 seconds for success/info messages
+            if (type === 'success' || type === 'info') {
+                setTimeout(() => {
+                    if (statusDiv) statusDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+        
+        // ========================================
+        // End of Google Places Search Functions
+        // ========================================
         
         // ========================================
         // End of Map Search Functions

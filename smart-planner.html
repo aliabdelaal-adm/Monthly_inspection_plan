@@ -4535,6 +4535,8 @@
         let infoWindow = null;
         let isMapInitialized = false;
         let newShopsAddedFromMap = []; // Track new shops added from map clicks
+        let isProcessingMarkerClick = false; // Flag to prevent map click when marker is clicked
+        let currentLoadingMarker = null; // Track loading marker for cleanup
         
         // Get map configuration from loaded config
         const MAP_CONFIG = window.GOOGLE_MAPS_CONFIG ? window.GOOGLE_MAPS_CONFIG.mapConfig : {
@@ -4911,24 +4913,71 @@
         
         // Handle map click for direct shop addition
         async function handleMapClickForShopAddition(event) {
+            // Skip if we're processing a marker click (prevent duplicate handling)
+            if (isProcessingMarkerClick) {
+                isProcessingMarkerClick = false;
+                return;
+            }
+            
             const latLng = event.latLng;
             
-            // Show loading indicator
+            // Clean up any existing loading marker first
+            if (currentLoadingMarker) {
+                try {
+                    currentLoadingMarker.setMap(null);
+                } catch (e) {}
+                currentLoadingMarker = null;
+            }
+            
+            // Create loading indicator marker (simple static marker, no animation)
             const loadingMarker = new google.maps.Marker({
                 position: latLng,
                 map: map,
                 icon: {
                     path: google.maps.SymbolPath.CIRCLE,
                     scale: 10,
-                    fillColor: '#667eea',
-                    fillOpacity: 0.6,
+                    fillColor: '#4CAF50', // Green color for loading (more visible)
+                    fillOpacity: 0.7,
                     strokeColor: 'white',
-                    strokeWeight: 2
+                    strokeWeight: 3
                 },
-                animation: google.maps.Animation.BOUNCE
+                zIndex: 9999 // Ensure it's on top
             });
             
+            // Store reference for cleanup
+            currentLoadingMarker = loadingMarker;
+            
+            // Set automatic cleanup timeout (5 seconds max) to prevent stuck markers
+            const cleanupTimeout = setTimeout(() => {
+                if (loadingMarker && loadingMarker.getMap()) {
+                    loadingMarker.setMap(null);
+                }
+                if (currentLoadingMarker === loadingMarker) {
+                    currentLoadingMarker = null;
+                }
+            }, 5000);
+            
+            // Helper function to clean up marker
+            const cleanupMarker = () => {
+                clearTimeout(cleanupTimeout);
+                try {
+                    if (loadingMarker) {
+                        loadingMarker.setMap(null);
+                    }
+                } catch (e) {}
+                if (currentLoadingMarker === loadingMarker) {
+                    currentLoadingMarker = null;
+                }
+            };
+            
             try {
+                // Check if Places Service is available
+                if (!window.placesService) {
+                    cleanupMarker();
+                    showAddCustomShopDialog(latLng);
+                    return;
+                }
+                
                 // Search for nearby places (pet shops, stores, etc.)
                 const request = {
                     location: latLng,
@@ -4937,7 +4986,12 @@
                 };
                 
                 const nearbyPlaces = await new Promise((resolve, reject) => {
+                    const searchTimeout = setTimeout(() => {
+                        resolve([]); // Timeout after 3 seconds
+                    }, 3000);
+                    
                     window.placesService.nearbySearch(request, (results, status) => {
+                        clearTimeout(searchTimeout);
                         if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
                             resolve(results);
                         } else {
@@ -4947,7 +5001,7 @@
                 });
                 
                 // Remove loading marker
-                loadingMarker.setMap(null);
+                cleanupMarker();
                 
                 if (nearbyPlaces.length === 0) {
                     // No shops found, show option to add custom shop
@@ -4960,7 +5014,7 @@
                     showShopSelectionDialog(nearbyPlaces, latLng);
                 }
             } catch (error) {
-                loadingMarker.setMap(null);
+                cleanupMarker();
                 console.error('Error handling map click:', error);
                 alert('⚠️ حدث خطأ في البحث عن المحلات. حاول النقر مرة أخرى.');
             }
@@ -5386,17 +5440,39 @@
                             shopName: shopName,
                             shopData: shop,
                             isAvailable: isAvailable,
-                            locationAccuracy: accuracy
+                            locationAccuracy: accuracy,
+                            clickable: true // Explicitly make clickable
                         });
                         
-                        // Add click event to marker
-                        marker.addListener('click', () => {
+                        // Add click event to marker - with flag to prevent map click handler
+                        marker.addListener('click', (event) => {
+                            // Set flag to indicate we're handling a marker click
+                            isProcessingMarkerClick = true;
+                            
+                            // Stop the event from propagating to the map
+                            if (event && event.stop) {
+                                event.stop();
+                            }
+                            
+                            // Clean up any loading marker that might have been created
+                            if (currentLoadingMarker) {
+                                try {
+                                    currentLoadingMarker.setMap(null);
+                                } catch (e) {}
+                                currentLoadingMarker = null;
+                            }
+                            
                             if (!marker.isAvailable) {
-                                showInfoWindow(marker, 'هذا المحل غير متاح للاختيار حالياً');
+                                showInfoWindow(marker, 'هذا المحل غير متاح للاختيار حالياً. اختر مفتش وتاريخ أولاً.');
                                 return;
                             }
                             
                             toggleShopSelection(marker);
+                            
+                            // Reset flag after a short delay
+                            setTimeout(() => {
+                                isProcessingMarkerClick = false;
+                            }, 100);
                         });
                         
                         // Add hover event
@@ -5668,6 +5744,11 @@
                     strokeColor: strokeColor,
                     strokeWeight: strokeWeight
                 });
+                
+                // Show feedback notification for deselection
+                const shop = marker.shopData;
+                const displayName = shop?.nameAr || shopName;
+                showMapNotification(`❌ تم إلغاء اختيار: ${displayName}`, 'info');
             } else {
                 // Select
                 mapSelectedShops.push(shopName);
@@ -5679,6 +5760,11 @@
                     strokeColor: strokeColor,
                     strokeWeight: strokeWeight
                 });
+                
+                // Show feedback notification for selection
+                const shop = marker.shopData;
+                const displayName = shop?.nameAr || shopName;
+                showMapNotification(`✅ تم اختيار: ${displayName}`, 'success');
             }
             
             updateMapSelection();
@@ -6139,6 +6225,17 @@
                 return;
             }
             
+            // Reset state for fresh modal open
+            isProcessingMarkerClick = false;
+            
+            // Clean up any existing loading markers
+            if (currentLoadingMarker) {
+                try {
+                    currentLoadingMarker.setMap(null);
+                } catch (e) {}
+                currentLoadingMarker = null;
+            }
+            
             // Show modal
             document.getElementById('mapModal').classList.add('show');
             
@@ -6162,6 +6259,17 @@
         function closeMapModal() {
             document.getElementById('mapModal').classList.remove('show');
             mapSelectedShops = [];
+            
+            // Clean up any loading markers
+            if (currentLoadingMarker) {
+                try {
+                    currentLoadingMarker.setMap(null);
+                } catch (e) {}
+                currentLoadingMarker = null;
+            }
+            
+            // Reset marker click flag
+            isProcessingMarkerClick = false;
         }
         
         // Populate inspector dropdown for map

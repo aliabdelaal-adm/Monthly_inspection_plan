@@ -190,6 +190,9 @@
             --uae-red: #ff0000;
             --uae-black: #000000;
             --uae-white: #ffffff;
+            /* Celebration effects display duration and transition */
+            --celebration-display-duration: 15s;
+            --celebration-fade-transition: 1s;
         }
         
         /* Universal box-sizing to prevent overflow issues */
@@ -460,6 +463,14 @@
             pointer-events: none;
             z-index: 1;
             overflow: hidden;
+            opacity: 1;
+            transition: opacity var(--celebration-fade-transition, 1s) ease-out;
+        }
+        
+        /* Hidden state for auto-disappear after 15 seconds */
+        .uae-celebration-effects.hidden {
+            opacity: 0;
+            visibility: hidden;
         }
         
         /* ===== FIREWORKS EFFECTS ===== */
@@ -36168,6 +36179,25 @@ function setupTapToStopMusic() {
 }
 
 window.addEventListener('load', function() {
+    // ===== UAE National Day Celebration Effects - Auto-hide after 15 seconds =====
+    // Display effects for 15 seconds on every page load, then hide them
+    // Note: Duration matches CSS custom property --celebration-display-duration (15s)
+    const UAE_CELEBRATION_DURATION_MS = 15000; // 15 seconds in milliseconds
+    
+    const celebrationEffects = document.querySelector('.uae-celebration-effects');
+    if (celebrationEffects) {
+        // Ensure effects are visible on page load
+        celebrationEffects.classList.remove('hidden');
+        console.log('🎆 UAE National Day celebration effects started!');
+        
+        // Auto-hide after 15 seconds
+        setTimeout(function() {
+            celebrationEffects.classList.add('hidden');
+            console.log('🎆 UAE National Day celebration effects hidden after 15 seconds');
+        }, UAE_CELEBRATION_DURATION_MS);
+    }
+    // ===== End of UAE National Day Celebration Effects Timer =====
+    
     // Load audio configuration from GitHub
     loadAudioConfig().then(() => {
         console.log('🎵 Audio configuration loaded successfully');

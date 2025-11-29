@@ -4974,6 +4974,8 @@
                 // Check if Places Service is available
                 if (!window.placesService) {
                     cleanupMarker();
+                    // Inform user and fallback to custom shop addition
+                    console.log('Places Service not available, showing custom shop dialog');
                     showAddCustomShopDialog(latLng);
                     return;
                 }
@@ -4985,17 +4987,21 @@
                     type: ['pet_store', 'store', 'establishment']
                 };
                 
+                let searchTimedOut = false;
                 const nearbyPlaces = await new Promise((resolve, reject) => {
                     const searchTimeout = setTimeout(() => {
-                        resolve([]); // Timeout after 3 seconds
+                        searchTimedOut = true;
+                        resolve([]); // Timeout after 3 seconds - treat as no results
                     }, 3000);
                     
                     window.placesService.nearbySearch(request, (results, status) => {
                         clearTimeout(searchTimeout);
-                        if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
-                            resolve(results);
-                        } else {
-                            resolve([]);
+                        if (!searchTimedOut) {
+                            if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
+                                resolve(results);
+                            } else {
+                                resolve([]);
+                            }
                         }
                     });
                 });
@@ -5463,13 +5469,14 @@
                             }
                             
                             if (!marker.isAvailable) {
-                                showInfoWindow(marker, 'هذا المحل غير متاح للاختيار حالياً. اختر مفتش وتاريخ أولاً.');
+                                showInfoWindow(marker, 'هذا المحل غير متاح للاختيار حالياً. يرجى اختيار المفتش والتاريخ من القائمة العلوية أولاً.');
                                 return;
                             }
                             
                             toggleShopSelection(marker);
                             
-                            // Reset flag after a short delay
+                            // Reset flag after Google Maps event processing completes
+                            // This ensures the map click handler doesn't fire for this click event
                             setTimeout(() => {
                                 isProcessingMarkerClick = false;
                             }, 100);

@@ -33,7 +33,7 @@ def extract_coordinates_from_link(link):
             try:
                 lat, lng = float(match.group(1)), float(match.group(2))
                 return (lat, lng)
-            except:
+            except (ValueError, TypeError):
                 continue
     
     return None
@@ -73,7 +73,7 @@ def shorten_google_maps_link(link):
                 
                 # Create a cleaner search link
                 return f"https://www.google.com/maps/search/?api=1&query={query[:100]}"
-            except:
+            except (ValueError, IndexError):
                 pass
     
     # If we can't shorten it, return as is
@@ -310,6 +310,13 @@ def main():
     print("Pet Shops Excel Cleanup Script")
     print("="*80)
     
+    # Check if input file exists
+    import os
+    if not os.path.exists(input_file):
+        print(f"\n❌ ERROR: Input file '{input_file}' not found!")
+        print("Please ensure the file exists in the current directory.")
+        return 1
+    
     # Step 1: Read all shops
     print("\n1. Reading shop data from Excel...")
     shops = read_shop_data_from_excel(input_file)
@@ -381,6 +388,13 @@ def main():
     print("\n" + "="*80)
     print("Cleanup completed successfully!")
     print("="*80)
+    return 0
 
 if __name__ == '__main__':
-    main()
+    import sys
+    try:
+        sys.exit(main())
+    except Exception as e:
+        print(f"\n❌ ERROR: An unexpected error occurred: {e}")
+        print("Please check the input file and try again.")
+        sys.exit(1)

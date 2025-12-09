@@ -182,5 +182,6 @@ def test_pet_shops_excel():
     return all_passed
 
 if __name__ == '__main__':
+    import sys
     success = test_pet_shops_excel()
-    exit(0 if success else 1)
+    sys.exit(0 if success else 1)

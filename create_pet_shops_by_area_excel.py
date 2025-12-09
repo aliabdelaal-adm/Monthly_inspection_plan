@@ -12,6 +12,12 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
+# Configuration constants
+STATUS_THRESHOLD_VERY_LARGE = 30  # Areas with 30+ shops
+STATUS_THRESHOLD_LARGE = 15       # Areas with 15-29 shops
+STATUS_THRESHOLD_MEDIUM = 8       # Areas with 8-14 shops
+MAX_SHEET_NAME_LENGTH = 31        # Excel sheet name limit
+
 def load_data():
     """Load data from plan-data.json and shops_details.json"""
     print("Loading data files...")
@@ -27,7 +33,7 @@ def load_data():
             shops_details = json.load(f)
         print(f"✓ Loaded {len(shops_details)} shop details")
     except FileNotFoundError:
-        print("⚠ shops_details.json not found, using basic info only")
+        print("⚠ shops_details.json not found - Contact info, addresses, and license numbers will be unavailable")
     
     return plan_data, shops_details
 
@@ -121,7 +127,7 @@ def create_summary_sheet(wb, area_shops):
     print("\nCreating summary sheet...")
     
     ws = wb.active
-    ws.title = "📊 الملخص - Summary"
+    ws.title = "Summary - الملخص"
     
     # Title
     title_cell = ws.merge_cells('A1:F2')
@@ -169,17 +175,17 @@ def create_summary_sheet(wb, area_shops):
         percentage = (shop_count / total_shops * 100) if total_shops > 0 else 0
         
         # Determine status based on count
-        if shop_count >= 30:
-            status = "🔴 كبير جداً"
+        if shop_count >= STATUS_THRESHOLD_VERY_LARGE:
+            status = "كبير جداً - Very Large"
             status_color = "FFE6E6"
-        elif shop_count >= 15:
-            status = "🟡 كبير"
+        elif shop_count >= STATUS_THRESHOLD_LARGE:
+            status = "كبير - Large"
             status_color = "FFF4E6"
-        elif shop_count >= 8:
-            status = "🟢 متوسط"
+        elif shop_count >= STATUS_THRESHOLD_MEDIUM:
+            status = "متوسط - Medium"
             status_color = "E6F4EA"
         else:
-            status = "🔵 صغير"
+            status = "صغير - Small"
             status_color = "E6F2FF"
         
         ws.cell(row=row, column=1, value=idx)
@@ -262,7 +268,18 @@ def create_summary_sheet(wb, area_shops):
 def create_area_sheet(wb, area_name, shops):
     """Create a sheet for a specific area"""
     # Clean sheet name (Excel has limitations)
-    sheet_name = area_name[:31]  # Max 31 characters
+    sheet_name = area_name[:MAX_SHEET_NAME_LENGTH]
+    
+    # Ensure unique sheet name
+    original_name = sheet_name
+    counter = 1
+    while sheet_name in wb.sheetnames:
+        # Add counter if duplicate
+        suffix = f"_{counter}"
+        max_len = MAX_SHEET_NAME_LENGTH - len(suffix)
+        sheet_name = original_name[:max_len] + suffix
+        counter += 1
+    
     ws = wb.create_sheet(title=sheet_name)
     
     # Title

@@ -21,11 +21,11 @@
 ### الملخص - Summary
 
 الملف يحتوي على **27 صفحة**:
-- **1 صفحة ملخص** تحتوي على إحصائيات شاملة
+- **1 صفحة ملخص** ("Summary - الملخص") تحتوي على إحصائيات شاملة
 - **26 صفحة** للمناطق (صفحة لكل منطقة)
 
 The file contains **27 sheets**:
-- **1 summary sheet** with comprehensive statistics
+- **1 summary sheet** ("Summary - الملخص") with comprehensive statistics
 - **26 area sheets** (one sheet per area)
 
 ---
